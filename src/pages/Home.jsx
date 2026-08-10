@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Route, SlidersHorizontal, ScanLine, Fuel, TrendingUp, Ban } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import PartnerApps from "@/components/PartnerApps";
 
 const CARDS = [
   { to: "/route", icon: Route, title: "AI Route Optimizer", desc: "Sequenced by zip & address for max $/hr", color: "bg-blue-500/10 text-blue-500" },
@@ -76,6 +77,8 @@ export default function Home() {
       <Link to="/categories" className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
         <Ban className="h-4 w-4" /> Manage blocked customers
       </Link>
+
+      <PartnerApps />
     </div>
   );
 }
