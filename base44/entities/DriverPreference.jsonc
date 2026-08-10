@@ -1,0 +1,39 @@
+{
+  "name": "DriverPreference",
+  "type": "object",
+  "properties": {
+    "accepted_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "food_pickup",
+        "grocery_shop_deliver",
+        "grocery_pickup",
+        "retail",
+        "package"
+      ]
+    },
+    "min_payout": {
+      "type": "number",
+      "default": 6
+    },
+    "max_miles": {
+      "type": "number",
+      "default": 12
+    },
+    "min_per_hour": {
+      "type": "number",
+      "default": 22
+    },
+    "vehicle_mpg": {
+      "type": "number",
+      "default": 26
+    },
+    "gas_price": {
+      "type": "number",
+      "default": 3.45
+    }
+  }
+}

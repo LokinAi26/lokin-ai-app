@@ -1,0 +1,37 @@
+{
+  "name": "FuelDeal",
+  "type": "object",
+  "properties": {
+    "station": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "price_per_gallon": {
+      "type": "number"
+    },
+    "discount_per_gallon": {
+      "type": "number",
+      "default": 0
+    },
+    "cashback_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "promo_code": {
+      "type": "string"
+    },
+    "expires_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "distance_miles": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "station",
+    "price_per_gallon"
+  ]
+}

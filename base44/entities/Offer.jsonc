@@ -1,0 +1,67 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "merchant": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food_pickup",
+        "grocery_shop_deliver",
+        "grocery_pickup",
+        "retail",
+        "package",
+        "alcohol",
+        "pharmacy"
+      ]
+    },
+    "payout": {
+      "type": "number"
+    },
+    "tip": {
+      "type": "number",
+      "default": 0
+    },
+    "miles": {
+      "type": "number"
+    },
+    "est_minutes": {
+      "type": "number"
+    },
+    "pickup_address": {
+      "type": "string"
+    },
+    "dropoff_address": {
+      "type": "string"
+    },
+    "items_count": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "accepted",
+        "completed",
+        "declined"
+      ],
+      "default": "available"
+    },
+    "sequence": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "merchant",
+    "category",
+    "payout",
+    "miles",
+    "est_minutes"
+  ]
+}

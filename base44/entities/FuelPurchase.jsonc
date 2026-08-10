@@ -1,0 +1,28 @@
+{
+  "name": "FuelPurchase",
+  "type": "object",
+  "properties": {
+    "station": {
+      "type": "string"
+    },
+    "gallons": {
+      "type": "number"
+    },
+    "total_paid": {
+      "type": "number"
+    },
+    "cashback_earned": {
+      "type": "number",
+      "default": 0
+    },
+    "purchased_on": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "station",
+    "gallons",
+    "total_paid"
+  ]
+}
