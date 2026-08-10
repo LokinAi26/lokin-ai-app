@@ -1,0 +1,29 @@
+{
+  "name": "Earning",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "trips": {
+      "type": "number",
+      "default": 0
+    },
+    "miles": {
+      "type": "number",
+      "default": 0
+    },
+    "platform": {
+      "type": "string",
+      "default": "mixed"
+    }
+  },
+  "required": [
+    "date",
+    "amount"
+  ]
+}
