@@ -8,6 +8,7 @@ const PARTNERS = [
   { name: "Instacart Shopper", scheme: "instacartshopper://", web: "https://shoppers.instacart.com", color: "text-emerald-400", letter: "I" },
   { name: "Grubhub Driver", scheme: "grubhubdriver://", web: "https://driver.grubhub.com", color: "text-orange-400", letter: "G" },
   { name: "Spark (Walmart)", scheme: "sparkdriver://", web: "https://sparkdriver.walmart.com", color: "text-blue-400", letter: "S" },
+  { name: "Veho Driver", scheme: "veho://", web: "https://app.veho.com/driver", color: "text-teal-400", letter: "V" },
 ];
 
 export default function PartnerApps() {
