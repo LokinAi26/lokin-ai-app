@@ -19,6 +19,13 @@ export function LokinGlyph({ size = 28, className = "" }) {
         </linearGradient>
       </defs>
 
+      {/* speed streaks trailing behind — fast motion */}
+      <g stroke={`url(#${gid})`} strokeWidth="4" strokeLinecap="round" opacity="0.9">
+        <line x1="6" y1="46" x2="16" y2="46" className="lokin-streak" />
+        <line x1="4" y1="58" x2="18" y2="58" className="lokin-streak" style={{ animationDelay: "0.15s" }} />
+        <line x1="6" y1="70" x2="16" y2="70" className="lokin-streak" style={{ animationDelay: "0.3s" }} />
+      </g>
+
       {/* padlock shackle — bold arch on top */}
       <path
         d="M37 40 V28 a13 13 0 0 1 26 0 V40"
@@ -37,9 +44,12 @@ export function LokinGlyph({ size = 28, className = "" }) {
       <line x1="50" y1="86" x2="50" y2="80" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
       <line x1="22" y1="58" x2="28" y2="58" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
 
-      {/* clock hands — 10:10 (classic lock-clock pose) */}
-      <line x1="50" y1="58" x2="38" y2="44" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      <line x1="50" y1="58" x2="64" y2="62" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+      {/* clock hands — spinning fast to convey motion */}
+      <g className="lokin-spin" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round">
+        <line x1="50" y1="58" x2="38" y2="44" />
+        <line x1="50" y1="58" x2="64" y2="62" />
+        <circle cx="50" cy="58" r="2.5" fill={`url(#${gid})`} stroke="none" />
+      </g>
 
       {/* keyhole in center */}
       <circle cx="50" cy="58" r="4.5" fill={`url(#${gid})`} />
