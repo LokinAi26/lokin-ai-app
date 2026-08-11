@@ -159,6 +159,16 @@ body {
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .ticker-scroll {
+    animation: ticker-scroll 35s linear infinite;
+  }
+  .ticker-scroll:hover {
+    animation-play-state: paused;
+  }
   .lokin-spin {
     transform-box: view-box;
     transform-origin: 50px 58px;

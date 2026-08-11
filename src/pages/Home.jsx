@@ -9,6 +9,7 @@ import UpcomingShifts from "@/components/UpcomingShifts";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
+import Ticker from "@/components/Ticker";
 import { getRoleMeta } from "@/lib/userTypes";
 
 function greeting() {
@@ -108,6 +109,8 @@ export default function Home() {
         <div className="text-xs text-white/45">{greeting()}.</div>
         <h1 className="text-2xl font-bold font-heading metal-text">{role.homeTitle}</h1>
       </div>
+
+      <Ticker />
 
       {/* Earnings + goal hero */}
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
