@@ -15,6 +15,15 @@ body {
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(circle, hsl(80 100% 50% / 0.10) 1px, transparent 1.6px),
+    repeating-linear-gradient(0deg, transparent 0 7px, hsl(80 100% 50% / 0.045) 7px 8px, transparent 8px 15px),
+    repeating-linear-gradient(90deg, transparent 0 13px, hsl(80 100% 50% / 0.05) 13px 14px, transparent 14px 23px, hsl(80 100% 50% / 0.025) 23px 24px, transparent 24px 37px),
+    linear-gradient(180deg, hsl(80 100% 50% / 0.02) 0%, transparent 22%, hsl(80 100% 50% / 0.03) 58%, transparent 100%);
+  background-size: 18px 18px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed, fixed, fixed, fixed;
+  background-position: center, 0 0, 0 0, center;
 }
 
 @layer base {
