@@ -27,6 +27,7 @@ import GigTasks from './pages/GigTasks';
 import Receipts from './pages/Receipts';
 import VehicleCare from './pages/VehicleCare';
 import Safety from './pages/Safety';
+import BreakTime from './pages/BreakTime';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
           <Route path="/receipts" element={<Receipts />} />
           <Route path="/vehicle-care" element={<VehicleCare />} />
           <Route path="/safety" element={<Safety />} />
+          <Route path="/break-time" element={<BreakTime />} />
         </Route>
       </Route>
       <Route path="/ThankYou" element={<ThankYou />} />
