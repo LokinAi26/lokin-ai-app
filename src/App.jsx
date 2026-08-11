@@ -22,6 +22,9 @@ import DrivingMode from './pages/DrivingMode';
 import Brand from './pages/Brand';
 import Pricing from './pages/Pricing';
 import ThankYou from './pages/ThankYou';
+import Support from './pages/Support';
+import GigTasks from './pages/GigTasks';
+import Receipts from './pages/Receipts';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -66,6 +69,9 @@ const AuthenticatedApp = () => {
           <Route path="/drive" element={<DrivingMode />} />
           <Route path="/brand" element={<Brand />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/gigs" element={<GigTasks />} />
+          <Route path="/receipts" element={<Receipts />} />
         </Route>
       </Route>
       <Route path="/ThankYou" element={<ThankYou />} />

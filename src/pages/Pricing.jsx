@@ -170,8 +170,18 @@ export default function Pricing() {
         })}
       </div>
 
-      <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-2">
-        SUBSCRIPTIONS BILL VIA BASE44 PAYMENTS · CANCEL ANYTIME
+      <div className="flex items-center justify-center gap-1.5 flex-wrap pt-2">
+        {["Apple Pay", "Google Pay", "Visa", "Mastercard", "Amex"].map((m) => (
+          <span
+            key={m}
+            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-white/55"
+          >
+            {m}
+          </span>
+        ))}
+      </div>
+      <div className="text-center text-[10px] tracking-[0.2em] text-white/30">
+        TAP TO PAY · SECURE CHECKOUT · CANCEL ANYTIME
       </div>
     </div>
   );

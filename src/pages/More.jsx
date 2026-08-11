@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
 const LINKS = [
   { to: "/pricing", icon: Crown, title: "Unlock Premium", desc: "Advanced routing & deeper AI", color: "text-primary" },
+  { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Mystery shops & food reviews", color: "text-primary" },
+  { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history & invoices", color: "text-white/60" },
   { to: "/route", icon: RouteIcon, title: "AI Route Optimizer", desc: "Sequenced by mode for max $/hr", color: "text-primary" },
   { to: "/categories", icon: SlidersHorizontal, title: "Work Filters", desc: "Delivery types & blocked customers", color: "text-accent" },
   { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
@@ -12,6 +14,7 @@ const LINKS = [
   { to: "/fuel", icon: FuelIcon, title: "Gas Discounts", desc: "Weekly codes & cashback", color: "text-accent" },
   { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "MPG, fuel, goals, mileage cost", color: "text-primary" },
   { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Brand system & apparel", color: "text-primary" },
+  { to: "/support", icon: Headphones, title: "AI Support Rep", desc: "Get help, report bugs, billing", color: "text-accent" },
 ];
 
 export default function More() {

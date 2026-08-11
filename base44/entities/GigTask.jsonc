@@ -1,0 +1,87 @@
+{
+  "name": "GigTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "mystery_shop",
+        "food_review",
+        "survey",
+        "product_test"
+      ],
+      "default": "mystery_shop"
+    },
+    "brand": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food",
+        "retail",
+        "service",
+        "grocery",
+        "tech",
+        "other"
+      ],
+      "default": "food"
+    },
+    "payout": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "est_minutes": {
+      "type": "number",
+      "default": 30
+    },
+    "proof_required": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "claimed",
+        "submitted",
+        "completed",
+        "expired"
+      ],
+      "default": "available"
+    },
+    "assigned_to_id": {
+      "type": "string"
+    },
+    "claimed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proof_photo_url": {
+      "type": "string"
+    },
+    "proof_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "payout"
+  ]
+}
