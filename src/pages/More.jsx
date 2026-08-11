@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -12,6 +12,7 @@ const LINKS = [
   { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
   { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Customers, stores, locations", color: "text-destructive" },
   { to: "/fuel", icon: FuelIcon, title: "Gas Discounts", desc: "Weekly codes & cashback", color: "text-accent" },
+  { to: "/vehicle-care", icon: Wrench, title: "Vehicle Care", desc: "Maintenance & mechanic finder", color: "text-primary" },
   { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "MPG, fuel, goals, mileage cost", color: "text-primary" },
   { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Brand system & apparel", color: "text-primary" },
   { to: "/support", icon: Headphones, title: "AI Support Rep", desc: "Get help, report bugs, billing", color: "text-accent" },

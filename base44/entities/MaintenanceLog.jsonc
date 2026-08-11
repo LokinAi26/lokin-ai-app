@@ -1,0 +1,41 @@
+{
+  "name": "MaintenanceLog",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "oil_change",
+        "tire_rotation",
+        "brake",
+        "battery",
+        "inspection",
+        "filter",
+        "fluid",
+        "other"
+      ],
+      "default": "oil_change"
+    },
+    "last_done_mileage": {
+      "type": "number"
+    },
+    "interval_miles": {
+      "type": "number",
+      "default": 5000
+    },
+    "last_done_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}
