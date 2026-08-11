@@ -26,6 +26,7 @@ import Support from './pages/Support';
 import GigTasks from './pages/GigTasks';
 import Receipts from './pages/Receipts';
 import VehicleCare from './pages/VehicleCare';
+import Safety from './pages/Safety';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
           <Route path="/gigs" element={<GigTasks />} />
           <Route path="/receipts" element={<Receipts />} />
           <Route path="/vehicle-care" element={<VehicleCare />} />
+          <Route path="/safety" element={<Safety />} />
         </Route>
       </Route>
       <Route path="/ThankYou" element={<ThankYou />} />

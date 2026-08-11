@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
 const LINKS = [
   { to: "/pricing", icon: Crown, title: "Unlock Premium", desc: "Advanced routing & deeper AI", color: "text-primary" },
+  { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS, location sharing & contacts", color: "text-destructive" },
   { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Mystery shops & food reviews", color: "text-primary" },
   { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history & invoices", color: "text-white/60" },
   { to: "/route", icon: RouteIcon, title: "AI Route Optimizer", desc: "Sequenced by mode for max $/hr", color: "text-primary" },
