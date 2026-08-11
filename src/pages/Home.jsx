@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain } from "lucide-react";
+import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain, Power } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -51,6 +51,12 @@ export default function Home() {
     setLocking(false);
     lockStartRef.current = false;
     setShowWork(true);
+  }
+
+  async function tapOut() {
+    if (!prefs?.id) return;
+    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off" });
+    setPrefs(updated);
   }
 
   async function loadPrefs() {
@@ -143,14 +149,22 @@ export default function Home() {
 
       {/* Start work / locked in */}
       {working ? (
-        <Link to="/lokin" className="block rounded-3xl border border-accent/40 bg-accent/[0.07] p-6 text-center active:scale-[0.99] transition-transform">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-accent/10 glow-cyan">
-            <Brain className="h-7 w-7 text-accent" />
-          </div>
-          <div className="mt-3 font-display text-xl font-extrabold tracking-wider text-accent text-glow-cyan">YOU&apos;RE LOCKED IN.</div>
-          <div className="text-xs text-white/50 mt-1">Open LOKIN AI for hands-free help</div>
-          <div className="mt-2 inline-flex items-center gap-1 text-xs text-white/50">Tap to continue <ChevronRight className="h-3 w-3" /></div>
-        </Link>
+        <div className="space-y-3">
+          <Link to="/lokin" className="block rounded-3xl border border-accent/40 bg-accent/[0.07] p-6 text-center active:scale-[0.99] transition-transform">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-accent/10 glow-cyan">
+              <Brain className="h-7 w-7 text-accent" />
+            </div>
+            <div className="mt-3 font-display text-xl font-extrabold tracking-wider text-accent text-glow-cyan">YOU&apos;RE LOCKED IN.</div>
+            <div className="text-xs text-white/50 mt-1">Open LOKIN AI for hands-free help</div>
+            <div className="mt-2 inline-flex items-center gap-1 text-xs text-white/50">Tap to continue <ChevronRight className="h-3 w-3" /></div>
+          </Link>
+          <button onClick={tapOut}
+            className="w-full rounded-2xl border border-destructive/50 bg-destructive/[0.08] p-4 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
+            style={{ boxShadow: "0 0 16px -4px hsl(0 84% 60% / 0.45)" }}>
+            <Power className="h-4 w-4 text-destructive" />
+            <span className="font-display text-lg font-bold tracking-[0.18em] text-destructive" style={{ textShadow: "0 0 12px hsl(0 84% 60% / 0.55)" }}>TAP OUT</span>
+          </button>
+        </div>
       ) : (
         <button onClick={startLockIn}
           className="w-full rounded-3xl glow-border lokin-panel radial-fade p-6 text-center active:scale-[0.99] transition-transform">
