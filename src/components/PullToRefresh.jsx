@@ -53,6 +53,7 @@ export default function PullToRefresh({ onRefresh, children }) {
         style={{ height: pull }}
       >
         <RefreshCw
+          aria-hidden="true"
           className={`h-5 w-5 text-primary transition-opacity ${refreshing ? "animate-spin" : ""}`}
           style={{ opacity: Math.min(1, pull / 50) }}
         />

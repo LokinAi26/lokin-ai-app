@@ -6,7 +6,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
 const NESTED_PATHS = [
-  "/categories", "/locator", "/avoid", "/fuel", "/settings", "/more",
+  "/categories", "/locator", "/avoid", "/fuel", "/settings",
   "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing",
 ];
 
@@ -54,7 +54,11 @@ export default function DriverLayout() {
   }, [loc.pathname, currentTab]);
 
   function handleTabClick(tabKey) {
-    if (tabKey === currentTab) return;
+    if (tabKey === currentTab) {
+      // Tapping the active tab pops to its root (iOS convention)
+      navigate(TAB_ROOTS[tabKey]);
+      return;
+    }
     navigate(lastPaths[tabKey] || TAB_ROOTS[tabKey]);
   }
 
@@ -63,12 +67,12 @@ export default function DriverLayout() {
       <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
           {isNested ? (
-            <button onClick={() => navigate(-1)} className="flex items-center gap-1 -ml-1 py-1 select-none">
+            <button onClick={() => navigate(TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
               <ChevronLeft className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-white/80">Back</span>
             </button>
           ) : (
-            <button onClick={() => handleTabClick("home")} className="flex items-center gap-1.5 select-none">
+            <button onClick={() => handleTabClick("home")} aria-label="LOKIN AI home" className="flex items-center gap-1.5 select-none">
               <LokinGlyph size={20} />
               <span className="font-display font-extrabold tracking-[0.22em] text-sm">
                 <span className="metal-text">L</span>
@@ -96,13 +100,13 @@ export default function DriverLayout() {
         </motion.div>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
+      <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
         <div className="max-w-md mx-auto grid grid-cols-5">
           {NAV.map(({ key, label, icon: Icon, center }) => {
             const active = currentTab === key;
             if (center) {
               return (
-                <button key={key} onClick={() => handleTabClick(key)}
+                <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10 glow-primary" : "border-white/10 bg-card"}`}>
                     <Icon size={24} />
@@ -112,7 +116,7 @@ export default function DriverLayout() {
               );
             }
             return (
-              <button key={key} onClick={() => handleTabClick(key)}
+              <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
                 className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-colors ${active ? "text-primary" : "text-white/45"}`}>
                 <Icon className="h-5 w-5" />
                 {label}

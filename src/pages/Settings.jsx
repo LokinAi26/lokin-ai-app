@@ -18,15 +18,30 @@ export default function Settings() {
   async function deleteAccount() {
     setDeleting(true);
     try {
-      const [prefsList, blocked, fuel] = await Promise.all([
-        base44.entities.DriverPreference.filter({}),
-        base44.entities.BlockedCustomer.filter({}),
-        base44.entities.FuelPurchase.filter({}),
+      const me = await base44.auth.me();
+      const uid = me?.id;
+      if (!uid) throw new Error("no user session");
+      const [prefsList, blocked, fuel, avoid, earnings, offers, locators, gigs, purchases] = await Promise.all([
+        base44.entities.DriverPreference.filter({ created_by_id: uid }),
+        base44.entities.BlockedCustomer.filter({ created_by_id: uid }),
+        base44.entities.FuelPurchase.filter({ created_by_id: uid }),
+        base44.entities.AvoidPlace.filter({ created_by_id: uid }),
+        base44.entities.Earning.filter({ created_by_id: uid }),
+        base44.entities.Offer.filter({ created_by_id: uid }),
+        base44.entities.LocatorItem.filter({ created_by_id: uid }),
+        base44.entities.GigTask.filter({ assigned_to_id: uid }),
+        base44.entities.Base44Purchase.filter({ appUserId: uid }),
       ]);
       await Promise.all([
         ...prefsList.map((p) => base44.entities.DriverPreference.delete(p.id)),
         ...blocked.map((b) => base44.entities.BlockedCustomer.delete(b.id)),
         ...fuel.map((f) => base44.entities.FuelPurchase.delete(f.id)),
+        ...avoid.map((a) => base44.entities.AvoidPlace.delete(a.id)),
+        ...earnings.map((e) => base44.entities.Earning.delete(e.id)),
+        ...offers.map((o) => base44.entities.Offer.delete(o.id)),
+        ...locators.map((l) => base44.entities.LocatorItem.delete(l.id)),
+        ...gigs.map((g) => base44.entities.GigTask.delete(g.id)),
+        ...purchases.map((p) => base44.entities.Base44Purchase.delete(p.id)),
       ]);
     } catch (e) {
       console.error("deleteAccount: purge failed", e);
