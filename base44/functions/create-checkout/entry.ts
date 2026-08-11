@@ -78,24 +78,43 @@ Deno.serve(async (req: Request) => {
     // integer BEFORE using it — do NOT Math.trunc first, or a fractional POST (e.g. 1.9) silently
     // passes as 1 and charges a quantity the UI never allowed. For a plan / fixed-entitlement product,
     // hard-code `1` and ignore the body; for a genuine multi-unit product, also enforce YOUR own max.
-    const quantity = Number(body.quantity ?? 1);
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      return new Response(JSON.stringify({ error: "Invalid quantity" }), { status: 400 });
+    const quantity = 1; // subscriptions are fixed-entitlement — ignore any client-sent quantity
+    // ===== APP-SPECIFIC: subscription product catalog (server-side authoritative prices) =====
+    // The client sends only a productId; price/tier/recurring terms are resolved here so a buyer
+    // can never tamper the charge. Tiers unlock features (granted in payments-webhook by productId).
+    const PRODUCTS: Record<string, { name: string; price: string; tier: string; subscriptionInfo: any }> = {
+      pro_monthly: {
+        name: "LOKIN Pro — Monthly",
+        price: "9.99",
+        tier: "pro",
+        subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Pro Monthly", description: "Advanced routing & deeper AI analytics" },
+      },
+      elite_monthly: {
+        name: "LOKIN Elite — Monthly",
+        price: "19.99",
+        tier: "elite",
+        subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Elite Monthly", description: "All Pro features + priority AI & elite routing" },
+      },
+      elite_annual: {
+        name: "LOKIN Elite — Annual",
+        price: "149.99",
+        tier: "elite",
+        subscriptionInfo: { subscriptionSettings: { frequency: "YEAR", freeTrialPeriod: { frequency: "DAY", interval: 14 } }, title: "LOKIN Elite Annual", description: "Yearly billing with a 14-day free trial" },
+      },
+    };
+    const product = PRODUCTS[productId];
+    if (!product) {
+      return new Response(JSON.stringify({ error: "Unknown plan" }), { status: 400 });
     }
-    // Example — replace with your real trusted product source:
-    //   const product = (await base44.asServiceRole.entities.Product.filter({ id: productId }))[0];
-    //   if (!product) return new Response(JSON.stringify({ error: "Unknown product" }), { status: 400 });
-    //   const productName = product.name; const price = String(product.price); const currency = product.currency ?? "USD";
-    const productName = "Purchase"; // TODO: from your trusted product source
-    const price = "0.00";           // TODO: authoritative per-unit price (major units), resolved server-side
+    const productName = product.name;
+    const price = product.price;            // authoritative per-unit price (major units), resolved server-side
     const currency = "USD";
-    // For a SUBSCRIPTION set this to Wix's subscriptionInfo; leave null for a one-time payment.
-    const subscriptionInfo = null;
+    const subscriptionInfo = product.subscriptionInfo; // recurring subscription
     // Where Wix returns the buyer. Both MUST be real, PUBLICLY reachable routes in this app: the
     // returning buyer is often anonymous, so a missing or login-gated route strands a paid customer.
     // Match your router exactly — `/ThankYou`, not `/thank-you`.
     const thankYouPath = "/ThankYou";
-    const postFlowPath = "/";
+    const postFlowPath = "/pricing";
     // ===== END APP-SPECIFIC =====
 
     const total = parseFloat(price) * quantity;

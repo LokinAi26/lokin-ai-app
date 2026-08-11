@@ -20,6 +20,8 @@ import AvoidList from './pages/AvoidList';
 import Settings from './pages/Settings';
 import DrivingMode from './pages/DrivingMode';
 import Brand from './pages/Brand';
+import Pricing from './pages/Pricing';
+import ThankYou from './pages/ThankYou';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -63,8 +65,10 @@ const AuthenticatedApp = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/drive" element={<DrivingMode />} />
           <Route path="/brand" element={<Brand />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Route>
       </Route>
+      <Route path="/ThankYou" element={<ThankYou />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

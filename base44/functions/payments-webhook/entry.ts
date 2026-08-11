@@ -166,6 +166,26 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
   //   - Gate paid access on a WRITABLE field you set here (e.g. plan / has_paid on the user or an
   //     Entitlement row) — NEVER on is_verified: it is platform-protected and cannot be set here,
   //     even as service role, so gating access on it locks the paying buyer out.
+  // ===== APP-SPECIFIC: unlock the tier the buyer paid for =====
+  // `plan` is a custom field on User (enum free/pro/elite). `update` is idempotent, so a duplicate
+  // ORDER_APPROVED is safe. purchase.productId is the plan key; map to the tier name.
+  const TIER_BY_PRODUCT: Record<string, string> = {
+    pro_monthly: "pro",
+    elite_monthly: "elite",
+    elite_annual: "elite",
+  };
+  const tier = TIER_BY_PRODUCT[purchase.productId] ?? "free";
+  if (purchase.appUserId) {
+    await db.entities.User.update(purchase.appUserId, { plan: tier });
+  } else if (buyerEmail) {
+    // Anonymous buyer: match an existing User by email so the grant survives when they sign in.
+    try {
+      const matches = await db.entities.User.filter({ email: buyerEmail });
+      if (matches?.[0]) await db.entities.User.update(matches[0].id, { plan: tier });
+    } catch (e) {
+      console.error("payments-webhook: grant by email failed", e);
+    }
+  }
   // ===== END APP-SPECIFIC =====
 
   // Mark paid LAST, so "paid" always implies the grant above completed. The idempotency
@@ -217,10 +237,10 @@ async function handleSubscriptionEnded(db: any, eventData: any): Promise<Respons
   }
 
   // ===== APP-SPECIFIC =====
-  // Revoke whatever access the subscription granted (mirror of the grant). Runs BEFORE we
-  // mark the purchase canceled: if it throws, the status stays as-is so Wix's retry re-runs
-  // the revoke rather than hitting the "already canceled" short-circuit and leaving access on.
-  // Must be idempotent.
+  // Revoke: drop the user back to the free tier. `update` is idempotent, so a duplicate is safe.
+  if (purchase.appUserId) {
+    await db.entities.User.update(purchase.appUserId, { plan: "free" });
+  }
   // ===== END APP-SPECIFIC =====
 
   // Mark canceled LAST, so "canceled" always implies access was actually revoked.

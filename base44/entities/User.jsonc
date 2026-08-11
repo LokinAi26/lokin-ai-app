@@ -7,6 +7,16 @@
         "admin",
         "user"
       ]
+    },
+    "plan": {
+      "type": "string",
+      "description": "Subscription tier unlocked via Base44 Payments",
+      "enum": [
+        "free",
+        "pro",
+        "elite"
+      ],
+      "default": "free"
     }
   },
   "required": [
