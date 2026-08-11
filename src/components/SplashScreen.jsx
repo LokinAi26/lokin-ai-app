@@ -194,7 +194,7 @@ export default function SplashScreen() {
             transition={{ duration: 0.5 }}
           >
             <LokinWordmark size={34} />
-            <div className="mt-2 text-[10px] tracking-[0.32em] text-primary/70 font-display">UNLOCK YOUR TIME</div>
+            <div className="mt-2 text-[10px] tracking-[0.32em] text-primary/70 font-display">UNLOCK YOUR POTENTIAL · LEVEL UP</div>
           </motion.div>
 
           <div className="absolute bottom-[calc(2rem+env(safe-area-inset-bottom))] text-[10px] tracking-[0.2em] text-white/30">
