@@ -11,11 +11,11 @@ export default function SplashScreen() {
   useEffect(() => {
     playVault();
     const timers = [
-      setTimeout(() => setPhase(1), 700),
-      setTimeout(() => setPhase(2), 1500),
-      setTimeout(() => setPhase(3), 2050),
-      setTimeout(() => setLeaving(true), 2850),
-      setTimeout(() => setDone(true), 3300),
+      setTimeout(() => setPhase(1), 600),
+      setTimeout(() => setPhase(2), 1250),
+      setTimeout(() => setPhase(3), 1700),
+      setTimeout(() => setLeaving(true), 2550),
+      setTimeout(() => setDone(true), 3100),
     ];
     // fallback: if autoplay blocked, play on first gesture
     const onGesture = () => { if (!playedRef.current) playVault(); };
@@ -27,7 +27,7 @@ export default function SplashScreen() {
     if (leaving || done) return;
     setLeaving(true);
     setPhase(3);
-    setTimeout(() => setDone(true), 450);
+    setTimeout(() => setDone(true), 500);
   }
 
   function playVault() {
@@ -112,7 +112,7 @@ export default function SplashScreen() {
           onClick={dismiss}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black select-none"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.4 } }}
+          exit={{ opacity: 0, scale: 1.06, filter: "blur(6px)", transition: { duration: 0.5, ease: "easeInOut" } }}
         >
           <div className="absolute inset-0 brand-grid opacity-30" />
           <div className="absolute inset-0" style={{ background: "radial-gradient(120% 80% at 50% 50%, hsl(80 100% 50% / 0.10), transparent 60%)" }} />

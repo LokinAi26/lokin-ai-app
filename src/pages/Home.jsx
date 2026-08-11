@@ -8,6 +8,7 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import UpcomingShifts from "@/components/UpcomingShifts";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
+import DasherCompanion from "@/components/DasherCompanion";
 
 function greeting() {
   const h = new Date().getHours();
@@ -126,6 +127,9 @@ export default function Home() {
         <StatTile icon={FuelIcon} label="Fuel cost" value={`$${fuel.toFixed(2)}`} sub={`@ $${prefs?.gas_price || 3.45}/gal`} />
         <StatTile icon={TrendingUp} label="Status" value={working ? "LOCKED IN" : "Off"} sub={working ? "working" : "tap start"} accent={working} />
       </div>
+
+      {/* Dasher companion */}
+      <DasherCompanion />
 
       {/* Lock In Score */}
       {data?.lockInScore && <LockInScore score={data.lockInScore} />}
