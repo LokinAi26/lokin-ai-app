@@ -4,7 +4,7 @@ import { Home, Route as RouteIcon, BarChart3, Menu, ChevronLeft } from "lucide-r
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
-const NESTED_PATHS = ["/categories", "/locator", "/avoid", "/fuel", "/settings", "/more"];
+const NESTED_PATHS = ["/categories", "/locator", "/avoid", "/fuel", "/settings", "/more", "/drive"];
 const MORE_PATHS = ["/more", "/avoid", "/settings", "/locator", "/fuel", "/categories"];
 
 const NAV = [

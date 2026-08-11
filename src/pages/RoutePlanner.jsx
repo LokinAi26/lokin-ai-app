@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation } from "lucide-react";
+import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Radar } from "lucide-react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
@@ -46,9 +47,14 @@ export default function RoutePlanner() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <RouteIcon className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <RouteIcon className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
+        </div>
+        <Link to="/drive" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
+          <Radar className="h-3.5 w-3.5" /> AI GPS
+        </Link>
       </div>
       <p className="text-sm text-white/45 -mt-2">Pick a mode — LOKIN ranks offers for that goal and sequences them by zone.</p>
 

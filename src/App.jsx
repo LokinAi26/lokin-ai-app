@@ -17,6 +17,7 @@ import Earnings from './pages/Earnings';
 import More from './pages/More';
 import AvoidList from './pages/AvoidList';
 import Settings from './pages/Settings';
+import DrivingMode from './pages/DrivingMode';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
           <Route path="/avoid" element={<AvoidList />} />
           <Route path="/fuel" element={<Fuel />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/drive" element={<DrivingMode />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />
