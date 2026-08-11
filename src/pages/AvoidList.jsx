@@ -17,14 +17,30 @@ export default function AvoidList() {
 
   async function add() {
     if (!name.trim()) return;
-    const created = await base44.entities.AvoidPlace.create({ name: name.trim(), type, reason, note: note.trim() });
-    setItems([created, ...items]);
+    const payload = { name: name.trim(), type, reason, note: note.trim() };
+    const tempId = `tmp_${Date.now()}`;
+    // optimistic insert
+    setItems([{ ...payload, id: tempId }, ...items]);
     setName(""); setNote("");
+    try {
+      const created = await base44.entities.AvoidPlace.create(payload);
+      setItems((cur) => cur.map((i) => (i.id === tempId ? created : i)));
+    } catch (e) {
+      // revert
+      setItems((cur) => cur.filter((i) => i.id !== tempId));
+    }
   }
 
   async function remove(id) {
-    await base44.entities.AvoidPlace.delete(id);
+    const prev = items;
+    // optimistic remove
     setItems(items.filter((i) => i.id !== id));
+    try {
+      await base44.entities.AvoidPlace.delete(id);
+    } catch (e) {
+      // revert
+      setItems(prev);
+    }
   }
 
   const typeLabel = (v) => AVOID_TYPES.find((t) => t.value === v)?.label || v;

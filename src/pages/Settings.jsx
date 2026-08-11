@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
-import { Save, Check } from "lucide-react";
+import { Save, Check, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { OPTIMIZATION_MODES, DAILY_GOAL_PRESETS } from "@/lib/deliveryLabels";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const [prefs, setPrefs] = useState(null);
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  async function deleteAccount() {
+    // mock account deletion flow — clears session and returns to login
+    try { await base44.auth.logout("/login"); } catch {}
+  }
 
   useEffect(() => {
     base44.entities.DriverPreference.filter({}).then((p) => {
@@ -73,9 +83,38 @@ export default function Settings() {
         </div>
       </Section>
 
-      <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2">
+      <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2 select-none">
         {saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save settings</>}
       </button>
+
+      <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-1">
+          <Trash2 className="h-4 w-4" /> Delete Account
+        </div>
+        <p className="text-xs text-white/50 mb-3">
+          Permanently remove your account and all LOKIN AI data. This cannot be undone.
+        </p>
+        <button onClick={() => setDeleteOpen(true)} className="w-full rounded-xl border border-destructive/40 bg-destructive/10 text-destructive font-bold py-2.5 text-sm flex items-center justify-center gap-2 select-none">
+          <Trash2 className="h-4 w-4" /> Delete Account
+        </button>
+      </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="max-w-sm rounded-3xl border-destructive/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Delete account permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will sign you out and erase your LOKIN AI profile, preferences, and history. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAccount} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

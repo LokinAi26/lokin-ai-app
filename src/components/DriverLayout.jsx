@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Home, Route as RouteIcon, BarChart3, Menu } from "lucide-react";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Home, Route as RouteIcon, BarChart3, Menu, ChevronLeft } from "lucide-react";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
+const NESTED_PATHS = ["/categories", "/locator", "/avoid", "/fuel", "/settings", "/more"];
 const MORE_PATHS = ["/more", "/avoid", "/settings", "/locator", "/fuel", "/categories"];
 
 const NAV = [
@@ -16,7 +17,9 @@ const NAV = [
 
 export default function DriverLayout() {
   const loc = useLocation();
+  const navigate = useNavigate();
   const [working, setWorking] = useState(false);
+  const isNested = NESTED_PATHS.includes(loc.pathname);
 
   useEffect(() => {
     base44.entities.DriverPreference.filter({}).then((p) => setWorking((p[0] && p[0].work_status) === "working"));
@@ -24,18 +27,25 @@ export default function DriverLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
-      <header className="sticky top-0 z-30 glass border-b border-white/8">
+      <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
-          <NavLink to="/" className="flex items-center gap-1.5">
-            <LokinGlyph size={20} />
-            <span className="font-display font-extrabold tracking-[0.22em] text-sm">
-              <span className="metal-text">L</span>
-              <span className="metal-text">OKIN</span>
-              <span className="text-primary text-glow ml-1">AI</span>
-            </span>
-          </NavLink>
+          {isNested ? (
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1 -ml-1 py-1 select-none">
+              <ChevronLeft className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-white/80">Back</span>
+            </button>
+          ) : (
+            <NavLink to="/" className="flex items-center gap-1.5 select-none">
+              <LokinGlyph size={20} />
+              <span className="font-display font-extrabold tracking-[0.22em] text-sm">
+                <span className="metal-text">L</span>
+                <span className="metal-text">OKIN</span>
+                <span className="text-primary text-glow ml-1">AI</span>
+              </span>
+            </NavLink>
+          )}
           {working && (
-            <span className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary">
+            <span className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LOCKED IN
             </span>
           )}
@@ -46,7 +56,7 @@ export default function DriverLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
         <div className="max-w-md mx-auto grid grid-cols-5">
           {NAV.map(({ to, label, icon: Icon, end, match, center }) => {
             const active = match ? match(loc.pathname) : end ? loc.pathname === to : loc.pathname.startsWith(to);

@@ -31,15 +31,24 @@ export default function Fuel() {
     const g = parseFloat(newGallons);
     const t = parseFloat(newTotal);
     const cashback = Math.round(t * 0.03 * 100) / 100; // 3% pay-at-pump cashback demo
-    const created = await base44.entities.FuelPurchase.create({
+    const payload = {
       station: newStation,
       gallons: g,
       total_paid: t,
       cashback_earned: cashback,
       purchased_on: new Date().toISOString().slice(0, 10),
-    });
-    setPurchases([created, ...purchases]);
+    };
+    const tempId = `tmp_${Date.now()}`;
+    // optimistic insert
+    setPurchases([{ ...payload, id: tempId }, ...purchases]);
     setNewGallons(""); setNewTotal(""); setNewStation("");
+    try {
+      const created = await base44.entities.FuelPurchase.create(payload);
+      setPurchases((cur) => cur.map((p) => (p.id === tempId ? created : p)));
+    } catch (e) {
+      // revert
+      setPurchases((cur) => cur.filter((p) => p.id !== tempId));
+    }
   }
 
   const totalCashback = purchases.reduce((s, p) => s + (p.cashback_earned || 0), 0);

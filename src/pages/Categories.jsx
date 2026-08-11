@@ -22,14 +22,22 @@ export default function Categories() {
 
   async function toggleCat(value) {
     if (!prefs) return;
+    const prev = prefs.accepted_categories || [];
+    const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+    // optimistic: reflect immediately
+    setPrefs({ ...prefs, accepted_categories: next });
     setSavingCat(true);
-    const set = new Set(prefs.accepted_categories || []);
-    set.has(value) ? set.delete(value) : set.add(value);
-    const updated = await base44.entities.DriverPreference.update(prefs.id, {
-      accepted_categories: [...set],
-    });
-    setPrefs(updated);
-    setSavingCat(false);
+    try {
+      const updated = await base44.entities.DriverPreference.update(prefs.id, {
+        accepted_categories: next,
+      });
+      setPrefs(updated);
+    } catch (e) {
+      // revert on failure
+      setPrefs({ ...prefs, accepted_categories: prev });
+    } finally {
+      setSavingCat(false);
+    }
   }
 
   async function addBlocked() {
