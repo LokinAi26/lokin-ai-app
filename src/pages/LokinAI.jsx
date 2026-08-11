@@ -23,6 +23,15 @@ export default function LokinAI() {
   const [draft, setDraft] = useState(null);
   const recRef = useRef(null);
   const scrollRef = useRef(null);
+  const [voices, setVoices] = useState([]);
+  const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem("lokin_voice") || "");
+
+  useEffect(() => {
+    function loadVoices() { setVoices(window.speechSynthesis?.getVoices() || []); }
+    loadVoices();
+    window.speechSynthesis?.addEventListener?.("voiceschanged", loadVoices);
+    return () => window.speechSynthesis?.removeEventListener?.("voiceschanged", loadVoices);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -87,9 +96,17 @@ export default function LokinAI() {
     try {
       const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ""));
       u.rate = 1.05;
+      const v = voices.find((x) => x.voiceURI === voiceURI);
+      if (v) u.voice = v;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     } catch {}
+  }
+
+  function pickVoice(uri) {
+    setVoiceURI(uri);
+    localStorage.setItem("lokin_voice", uri);
+    speak("LOKIN online. Locked in.");
   }
 
   return (
@@ -98,6 +115,22 @@ export default function LokinAI() {
         <LokinGlyph size={22} />
         <h1 className="text-xl font-bold font-heading metal-text">LOKIN AI</h1>
         <span className="text-[11px] text-accent/80 tracking-wide">voice assistant</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-xs">
+        <Volume2 className="h-3.5 w-3.5 shrink-0 text-accent/70" />
+        <span className="text-white/45 shrink-0">Voice</span>
+        <select value={voiceURI} onChange={(e) => pickVoice(e.target.value)}
+          className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-white/80">
+          <option value="">System default</option>
+          {voices.map((v) => (
+            <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
+          ))}
+        </select>
+        <button onClick={() => speak("LOKIN online. Locked in.")}
+          className="shrink-0 rounded-lg border border-accent/40 bg-accent/10 px-2 py-1.5 text-accent">
+          Preview
+        </button>
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-2.5 overflow-y-auto no-scrollbar pb-2">
