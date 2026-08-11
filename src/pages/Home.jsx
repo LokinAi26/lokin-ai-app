@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -6,6 +6,7 @@ import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import UpcomingShifts from "@/components/UpcomingShifts";
+import LockInSequence from "@/components/LockInSequence";
 
 function greeting() {
   const h = new Date().getHours();
@@ -38,6 +39,19 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
+  const [locking, setLocking] = useState(false);
+  const lockStartRef = useRef(false);
+
+  function startLockIn() {
+    if (lockStartRef.current || locking) return; // prevent double-trigger
+    lockStartRef.current = true;
+    setLocking(true);
+  }
+  function handleLockInComplete() {
+    setLocking(false);
+    lockStartRef.current = false;
+    setShowWork(true);
+  }
 
   async function loadPrefs() {
     const p = await base44.entities.DriverPreference.filter({});
@@ -138,7 +152,7 @@ export default function Home() {
           <div className="mt-2 inline-flex items-center gap-1 text-xs text-white/50">Tap to continue <ChevronRight className="h-3 w-3" /></div>
         </Link>
       ) : (
-        <button onClick={() => setShowWork(true)}
+        <button onClick={startLockIn}
           className="w-full rounded-3xl glow-border lokin-panel radial-fade p-6 text-center active:scale-[0.99] transition-transform">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-primary/10 glow-primary">
             <LokinGlyph size={40} />
@@ -157,6 +171,8 @@ export default function Home() {
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
         ONE APP. EVERY GIG. MAXIMUM EARNINGS.
       </div>
+
+      <LockInSequence active={locking} onComplete={handleLockInComplete} />
 
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs}
         onStarted={() => loadCommand()} />
