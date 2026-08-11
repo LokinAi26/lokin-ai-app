@@ -38,7 +38,7 @@ export default function UpcomingShifts() {
   const events = data?.events || [];
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-black p-5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)]">
+    <div className="rounded-3xl border border-white/10 lokin-panel p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />
@@ -46,7 +46,7 @@ export default function UpcomingShifts() {
         </div>
         {connected && (
           <button onClick={() => load(true)} disabled={refreshing}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 text-primary disabled:opacity-50">
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-primary disabled:opacity-50">
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
           </button>
         )}
@@ -81,7 +81,7 @@ export default function UpcomingShifts() {
                 <div className="text-xs text-white/50 mt-0.5">{fmt(e.start)}</div>
                 {e.location && (
                   <div className="text-xs text-white/45 flex items-center gap-1 truncate mt-1">
-                    <MapPin className="h-3 w-3" />{e.location}
+                    <MapPin className="h-3 w-3 text-primary/70" />{e.location}
                   </div>
                 )}
               </div>

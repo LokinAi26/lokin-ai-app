@@ -31,11 +31,11 @@ export default function Settings() {
     setPrefs(res); setSaved(true);
   }
 
-  if (!form) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (!form) return <div className="p-6 text-sm text-white/45">Loading…</div>;
 
   return (
     <div className="p-4 space-y-5">
-      <h1 className="text-2xl font-bold font-heading">Settings</h1>
+      <h1 className="text-2xl font-bold font-heading metal-text">Settings</h1>
 
       <Section title="Vehicle & Fuel">
         <Field label="Vehicle MPG"><Num value={form.vehicle_mpg} onChange={(v) => set("vehicle_mpg", v)} /></Field>
@@ -47,16 +47,16 @@ export default function Settings() {
         <Field label="Min hourly rate $/hr"><Num value={form.min_per_hour} onChange={(v) => set("min_per_hour", v)} /></Field>
         <Field label="Daily hours goal"><Num value={form.daily_hours_goal} onChange={(v) => set("daily_hours_goal", v)} /></Field>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Daily goal</div>
+          <div className="text-xs text-white/45 mb-1">Daily goal</div>
           <div className="flex flex-wrap gap-2">
             {DAILY_GOAL_PRESETS.map((g) => (
               <button key={g} onClick={() => set("daily_goal", g)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border ${form.daily_goal === g ? "border-primary bg-primary/15 text-primary" : "border-border bg-muted text-muted-foreground"}`}>
+                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.daily_goal === g ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
                 ${g}
               </button>
             ))}
             <input type="number" value={form.daily_goal} onChange={(e) => set("daily_goal", parseFloat(e.target.value) || 0)}
-              className="w-20 rounded-lg border border-input bg-background px-2 py-1.5 text-sm" placeholder="Custom" />
+              className="w-20 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white" placeholder="Custom" />
           </div>
         </div>
         <Field label="Weekly goal $"><Num value={form.weekly_goal} onChange={(v) => set("weekly_goal", v)} /></Field>
@@ -66,14 +66,14 @@ export default function Settings() {
         <div className="flex flex-wrap gap-2">
           {OPTIMIZATION_MODES.map((m) => (
             <button key={m.value} onClick={() => set("optimization_mode", m.value)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium border ${form.optimization_mode === m.value ? "border-accent bg-accent/15 text-accent" : "border-border bg-muted text-muted-foreground"}`}>
+              className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.optimization_mode === m.value ? "border-accent bg-accent/15 text-accent" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
               {m.label}
             </button>
           ))}
         </div>
       </Section>
 
-      <button onClick={save} className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 glow-primary flex items-center justify-center gap-2">
+      <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2">
         {saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save settings</>}
       </button>
     </div>
@@ -82,8 +82,8 @@ export default function Settings() {
 
 function Section({ title, children }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>
+    <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">{title}</div>
       {children}
     </div>
   );
@@ -91,7 +91,7 @@ function Section({ title, children }) {
 function Field({ label, children }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className="text-xs text-white/45 mb-1">{label}</div>
       {children}
     </div>
   );
@@ -99,6 +99,6 @@ function Field({ label, children }) {
 function Num({ value, onChange, step = 1 }) {
   return (
     <input type="number" value={value} step={step} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white" />
   );
 }

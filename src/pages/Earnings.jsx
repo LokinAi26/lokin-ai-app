@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Cell, Tooltip } from "recharts";
 import { Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import LockInScore from "@/components/LockInScore";
 
 const RANGES = [
   { value: "today", label: "Today" },
@@ -15,6 +16,7 @@ export default function Earnings() {
   const [records, setRecords] = useState([]);
   const [prefs, setPrefs] = useState(null);
   const [range, setRange] = useState("today");
+  const [score, setScore] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -22,6 +24,15 @@ export default function Earnings() {
       base44.entities.DriverPreference.filter({}),
     ]).then(([e, p]) => { setRecords(e); setPrefs(p[0] || null); });
   }, []);
+
+  // lightweight Lock In Score for the earnings view
+  useEffect(() => {
+    let on = true;
+    base44.functions.invoke("optimizeRoute", { mode: prefs?.optimization_mode || "most_profit" })
+      .then((res) => { if (on) setScore(res.data?.lockInScore || null); })
+      .catch(() => {});
+    return () => { on = false; };
+  }, [prefs?.optimization_mode]);
 
   const dailyGoal = prefs?.daily_goal || 150;
 
@@ -46,18 +57,14 @@ export default function Earnings() {
   const netPerHour = hours > 0 ? net / hours : 0;
   const goalPct = range === "today" ? Math.min(100, Math.round((gross / Math.max(1, dailyGoal)) * 100)) : null;
 
-  // group by platform
   const byPlatform = useMemo(() => {
     const m = {};
     for (const r of filtered) m[r.platform || "mixed"] = (m[r.platform || "mixed"] || 0) + (r.amount || 0);
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
   }, [filtered]);
 
-  // chart data: per-day for week/month, single bar for today
   const chart = useMemo(() => {
-    if (range === "today") {
-      return [{ label: "Today", value: Math.round(gross * 100) / 100 }];
-    }
+    if (range === "today") return [{ label: "Today", value: Math.round(gross * 100) / 100 }];
     const days = range === "week" ? 7 : 30;
     const now = new Date();
     const out = [];
@@ -70,7 +77,6 @@ export default function Earnings() {
     return out;
   }, [records, range, gross]);
 
-  // rule-based AI insights
   const insights = useMemo(() => {
     const out = [];
     if (range === "today" && gross > 0 && goalPct !== null) {
@@ -89,8 +95,8 @@ export default function Earnings() {
   const stats = [
     { icon: DollarSign, label: "Gross", value: `$${gross.toFixed(0)}` },
     { icon: FuelIcon, label: "Fuel", value: `$${fuel.toFixed(2)}` },
-    { icon: TrendingUp, label: "Net", value: `$${net.toFixed(0)}` },
-    { icon: Clock, label: "Net/hr", value: `$${netPerHour.toFixed(0)}` },
+    { icon: TrendingUp, label: "Net", value: `$${net.toFixed(0)}`, accent: true },
+    { icon: Clock, label: "Net/hr", value: `$${netPerHour.toFixed(0)}`, accent: true },
     { icon: MapPin, label: "Miles", value: `${miles.toFixed(0)}` },
     { icon: Sparkles, label: "Trips", value: `${trips}` },
   ];
@@ -98,47 +104,49 @@ export default function Earnings() {
   return (
     <div className="p-4 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold font-heading">Earnings</h1>
-        <p className="text-sm text-muted-foreground">True earning rate — gross, fuel, mileage, net.</p>
+        <h1 className="text-2xl font-bold font-heading metal-text">Earnings</h1>
+        <p className="text-sm text-white/45">True earning rate — gross, fuel, mileage, net.</p>
       </div>
 
-      <div className="flex rounded-xl bg-muted p-1 text-sm">
+      <div className="flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 text-sm">
         {RANGES.map((r) => (
           <button key={r.value} onClick={() => setRange(r.value)}
-            className={`flex-1 rounded-lg py-1.5 font-medium ${range === r.value ? "bg-background shadow-sm text-primary" : "text-muted-foreground"}`}>
+            className={`flex-1 rounded-xl py-1.5 font-medium transition-colors ${range === r.value ? "bg-primary/15 text-primary" : "text-white/50"}`}>
             {r.label}
           </button>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">Net {RANGES.find((r) => r.value === range)?.label}</div>
-        <div className="text-4xl font-bold font-display text-primary text-glow">${net.toFixed(0)}</div>
-        <div className="text-xs text-muted-foreground">gross ${gross.toFixed(0)} · fuel ${fuel.toFixed(2)}</div>
+      <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Net {RANGES.find((r) => r.value === range)?.label}</div>
+        <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${net.toFixed(0)}</div>
+        <div className="text-xs text-white/45 mt-2">gross ${gross.toFixed(0)} · fuel ${fuel.toFixed(2)}</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-3 text-center">
-            <s.icon className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-            <div className="text-lg font-bold font-display">{s.value}</div>
-            <div className="text-[10px] text-muted-foreground">{s.label}</div>
+          <div key={s.label} className="rounded-2xl border border-white/10 lokin-panel p-3 text-center">
+            <s.icon className={`h-4 w-4 mx-auto mb-1 ${s.accent ? "text-primary" : "text-white/40"}`} />
+            <div className={`text-lg font-bold font-display ${s.accent ? "text-primary" : "text-white"}`}>{s.value}</div>
+            <div className="text-[10px] text-white/40">{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="text-sm font-semibold mb-2">Daily earnings</div>
+      {score && <LockInScore score={score} />}
+
+      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="text-sm font-semibold text-white/80 mb-2">Daily earnings</div>
         <div className="h-44 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={range === "month" ? 4 : 0} />
-              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
-              <Tooltip cursor={{ fill: "hsl(var(--muted))" }} contentStyle={{ borderRadius: 10, border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
-              {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(var(--primary))" strokeDasharray="4 4" />}
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={range === "month" ? 14 : 42}>
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} interval={range === "month" ? 4 : 0} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
+              <Tooltip cursor={{ fill: "hsl(0 0% 100% / 0.05)" }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
+              {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(80 100% 50%)" strokeDasharray="4 4" />}
+              <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={range === "month" ? 14 : 42}>
                 {chart.map((d, i) => (
-                  <Cell key={i} fill={d.value >= dailyGoal ? "#34d399" : "hsl(var(--primary))"} />
+                  <Cell key={i} fill={d.value >= dailyGoal ? "#A8FF00" : "hsl(80 100% 50% / 0.45)"} />
                 ))}
               </Bar>
             </BarChart>
@@ -146,26 +154,26 @@ export default function Earnings() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold mb-2 text-primary">
           <Sparkles className="h-4 w-4" /> AI Insights
         </div>
         <ul className="space-y-1.5">
           {insights.map((t, i) => (
-            <li key={i} className="text-sm flex gap-2"><span className="text-primary">›</span>{t}</li>
+            <li key={i} className="text-sm flex gap-2 text-white/80"><span className="text-primary">›</span>{t}</li>
           ))}
-          {insights.length === 0 && <li className="text-sm text-muted-foreground">No data for this period yet.</li>}
+          {insights.length === 0 && <li className="text-sm text-white/45">No data for this period yet.</li>}
         </ul>
       </div>
 
       {byPlatform.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="text-sm font-semibold mb-2">By platform</div>
+        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+          <div className="text-sm font-semibold text-white/80 mb-2">By platform</div>
           <div className="space-y-2">
             {byPlatform.map(([name, amt]) => (
               <div key={name} className="flex items-center justify-between text-sm">
-                <span className="capitalize">{name}</span>
-                <span className="font-medium">${amt.toFixed(0)}</span>
+                <span className="capitalize text-white/70">{name}</span>
+                <span className="font-medium text-primary">${amt.toFixed(0)}</span>
               </div>
             ))}
           </div>

@@ -54,9 +54,9 @@ export default function Categories() {
     <div className="p-5 space-y-6">
       <div className="flex items-center gap-2">
         <SlidersHorizontal className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold font-heading">Category Taps</h1>
+        <h1 className="text-xl font-bold font-heading metal-text">Work Filters</h1>
       </div>
-      <p className="text-sm text-muted-foreground -mt-4">
+      <p className="text-sm text-white/45 -mt-4">
         Tap the delivery types you accept. Offers you don&apos;t want are filtered out automatically.
       </p>
 
@@ -68,12 +68,12 @@ export default function Categories() {
               key={c.value}
               onClick={() => toggleCat(c.value)}
               disabled={savingCat || !prefs}
-              className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-colors ${
-                on ? "border-primary bg-primary/5" : "border-border bg-card"
+              className={`w-full flex items-center justify-between rounded-2xl border p-3.5 text-left transition-colors ${
+                on ? "border-primary bg-primary/[0.08] glow-border" : "border-white/10 lokin-panel"
               }`}
             >
-              <span className="text-sm font-medium">{c.label}</span>
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              <span className="text-sm font-medium text-white">{c.label}</span>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "bg-white/8 text-white/40"}`}>
                 {on ? <Check className="h-4 w-4" /> : <X className="h-3.5 w-3.5" />}
               </span>
             </button>
@@ -84,7 +84,7 @@ export default function Categories() {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Ban className="h-4 w-4 text-destructive" />
-          <h2 className="text-sm font-semibold">Blocked Customers</h2>
+          <h2 className="text-sm font-semibold text-white/80">Blocked Customers</h2>
         </div>
 
         <div className="flex gap-2 mb-3">
@@ -92,28 +92,28 @@ export default function Categories() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Customer name"
-            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30"
           />
           <input
             value={newReason}
             onChange={(e) => setNewReason(e.target.value)}
             placeholder="Reason (opt.)"
-            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30"
           />
-          <button onClick={addBlocked} className="rounded-lg bg-primary text-primary-foreground px-3 disabled:opacity-50" disabled={!newName.trim()}>
+          <button onClick={addBlocked} className="rounded-xl bg-primary text-primary-foreground px-3 disabled:opacity-50 glow-primary" disabled={!newName.trim()}>
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
         {blocked.length === 0 ? (
-          <div className="text-xs text-muted-foreground text-center py-4">No blocked customers.</div>
+          <div className="text-xs text-white/45 text-center py-4">No blocked customers.</div>
         ) : (
           <div className="space-y-2">
             {blocked.map((b) => (
-              <div key={b.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
+              <div key={b.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel p-3">
                 <div>
-                  <div className="text-sm font-medium">{b.name}</div>
-                  {b.reason && <div className="text-xs text-muted-foreground">{b.reason}</div>}
+                  <div className="text-sm font-medium text-white">{b.name}</div>
+                  {b.reason && <div className="text-xs text-white/45">{b.reason}</div>}
                 </div>
                 <button onClick={() => removeBlocked(b.id)} className="text-destructive text-xs font-medium">Unblock</button>
               </div>

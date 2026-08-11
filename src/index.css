@@ -17,24 +17,24 @@ body {
 
 @layer base {
   :root {
-    --background: 240 10% 4%;
-    --foreground: 220 14% 88%;
-    --card: 240 8% 7%;
+    --background: 0 0% 0%;
+    --foreground: 220 14% 92%;
+    --card: 240 6% 5%;
     --card-foreground: 220 14% 92%;
-    --popover: 240 10% 6%;
+    --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
     --primary: 80 100% 50%;
     --primary-foreground: 240 10% 4%;
-    --secondary: 240 6% 12%;
-    --secondary-foreground: 220 14% 90%;
-    --muted: 240 6% 13%;
-    --muted-foreground: 220 10% 58%;
+    --secondary: 240 6% 10%;
+    --secondary-foreground: 220 14% 92%;
+    --muted: 240 6% 11%;
+    --muted-foreground: 220 10% 55%;
     --accent: 188 95% 50%;
     --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 16%;
-    --input: 240 6% 16%;
+    --border: 0 0% 15%;
+    --input: 0 0% 14%;
     --ring: 80 100% 50%;
     --neon: 80 100% 50%;
     --neon-cyan: 188 95% 50%;
@@ -43,39 +43,39 @@ body {
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.75rem;
+    --radius: 1rem;
     --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Sora', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 240 10% 6%;
+    --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 88%;
     --sidebar-primary: 80 100% 50%;
     --sidebar-primary-foreground: 240 10% 4%;
-    --sidebar-accent: 240 6% 13%;
+    --sidebar-accent: 240 6% 11%;
     --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 240 6% 16%;
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 80 100% 50%;
   }
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 220 14% 88%;
-    --card: 240 8% 7%;
+    --background: 0 0% 0%;
+    --foreground: 220 14% 92%;
+    --card: 240 6% 5%;
     --card-foreground: 220 14% 92%;
-    --popover: 240 10% 6%;
+    --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
     --primary: 80 100% 50%;
     --primary-foreground: 240 10% 4%;
-    --secondary: 240 6% 12%;
-    --secondary-foreground: 220 14% 90%;
-    --muted: 240 6% 13%;
-    --muted-foreground: 220 10% 58%;
+    --secondary: 240 6% 10%;
+    --secondary-foreground: 220 14% 92%;
+    --muted: 240 6% 11%;
+    --muted-foreground: 220 10% 55%;
     --accent: 188 95% 50%;
     --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 16%;
-    --input: 240 6% 16%;
+    --border: 0 0% 15%;
+    --input: 0 0% 14%;
     --ring: 80 100% 50%;
     --neon: 80 100% 50%;
     --neon-cyan: 188 95% 50%;
@@ -84,13 +84,13 @@ body {
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar-background: 240 10% 6%;
+    --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 88%;
     --sidebar-primary: 80 100% 50%;
     --sidebar-primary-foreground: 240 10% 4%;
-    --sidebar-accent: 240 6% 13%;
+    --sidebar-accent: 240 6% 11%;
     --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 240 6% 16%;
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 80 100% 50%;
   }
 }
@@ -112,13 +112,28 @@ body {
   .glow-cyan {
     box-shadow: 0 0 0 1px hsl(188 95% 50% / 0.35), 0 0 18px -2px hsl(188 95% 50% / 0.5);
   }
-  .text-glow {
-    text-shadow: 0 0 12px hsl(80 100% 50% / 0.55);
-  }
+  .text-glow { text-shadow: 0 0 12px hsl(80 100% 50% / 0.55); }
+  .text-glow-cyan { text-shadow: 0 0 12px hsl(188 95% 50% / 0.55); }
   .glass {
-    background: hsl(240 8% 7% / 0.72);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: hsl(240 6% 5% / 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .metal-text {
+    background: linear-gradient(180deg, #ffffff 0%, #d3d7df 55%, #9aa0ab 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glow-border {
+    border: 1px solid hsl(80 100% 50% / 0.45);
+    box-shadow: 0 0 16px -4px hsl(80 100% 50% / 0.55), inset 0 0 14px -8px hsl(80 100% 50% / 0.45);
+  }
+  .lokin-panel {
+    background: linear-gradient(180deg, hsl(240 6% 7%) 0%, hsl(240 6% 4%) 100%);
+  }
+  .radial-fade {
+    background-image: radial-gradient(120% 80% at 50% 0%, hsl(80 100% 50% / 0.09), transparent 60%);
   }
   .brand-grid {
     background-image:

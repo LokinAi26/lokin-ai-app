@@ -34,37 +34,37 @@ export default function AvoidList() {
     <div className="p-4 space-y-4">
       <div className="flex items-center gap-2">
         <Ban className="h-5 w-5 text-destructive" />
-        <h1 className="text-xl font-bold font-heading">Avoid List</h1>
+        <h1 className="text-xl font-bold font-heading metal-text">Avoid List</h1>
       </div>
-      <p className="text-sm text-muted-foreground -mt-2">LOKIN AI skips these customers, stores, and locations when ranking opportunities.</p>
+      <p className="text-sm text-white/45 -mt-2">LOKIN AI skips these customers, stores, and locations when ranking opportunities.</p>
 
-      <div className="rounded-2xl border border-border bg-card p-3 space-y-2">
+      <div className="rounded-3xl border border-white/10 lokin-panel p-3.5 space-y-2.5">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (customer, store, location…)"
-          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
         <div className="flex gap-2">
-          <select value={type} onChange={(e) => setType(e.target.value)} className="flex-1 rounded-lg border border-input bg-background px-2 py-2 text-sm">
-            {AVOID_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          <select value={type} onChange={(e) => setType(e.target.value)} className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-sm text-white">
+            {AVOID_TYPES.map((t) => <option key={t.value} value={t.value} className="bg-neutral-900">{t.label}</option>)}
           </select>
-          <select value={reason} onChange={(e) => setReason(e.target.value)} className="flex-1 rounded-lg border border-input bg-background px-2 py-2 text-sm">
-            {AVOID_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          <select value={reason} onChange={(e) => setReason(e.target.value)} className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-sm text-white">
+            {AVOID_REASONS.map((r) => <option key={r.value} value={r.value} className="bg-neutral-900">{r.label}</option>)}
           </select>
         </div>
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-        <button onClick={add} disabled={!name.trim()} className="w-full rounded-lg bg-primary text-primary-foreground py-2 text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-1">
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
+        <button onClick={add} disabled={!name.trim()} className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-1.5 glow-primary">
           <Plus className="h-4 w-4" /> Add to avoid list
         </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="text-sm text-muted-foreground text-center py-6">No avoid entries yet.</div>
+        <div className="text-sm text-white/45 text-center py-6">No avoid entries yet.</div>
       ) : (
         <div className="space-y-2">
           {items.map((i) => (
-            <div key={i.id} className="flex items-start justify-between rounded-xl border border-border bg-card p-3">
+            <div key={i.id} className="flex items-start justify-between rounded-2xl border border-white/10 lokin-panel p-3.5">
               <div>
-                <div className="text-sm font-medium">{i.name}</div>
-                <div className="text-xs text-muted-foreground">{typeLabel(i.type)} · {reasonLabel(i.reason)}</div>
-                {i.note && <div className="text-xs text-muted-foreground mt-0.5">{i.note}</div>}
+                <div className="text-sm font-medium text-white">{i.name}</div>
+                <div className="text-xs text-white/45">{typeLabel(i.type)} · {reasonLabel(i.reason)}</div>
+                {i.note && <div className="text-xs text-white/45 mt-0.5">{i.note}</div>}
               </div>
               <button onClick={() => remove(i.id)} className="text-destructive p-1"><Trash2 className="h-4 w-4" /></button>
             </div>
