@@ -4,6 +4,7 @@ import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Lock, Play, Chev
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import WorkModeSheet from "@/components/WorkModeSheet";
+import UpcomingShifts from "@/components/UpcomingShifts";
 
 function greeting() {
   const h = new Date().getHours();
@@ -82,6 +83,9 @@ export default function Home() {
 
       {/* Lock In Score */}
       {data?.lockInScore && <LockInScore score={data.lockInScore} />}
+
+      {/* Upcoming Google Calendar shifts */}
+      <UpcomingShifts />
 
       {/* AI recommendation */}
       <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
