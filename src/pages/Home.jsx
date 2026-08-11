@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain, Power } from "lucide-react";
+import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain, Power, Truck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -8,6 +8,8 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import UpcomingShifts from "@/components/UpcomingShifts";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
+import UserTypeSelector from "@/components/UserTypeSelector";
+import { getRoleMeta } from "@/lib/userTypes";
 
 function greeting() {
   const h = new Date().getHours();
@@ -40,6 +42,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
+  const [showType, setShowType] = useState(false);
   const [locking, setLocking] = useState(false);
   const lockStartRef = useRef(false);
 
@@ -88,6 +91,7 @@ export default function Home() {
   const miles = data?.stats?.miles || 0;
   const fuel = data?.stats?.fuel || 0;
   const working = prefs?.work_status === "working";
+  const role = getRoleMeta(prefs?.user_type);
 
   return (
     <PullToRefresh onRefresh={loadCommand}>
@@ -95,10 +99,14 @@ export default function Home() {
       {/* Brand header */}
       <div className="flex items-center justify-between pt-1">
         <LokinWordmark size={26} />
+        <button onClick={() => setShowType(true)}
+          className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/80 active:scale-[0.97] transition-transform">
+          <span>{role.emoji}</span> {role.short}
+        </button>
       </div>
       <div>
         <div className="text-xs text-white/45">{greeting()}.</div>
-        <h1 className="text-2xl font-bold font-heading metal-text">Command Center</h1>
+        <h1 className="text-2xl font-bold font-heading metal-text">{role.homeTitle}</h1>
       </div>
 
       {/* Earnings + goal hero */}
@@ -178,20 +186,23 @@ export default function Home() {
         </button>
       )}
 
-      <div className="grid grid-cols-3 gap-3 pt-1">
+      <div className="grid grid-cols-4 gap-2.5 pt-1">
         <QuickLink to="/route" icon={Sparkles} label="Optimize" />
+        <QuickLink to="/on-the-road" icon={Truck} label="On Road" />
         <QuickLink to="/earnings" icon={TrendingUp} label="Earnings" />
         <QuickLink to="/more" icon={MapPin} label="More" />
       </div>
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
-        ONE APP. EVERY GIG. MAXIMUM EARNINGS.
+        ONE APP. EVERY MILE. UNLOCK YOUR POTENTIAL.
       </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
 
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs}
         onStarted={() => loadCommand()} />
+      <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs}
+        onSaved={() => loadCommand()} />
     </div>
     </PullToRefresh>
   );

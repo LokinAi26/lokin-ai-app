@@ -2,6 +2,15 @@
   "name": "DriverPreference",
   "type": "object",
   "properties": {
+    "user_type": {
+      "type": "string",
+      "enum": [
+        "driver",
+        "trucker",
+        "traveler"
+      ],
+      "default": "driver"
+    },
     "accepted_categories": {
       "type": "array",
       "items": {

@@ -7,7 +7,7 @@ import { base44 } from "@/api/base44Client";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
-  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing",
+  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road",
 ];
 
 const TAB_ROOTS = {

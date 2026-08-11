@@ -28,6 +28,7 @@ import Receipts from './pages/Receipts';
 import VehicleCare from './pages/VehicleCare';
 import Safety from './pages/Safety';
 import BreakTime from './pages/BreakTime';
+import OnTheRoad from './pages/OnTheRoad';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
           <Route path="/vehicle-care" element={<VehicleCare />} />
           <Route path="/safety" element={<Safety />} />
           <Route path="/break-time" element={<BreakTime />} />
+          <Route path="/on-the-road" element={<OnTheRoad />} />
         </Route>
       </Route>
       <Route path="/ThankYou" element={<ThankYou />} />

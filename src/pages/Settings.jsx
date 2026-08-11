@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Save, Check, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { OPTIMIZATION_MODES, DAILY_GOAL_PRESETS } from "@/lib/deliveryLabels";
+import { USER_TYPES } from "@/lib/userTypes";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
@@ -54,6 +55,7 @@ export default function Settings() {
       const def = p[0];
       setPrefs(def);
       setForm(def || {
+        user_type: "driver",
         vehicle_mpg: 26, gas_price: 3.45, min_per_hour: 22, mileage_cost: 0.67,
         daily_goal: 150, weekly_goal: 850, daily_hours_goal: 8, optimization_mode: "most_profit",
         accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
@@ -77,6 +79,17 @@ export default function Settings() {
   return (
     <div className="p-4 space-y-5">
       <h1 className="text-2xl font-bold font-heading metal-text">Settings</h1>
+
+      <Section title="I am a…">
+        <div className="flex flex-wrap gap-2">
+          {USER_TYPES.map((t) => (
+            <button key={t.value} onClick={() => set("user_type", t.value)}
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.user_type === t.value ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
+              <span>{t.emoji}</span> {t.label}
+            </button>
+          ))}
+        </div>
+      </Section>
 
       <Section title="Vehicle & Fuel">
         <Field label="Vehicle MPG"><Num value={form.vehicle_mpg} onChange={(v) => set("vehicle_mpg", v)} /></Field>
