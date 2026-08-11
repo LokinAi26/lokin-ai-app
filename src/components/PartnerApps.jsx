@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 
 // Partner delivery platforms this copilot pairs with.
 const PARTNERS = [
-  { name: "DoorDash Dasher", scheme: "doordash://dash", web: "https://doordash.com/dash", color: "text-red-400", letter: "D" },
+  { name: "DoorDash Dasher", scheme: "doordash://", web: "https://drivers.doordash.com", color: "text-red-400", letter: "D" },
   { name: "Uber Driver", scheme: "uberdash://", web: "https://drivers.uber.com", color: "text-white", letter: "U" },
   { name: "Amazon Flex", scheme: "amazonflex://", web: "https://flex.amazon.com", color: "text-amber-400", letter: "A" },
   { name: "Instacart Shopper", scheme: "instacartshopper://", web: "https://shoppers.instacart.com", color: "text-emerald-400", letter: "I" },

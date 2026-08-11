@@ -16,10 +16,10 @@ export default function DasherCompanion() {
 
   function launchDasher() {
     const start = Date.now();
-    try { window.location.href = "doordash://dash"; } catch {}
+    try { window.location.href = "doordash://"; } catch {}
     setTimeout(() => {
       if (Date.now() - start < 1800) {
-        window.open("https://doordash.com/dash", "_blank", "noopener,noreferrer");
+        window.open("https://drivers.doordash.com", "_blank", "noopener,noreferrer");
       }
     }, 700);
   }
