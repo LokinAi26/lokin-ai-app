@@ -38,43 +38,49 @@ export default function UpcomingShifts() {
   const events = data?.events || [];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="rounded-3xl border border-white/10 bg-black p-5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)]">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-accent" />
-          <div className="text-sm font-semibold">Upcoming Shifts</div>
+          <Calendar className="h-4 w-4 text-primary" />
+          <div className="text-sm font-semibold tracking-wide text-white">UPCOMING SHIFTS</div>
         </div>
         {connected && (
-          <button onClick={() => load(true)} disabled={refreshing} className="text-muted-foreground disabled:opacity-50">
+          <button onClick={() => load(true)} disabled={refreshing}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 text-primary disabled:opacity-50">
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground py-3">Loading your calendar…</div>
+        <div className="flex items-center gap-2 py-4">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+          <div className="text-sm text-white/50">Loading your calendar…</div>
+        </div>
       ) : !connected ? (
-        <div className="text-center py-2">
-          <p className="text-sm text-muted-foreground mb-3">Connect Google Calendar to see your delivery shifts here.</p>
+        <div className="text-center py-3">
+          <p className="text-sm text-white/55 mb-4 leading-relaxed">
+            Connect Google Calendar to surface your delivery shifts here.
+          </p>
           <a href="https://calendar.google.com" target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent">
-            <Link2 className="h-3.5 w-3.5" /> Connect Calendar
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-4 py-2 text-xs font-bold tracking-wide text-primary glow-primary">
+            <Link2 className="h-3.5 w-3.5" /> CONNECT CALENDAR
           </a>
         </div>
       ) : events.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-3">No upcoming shifts on your calendar.</div>
+        <div className="text-sm text-white/50 py-4">No upcoming shifts on your calendar.</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {events.map((e) => (
-            <div key={e.id} className="flex items-start gap-3 rounded-xl bg-muted/40 p-2.5">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15">
-                <Clock className="h-4 w-4 text-accent" />
+            <div key={e.id} className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
+                <Clock className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium truncate">{e.title}</div>
-                <div className="text-xs text-muted-foreground">{fmt(e.start)}</div>
+                <div className="text-sm font-semibold text-white truncate">{e.title}</div>
+                <div className="text-xs text-white/50 mt-0.5">{fmt(e.start)}</div>
                 {e.location && (
-                  <div className="text-xs text-muted-foreground flex items-center gap-1 truncate mt-0.5">
+                  <div className="text-xs text-white/45 flex items-center gap-1 truncate mt-1">
                     <MapPin className="h-3 w-3" />{e.location}
                   </div>
                 )}

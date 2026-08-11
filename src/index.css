@@ -23,7 +23,7 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 10% 6%;
     --popover-foreground: 220 14% 92%;
-    --primary: 142 69% 53%;
+    --primary: 80 100% 50%;
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 12%;
     --secondary-foreground: 220 14% 90%;
@@ -35,10 +35,10 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 240 6% 16%;
     --input: 240 6% 16%;
-    --ring: 142 69% 53%;
-    --neon: 142 69% 53%;
+    --ring: 80 100% 50%;
+    --neon: 80 100% 50%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 142 69% 53%;
+    --chart-1: 80 100% 50%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
@@ -50,12 +50,12 @@ body {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 240 10% 6%;
     --sidebar-foreground: 220 14% 88%;
-    --sidebar-primary: 142 69% 53%;
+    --sidebar-primary: 80 100% 50%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 13%;
     --sidebar-accent-foreground: 220 14% 90%;
     --sidebar-border: 240 6% 16%;
-    --sidebar-ring: 142 69% 53%;
+    --sidebar-ring: 80 100% 50%;
   }
   .dark {
     --background: 240 10% 4%;
@@ -64,7 +64,7 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 10% 6%;
     --popover-foreground: 220 14% 92%;
-    --primary: 142 69% 53%;
+    --primary: 80 100% 50%;
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 12%;
     --secondary-foreground: 220 14% 90%;
@@ -76,22 +76,22 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 240 6% 16%;
     --input: 240 6% 16%;
-    --ring: 142 69% 53%;
-    --neon: 142 69% 53%;
+    --ring: 80 100% 50%;
+    --neon: 80 100% 50%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 142 69% 53%;
+    --chart-1: 80 100% 50%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --sidebar-background: 240 10% 6%;
     --sidebar-foreground: 220 14% 88%;
-    --sidebar-primary: 142 69% 53%;
+    --sidebar-primary: 80 100% 50%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 13%;
     --sidebar-accent-foreground: 220 14% 90%;
     --sidebar-border: 240 6% 16%;
-    --sidebar-ring: 142 69% 53%;
+    --sidebar-ring: 80 100% 50%;
   }
 }
 
@@ -107,13 +107,13 @@ body {
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .glow-primary {
-    box-shadow: 0 0 0 1px hsl(142 69% 53% / 0.35), 0 0 18px -2px hsl(142 69% 53% / 0.55);
+    box-shadow: 0 0 0 1px hsl(80 100% 50% / 0.35), 0 0 18px -2px hsl(80 100% 50% / 0.55);
   }
   .glow-cyan {
     box-shadow: 0 0 0 1px hsl(188 95% 50% / 0.35), 0 0 18px -2px hsl(188 95% 50% / 0.5);
   }
   .text-glow {
-    text-shadow: 0 0 12px hsl(142 69% 53% / 0.55);
+    text-shadow: 0 0 12px hsl(80 100% 50% / 0.55);
   }
   .glass {
     background: hsl(240 8% 7% / 0.72);
@@ -122,8 +122,8 @@ body {
   }
   .brand-grid {
     background-image:
-      linear-gradient(hsl(142 69% 53% / 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(142 69% 53% / 0.05) 1px, transparent 1px);
+      linear-gradient(hsl(80 100% 50% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(80 100% 50% / 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
