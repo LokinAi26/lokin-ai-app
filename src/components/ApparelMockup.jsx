@@ -55,11 +55,76 @@ function Sticker({ glyphColor = NEON }) {
   );
 }
 
+function DeliveryBag({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <rect x="40" y="70" width="160" height="150" rx="14" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="40" y="70" width="160" height="34" rx="14" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <rect x="58" y="60" width="124" height="20" rx="6" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+      <rect x="100" y="48" width="40" height="16" rx="5" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <line x1="120" y1="74" x2="120" y2="104" stroke="hsl(0 0% 100% / 0.15)" strokeWidth="2" />
+      <rect x="74" y="120" width="92" height="74" rx="8" fill="hsl(0 0% 0% / 0.35)" stroke="hsl(80 100% 50% / 0.25)" strokeWidth="1.5" />
+      <g transform="translate(95 126)">
+        <LokinGlyph size={54} />
+      </g>
+      <text x="122" y="186" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="9" letterSpacing="1.5" textAnchor="middle">INSULATED</text>
+    </svg>
+  );
+}
+
+function CateringBag({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <rect x="28" y="80" width="184" height="140" rx="10" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="28" y="80" width="184" height="28" rx="10" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <path d="M52 78 V54 Q52 44 62 44 H90 Q100 44 100 54 V78" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+      <path d="M140 78 V54 Q140 44 150 44 H178 Q188 44 188 54 V78" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+      <line x1="120" y1="108" x2="120" y2="220" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
+      <g transform="translate(96 140)">
+        <LokinGlyph size={48} />
+      </g>
+      <text x="122" y="196" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="9" letterSpacing="1.5" textAnchor="middle">CATERING</text>
+    </svg>
+  );
+}
+
+function PizzaBag({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <rect x="44" y="78" width="152" height="140" rx="12" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="44" y="78" width="152" height="30" rx="12" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <rect x="64" y="70" width="112" height="16" rx="5" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+      <rect x="72" y="120" width="96" height="80" rx="8" fill="hsl(0 0% 0% / 0.35)" stroke="hsl(80 100% 50% / 0.25)" strokeWidth="1.5" />
+      <g transform="translate(96 126)">
+        <LokinGlyph size={46} />
+      </g>
+      <text x="122" y="190" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="9" letterSpacing="1.5" textAnchor="middle">PIZZA</text>
+    </svg>
+  );
+}
+
+function Tote({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <path d="M56 86 H184 L176 214 H64 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <path d="M88 86 Q88 52 120 52 Q152 52 152 86" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+      <g transform="translate(95 120)">
+        <LokinGlyph size={52} />
+      </g>
+      <text x="122" y="184" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="10" letterSpacing="1.5" textAnchor="middle">LOKIN</text>
+    </svg>
+  );
+}
+
 const VARIANTS = {
   tee: Tee,
   hoodie: Hoodie,
   cap: Cap,
   sticker: Sticker,
+  delivery: DeliveryBag,
+  catering: CateringBag,
+  pizza: PizzaBag,
+  tote: Tote,
 };
 
 export default function ApparelMockup({ variant = "tee", className = "" }) {
