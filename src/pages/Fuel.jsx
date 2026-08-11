@@ -51,7 +51,7 @@ export default function Fuel() {
         <h1 className="text-xl font-bold font-heading">Gas Discounts</h1>
       </div>
 
-      <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5">
+      <div className="rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground p-5 glow-primary">
         <div className="text-sm opacity-90">Total cashback earned</div>
         <div className="text-3xl font-bold">${totalCashback.toFixed(2)}</div>
         <div className="text-xs opacity-80 mt-1">Pay at the pump · 3% back on every fill-up</div>
@@ -71,7 +71,7 @@ export default function Fuel() {
                     <div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{d.address} · {d.distance_miles ?? "?"}mi</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-emerald-600">${net}/gal</div>
+                    <div className="text-sm font-bold text-primary">${net}/gal</div>
                     <div className="text-xs line-through text-muted-foreground">${d.price_per_gallon.toFixed(2)}</div>
                   </div>
                 </div>
@@ -81,12 +81,12 @@ export default function Fuel() {
                       onClick={() => copy(d.promo_code)}
                       className="flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1.5 text-xs font-mono font-semibold"
                     >
-                      {copied === d.promo_code ? <Check className="h-3 w-3 text-emerald-600" /> : <Tag className="h-3 w-3" />}
+                      {copied === d.promo_code ? <Check className="h-3 w-3 text-primary" /> : <Tag className="h-3 w-3" />}
                       {d.promo_code}
                     </button>
                   )}
                   {(d.cashback_percent || 0) > 0 && (
-                    <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                    <span className="flex items-center gap-1 text-xs text-primary font-medium">
                       <Percent className="h-3 w-3" />{d.cashback_percent}% cashback
                     </span>
                   )}
@@ -119,7 +119,7 @@ export default function Fuel() {
                   <div className="font-medium">{p.station}</div>
                   <div className="text-xs text-muted-foreground">{p.purchased_on} · {p.gallons} gal · ${p.total_paid}</div>
                 </div>
-                <div className="text-emerald-600 font-semibold text-sm">+${(p.cashback_earned || 0).toFixed(2)}</div>
+                <div className="text-primary font-semibold text-sm">+${(p.cashback_earned || 0).toFixed(2)}</div>
               </div>
             ))}
           </div>

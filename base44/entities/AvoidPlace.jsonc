@@ -1,0 +1,40 @@
+{
+  "name": "AvoidPlace",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "restaurant",
+        "store",
+        "location",
+        "apartment"
+      ],
+      "default": "store"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "slow",
+        "poor_parking",
+        "long_wait",
+        "low_tips",
+        "difficult_location",
+        "personal_preference",
+        "other"
+      ],
+      "default": "other"
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

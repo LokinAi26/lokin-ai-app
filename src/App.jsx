@@ -12,6 +12,11 @@ import RoutePlanner from './pages/RoutePlanner';
 import Categories from './pages/Categories';
 import Locator from './pages/Locator';
 import Fuel from './pages/Fuel';
+import LokinAI from './pages/LokinAI';
+import Earnings from './pages/Earnings';
+import More from './pages/More';
+import AvoidList from './pages/AvoidList';
+import Settings from './pages/Settings';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -45,9 +50,14 @@ const AuthenticatedApp = () => {
         <Route element={<DriverLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/route" element={<RoutePlanner />} />
+          <Route path="/lokin" element={<LokinAI />} />
+          <Route path="/earnings" element={<Earnings />} />
+          <Route path="/more" element={<More />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/locator" element={<Locator />} />
+          <Route path="/avoid" element={<AvoidList />} />
           <Route path="/fuel" element={<Fuel />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

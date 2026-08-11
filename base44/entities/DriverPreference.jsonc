@@ -15,6 +15,44 @@
         "package"
       ]
     },
+    "work_filters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "active_modes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "delivery"
+      ]
+    },
+    "work_status": {
+      "type": "string",
+      "enum": [
+        "off",
+        "working",
+        "paused"
+      ],
+      "default": "off"
+    },
+    "optimization_mode": {
+      "type": "string",
+      "enum": [
+        "fastest",
+        "most_profit",
+        "most_money",
+        "goal_mode",
+        "low_stress",
+        "minimum_mileage",
+        "homeward"
+      ],
+      "default": "most_profit"
+    },
     "min_payout": {
       "type": "number",
       "default": 6
@@ -26,6 +64,10 @@
     "min_per_hour": {
       "type": "number",
       "default": 22
+    },
+    "mileage_cost": {
+      "type": "number",
+      "default": 0.67
     },
     "vehicle_mpg": {
       "type": "number",
@@ -42,6 +84,10 @@
     "weekly_goal": {
       "type": "number",
       "default": 850
+    },
+    "daily_hours_goal": {
+      "type": "number",
+      "default": 8
     }
   }
 }
