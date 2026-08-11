@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Cell, 
 import { Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const RANGES = [
   { value: "today", label: "Today" },
@@ -33,6 +34,19 @@ export default function Earnings() {
       .catch(() => {});
     return () => { on = false; };
   }, [prefs?.optimization_mode]);
+
+  async function refresh() {
+    const [e, p] = await Promise.all([
+      base44.entities.Earning.filter({}, "date"),
+      base44.entities.DriverPreference.filter({}),
+    ]);
+    setRecords(e);
+    setPrefs(p[0] || null);
+    try {
+      const res = await base44.functions.invoke("optimizeRoute", { mode: p[0]?.optimization_mode || "most_profit" });
+      setScore(res.data?.lockInScore || null);
+    } catch {}
+  }
 
   const dailyGoal = prefs?.daily_goal || 150;
 
@@ -102,6 +116,7 @@ export default function Earnings() {
   ];
 
   return (
+    <PullToRefresh onRefresh={refresh}>
     <div className="p-4 space-y-4">
       <div>
         <h1 className="text-2xl font-bold font-heading metal-text">Earnings</h1>
@@ -180,5 +195,6 @@ export default function Earnings() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }

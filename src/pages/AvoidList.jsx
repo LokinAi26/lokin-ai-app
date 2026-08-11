@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Ban, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { AVOID_TYPES, AVOID_REASONS } from "@/lib/deliveryLabels";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 export default function AvoidList() {
   const [items, setItems] = useState([]);
@@ -58,12 +59,22 @@ export default function AvoidList() {
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (customer, store, location…)"
           className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
         <div className="flex gap-2">
-          <select value={type} onChange={(e) => setType(e.target.value)} className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-sm text-white">
-            {AVOID_TYPES.map((t) => <option key={t.value} value={t.value} className="bg-neutral-900">{t.label}</option>)}
-          </select>
-          <select value={reason} onChange={(e) => setReason(e.target.value)} className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-sm text-white">
-            {AVOID_REASONS.map((r) => <option key={r.value} value={r.value} className="bg-neutral-900">{r.label}</option>)}
-          </select>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger className="flex-1 rounded-xl border-white/10 bg-white/[0.03] text-white text-sm h-10">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-neutral-900 border-white/10 text-white max-h-60">
+              {AVOID_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={reason} onValueChange={setReason}>
+            <SelectTrigger className="flex-1 rounded-xl border-white/10 bg-white/[0.03] text-white text-sm h-10">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-neutral-900 border-white/10 text-white max-h-60">
+              {AVOID_REASONS.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
         <button onClick={add} disabled={!name.trim()} className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-1.5 glow-primary">

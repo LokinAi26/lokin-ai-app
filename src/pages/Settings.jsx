@@ -13,8 +13,24 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  const [deleting, setDeleting] = useState(false);
+
   async function deleteAccount() {
-    // mock account deletion flow — clears session and returns to login
+    setDeleting(true);
+    try {
+      const [prefsList, blocked, fuel] = await Promise.all([
+        base44.entities.DriverPreference.filter({}),
+        base44.entities.BlockedCustomer.filter({}),
+        base44.entities.FuelPurchase.filter({}),
+      ]);
+      await Promise.all([
+        ...prefsList.map((p) => base44.entities.DriverPreference.delete(p.id)),
+        ...blocked.map((b) => base44.entities.BlockedCustomer.delete(b.id)),
+        ...fuel.map((f) => base44.entities.FuelPurchase.delete(f.id)),
+      ]);
+    } catch (e) {
+      console.error("deleteAccount: purge failed", e);
+    }
     try { await base44.auth.logout("/login"); } catch {}
   }
 
@@ -109,8 +125,8 @@ export default function Settings() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteAccount} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive">
-              Delete
+            <AlertDialogAction onClick={deleteAccount} disabled={deleting} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive">
+              {deleting ? "Erasing…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

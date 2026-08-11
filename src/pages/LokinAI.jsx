@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Send, Volume2, Radio } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const QUICK = [
   "What should I do next?",
@@ -120,13 +121,17 @@ export default function LokinAI() {
       <div className="flex items-center gap-2 text-xs">
         <Volume2 className="h-3.5 w-3.5 shrink-0 text-accent/70" />
         <span className="text-white/45 shrink-0">Voice</span>
-        <select value={voiceURI} onChange={(e) => pickVoice(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-white/80">
-          <option value="">System default</option>
-          {voices.map((v) => (
-            <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
-          ))}
-        </select>
+        <Select value={voiceURI || "default"} onValueChange={(v) => pickVoice(v === "default" ? "" : v)}>
+          <SelectTrigger className="flex-1 min-w-0 rounded-lg border-white/10 bg-white/[0.03] text-white/80 h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-neutral-900 border-white/10 text-white">
+            <SelectItem value="default">System default</SelectItem>
+            {voices.map((v) => (
+              <SelectItem key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <button onClick={() => speak("LOKIN online. Locked in.")}
           className="shrink-0 rounded-lg border border-accent/40 bg-accent/10 px-2 py-1.5 text-accent">
           Preview

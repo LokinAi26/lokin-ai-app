@@ -7,6 +7,7 @@ import LockInScore from "@/components/LockInScore";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import UpcomingShifts from "@/components/UpcomingShifts";
 import LockInSequence from "@/components/LockInSequence";
+import PullToRefresh from "@/components/PullToRefresh";
 
 function greeting() {
   const h = new Date().getHours();
@@ -89,6 +90,7 @@ export default function Home() {
   const working = prefs?.work_status === "working";
 
   return (
+    <PullToRefresh onRefresh={loadCommand}>
     <div className="p-4 space-y-4">
       {/* Brand header */}
       <div className="flex items-center justify-between pt-1">
@@ -191,6 +193,7 @@ export default function Home() {
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs}
         onStarted={() => loadCommand()} />
     </div>
+    </PullToRefresh>
   );
 }
 
