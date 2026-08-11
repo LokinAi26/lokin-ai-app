@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -10,6 +10,7 @@ const LINKS = [
   { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Customers, stores, locations", color: "text-destructive" },
   { to: "/fuel", icon: FuelIcon, title: "Gas Discounts", desc: "Weekly codes & cashback", color: "text-accent" },
   { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "MPG, fuel, goals, mileage cost", color: "text-primary" },
+  { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Brand system & apparel", color: "text-primary" },
 ];
 
 export default function More() {
