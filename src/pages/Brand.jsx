@@ -43,7 +43,7 @@ export default function Brand() {
     <div className="p-4 space-y-6 pb-8">
       <div>
         <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">BRAND SYSTEM</div>
-        <h1 className="text-2xl font-bold font-heading metal-text">LOKIN AI</h1>
+        <h1 className="text-2xl font-bold font-heading metal-text">Lock in. Level up</h1>
       </div>
 
       {/* Emblem hero */}
