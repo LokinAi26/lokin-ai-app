@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
+import EliteOpportunities from "@/components/EliteOpportunities";
 
 const TYPE_META = {
   mystery_shop: { label: "Mystery Shop", icon: ShoppingBag, color: "text-primary" },
@@ -136,6 +137,8 @@ export default function GigTasks() {
       <p className="text-sm text-white/45 -mt-2">
         Get paid for mystery shopping, food reviews &amp; more — no car required.
       </p>
+
+      <EliteOpportunities plan={user?.plan} />
 
       <div className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-4">
         <div className="flex items-end justify-between">

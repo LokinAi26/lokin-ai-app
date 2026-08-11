@@ -49,11 +49,11 @@ const TIERS = [
     cta: "Go Elite",
     features: [
       "Everything in Pro",
+      "Locked-in elite opportunities",
+      "DashLink boosts & priority blocks",
       "Priority AI assistant",
       "Elite routing (max $/hr)",
-      "14-day free trial (annual)",
       "Fuel & mileage optimization AI",
-      "Early access to new features",
     ],
     annualId: "elite_annual",
     annualPrice: "$149.99/yr",
