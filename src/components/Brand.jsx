@@ -14,25 +14,36 @@ export function LokinGlyph({ size = 28, className = "" }) {
     >
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="hsl(80 100% 60%)" />
-          <stop offset="100%" stopColor="hsl(95 100% 45%)" />
+          <stop offset="0%" stopColor="hsl(80 100% 62%)" />
+          <stop offset="100%" stopColor="hsl(92 100% 42%)" />
         </linearGradient>
       </defs>
-      {/* clock ring */}
-      <circle cx="50" cy="54" r="34" stroke={`url(#${gid})`} strokeWidth="7" />
-      {/* tick 12 */}
-      <line x1="50" y1="24" x2="50" y2="31" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      {/* tick 3 */}
-      <line x1="80" y1="54" x2="73" y2="54" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      {/* tick 9 */}
-      <line x1="20" y1="54" x2="27" y2="54" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      {/* clock hands 10:10 */}
-      <line x1="50" y1="54" x2="38" y2="40" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      <line x1="50" y1="54" x2="64" y2="58" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
-      {/* padlock shackle */}
-      <path d="M38 32 V24 a12 12 0 0 1 24 0 V32" stroke={`url(#${gid})`} strokeWidth="7" strokeLinecap="round" fill="none" />
-      {/* keyhole */}
-      <circle cx="50" cy="54" r="4" fill={`url(#${gid})`} />
+
+      {/* padlock shackle — bold arch on top */}
+      <path
+        d="M37 40 V28 a13 13 0 0 1 26 0 V40"
+        stroke={`url(#${gid})`}
+        strokeWidth="8"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* lock body = clock face ring */}
+      <circle cx="50" cy="58" r="33" stroke={`url(#${gid})`} strokeWidth="8" />
+
+      {/* clock ticks — 12 / 3 / 6 / 9 */}
+      <line x1="50" y1="30" x2="50" y2="36" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+      <line x1="78" y1="58" x2="72" y2="58" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+      <line x1="50" y1="86" x2="50" y2="80" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+      <line x1="22" y1="58" x2="28" y2="58" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+
+      {/* clock hands — 10:10 (classic lock-clock pose) */}
+      <line x1="50" y1="58" x2="38" y2="44" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+      <line x1="50" y1="58" x2="64" y2="62" stroke={`url(#${gid})`} strokeWidth="5" strokeLinecap="round" />
+
+      {/* keyhole in center */}
+      <circle cx="50" cy="58" r="4.5" fill={`url(#${gid})`} />
+      <rect x="48.5" y="58" width="3" height="7" rx="1.5" fill={`url(#${gid})`} />
     </svg>
   );
 }
