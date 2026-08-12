@@ -1,7 +1,6 @@
-import { ShoppingBag, Briefcase, Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight, Snowflake } from "lucide-react";
+import { Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight } from "lucide-react";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
-import ApparelMockup from "@/components/ApparelMockup";
-import { useToast } from "@/components/ui/use-toast";
+import PrintfulStore from "@/components/PrintfulStore";
 
 const PALETTE = [
   { name: "Neon Lime", hex: "#A8FF00", text: "text-black" },
@@ -28,34 +27,11 @@ const VALUES = [
   { icon: Coffee, title: "Break Recharge", desc: "Breathing coach, motivation pep talks, and free streaming between shifts." },
 ];
 
-const APPAREL = [
-  { variant: "tee", name: "Vault Tee", price: "$32" },
-  { variant: "hoodie", name: "Lock In Hoodie", price: "$58" },
-  { variant: "cap", name: "Lokin Cap", price: "$28" },
-  { variant: "sticker", name: "Glyph Sticker Pack", price: "$9" },
-];
-
-const GEAR = [
-  { variant: "delivery", name: "Insulated Delivery Bag", price: "$48" },
-  { variant: "catering", name: "Catering Bag", price: "$72" },
-  { variant: "pizza", name: "Pizza Bag", price: "$54" },
-  { variant: "tote", name: "Driver Tote", price: "$24" },
-];
-
-const WINTER = [
-  { variant: "shiesty", name: "Lock In Shiesty", price: "$24" },
-  { variant: "shiesty", name: "Vault Balaclava", price: "$26" },
-  { variant: "hoodie", name: "Cold-Mile Hoodie", price: "$62" },
-  { variant: "cap", name: "Fleece Beanie Cap", price: "$30" },
-];
+// Your Printful store ID (numeric). Find it in Printful → Store Settings.
+// Leave empty to show the "Connect Printful" state; set it to pull live products & prices.
+const PRINTFUL_STORE_ID = "";
 
 export default function Brand() {
-  const { toast } = useToast();
-
-  function notify(name) {
-    toast({ title: "Added to waitlist", description: `We'll ping you when ${name} drops.` });
-  }
-
   return (
     <div className="p-4 space-y-6 pb-8">
       <div>
@@ -144,86 +120,8 @@ export default function Brand() {
         </div>
       </div>
 
-      {/* Apparel */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <ShoppingBag className="h-4 w-4 text-primary" />
-          <div className="text-sm font-semibold text-white/80">Apparel</div>
-          <div className="ml-auto text-[10px] tracking-widest text-accent/70 font-display">DROPPING SOON</div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {APPAREL.map((a) => (
-            <div key={a.variant} className="rounded-2xl border border-white/10 lokin-panel p-3">
-              <div className="rounded-xl bg-black/50 border border-white/5 p-2">
-                <ApparelMockup variant={a.variant} />
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-white">{a.name}</div>
-                  <div className="text-xs text-primary font-bold">{a.price}</div>
-                </div>
-                <button onClick={() => notify(a.name)} className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary active:scale-95 transition-transform">
-                  Notify
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Winter apparel */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Snowflake className="h-4 w-4 text-accent" />
-          <div className="text-sm font-semibold text-white/80">Winter Apparel</div>
-          <div className="ml-auto text-[10px] tracking-widest text-accent/70 font-display">COLD MILES</div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {WINTER.map((a) => (
-            <div key={a.name} className="rounded-2xl border border-white/10 lokin-panel p-3">
-              <div className="rounded-xl bg-black/50 border border-white/5 p-2">
-                <ApparelMockup variant={a.variant} />
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-white">{a.name}</div>
-                  <div className="text-xs text-primary font-bold">{a.price}</div>
-                </div>
-                <button onClick={() => notify(a.name)} className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary active:scale-95 transition-transform">
-                  Notify
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Work Gear */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Briefcase className="h-4 w-4 text-primary" />
-          <div className="text-sm font-semibold text-white/80">Work Gear</div>
-          <div className="ml-auto text-[10px] tracking-widest text-accent/70 font-display">DROPPING SOON</div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {GEAR.map((a) => (
-            <div key={a.variant} className="rounded-2xl border border-white/10 lokin-panel p-3">
-              <div className="rounded-xl bg-black/50 border border-white/5 p-2">
-                <ApparelMockup variant={a.variant} />
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-white">{a.name}</div>
-                  <div className="text-xs text-primary font-bold">{a.price}</div>
-                </div>
-                <button onClick={() => notify(a.name)} className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary active:scale-95 transition-transform">
-                  Notify
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Live Printful store */}
+      <PrintfulStore storeId={PRINTFUL_STORE_ID} limit={20} />
 
       {/* Built on base44 stamp */}
       <a href="https://base44.com" target="_blank" rel="noopener noreferrer"

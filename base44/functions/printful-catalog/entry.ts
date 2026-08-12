@@ -6,7 +6,7 @@ import { secrets } from "base44:runtime";
 // Docs: https://developers.printful.com (Store API)
 
 const API = "https://api.printful.com";
-const VALID_ACTIONS = ["store", "products", "product", "availability", "orders", "order"];
+const VALID_ACTIONS = ["store", "products", "product", "availability", "orders", "order", "catalog"];
 
 async function pfGet(path, token, storeId) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -188,6 +188,50 @@ export default async function (req) {
           })),
         },
       });
+    }
+
+    // ----- Enriched catalog (products + variants with price & image) -----
+    if (action === "catalog") {
+      const max = Math.min(30, Math.max(1, Number(payload.limit) || 20));
+      const list = await pfGet(`/store/products?offset=0&limit=${max}`, token, storeId);
+      if (!list.ok) return Response.json({ error: list.error }, { status: list.status });
+      const base = Array.isArray(list.result) ? list.result : [];
+      // Fetch each product's variants (price + image) in parallel, bounded.
+      const detailed = await Promise.all(
+        base.slice(0, max).map(async (p) => {
+          const r = await pfGet(`/store/products/${encodeURIComponent(p.id)}`, token, storeId);
+          if (!r.ok) return null;
+          const sp = r.result?.sync_product || {};
+          const variants = (r.result?.sync_variants || []).map((v) => ({
+            id: v.id,
+            variant_id: v.variant_id,
+            name: v.name,
+            sku: v.sku,
+            retail_price: v.retail_price,
+            currency: v.currency,
+            thumbnail_url: v.thumbnail_url,
+            image_url: v.image,
+            in_stock: v.availability_status !== "discontinued" && !v.is_discontinued,
+          }));
+          const prices = variants
+            .map((v) => parseFloat(v.retail_price))
+            .filter((n) => !isNaN(n));
+          const currency = variants[0]?.currency || "USD";
+          return {
+            id: sp.id,
+            external_id: sp.external_id,
+            name: sp.name,
+            thumbnail_url: sp.thumbnail_url,
+            type: sp.type,
+            variants,
+            min_price: prices.length ? Math.min(...prices).toFixed(2) : null,
+            max_price: prices.length ? Math.max(...prices).toFixed(2) : null,
+            currency,
+          };
+        })
+      );
+      const products = detailed.filter(Boolean);
+      return Response.json({ products, storeId });
     }
 
     // ----- Store info -----
