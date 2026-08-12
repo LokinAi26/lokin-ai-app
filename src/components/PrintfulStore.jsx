@@ -132,16 +132,22 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
             <button
               key={p.id}
               onClick={() => setSelected(p)}
-              className="text-left rounded-2xl border border-white/10 lokin-panel p-3 active:scale-[0.98] transition-transform"
+              className="group text-left rounded-2xl border border-white/10 lokin-panel p-2.5 active:scale-[0.98] active:border-primary/40 active:glow-primary transition-all"
             >
-              <div className="rounded-xl bg-black/50 border border-white/5 overflow-hidden">
+              <div className="relative rounded-xl bg-black/50 border border-white/5 overflow-hidden">
                 <Image src={p.thumbnail_url} alt={p.name} fittingType="fit" className="aspect-square w-full" />
+                <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 to-transparent" />
+                <span className="absolute top-1.5 right-1.5 rounded-full bg-black/70 border border-primary/30 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-primary backdrop-blur">
+                  {p.variants?.length || 0}
+                </span>
               </div>
-              <div className="mt-2">
-                <div className="text-sm font-semibold text-white truncate">{p.name}</div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <div className="text-xs text-primary font-bold">{priceLabel(p) || "—"}</div>
-                  <div className="text-[10px] text-white/40">{p.variants?.length || 0} variants</div>
+              <div className="px-1 pt-2 pb-0.5">
+                <div className="text-sm font-semibold text-white truncate leading-tight">{p.name}</div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="rounded-md bg-primary/10 border border-primary/30 px-1.5 py-0.5 text-xs font-bold text-primary text-glow">
+                    {priceLabel(p) || "—"}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/30 group-active:text-primary">View</span>
                 </div>
               </div>
             </button>
