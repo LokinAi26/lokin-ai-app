@@ -44,7 +44,7 @@ export default async function (req) {
     }
     // Printful requires the store ID for the Store API when a personal token has
     // multiple stores. Accept a payload override or a stored secret; not sensitive.
-    const storeId = payload.storeId || secrets.get("PRINTFUL_STORE_ID") || "";
+    const storeId = payload.storeId || "";
 
     // ----- Products list -----
     if (action === "products") {
