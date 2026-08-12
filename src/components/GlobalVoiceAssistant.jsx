@@ -18,7 +18,21 @@ const NAV_COMMANDS = [
   { keys: ["vehicle", "mechanic", "maintenance", "car care"], to: "/vehicle-care", label: "Vehicle Care" },
   { keys: ["brand", "merch", "apparel", "shiesty"], to: "/brand", label: "Opening Brand" },
   { keys: ["settings", "preferences", "goals"], to: "/settings", label: "Opening Settings" },
+  { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode"], to: "/drive", label: "Opening Drive Mode" },
 ];
+
+const MUSIC_ACTIONS = [
+  { keys: ["play music", "play driving music", "start music", "play a station", "play some music"], action: "play", label: "Playing your drive music", nav: "/drive" },
+  { keys: ["pause music", "stop the music", "stop music", "pause the music"], action: "pause", label: "Pausing the music" },
+  { keys: ["next station", "next song", "skip this", "skip song", "next track", "skip"], action: "next", label: "Skipping to the next station" },
+  { keys: ["previous station", "last station", "previous song", "go back a station"], action: "prev", label: "Previous station" },
+];
+
+function matchMusic(text) {
+  const t = text.toLowerCase();
+  for (const c of MUSIC_ACTIONS) if (c.keys.some((k) => t.includes(k))) return c;
+  return null;
+}
 
 function matchCommand(text) {
   const t = text.toLowerCase();
@@ -57,6 +71,15 @@ export default function GlobalVoiceAssistant() {
     setBusy(true);
     setTranscript(command);
     setReply("");
+    const music = matchMusic(command);
+    if (music) {
+      window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
+      speak(music.label);
+      setReply(music.label);
+      if (music.nav) setTimeout(() => navigate(music.nav), 400);
+      setBusy(false);
+      return;
+    }
     const nav = matchCommand(command);
     if (nav) {
       speak(nav.label);

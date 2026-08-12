@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Heart } from "lucide-react";
 
 // Awareness dedication — LOKIN AI stands with drivers & families affected by
 // breast cancer, cystic fibrosis, diabetes, and mental illness.
@@ -72,6 +74,9 @@ export default function AwarenessBanner() {
         </div>
       )}
 
+      <Link to="/awareness" className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/[0.06] py-2 text-xs font-semibold text-primary active:scale-[0.98] transition-transform">
+        <Heart className="h-3.5 w-3.5" /> View spotlights & pledge
+      </Link>
       <div className="mt-2 text-center text-[9px] text-white/30">
         A portion of every LOKIN Elite subscription supports research & support funds.
       </div>
