@@ -1,4 +1,4 @@
-import { ShoppingBag, Briefcase, Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight } from "lucide-react";
+import { ShoppingBag, Briefcase, Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight, Snowflake } from "lucide-react";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import ApparelMockup from "@/components/ApparelMockup";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,6 +40,13 @@ const GEAR = [
   { variant: "catering", name: "Catering Bag", price: "$72" },
   { variant: "pizza", name: "Pizza Bag", price: "$54" },
   { variant: "tote", name: "Driver Tote", price: "$24" },
+];
+
+const WINTER = [
+  { variant: "shiesty", name: "Lock In Shiesty", price: "$24" },
+  { variant: "shiesty", name: "Vault Balaclava", price: "$26" },
+  { variant: "hoodie", name: "Cold-Mile Hoodie", price: "$62" },
+  { variant: "cap", name: "Fleece Beanie Cap", price: "$30" },
 ];
 
 export default function Brand() {
@@ -147,6 +154,33 @@ export default function Brand() {
         <div className="grid grid-cols-2 gap-3">
           {APPAREL.map((a) => (
             <div key={a.variant} className="rounded-2xl border border-white/10 lokin-panel p-3">
+              <div className="rounded-xl bg-black/50 border border-white/5 p-2">
+                <ApparelMockup variant={a.variant} />
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-white">{a.name}</div>
+                  <div className="text-xs text-primary font-bold">{a.price}</div>
+                </div>
+                <button onClick={() => notify(a.name)} className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-[11px] font-bold text-primary active:scale-95 transition-transform">
+                  Notify
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Winter apparel */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Snowflake className="h-4 w-4 text-accent" />
+          <div className="text-sm font-semibold text-white/80">Winter Apparel</div>
+          <div className="ml-auto text-[10px] tracking-widest text-accent/70 font-display">COLD MILES</div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {WINTER.map((a) => (
+            <div key={a.name} className="rounded-2xl border border-white/10 lokin-panel p-3">
               <div className="rounded-xl bg-black/50 border border-white/5 p-2">
                 <ApparelMockup variant={a.variant} />
               </div>

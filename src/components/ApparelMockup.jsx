@@ -103,6 +103,24 @@ function PizzaBag({ glyphColor = NEON }) {
   );
 }
 
+function Shiesty({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* Balaclava head + neck */}
+      <path d="M70 56 Q120 26 170 56 L170 150 Q170 168 152 170 H88 Q70 168 70 150 Z M88 170 L84 214 H156 L152 170 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      {/* Face opening */}
+      <path d="M92 70 Q120 64 148 70 L142 120 Q120 132 98 120 Z" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      {/* Single eye slit */}
+      <rect x="104" y="86" width="44" height="9" rx="4.5" fill="#020303" stroke="hsl(80 100% 50% / 0.5)" strokeWidth="1.2" />
+      {/* Crown seam */}
+      <path d="M92 52 Q120 44 148 52" fill="none" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <g transform="translate(96 138)">
+        <LokinGlyph size={48} />
+      </g>
+    </svg>
+  );
+}
+
 function Tote({ glyphColor = NEON }) {
   return (
     <svg viewBox="0 0 240 240" className="h-full w-full">
@@ -125,6 +143,7 @@ const VARIANTS = {
   catering: CateringBag,
   pizza: PizzaBag,
   tote: Tote,
+  shiesty: Shiesty,
 };
 
 export default function ApparelMockup({ variant = "tee", className = "" }) {
