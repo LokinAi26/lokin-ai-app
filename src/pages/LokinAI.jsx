@@ -3,6 +3,7 @@ import { Mic, Send, Volume2, Radio } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import AiKeyboardBar from "@/components/AiKeyboardBar";
 
 const QUICK = [
   "What should I do next?",
@@ -187,18 +188,21 @@ export default function LokinAI() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && ask(transcript)}
-          placeholder="Say or type a command…"
-          className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30"
-        />
-        <button onClick={startListening} disabled={busy}
-          className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all disabled:opacity-60 ${listening ? "bg-accent text-accent-foreground glow-cyan animate-pulse" : "bg-accent/15 border border-accent/40 text-accent"}`}>
-          <Mic className="h-5 w-5" />
-        </button>
+      <div className="space-y-1.5">
+        <AiKeyboardBar value={transcript} onApply={setTranscript} disabled={busy} />
+        <div className="flex items-center gap-2">
+          <input
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && ask(transcript)}
+            placeholder="Say or type a command…"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30"
+          />
+          <button onClick={startListening} disabled={busy}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all disabled:opacity-60 ${listening ? "bg-accent text-accent-foreground glow-cyan animate-pulse" : "bg-accent/15 border border-accent/40 text-accent"}`}>
+            <Mic className="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
