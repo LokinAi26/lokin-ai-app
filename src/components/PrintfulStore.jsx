@@ -108,9 +108,17 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
           <div className="mt-3 font-display text-lg font-extrabold tracking-[0.15em] text-primary text-glow">
             NO PRODUCTS YET
           </div>
-          <div className="text-xs text-white/45 mt-1 max-w-[28ch] mx-auto">
+          <div className="text-xs text-white/45 mt-1 max-w-[30ch] mx-auto">
             {error ? error : "Add your LOKIN items as Sync Products in Printful — they'll appear here automatically."}
           </div>
+          <a
+            href="https://www.printful.com/dashboard/store/18600767/products"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold text-primary active:scale-95 transition-transform"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" /> Add products in Printful
+          </a>
         </div>
       )}
 
