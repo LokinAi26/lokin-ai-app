@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Coffee, Play, Square, ExternalLink, Headphones } from "lucide-react";
+import MeditationCoach from "@/components/MeditationCoach";
+import MotivationCoach from "@/components/MotivationCoach";
 
 const STREAMS = [
   { id: "jfKfPfyJRdk", title: "Lofi Hip Hop Radio", sub: "Beats to chill to", emoji: "🎧" },
@@ -106,6 +108,10 @@ export default function BreakTime() {
           </button>
         )}
       </div>
+
+      {/* Regroup & reset */}
+      <MeditationCoach />
+      <MotivationCoach />
 
       {/* Now playing */}
       <div className="rounded-3xl border border-white/10 lokin-panel p-4">
