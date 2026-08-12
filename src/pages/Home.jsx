@@ -10,6 +10,7 @@ import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import Ticker from "@/components/Ticker";
+import AwarenessBanner from "@/components/AwarenessBanner";
 import { getRoleMeta } from "@/lib/userTypes";
 
 function greeting() {
@@ -195,6 +196,8 @@ export default function Home() {
         <QuickLink to="/earnings" icon={TrendingUp} label="Earnings" />
         <QuickLink to="/more" icon={MapPin} label="More" />
       </div>
+
+      <AwarenessBanner />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
         ONE APP. EVERY MILE. UNLOCK YOUR POTENTIAL.
