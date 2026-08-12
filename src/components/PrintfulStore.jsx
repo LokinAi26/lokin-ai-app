@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
@@ -12,36 +12,62 @@ function priceLabel(p) {
   return `${sym}${p.min_price}–${sym}${p.max_price}`;
 }
 
-export default function PrintfulStore({ storeId = "", limit = 20 }) {
+export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const { toast } = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [live, setLive] = useState(false);
 
-  useEffect(() => {
-    if (!storeId) return;
-    let active = true;
+  const load = useCallback(async () => {
     setLoading(true);
-    base44.functions
-      .invoke("printful-catalog", { action: "catalog", storeId, limit })
-      .then((res) => {
-        if (!active) return;
-        setProducts(res.data?.products || []);
-        setLive(true);
-        setError(null);
-      })
-      .catch((e) => active && setError(e?.message || "Failed to load store"))
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
+    try {
+      // Auto-resolve the Printful store ID if one wasn't passed in.
+      let sid = storeId;
+      if (!sid) {
+        const sres = await base44.functions.invoke("printful-catalog", { action: "stores" });
+        sid = sres.data?.stores?.[0]?.id ? String(sres.data.stores[0].id) : "";
+      }
+      if (!sid) {
+        setLive(false);
+        setError("No Printful store connected to your account yet.");
+        setProducts([]);
+        return;
+      }
+      const res = await base44.functions.invoke("printful-catalog", {
+        action: "catalog",
+        storeId: sid,
+        limit,
+      });
+      setProducts(res.data?.products || []);
+      setLive(true);
+      setError(null);
+    } catch (e) {
+      setError(e?.message || "Failed to load store");
+      setLive(false);
+    } finally {
+      setLoading(false);
+    }
   }, [storeId, limit]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Auto-refresh when the user returns to the tab so dashboard edits flow through.
+  useEffect(() => {
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [load]);
 
   function notify(name) {
     toast({ title: "Added to waitlist", description: `We'll ping you when ${name} drops.` });
   }
 
-  const showSkeleton = !!storeId && loading;
-  const showEmpty = !storeId || (!loading && (!products.length || error));
+  const showSkeleton = loading && products.length === 0 && !error;
+  const showEmpty = !loading && (error || products.length === 0);
+  const showGrid = products.length > 0;
 
   return (
     <div>
@@ -50,7 +76,7 @@ export default function PrintfulStore({ storeId = "", limit = 20 }) {
         <div className="text-sm font-semibold text-white/80">The Vault</div>
         {live && !error && (
           <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-widest text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LIVE
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LIVE · {products.length}
           </span>
         )}
       </div>
@@ -61,24 +87,27 @@ export default function PrintfulStore({ storeId = "", limit = 20 }) {
             <LokinGlyph size={40} className="lokin-spin" />
           </div>
           <div className="mt-3 font-display text-lg font-extrabold tracking-[0.15em] text-primary text-glow">
-            {storeId ? "STORE OFFLINE" : "CONNECT PRINTFUL"}
+            STORE OFFLINE
           </div>
-          <div className="text-xs text-white/45 mt-1">
-            {error ? error : "Live products load here once your store ID is set."}
-          </div>
+          <div className="text-xs text-white/45 mt-1">{error || "No products found."}</div>
         </div>
       )}
 
-      {(showSkeleton || products.length > 0) && (
+      {showSkeleton && (
         <div className="grid grid-cols-2 gap-3">
-          {showSkeleton && Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="rounded-2xl border border-white/10 lokin-panel p-3">
               <div className="aspect-square rounded-xl bg-white/5 animate-pulse" />
               <div className="mt-2 h-3 w-2/3 rounded bg-white/5 animate-pulse" />
               <div className="mt-1 h-3 w-1/3 rounded bg-white/5 animate-pulse" />
             </div>
           ))}
-          {!showSkeleton && products.map((p) => (
+        </div>
+      )}
+
+      {showGrid && (
+        <div className="grid grid-cols-2 gap-3">
+          {products.map((p) => (
             <div key={p.id} className="rounded-2xl border border-white/10 lokin-panel p-3">
               <div className="rounded-xl bg-black/50 border border-white/5 overflow-hidden">
                 <Image

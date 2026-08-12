@@ -6,11 +6,11 @@ import { secrets } from "base44:runtime";
 // Docs: https://developers.printful.com (Store API)
 
 const API = "https://api.printful.com";
-const VALID_ACTIONS = ["store", "products", "product", "availability", "orders", "order", "catalog"];
+const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog"];
 
 async function pfGet(path, token, storeId) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  if (storeId) headers["X-PF-Store"] = String(storeId);
+  if (storeId) headers["X-PF-Store-Id"] = String(storeId);
   const res = await fetch(`${API}${path}`, { headers });
   let body;
   try { body = await res.json(); } catch { body = null; }
@@ -45,6 +45,14 @@ export default async function (req) {
     // Printful requires the store ID for the Store API when a personal token has
     // multiple stores. Accept a payload override or a stored secret; not sensitive.
     const storeId = payload.storeId || "";
+
+    // ----- Stores list (auto-resolve store ID; the id itself is not sensitive) -----
+    if (action === "stores") {
+      const r = await pfGet(`/stores`, token, "");
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      const stores = (r.result || []).map((s) => ({ id: s.id, name: s.name, type: s.type }));
+      return Response.json({ stores });
+    }
 
     // ----- Products list -----
     if (action === "products") {
@@ -190,15 +198,24 @@ export default async function (req) {
       });
     }
 
-    // ----- Enriched catalog (products + variants with price & image) -----
+    // ----- Enriched catalog (ALL products + variants with price & image) -----
     if (action === "catalog") {
-      const max = Math.min(30, Math.max(1, Number(payload.limit) || 20));
-      const list = await pfGet(`/store/products?offset=0&limit=${max}`, token, storeId);
-      if (!list.ok) return Response.json({ error: list.error }, { status: list.status });
-      const base = Array.isArray(list.result) ? list.result : [];
-      // Fetch each product's variants (price + image) in parallel, bounded.
+      const cap = Math.min(200, Math.max(1, Number(payload.limit) || 200));
+      const base = [];
+      let offset = 0;
+      // Paginate through every product in the store (100 per page).
+      while (base.length < cap) {
+        const r = await pfGet(`/store/products?offset=${offset}&limit=100`, token, storeId);
+        if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+        const batch = Array.isArray(r.result) ? r.result : [];
+        base.push(...batch);
+        if (batch.length < 100) break;
+        offset += 100;
+        if (offset > 2000) break; // safety guard
+      }
+      // Fetch each product's variants (price + image) in parallel.
       const detailed = await Promise.all(
-        base.slice(0, max).map(async (p) => {
+        base.slice(0, cap).map(async (p) => {
           const r = await pfGet(`/store/products/${encodeURIComponent(p.id)}`, token, storeId);
           if (!r.ok) return null;
           const sp = r.result?.sync_product || {};
@@ -231,7 +248,7 @@ export default async function (req) {
         })
       );
       const products = detailed.filter(Boolean);
-      return Response.json({ products, storeId });
+      return Response.json({ products, storeId, count: products.length });
     }
 
     // ----- Store info -----

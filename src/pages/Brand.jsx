@@ -120,8 +120,8 @@ export default function Brand() {
         </div>
       </div>
 
-      {/* Live Printful store */}
-      <PrintfulStore storeId={PRINTFUL_STORE_ID} limit={20} />
+      {/* Live Printful store — auto-resolves store ID & pulls every product/price */}
+      <PrintfulStore storeId={PRINTFUL_STORE_ID} limit={200} />
 
       {/* Built on base44 stamp */}
       <a href="https://base44.com" target="_blank" rel="noopener noreferrer"
