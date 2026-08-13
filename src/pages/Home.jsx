@@ -11,6 +11,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import Ticker from "@/components/Ticker";
 import AwarenessBanner from "@/components/AwarenessBanner";
+import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
 
 function greeting() {
@@ -101,10 +102,13 @@ export default function Home() {
       {/* Brand header */}
       <div className="flex items-center justify-between pt-1">
         <LokinWordmark size={26} />
-        <button onClick={() => setShowType(true)}
-          className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/80 active:scale-[0.97] transition-transform">
-          <span>{role.emoji}</span> {role.short}
-        </button>
+        <div className="flex items-center gap-2">
+          <HomeSignalIndicator />
+          <button onClick={() => setShowType(true)}
+            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/80 active:scale-[0.97] transition-transform">
+            <span>{role.emoji}</span> {role.short}
+          </button>
+        </div>
       </div>
       <div>
         <div className="text-xs text-white/45">{greeting()}.</div>
