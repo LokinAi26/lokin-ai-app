@@ -2,10 +2,32 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 
-// Printify store catalog & product integration for the LOKIN Brand Store.
-// The PRINTIFY_API_TOKEN is read server-side only and never returned to the client.
-// Printify API docs: https://developers.printify.com (Personal API token)
-// Auth: Authorization: Bearer <token>; shop id is part of the URL path.
+/**
+ * printify-catalog — LOKIN Brand Store <-> Printify integration.
+ *
+ * Secures the Printify API behind a backend function so the API token never
+ * reaches the client. Client call:
+ *   base44.functions.invoke('printify-catalog', { action, shop_id, ... })
+ *
+ * Secret: PRINTIFY_API_TOKEN (personal API token) — server-side only.
+ * Headers: Authorization: Bearer <token>; the shop id is part of the URL path.
+ *
+ * Auth model — storefront reads are open to any logged-in user; fulfillment +
+ * billing actions are admin-only:
+ *   shops / products / product / catalog  -> any user
+ *   orders / order / createProduct        -> admin only
+ *
+ * Actions (payload.action):
+ *   shops         list shops on the token (auto-resolves shop id)
+ *   products      paginated product list
+ *   product       single product + variants (price/image)
+ *   catalog       enriched storefront catalog (all products + variants, min/max price)
+ *   orders/order  order list/detail (admin)
+ *   createProduct create a product from a validated product body (admin)
+ *
+ * Most actions require payload.shop_id (or shopId).
+ * Docs: https://developers.printify.com (Personal API token)
+ */
 
 const API = "https://api.printify.com/v1";
 const VALID_ACTIONS = ["shops", "products", "product", "catalog", "orders", "order", "createProduct"];

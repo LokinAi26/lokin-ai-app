@@ -2,9 +2,34 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 
-// Printful store catalog & order integration for the LOKIN Brand Store.
-// The PRINTFUL_API_TOKEN is read server-side only and never returned to the client.
-// Docs: https://developers.printful.com (Store API)
+/**
+ * printful-catalog — LOKIN Brand Store <-> Printful integration.
+ *
+ * Secures the Printful Store API behind a backend function so the API token
+ * never reaches the client. Client call:
+ *   base44.functions.invoke('printful-catalog', { action, ... })
+ *
+ * Secret: PRINTFUL_API_TOKEN (personal API token) — server-side only.
+ * Headers: Authorization: Bearer <token>; X-PF-Store-Id when a token owns >1 store.
+ *
+ * Auth model — storefront reads are open to any logged-in user; fulfillment +
+ * billing actions are admin-only:
+ *   stores / products / product / availability / catalog / warehouse  -> any user
+ *   orders / order / store / createProduct                            -> admin only
+ *
+ * Actions (payload.action):
+ *   stores        list stores on the token (auto-resolves store id)
+ *   products      paginated sync products list
+ *   product       single sync product + variants (price/image/sku)
+ *   availability  variant stock by variant ids
+ *   catalog       enriched storefront catalog (all products + variants, min/max price) — used by PrintfulStore
+ *   warehouse     Printful blank-product warehouse catalog (feeds createProduct)
+ *   orders/order  order list/detail with shipments + tracking (admin)
+ *   createProduct create a sync product from a warehouse blank + retail price (admin)
+ *   store         current store info (admin)
+ *
+ * Docs: https://developers.printful.com (Store API)
+ */
 
 const API = "https://api.printful.com";
 const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog", "warehouse", "createProduct"];

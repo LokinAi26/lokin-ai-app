@@ -2,10 +2,31 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 
-// Shopify Admin API catalog & product integration for the LOKIN Brand Store.
-// Uses the Admin API REST endpoints with the X-Shopify-Access-Token header.
-// SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN are read server-side only.
-// Shopify Admin API docs: https://shopify.dev/docs/api/admin-rest
+/**
+ * shopify-catalog — LOKIN Brand Store <-> Shopify Admin REST API integration.
+ *
+ * Secures the Shopify Admin API behind a backend function so the access token
+ * never reaches the client. Client call:
+ *   base44.functions.invoke('shopify-catalog', { action, ... })
+ *
+ * Secrets: SHOPIFY_STORE_DOMAIN (e.g. store.myshopify.com) + SHOPIFY_ACCESS_TOKEN — server-side only.
+ * Header: X-Shopify-Access-Token. Admin API version pinned to 2024-07.
+ *
+ * Auth model — storefront reads are open to any logged-in user; fulfillment +
+ * billing actions are admin-only:
+ *   shop / products / product / catalog  -> any user
+ *   orders / order / createProduct       -> admin only
+ *
+ * Actions (payload.action):
+ *   shop          shop info
+ *   products      paginated products list (page_info cursor via Link header)
+ *   product       single product + variants
+ *   catalog       enriched storefront catalog (all products + variants, min/max price)
+ *   orders/order  order list/detail (admin)
+ *   createProduct create a product (admin)
+ *
+ * Docs: https://shopify.dev/docs/api/admin-rest
+ */
 
 const API_VERSION = "2024-07";
 const VALID_ACTIONS = ["shop", "products", "product", "catalog", "orders", "order", "createProduct"];

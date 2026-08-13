@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
+import { getGmailSender, gmailSendMessage } from "../../shared/gmailSend.ts";
 
 // Polls Printful for orders that just shipped and emails each customer a
 // shipping confirmation via the connected Gmail account. Dedups by order_id
@@ -18,38 +19,8 @@ async function pfGet(path, token, storeId) {
   return { ok: true, result: d.result, paging: d.paging };
 }
 
-function base64urlUtf8(str) {
-  const b64 = btoa(unescape(encodeURIComponent(str)));
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function buildRawMessage(fromEmail, toEmail, toName, subject, body) {
-  const to = toName ? `${toName} <${toEmail}>` : toEmail;
-  const raw = [
-    `From: LOKIN AI <${fromEmail}>`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: text/plain; charset=UTF-8`,
-    ``,
-    body,
-  ].join("\r\n");
-  return base64urlUtf8(raw);
-}
-
-async function sendGmail(gmailToken, fromEmail, toEmail, toName, subject, body) {
-  const raw = buildRawMessage(fromEmail, toEmail, toName, subject, body);
-  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${gmailToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ raw }),
-  });
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw new Error(`Gmail send failed (${res.status}): ${t}`);
-  }
-  return res.json();
-}
+// Gmail raw-message + sending live in base44/shared/gmailSend.ts (shared with
+// partner-outreach). Resolved here via getGmailSender + gmailSendMessage.
 
 export default async function (req) {
   try {
@@ -68,14 +39,9 @@ export default async function (req) {
     const storeId = String(storesRes.result?.[0]?.id || "");
     if (!storeId) return Response.json({ error: "No Printful store found" }, { status: 500 });
 
-    // Gmail connection + sender address.
-    const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection("gmail");
-    if (!gmailToken) return Response.json({ error: "Gmail not connected" }, { status: 500 });
-    const profRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${gmailToken}` },
-    });
-    if (!profRes.ok) return Response.json({ error: "Gmail sender lookup failed" }, { status: 500 });
-    const fromEmail = (await profRes.json()).email;
+    // Gmail connection + sender address (resolved once per run via shared helper).
+    const { token: gmailToken, fromEmail } = await getGmailSender(base44);
+    if (!gmailToken || !fromEmail) return Response.json({ error: "Gmail not connected" }, { status: 500 });
 
     // Gather shipped orders (fulfilled = fully shipped, partial = some packages shipped).
     const statuses = ["fulfilled", "partial"];
@@ -120,7 +86,7 @@ export default async function (req) {
           `Thank you for supporting LOKIN AI.\n\n` +
           `— LOKIN AI`;
 
-        await sendGmail(gmailToken, fromEmail, email, name, subject, body);
+        await gmailSendMessage(gmailToken, fromEmail, email, name, subject, body);
         await base44.asServiceRole.entities.PrintfulShipment.create({
           order_id: String(o.id),
           customer_email: email,
