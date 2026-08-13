@@ -11,6 +11,7 @@ const SECTIONS = [
       { variant: "tee", name: "LOKIN AI Tee", sub: "Signature lockup · Individual product" },
       { variant: "hoodie", name: "LOKIN AI Hoodie", sub: "Signature lockup · Individual product" },
       { variant: "cap", name: "LOKIN AI Cap", sub: "Embroidered-look lock mark" },
+      { variant: "sticker", name: "LOKIN AI Sticker", sub: "Signature brand lockup" },
     ],
   },
   {
