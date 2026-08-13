@@ -4,6 +4,7 @@ import { Navigation, MapPin, Clock, DollarSign, Check, Radar, Flag, RefreshCw } 
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import DriveMusicPlayer from "@/components/DriveMusicPlayer";
+import AiGps4D from "@/components/AiGps4D";
 
 function routePoints(n, W = 360, H = 360) {
   if (n <= 1) return [[W / 2, H / 2]];
@@ -197,6 +198,8 @@ export default function DrivingMode() {
           <MiniStat label="net/hr" value={`$${data.stats.perHour}`} accent />
         </div>
       )}
+
+      <AiGps4D stops={stops} compact />
 
       <DriveMusicPlayer />
     </div>

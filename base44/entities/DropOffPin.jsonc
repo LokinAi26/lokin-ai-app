@@ -1,0 +1,33 @@
+{
+  "name": "DropOffPin",
+  "type": "object",
+  "properties": {
+    "offer_id": {
+      "type": "string",
+      "description": "Reference to the Offer this precision pin belongs to."
+    },
+    "merchant": {
+      "type": "string"
+    },
+    "dropoff_address": {
+      "type": "string"
+    },
+    "apt": {
+      "type": "string",
+      "description": "Apartment / unit number for precise drop-off."
+    },
+    "gate_code": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string",
+      "description": "Drop-off note (side door, leave at porch, etc.)."
+    },
+    "photo_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "offer_id"
+  ]
+}

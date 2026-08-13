@@ -34,6 +34,7 @@ import OnTheRoad from './pages/OnTheRoad';
 import Awareness from './pages/Awareness';
 import Connectivity from './pages/Connectivity';
 import ShopDeliver from './pages/ShopDeliver';
+import AiGps from './pages/AiGps';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -95,6 +96,7 @@ const AuthenticatedApp = () => {
           <Route path="/awareness" element={<Awareness />} />
           <Route path="/connectivity" element={<Connectivity />} />
           <Route path="/shop-deliver" element={<ShopDeliver />} />
+          <Route path="/ai-gps" element={<AiGps />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />
