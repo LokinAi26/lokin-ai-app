@@ -1,43 +1,74 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Navigation, Fuel, ShoppingBag } from "lucide-react";
+import { Navigation, Fuel, ShoppingBag, Wifi, Search, Briefcase, LifeBuoy, LayoutGrid, X } from "lucide-react";
 
-// Compact neon-green quick-jump rail — fixed on the left edge so you can hop
-// between Route Planner, Fuel Finder, and the Commerce Hub from anywhere
-// without returning to Home. Mobile-first: floats above page content.
+// Compact neon-green quick-jump hub — pinned to the top-right so you can hop
+// to Route, Fuel, the Commerce Hub, Connectivity, Locator, Gigs and Support
+// from anywhere. Collapses to a small rectangle; tap to expand the jump grid.
+// Sits just below the global header so it never covers page actions.
+
 const ITEMS = [
   { to: "/route", label: "Route", icon: Navigation, match: (p) => p.startsWith("/route") || p.startsWith("/drive") },
   { to: "/fuel", label: "Fuel", icon: Fuel, match: (p) => p.startsWith("/fuel") },
   { to: "/brand", label: "Hub", icon: ShoppingBag, match: (p) => p.startsWith("/brand") },
+  { to: "/connectivity", label: "Signal", icon: Wifi, match: (p) => p.startsWith("/connectivity") },
+  { to: "/locator", label: "Locator", icon: Search, match: (p) => p.startsWith("/locator") },
+  { to: "/gigs", label: "Gigs", icon: Briefcase, match: (p) => p.startsWith("/gigs") },
+  { to: "/support", label: "Support", icon: LifeBuoy, match: (p) => p.startsWith("/support") },
 ];
 
 export default function QuickJumpRail() {
   const loc = useLocation();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const activeItem = ITEMS.find((i) => i.match(loc.pathname));
+  const ActiveIcon = activeItem?.icon || LayoutGrid;
+
+  // Close on route change
+  useEffect(() => { setOpen(false); }, [loc.pathname]);
+
+  function go(to) {
+    setOpen(false);
+    navigate(to);
+  }
 
   return (
-    <div className="fixed left-2 top-1/2 -translate-y-1/2 z-30 select-none">
-      <div className="flex flex-col items-center gap-1 rounded-2xl border border-primary/30 glass px-1.5 py-2 glow-primary">
-        {ITEMS.map(({ to, label, icon: Icon, match }) => {
-          const active = match(loc.pathname);
-          return (
-            <button
-              key={to}
-              onClick={() => navigate(to)}
-              aria-label={`${label} jump`}
-              className={`group relative flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
-                active
-                  ? "bg-primary/15 text-primary"
-                  : "text-white/45 hover:text-primary hover:bg-primary/5"
-              }`}
-            >
-              <Icon className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
-              <span className="pointer-events-none absolute left-[calc(100%+6px)] whitespace-nowrap rounded-md border border-primary/20 bg-black/80 px-2 py-1 text-[10px] font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+    <div className="fixed right-2 top-[calc(3rem+env(safe-area-inset-top)+6px)] z-40 select-none">
+      {/* Collapsed: small rectangle hub button */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Quick jump hub"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/30 glass glow-primary active:scale-95 transition-transform"
+      >
+        {open ? <X className="h-4 w-4 text-primary" /> : <ActiveIcon className="h-4 w-4 text-primary" />}
+        {!open && activeItem && (
+          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary glow-primary" />
+        )}
+      </button>
+
+      {/* Expanded: jump grid */}
+      {open && (
+        <div className="mt-2 w-44 rounded-2xl border border-primary/30 glass p-2 glow-primary">
+          <div className="grid grid-cols-3 gap-1.5">
+            {ITEMS.map(({ to, label, icon: Icon, match }) => {
+              const active = match(loc.pathname);
+              return (
+                <button
+                  key={to}
+                  onClick={() => go(to)}
+                  className={`flex flex-col items-center gap-1 rounded-xl py-2 transition-all active:scale-95 ${
+                    active ? "bg-primary/15 text-primary border border-primary/40" : "text-white/60 border border-transparent hover:bg-primary/5"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" style={{ width: 16, height: 16 }} />
+                  <span className="text-[9px] font-semibold tracking-wide">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
