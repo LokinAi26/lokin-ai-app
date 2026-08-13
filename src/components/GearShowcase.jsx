@@ -59,13 +59,9 @@ const SECTIONS = [
     ],
   },
   {
-    title: "Self-Defense Kit",
+    title: "Driver Alert Gear",
     items: [
-      {
-        variant: "selfdefense",
-        name: "LOKIN Utility Belt",
-        sub: "Mace · Taser · Cutter/Breaker · Panic alarm",
-      },
+      { variant: "delivery", name: "Personal Alert Kit", sub: "Audible alarm · reflective visibility gear" },
     ],
   },
 ];
