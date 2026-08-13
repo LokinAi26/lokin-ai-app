@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
+import { shopifyDemo } from "../../shared/demoCatalog.ts";
 
 /**
  * shopify-catalog — LOKIN Brand Store <-> Shopify Admin REST API integration.
@@ -83,8 +84,11 @@ export default async function (req) {
 
     const domain = secrets.get("SHOPIFY_STORE_DOMAIN");
     const token = secrets.get("SHOPIFY_ACCESS_TOKEN");
+    // Demo/sandbox fallback: when either secret is missing, serve clearly-flagged
+    // sample data so the storefront renders instead of erroring. Add the real
+    // SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN in Settings -> Secrets to go live.
     if (!domain || !token) {
-      return Response.json({ error: "SHOPIFY_STORE_DOMAIN and SHOPIFY_ACCESS_TOKEN must be configured." }, { status: 500 });
+      return Response.json(shopifyDemo(action, payload));
     }
 
     const base = baseUrl(domain);
