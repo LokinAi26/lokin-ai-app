@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
+import QuickJumpRail from "@/components/QuickJumpRail";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
@@ -127,6 +128,7 @@ export default function DriverLayout() {
         </div>
       </nav>
 
+      <QuickJumpRail />
       <GlobalVoiceAssistant />
     </div>
   );
