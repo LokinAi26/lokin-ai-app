@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
+import RouteHeatMap from "@/components/RouteHeatMap";
 
 export default function RoutePlanner() {
   const [origin, setOrigin] = useState("");
@@ -57,6 +58,8 @@ export default function RoutePlanner() {
         </Link>
       </div>
       <p className="text-sm text-white/45 -mt-2">Pick a mode — LOKIN ranks offers for that goal and sequences them by zone.</p>
+
+      <RouteHeatMap />
 
       <div className="flex flex-wrap gap-2">
         {OPTIMIZATION_MODES.map((m) => (
