@@ -2,6 +2,7 @@ import { Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpR
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import PrintfulStore from "@/components/PrintfulStore";
 import GearShowcase from "@/components/GearShowcase";
+import CommerceConnections from "@/components/CommerceConnections";
 
 const PALETTE = [
   { name: "Neon Lime", hex: "#A8FF00", text: "text-black" },
@@ -120,6 +121,9 @@ export default function Brand() {
           ))}
         </div>
       </div>
+
+      {/* Commerce health — live status for Printful, Printify, Shopify and Gmail */}
+      <CommerceConnections />
 
       {/* In-app LOKIN gear collection — categorized mockups */}
       <GearShowcase />
