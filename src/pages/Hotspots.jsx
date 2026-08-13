@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Flame, Crosshair, TrendingUp, MapPin, Navigation } from "lucide-react";
+import { Flame, Crosshair, TrendingUp, MapPin, Navigation, DollarSign, Percent, Activity } from "lucide-react";
 
 const PLATFORMS = [
   { id: "doordash", name: "DoorDash", color: "#FF3008" },
   { id: "ubereats", name: "Uber Eats", color: "#06C167" },
   { id: "gopuff", name: "GoPuff", color: "#9B5DE5" },
   { id: "instacart", name: "Instacart", color: "#43B02A" },
+];
+
+const METRICS = [
+  { id: "earnings", label: "Earnings", unit: "$", icon: DollarSign },
+  { id: "tips", label: "Tips", unit: "%", icon: Percent },
+  { id: "volume", label: "Volume", unit: "", icon: Activity },
 ];
 
 // Hotspot seeds: offsets (degrees) from the live map center + earning attributes.
@@ -25,13 +31,34 @@ const SEEDS = [
   { name: "Greenview Mall", dx: -0.018, dy: -0.018, base: 23, tips: 14, volume: 55, platforms: ["instacart", "doordash"] },
 ];
 
-const DEFAULT_CENTER = [40.7128, -74.006]; // NYC fallback when geolocation is denied
+const DEFAULT_CENTER = [40.7128, -74.006];
 
-function heatColor(perHour) {
-  if (perHour >= 32) return "#FF3B3B";
-  if (perHour >= 28) return "#FF8A00";
-  if (perHour >= 25) return "#FFD200";
+// Color-coded intensity thresholds per metric — red = hottest, lime = coolest.
+const THRESHOLDS = {
+  earnings: [32, 28, 25], // $/hr
+  tips: [22, 18, 15], // %
+  volume: [85, 72, 60], // 0-100
+};
+
+function heatColor(metric, val) {
+  const [red, orange, yellow] = THRESHOLDS[metric];
+  if (val >= red) return "#FF3B3B";
+  if (val >= orange) return "#FF8A00";
+  if (val >= yellow) return "#FFD200";
   return "#A8FF00";
+}
+
+function metricValue(h, metric) {
+  if (metric === "tips") return h.tips;
+  if (metric === "volume") return h.volume;
+  return h.perHour;
+}
+
+function metricDisplay(h, metric) {
+  const v = metricValue(h, metric);
+  if (metric === "earnings") return `$${h.perHour}`;
+  if (metric === "tips") return `${h.tips}%`;
+  return `${h.volume}`;
 }
 
 function haversineMi(a, b) {
@@ -62,7 +89,8 @@ function FlyTo({ target }) {
 
 export default function Hotspots() {
   const [center, setCenter] = useState(DEFAULT_CENTER);
-  const [selected, setSelected] = useState([]); // platform ids; empty = all
+  const [selected, setSelected] = useState([]);
+  const [metric, setMetric] = useState("earnings");
   const [flyTo, setFlyTo] = useState(null);
 
   useEffect(() => {
@@ -88,12 +116,14 @@ export default function Hotspots() {
     return hotspots.filter((h) => h.platforms.some((p) => selected.includes(p)));
   }, [hotspots, selected]);
 
-  const ranked = [...visible].sort((a, b) => b.perHour - a.perHour);
+  const ranked = [...visible].sort((a, b) => metricValue(b, metric) - metricValue(a, metric));
   const routePoints = ranked.slice(0, 5).map((h) => [h.lat, h.lng]);
 
   function togglePlatform(id) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   }
+
+  const activeMetric = METRICS.find((m) => m.id === metric);
 
   return (
     <div className="p-4 space-y-4 pb-8">
@@ -106,6 +136,26 @@ export default function Hotspots() {
           <Flame className="h-4 w-4 text-primary" />
           <span className="text-xs font-bold text-primary">{visible.length} zones</span>
         </div>
+      </div>
+
+      {/* Metric selector — drives heat color + ranking */}
+      <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-black/40 p-1">
+        {METRICS.map((m) => {
+          const on = metric === m.id;
+          const Icon = m.icon;
+          return (
+            <button
+              key={m.id}
+              onClick={() => setMetric(m.id)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all active:scale-95 ${
+                on ? "bg-primary/15 text-primary border border-primary/40 glow-primary" : "text-white/55 border border-transparent"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {m.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Platform filters */}
@@ -142,14 +192,14 @@ export default function Hotspots() {
           {/* Neon green GPS earnings route through the top 5 zones */}
           {routePoints.length >= 2 && (
             <>
-              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 11, opacity: 0.18 }} />
-              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 4, opacity: 0.95, className: "lokin-route" }} />
+              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 12, opacity: 0.2 }} />
+              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 5, opacity: 1, className: "lokin-route" }} />
             </>
           )}
 
           {/* Heat zones — nested translucent circles simulate a radial gradient */}
           {visible.map((h) => {
-            const c = heatColor(h.perHour);
+            const c = heatColor(metric, metricValue(h, metric));
             const r = 16 + h.volume / 8;
             return (
               <span key={h.id}>
@@ -157,7 +207,7 @@ export default function Hotspots() {
                 <CircleMarker center={[h.lat, h.lng]} radius={r * 1.3} pathOptions={{ color: c, fillColor: c, fillOpacity: 0.22, weight: 0 }} />
                 <CircleMarker center={[h.lat, h.lng]} radius={r * 0.7} pathOptions={{ color: c, fillColor: c, fillOpacity: 0.55, weight: 0 }}>
                   <Tooltip direction="top" offset={[0, -4]} className="lokin-tip">
-                    <b>{h.name}</b> · ${h.perHour}/hr
+                    <b>{h.name}</b> · {metricDisplay(h, metric)} {activeMetric.label.toLowerCase()}
                   </Tooltip>
                 </CircleMarker>
               </span>
@@ -171,12 +221,12 @@ export default function Hotspots() {
 
         {/* Legend overlay */}
         <div className="absolute bottom-2 left-2 flex items-center gap-2 rounded-full glass border border-white/10 px-2.5 py-1">
-          <span className="text-[10px] tracking-widest text-white/50 font-display">COOL</span>
+          <span className="text-[10px] tracking-widest text-white/50 font-display">LOW</span>
           <span className="h-2 w-2 rounded-full" style={{ background: "#A8FF00" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FFD200" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF8A00" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF3B3B" }} />
-          <span className="text-[10px] tracking-widest text-white/50 font-display">HOT</span>
+          <span className="text-[10px] tracking-widest text-white/50 font-display">HIGH</span>
         </div>
         <div className="absolute top-2 right-2 flex items-center gap-1.5 rounded-full glass border border-primary/30 px-2.5 py-1">
           <Navigation className="h-3 w-3 text-primary" />
@@ -187,11 +237,11 @@ export default function Hotspots() {
       {/* Zone ranking */}
       <div>
         <div className="text-[11px] tracking-[0.24em] text-white/40 font-display mb-2 flex items-center gap-1.5">
-          <TrendingUp className="h-3.5 w-3.5 text-primary" /> TOP EARNING ZONES
+          <TrendingUp className="h-3.5 w-3.5 text-primary" /> TOP ZONES · BY {activeMetric.label.toUpperCase()}
         </div>
         <div className="space-y-2">
           {ranked.map((h, i) => {
-            const c = heatColor(h.perHour);
+            const c = heatColor(metric, metricValue(h, metric));
             return (
               <button
                 key={h.id}
@@ -221,16 +271,17 @@ export default function Hotspots() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-display font-black text-lg leading-none" style={{ color: c }}>
-                      ${h.perHour}
+                      {metricDisplay(h, metric)}
                     </div>
-                    <div className="text-[9px] tracking-widest text-white/40 font-display">PER HR</div>
+                    <div className="text-[9px] tracking-widest text-white/40 font-display">{activeMetric.label.toUpperCase()}</div>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[10px] text-white/50">
                   <span className="inline-flex items-center gap-1"><Crosshair className="h-3 w-3" /> {h.dist.toFixed(1)} mi</span>
-                  <span>{h.tips}% avg tip</span>
-                  <div className="ml-auto flex items-center gap-1.5 flex-1 max-w-[40%]">
-                    <span className="text-white/40">demand</span>
+                  <span className="text-white/40">${h.perHour}/hr</span>
+                  <span>{h.tips}% tip</span>
+                  <div className="ml-auto flex items-center gap-1.5 flex-1 max-w-[35%]">
+                    <span className="text-white/40">vol</span>
                     <div className="h-1.5 flex-1 rounded-full bg-white/8 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${h.volume}%`, background: c }} />
                     </div>
