@@ -43,7 +43,8 @@ export default async function (req) {
       result.printful = { connected: false, status: r.status, error: r.data?.error?.message || r.data?.error || "Printful check failed" };
     }
   } else {
-    result.printful = { connected: false, error: "PRINTFUL_API_TOKEN missing" };
+    // No real token -> storefront falls back to demo/sandbox data.
+    result.printful = { connected: false, mode: "demo", error: "PRINTFUL_API_TOKEN missing — serving demo data" };
   }
 
   const printifyToken = secrets.get("PRINTIFY_API_TOKEN");
@@ -64,7 +65,7 @@ export default async function (req) {
       result.printify = { connected: false, status: r.status, error: r.data?.message || r.data?.error || "Printify check failed" };
     }
   } else {
-    result.printify = { connected: false, error: "PRINTIFY_API_TOKEN missing" };
+    result.printify = { connected: false, mode: "demo", error: "PRINTIFY_API_TOKEN missing — serving demo data" };
   }
 
   const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
@@ -74,7 +75,7 @@ export default async function (req) {
     .replace(/^https?:\/\//i, "")
     .replace(/\/+$/, "");
   if (shopifyDomain && shopifyToken) {
-    const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
+    const r = await safeJson(`https://${shopifyDomain}/admin/api/2024-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
     });
     if (r.ok) {
@@ -84,7 +85,7 @@ export default async function (req) {
       result.shopify = { connected: false, status: r.status, error: r.data?.errors || r.data?.error || "Shopify check failed" };
     }
   } else {
-    result.shopify = { connected: false, error: "SHOPIFY_STORE_DOMAIN or SHOPIFY_ACCESS_TOKEN missing" };
+    result.shopify = { connected: false, mode: "demo", error: "SHOPIFY credentials missing — serving demo data" };
   }
 
   try {
