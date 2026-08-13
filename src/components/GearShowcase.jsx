@@ -58,6 +58,16 @@ const SECTIONS = [
       { variant: "socks", name: "Moisture-Wicking Socks", sub: "Winter · Thermal" },
     ],
   },
+  {
+    title: "Self-Defense Kit",
+    items: [
+      {
+        variant: "selfdefense",
+        name: "LOKIN Utility Belt",
+        sub: "Mace · Taser · Cutter/Breaker · Panic alarm",
+      },
+    ],
+  },
 ];
 
 export default function GearShowcase() {

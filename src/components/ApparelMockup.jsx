@@ -197,6 +197,54 @@ function Socks({ glyphColor = NEON }) {
   );
 }
 
+function SelfDefenseKit({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* Utility belt — horizontal band */}
+      <rect x="24" y="132" width="192" height="26" rx="6" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="24" y="138" width="192" height="6" fill="hsl(0 0% 0% / 0.45)" />
+      <rect x="100" y="128" width="40" height="34" rx="5" fill="#05080b" stroke="hsl(80 100% 50% / 0.45)" strokeWidth="2" />
+      <g transform="translate(104 132)"><LokinGlyph size={32} /></g>
+
+      {/* Mace canister — top left */}
+      <rect x="48" y="54" width="26" height="78" rx="7" fill={SWATCH} stroke="hsl(80 100% 50% / 0.4)" strokeWidth="2" />
+      <rect x="48" y="54" width="26" height="18" rx="7" fill="#05080b" stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="56" y="40" width="10" height="16" rx="3" fill="#05080b" stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="52" y="88" width="18" height="6" rx="2" fill={NEON} opacity="0.75" />
+      <text x="61" y="108" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="7" letterSpacing="1" textAnchor="middle">MACE</text>
+
+      {/* Taser — top center */}
+      <rect x="104" y="48" width="30" height="84" rx="8" fill={SWATCH} stroke="hsl(80 100% 50% / 0.4)" strokeWidth="2" />
+      <rect x="104" y="48" width="30" height="22" rx="8" fill="#05080b" stroke="hsl(0 84% 60% / 0.6)" strokeWidth="2" />
+      <path d="M112 48 V36 L118 30 M126 48 V36 L120 30" stroke={NEON} strokeWidth="2" fill="none" />
+      <circle cx="119" cy="28" r="3" fill={NEON} />
+      <circle cx="119" cy="74" r="9" fill="#05080b" stroke={NEON} strokeWidth="1.8" />
+      <path d="M115 74 H123 M119 70 V78" stroke={NEON} strokeWidth="1.6" />
+      <text x="119" y="116" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="7" letterSpacing="1" textAnchor="middle">TASER</text>
+
+      {/* Seatbelt cutter / window breaker — top right */}
+      <rect x="164" y="56" width="28" height="76" rx="7" fill={SWATCH} stroke="hsl(80 100% 50% / 0.4)" strokeWidth="2" />
+      <rect x="164" y="56" width="28" height="20" rx="7" fill="#05080b" stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      {/* blade */}
+      <path d="M172 56 V44 L178 38 L184 44 V56 Z" fill={NEON} opacity="0.85" stroke="hsl(80 100% 50% / 0.5)" strokeWidth="1.2" />
+      {/* window breaker tip */}
+      <circle cx="178" cy="124" r="6" fill="#05080b" stroke={NEON} strokeWidth="2" />
+      <text x="178" y="108" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="6" letterSpacing="0.5" textAnchor="middle">CUT/BREAK</text>
+
+      {/* Panic alarm — bottom dangling */}
+      <circle cx="120" cy="200" r="20" fill={SWATCH} stroke="hsl(0 84% 60% / 0.6)" strokeWidth="2" />
+      <circle cx="120" cy="200" r="13" fill="#05080b" stroke={NEON} strokeWidth="1.8" />
+      <circle cx="120" cy="200" r="4" fill={NEON} />
+      {/* sound waves */}
+      <path d="M146 188 Q156 200 146 212" fill="none" stroke="hsl(0 84% 60% / 0.7)" strokeWidth="2" />
+      <path d="M154 182 Q168 200 154 218" fill="none" stroke="hsl(0 84% 60% / 0.5)" strokeWidth="2" />
+      {/* keychain ring */}
+      <circle cx="120" cy="158" r="7" fill="none" stroke="hsl(0 0% 100% / 0.35)" strokeWidth="3" />
+      <line x1="120" y1="165" x2="120" y2="180" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="2" />
+    </svg>
+  );
+}
+
 const VARIANTS = {
   tee: Tee,
   hoodie: Hoodie,
@@ -211,6 +259,7 @@ const VARIANTS = {
   seatcushion: SeatCushion,
   massagecover: MassageCover,
   socks: Socks,
+  selfdefense: SelfDefenseKit,
 };
 
 export default function ApparelMockup({ variant = "tee", className = "" }) {
