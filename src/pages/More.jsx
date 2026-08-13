@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -27,6 +27,7 @@ const GROUPS = [
     label: "Smart Tools",
     items: [
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
+      { to: "/shop-deliver", icon: ShoppingBag, title: "Shop & Deliver Map", desc: "Route map for shop & deliver orders", color: "text-primary" },
       { to: "/categories", icon: SlidersHorizontal, title: "Work Filters", desc: "Delivery types & preferences", color: "text-accent" },
       { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Customers, stores & locations", color: "text-destructive" },
     ],

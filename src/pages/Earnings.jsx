@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Cell, Tooltip } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Tooltip } from "recharts";
 import { Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
@@ -133,9 +133,9 @@ export default function Earnings() {
       </div>
 
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Net {RANGES.find((r) => r.value === range)?.label}</div>
-        <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${net.toFixed(0)}</div>
-        <div className="text-xs text-white/45 mt-2">gross ${gross.toFixed(0)} · fuel ${fuel.toFixed(2)}</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Gross Earnings {RANGES.find((r) => r.value === range)?.label}</div>
+        <div className="text-5xl font-bold font-display metal-text leading-none mt-1">${gross.toFixed(2)}</div>
+        <div className="text-xs text-white/45 mt-2">{trips} trips · {miles.toFixed(0)} mi · fuel ${fuel.toFixed(2)}</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -152,21 +152,23 @@ export default function Earnings() {
 
       <div className="rounded-3xl border border-white/10 lokin-panel p-4">
         <div className="text-sm font-semibold text-white/80 mb-2">Daily earnings</div>
-        <div className="h-44 -mx-2">
+        <div className="h-48 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chart} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
+            <LineChart data={chart} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} interval={range === "month" ? 4 : 0} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
-              <Tooltip cursor={{ fill: "hsl(0 0% 100% / 0.05)" }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
+              <Tooltip cursor={{ stroke: "hsl(80 100% 50% / 0.4)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
               {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(80 100% 50%)" strokeDasharray="4 4" />}
-              <Bar dataKey="value" radius={[5, 5, 0, 0]} maxBarSize={range === "month" ? 14 : 42}>
-                {chart.map((d, i) => (
-                  <Cell key={i} fill={d.value >= dailyGoal ? "#A8FF00" : "hsl(80 100% 50% / 0.45)"} />
-                ))}
-              </Bar>
-            </BarChart>
+              <Line type="monotone" dataKey="value" stroke="#A8FF00" strokeWidth={3} dot={{ r: 3, fill: "#A8FF00" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.8))" }} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-5">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/70">Net Earnings</div>
+        <div className="text-4xl font-bold font-display text-primary text-glow leading-none mt-1">${net.toFixed(2)}</div>
+        <div className="text-xs text-white/45 mt-2">after fuel · ${netPerHour.toFixed(0)}/hr</div>
       </div>
 
       <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-4">
