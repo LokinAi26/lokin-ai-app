@@ -1,0 +1,45 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "phone",
+        "supplies",
+        "equipment",
+        "fuel",
+        "maintenance",
+        "insurance",
+        "parking",
+        "tolls",
+        "meals",
+        "software",
+        "other"
+      ],
+      "default": "other"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "deductible": {
+      "type": "boolean",
+      "default": true
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "amount",
+    "category",
+    "date"
+  ]
+}

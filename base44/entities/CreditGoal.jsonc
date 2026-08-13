@@ -1,0 +1,27 @@
+{
+  "name": "CreditGoal",
+  "type": "object",
+  "properties": {
+    "current_score": {
+      "type": "number"
+    },
+    "goal_score": {
+      "type": "number"
+    },
+    "utilization_pct": {
+      "type": "number"
+    },
+    "on_time_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

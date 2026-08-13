@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -11,6 +11,7 @@ const GROUPS = [
       { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Mystery shops & food reviews", color: "text-primary" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history & invoices", color: "text-white/60" },
       { to: "/hotspots", icon: Flame, title: "Hot Spots", desc: "Heat map of high-paying zones", color: "text-primary" },
+      { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mile tracker, deductions & AI advisor", color: "text-primary" },
     ],
   },
   {

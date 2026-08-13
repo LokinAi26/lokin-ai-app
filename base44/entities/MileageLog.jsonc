@@ -1,0 +1,35 @@
+{
+  "name": "MileageLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "miles": {
+      "type": "number"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "business",
+        "personal",
+        "medical",
+        "charitable",
+        "moving"
+      ],
+      "default": "business"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "deduction": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "miles",
+    "date"
+  ]
+}
