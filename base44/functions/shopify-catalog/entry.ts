@@ -29,7 +29,7 @@ import { shopifyDemo } from "../../shared/demoCatalog.ts";
  * Docs: https://shopify.dev/docs/api/admin-rest
  */
 
-const API_VERSION = "2024-07";
+const API_VERSION = "2026-07";
 const VALID_ACTIONS = ["shop", "products", "product", "catalog", "orders", "order", "createProduct"];
 
 function baseUrl(domain) {
