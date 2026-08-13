@@ -45,7 +45,7 @@ export default function Brand() {
         <div className="absolute inset-0 brand-grid opacity-20" />
         <div className="relative">
           <div className="flex h-28 w-28 items-center justify-center rounded-full border border-primary/30 bg-black glow-primary">
-            <LokinGlyph size={72} className="lokin-spin" />
+            <LokinGlyph size={72} className="lokin-pulse" />
           </div>
           <h2 className="mt-5 font-display text-3xl font-black leading-[1.05] tracking-tight text-white">
             EVERY DRIVER<br /><span className="text-primary text-glow">NEEDS A LOCK.</span>

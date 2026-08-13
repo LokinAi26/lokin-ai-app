@@ -177,6 +177,13 @@ body {
   .lokin-streak {
     animation: lokin-streak 0.6s linear infinite;
   }
+  .lokin-pulse {
+    animation: lokin-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes lokin-pulse {
+    0%, 100% { filter: drop-shadow(0 0 3px hsl(80 100% 50% / 0.35)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 16px hsl(80 100% 50% / 0.85)); transform: scale(1.06); }
+  }
   @keyframes lokin-spin {
     to { transform: rotate(360deg); }
   }
