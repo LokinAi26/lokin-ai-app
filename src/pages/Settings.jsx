@@ -7,6 +7,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import CommerceCredentials from "@/components/CommerceCredentials";
 
 export default function Settings() {
   const [prefs, setPrefs] = useState(null);
@@ -130,6 +131,8 @@ export default function Settings() {
       <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2 select-none">
         {saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save settings</>}
       </button>
+
+      <CommerceCredentials />
 
       <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-1">
