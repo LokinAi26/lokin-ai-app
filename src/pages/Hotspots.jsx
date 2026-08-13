@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Flame, Crosshair, TrendingUp, MapPin, Navigation, DollarSign, Percent, Activity } from "lucide-react";
+import ZoneAlertMonitor from "@/components/ZoneAlertMonitor";
 
 const PLATFORMS = [
   { id: "doordash", name: "DoorDash", color: "#FF3008" },
@@ -181,6 +182,9 @@ export default function Hotspots() {
           </button>
         )}
       </div>
+
+      {/* Live zone-entry alerts */}
+      <ZoneAlertMonitor zones={hotspots} />
 
       {/* Map */}
       <div className="relative rounded-3xl border border-primary/20 overflow-hidden glow-border">
