@@ -8,6 +8,7 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import CommerceCredentials from "@/components/CommerceCredentials";
+import InventoryMonitor from "@/components/InventoryMonitor";
 
 export default function Settings() {
   const [prefs, setPrefs] = useState(null);
@@ -133,6 +134,8 @@ export default function Settings() {
       </button>
 
       <CommerceCredentials />
+
+      <InventoryMonitor />
 
       <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-1">
