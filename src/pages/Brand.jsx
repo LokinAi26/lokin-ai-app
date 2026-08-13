@@ -125,7 +125,14 @@ export default function Brand() {
       {/* Commerce health — live status for Printful, Printify, Shopify and Gmail */}
       <CommerceConnections />
 
-      {/* In-app LOKIN gear collection — categorized mockups */}
+      {/* In-app LOKIN gear collection — every card represents an individual sellable product */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4">
+        <div className="text-[11px] tracking-[0.22em] text-primary/80 font-display">PRINT-ON-DEMAND READY</div>
+        <div className="mt-1 text-sm font-bold text-white">Individual Product Catalog</div>
+        <p className="mt-1 text-xs leading-relaxed text-white/50">
+          Each item below is separated as its own product so artwork, mockups, variants, pricing, and fulfillment can be managed independently in Printful or Printify.
+        </p>
+      </div>
       <GearShowcase />
 
       {/* Live Printful store — auto-resolves store ID & pulls every product/price */}
@@ -147,7 +154,7 @@ export default function Brand() {
       </a>
 
       <div className="text-center text-[10px] tracking-[0.24em] text-white/30 pt-2">
-        LOKIN AI BRAND SYSTEM · LOCK IN. MAKE MORE.
+        LOKIN AI BRAND SYSTEM · LOCK IN. LEVEL UP.
       </div>
     </div>
   );
