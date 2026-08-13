@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
+import { jsonRequest } from "../../shared/printRequest.ts";
 
 // Printful store catalog & order integration for the LOKIN Brand Store.
 // The PRINTFUL_API_TOKEN is read server-side only and never returned to the client.
@@ -11,27 +12,18 @@ const VALID_ACTIONS = ["store", "stores", "products", "product", "availability",
 async function pfGet(path, token, storeId) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   if (storeId) headers["X-PF-Store-Id"] = String(storeId);
-  const res = await fetch(`${API}${path}`, { headers });
-  let body;
-  try { body = await res.json(); } catch { body = null; }
-  if (!res.ok) {
-    const msg = body?.error?.message || body?.error || `Printful request failed (${res.status})`;
-    return { ok: false, status: res.status, error: msg };
-  }
-  return { ok: true, code: body?.code, result: body?.result, paging: body?.paging, extras: body?.extras };
+  const r = await jsonRequest({ url: `${API}${path}`, headers });
+  if (!r.ok) return { ok: false, status: r.status, error: r.error };
+  const d = r.data || {};
+  return { ok: true, code: d.code, result: d.result, paging: d.paging, extras: d.extras };
 }
 
 async function pfPost(path, token, storeId, body) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   if (storeId) headers["X-PF-Store-Id"] = String(storeId);
-  const res = await fetch(`${API}${path}`, { method: "POST", headers, body: JSON.stringify(body) });
-  let b;
-  try { b = await res.json(); } catch { b = null; }
-  if (!res.ok) {
-    const msg = b?.error?.message || b?.error || `Printful request failed (${res.status})`;
-    return { ok: false, status: res.status, error: msg };
-  }
-  return { ok: true, code: b?.code, result: b?.result };
+  const r = await jsonRequest({ url: `${API}${path}`, method: "POST", headers, body });
+  if (!r.ok) return { ok: false, status: r.status, error: r.error };
+  return { ok: true, code: r.data?.code, result: r.data?.result };
 }
 
 export default async function (req) {
