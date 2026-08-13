@@ -1,0 +1,64 @@
+{
+  "auth": "oauth",
+  "tools": {
+    "functions": [
+      {
+        "name": "check_commerce_health",
+        "title": "Check commerce credentials status",
+        "description": "Reports the live connection status for Printful, Printify, Shopify and Gmail — which API secrets are configured, which resolve to a real store/shop, and which are in demo/sandbox fallback mode. Call this to verify the commerce integration configuration before testing catalog or order flows.",
+        "input_schema": { "type": "object", "properties": {}, "required": [] },
+        "handler": "commerce-health",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "read_printify_catalog",
+        "title": "Read Printify catalog",
+        "description": "Reads the LOKIN Printify store. Pass action 'shops' to list shops, 'catalog' (with shop_id) for the enriched product catalog with min/max prices, or 'product' (with shop_id + id) for a single product's variants. Returns demo-flagged sample data when the real PRINTIFY_API_TOKEN is not configured.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: shops, products, product, catalog. Read-only storefront reads." },
+            "shop_id": { "type": "string", "description": "Printify shop id; required for products/product/catalog. Use the id returned by the 'shops' action." },
+            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
+            "limit": { "type": "number", "description": "Max products for 'catalog'; 1–200, defaults to 200." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printify-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "read_shopify_catalog",
+        "title": "Read Shopify catalog",
+        "description": "Reads the LOKIN Shopify store. Pass action 'shop' for store info, 'catalog' for the enriched product list with min/max prices, or 'product' (with id) for a single product's variants. Returns demo-flagged sample data when SHOPIFY_STORE_DOMAIN or SHOPIFY_ACCESS_TOKEN is not configured.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: shop, products, product, catalog. Read-only storefront reads." },
+            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
+            "limit": { "type": "number", "description": "Max products for 'products'/'catalog'; 1–250, defaults to 50/250." }
+          },
+          "required": ["action"]
+        },
+        "handler": "shopify-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "read_printful_catalog",
+        "title": "Read Printful catalog",
+        "description": "Reads the LOKIN Printful store. Pass action 'store' for the resolved store info, 'products' (with store_id) for the product list, or 'product' (with store_id + id) for a single product's variants and pricing. The real PRINTFUL_API_TOKEN is already configured.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: store, products, product, catalog. Read-only storefront reads." },
+            "store_id": { "type": "string", "description": "Printful store id; required for products/product/catalog. Use the id from the 'store' action." },
+            "id": { "type": "string", "description": "Product id; required for the 'product' action." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      }
+    ]
+  }
+}
