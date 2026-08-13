@@ -159,6 +159,10 @@ body {
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .leaflet-container { background: #050608; font-family: var(--font-body); }
+  .lokin-route { filter: drop-shadow(0 0 6px rgba(168, 255, 0, 0.85)); }
+  .leaflet-tooltip.lokin-tip { background: rgba(5, 6, 8, 0.92); border: 1px solid rgba(168, 255, 0, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
+  .leaflet-tooltip.lokin-tip::before { display: none; }
   @keyframes ticker-scroll {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }

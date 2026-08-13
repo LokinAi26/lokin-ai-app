@@ -24,6 +24,7 @@ import Pricing from './pages/Pricing';
 import ThankYou from './pages/ThankYou';
 import Support from './pages/Support';
 import GigTasks from './pages/GigTasks';
+import Hotspots from './pages/Hotspots';
 import Receipts from './pages/Receipts';
 import VehicleCare from './pages/VehicleCare';
 import Safety from './pages/Safety';
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/support" element={<Support />} />
           <Route path="/gigs" element={<GigTasks />} />
+          <Route path="/hotspots" element={<Hotspots />} />
           <Route path="/receipts" element={<Receipts />} />
           <Route path="/vehicle-care" element={<VehicleCare />} />
           <Route path="/safety" element={<Safety />} />
