@@ -1,6 +1,7 @@
 import { Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight } from "lucide-react";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import PrintfulStore from "@/components/PrintfulStore";
+import GearShowcase from "@/components/GearShowcase";
 
 const PALETTE = [
   { name: "Neon Lime", hex: "#A8FF00", text: "text-black" },
@@ -119,6 +120,9 @@ export default function Brand() {
           ))}
         </div>
       </div>
+
+      {/* In-app LOKIN gear collection — categorized mockups */}
+      <GearShowcase />
 
       {/* Live Printful store — auto-resolves store ID & pulls every product/price */}
       <PrintfulStore storeId={PRINTFUL_STORE_ID} limit={200} />

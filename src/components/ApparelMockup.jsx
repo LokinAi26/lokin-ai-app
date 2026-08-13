@@ -134,6 +134,69 @@ function Tote({ glyphColor = NEON }) {
   );
 }
 
+function CupHolder({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <path d="M40 112 H200 L190 200 H50 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="40" y="100" width="160" height="22" rx="6" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <circle cx="86" cy="84" r="26" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <circle cx="154" cy="84" r="26" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
+      <circle cx="86" cy="84" r="15" fill="#020303" />
+      <circle cx="154" cy="84" r="15" fill="#020303" />
+      <g transform="translate(96 146)">
+        <LokinGlyph size={48} />
+      </g>
+      <text x="122" y="194" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">CARRIER</text>
+    </svg>
+  );
+}
+
+function SeatCushion({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <rect x="38" y="120" width="164" height="72" rx="16" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <path d="M50 120 V72 Q50 58 64 58 H176 Q190 58 190 72 V120 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <line x1="120" y1="62" x2="120" y2="118" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
+      <line x1="58" y1="152" x2="182" y2="152" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
+      <g transform="translate(96 72)">
+        <LokinGlyph size={46} />
+      </g>
+      <text x="122" y="180" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">CUSHION</text>
+    </svg>
+  );
+}
+
+function MassageCover({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <path d="M50 124 V74 Q50 58 66 58 H174 Q190 58 190 74 V124 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="38" y="124" width="164" height="66" rx="16" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <circle cx="86" cy="92" r="7" fill="#05080b" stroke={NEON} strokeWidth="1.5" />
+      <circle cx="154" cy="92" r="7" fill="#05080b" stroke={NEON} strokeWidth="1.5" />
+      <circle cx="86" cy="156" r="7" fill="#05080b" stroke={NEON} strokeWidth="1.5" />
+      <circle cx="154" cy="156" r="7" fill="#05080b" stroke={NEON} strokeWidth="1.5" />
+      <g transform="translate(96 70)">
+        <LokinGlyph size={40} />
+      </g>
+      <text x="122" y="182" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">VIBRO</text>
+    </svg>
+  );
+}
+
+function Socks({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      <path d="M96 40 H142 V122 Q142 134 152 140 L180 160 Q190 168 190 184 V198 Q190 210 178 210 H104 Q92 210 92 198 V178 Q92 170 84 164 L66 152 Q56 146 56 134 V52 Q56 40 70 40 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
+      <rect x="96" y="50" width="46" height="8" fill={NEON} opacity="0.75" />
+      <rect x="96" y="62" width="46" height="5" fill="hsl(0 0% 100% / 0.25)" />
+      <g transform="translate(72 92)">
+        <LokinGlyph size={34} />
+      </g>
+      <text x="124" y="194" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">WICK</text>
+    </svg>
+  );
+}
+
 const VARIANTS = {
   tee: Tee,
   hoodie: Hoodie,
@@ -144,6 +207,10 @@ const VARIANTS = {
   pizza: PizzaBag,
   tote: Tote,
   shiesty: Shiesty,
+  cupholder: CupHolder,
+  seatcushion: SeatCushion,
+  massagecover: MassageCover,
+  socks: Socks,
 };
 
 export default function ApparelMockup({ variant = "tee", className = "" }) {

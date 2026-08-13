@@ -6,7 +6,7 @@ import { secrets } from "base44:runtime";
 // Docs: https://developers.printful.com (Store API)
 
 const API = "https://api.printful.com";
-const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog"];
+const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog", "warehouse", "createProduct"];
 
 async function pfGet(path, token, storeId) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -19,6 +19,19 @@ async function pfGet(path, token, storeId) {
     return { ok: false, status: res.status, error: msg };
   }
   return { ok: true, code: body?.code, result: body?.result, paging: body?.paging, extras: body?.extras };
+}
+
+async function pfPost(path, token, storeId, body) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  if (storeId) headers["X-PF-Store-Id"] = String(storeId);
+  const res = await fetch(`${API}${path}`, { method: "POST", headers, body: JSON.stringify(body) });
+  let b;
+  try { b = await res.json(); } catch { b = null; }
+  if (!res.ok) {
+    const msg = b?.error?.message || b?.error || `Printful request failed (${res.status})`;
+    return { ok: false, status: res.status, error: msg };
+  }
+  return { ok: true, code: b?.code, result: b?.result };
 }
 
 export default async function (req) {
@@ -34,7 +47,7 @@ export default async function (req) {
     }
 
     // Orders and store info are admin-only (sensitive fulfillment/billing data)
-    if ((action === "orders" || action === "order" || action === "store") && user.role !== "admin") {
+    if ((action === "orders" || action === "order" || action === "store" || action === "createProduct") && user.role !== "admin") {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
@@ -249,6 +262,49 @@ export default async function (req) {
       );
       const products = detailed.filter(Boolean);
       return Response.json({ products, storeId, count: products.length });
+    }
+
+    // ----- Printful warehouse catalog (blank products + variant ids) -----
+    if (action === "warehouse") {
+      const offset = Math.max(0, Number(payload.offset) || 0);
+      const limit = Math.min(100, Math.max(1, Number(payload.limit) || 50));
+      const r = await pfGet(`/products?offset=${offset}&limit=${limit}`, token, "");
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      const products = (r.result || []).map((p) => ({
+        id: p.id,
+        type: p.type,
+        brand: p.brand,
+        model: p.model,
+        name: `${p.brand} ${p.model}`,
+        image: p.image,
+        variants: p.variants,
+      }));
+      return Response.json({ products, paging: r.paging });
+    }
+
+    // ----- Create a sync product in the LOKIN Printful store -----
+    // Requires a Printful warehouse blank variant_id + retail price; a design
+    // file URL is optional (omit to create a blank product, then add art in Printful).
+    if (action === "createProduct") {
+      const name = String(payload.name || "").trim();
+      const variantId = Number(payload.variant_id);
+      const retailPrice = String(payload.retail_price || "").trim();
+      const fileUrl = String(payload.file_url || "").trim();
+      if (!name || !variantId || !retailPrice) {
+        return Response.json({ error: "name, variant_id, and retail_price are required." }, { status: 400 });
+      }
+      const syncVariant = { variant_id: variantId, retail_price: retailPrice };
+      if (fileUrl) {
+        syncVariant.files = [{ url: fileUrl, type: "default", placement: payload.placement || "front" }];
+      }
+      const r = await pfPost(`/store/products`, token, storeId, {
+        sync_product: { name },
+        sync_variants: [syncVariant],
+      });
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({
+        product: { id: r.result?.id, name: r.result?.name, external_id: r.result?.external_id },
+      });
     }
 
     // ----- Store info -----
