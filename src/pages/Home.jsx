@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, TrendingUp, Gauge, Fuel as FuelIcon, MapPin, Play, ChevronRight, Brain, Power, Truck } from "lucide-react";
+import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -21,28 +21,10 @@ function greeting() {
   return "Good evening";
 }
 
-function GoalDial({ pct }) {
-  const r = 34;
-  const circ = 2 * Math.PI * r;
-  const dash = (Math.min(100, pct) / 100) * circ;
-  return (
-    <div className="relative h-20 w-20 shrink-0">
-      <svg viewBox="0 0 100 100" className="h-20 w-20 -rotate-90">
-        <circle cx="50" cy="50" r={r} stroke="hsl(0 0% 100% / 0.08)" strokeWidth="6" fill="none" />
-        <circle cx="50" cy="50" r={r} stroke="hsl(80 100% 50%)" strokeWidth="6" fill="none"
-          strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} style={{ filter: "drop-shadow(0 0 5px hsl(80 100% 50% / 0.8))" }} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-base font-bold font-display text-primary text-glow leading-none">{pct}%</span>
-        <span className="text-[8px] uppercase tracking-wider text-white/40">goal</span>
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const [prefs, setPrefs] = useState(null);
   const [data, setData] = useState(null);
+  const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
   const [showType, setShowType] = useState(false);
@@ -84,7 +66,10 @@ export default function Home() {
     }
   }
 
-  useEffect(() => { loadCommand(); }, []);
+  useEffect(() => {
+    loadCommand();
+    base44.auth.me().then(setMe).catch(() => {});
+  }, []);
 
   const dailyGoal = prefs?.daily_goal || 150;
   const today = data?.todayEarnings || 0;
@@ -95,6 +80,7 @@ export default function Home() {
   const fuel = data?.stats?.fuel || 0;
   const working = prefs?.work_status === "working";
   const role = getRoleMeta(prefs?.user_type);
+  const firstName = (me?.full_name?.split(" ")[0]) || role.short;
 
   return (
     <PullToRefresh onRefresh={loadCommand}>
@@ -110,37 +96,45 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Profile + streak */}
       <div>
-        <div className="text-xs text-white/45">{greeting()}.</div>
-        <h1 className="text-2xl font-bold font-heading metal-text">{role.homeTitle}</h1>
+        <div className="text-xs text-white/45">{greeting()},</div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold font-heading metal-text">{firstName}</h1>
+          {working && <span className="text-lg leading-none" title="Locked-in streak">🔥</span>}
+        </div>
       </div>
 
       <Ticker />
 
-      {/* Earnings + goal hero */}
+      {/* Today's Goal hero — linear progress to match the design target */}
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Today&apos;s Earnings</div>
-            <div className="text-5xl font-bold font-display metal-text leading-none mt-1">${today.toFixed(0)}</div>
-          </div>
-          <GoalDial pct={pct} />
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Today&apos;s Goal</div>
+          <div className="text-sm font-bold text-primary">${dailyGoal}</div>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-white/8 overflow-hidden">
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div>
+            <div className="text-5xl font-bold font-display metal-text leading-none">${today.toFixed(2)}</div>
+            <div className="text-[11px] text-white/45 mt-1">earned</div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-primary text-glow leading-none">${remaining.toFixed(2)}</div>
+            <div className="text-[11px] text-white/45 mt-1">remaining</div>
+          </div>
+        </div>
+        <div className="mt-3 h-2.5 rounded-full bg-white/10 overflow-hidden">
           <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 10px hsl(80 100% 50% / 0.7)" }} />
         </div>
-        <div className="mt-2 flex items-center justify-between text-[11px]">
-          <span className="text-white/45">Goal ${dailyGoal}</span>
-          <span className="font-semibold text-primary">${remaining.toFixed(0)} to go</span>
-        </div>
+        <div className="mt-1.5 text-right text-[11px] text-white/40">{pct}% of goal</div>
       </div>
 
-      {/* Stat grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatTile icon={Gauge} label="Net / hour" value={`$${netPerHour.toFixed(0)}`} sub={`target $${prefs?.min_per_hour || 22}`} accent />
-        <StatTile icon={MapPin} label="Miles" value={`${miles.toFixed(0)} mi`} sub="route est." />
-        <StatTile icon={FuelIcon} label="Fuel cost" value={`$${fuel.toFixed(2)}`} sub={`@ $${prefs?.gas_price || 3.45}/gal`} />
-        <StatTile icon={TrendingUp} label="Status" value={working ? "LOCKED IN" : "Off"} sub={working ? "working" : "tap start"} accent={working} />
+      {/* Stat row — Net/hr · Miles · Fuel */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatTile icon={Gauge} label="Net / hr" value={`$${netPerHour.toFixed(0)}`} accent />
+        <StatTile icon={MapPin} label="Miles" value={`${miles.toFixed(0)}`} />
+        <StatTile icon={FuelIcon} label="Fuel" value={`$${fuel.toFixed(2)}`} />
       </div>
 
       {/* Lock In Score */}
@@ -204,7 +198,7 @@ export default function Home() {
       <AwarenessBanner />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
-        ONE APP. EVERY MILE. UNLOCK YOUR POTENTIAL.
+        ONE APP. EVERY GIG. MAXIMUM EARNINGS.
       </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
@@ -218,14 +212,13 @@ export default function Home() {
   );
 }
 
-function StatTile({ icon: Icon, label, value, sub, accent }) {
+function StatTile({ icon: Icon, label, value, accent }) {
   return (
     <div className="rounded-2xl border border-white/10 lokin-panel p-3.5">
       <div className="flex items-center gap-1.5 text-[11px] text-white/45">
         <Icon className="h-3.5 w-3.5 text-primary" /> {label}
       </div>
       <div className={`text-xl font-bold mt-1 font-display ${accent ? "text-primary text-glow" : "text-white"}`}>{value}</div>
-      <div className="text-[11px] text-white/40">{sub}</div>
     </div>
   );
 }
