@@ -97,6 +97,17 @@
     "daily_hours_goal": {
       "type": "number",
       "default": 8
+    },
+    "stock_alert_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "stock_alert_threshold": {
+      "type": "number",
+      "default": 5
+    },
+    "stock_alert_email": {
+      "type": "string"
     }
   }
 }
