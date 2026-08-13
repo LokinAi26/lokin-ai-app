@@ -6,6 +6,14 @@ import ApparelMockup from "@/components/ApparelMockup";
 // shown here as the LOKIN collection and created in Printful where supported.
 const SECTIONS = [
   {
+    title: "Core Apparel",
+    items: [
+      { variant: "tee", name: "LOKIN AI Tee", sub: "Signature lockup · Individual product" },
+      { variant: "hoodie", name: "LOKIN AI Hoodie", sub: "Signature lockup · Individual product" },
+      { variant: "cap", name: "LOKIN AI Cap", sub: "Embroidered-look lock mark" },
+    ],
+  },
+  {
     title: "Winter Headgear",
     items: [{ variant: "shiesty", name: "LOKIN Balaclava", sub: "Fleece · One size" }],
   },
@@ -42,12 +50,14 @@ const SECTIONS = [
     items: [
       { variant: "cupholder", name: "Cup Carrier", sub: "2-cup" },
       { variant: "cupholder", name: "Cup Carrier", sub: "4-cup" },
+      { variant: "cupholder", name: "Cup Carrier", sub: "6-cup" },
     ],
   },
   {
     title: "Seat Comfort",
     items: [
       { variant: "seatcushion", name: "Driver Seat Cushion", sub: "Mesh · breathable" },
+      { variant: "seatcushion", name: "Lumbar Support Cushion", sub: "Driver back support" },
       { variant: "massagecover", name: "Massage Seat Cover", sub: "Vibration nodes" },
     ],
   },
@@ -59,9 +69,11 @@ const SECTIONS = [
     ],
   },
   {
-    title: "Driver Alert Gear",
+    title: "Driver Safety & Alert Gear",
     items: [
-      { variant: "delivery", name: "Personal Alert Kit", sub: "Audible alarm · reflective visibility gear" },
+      { variant: "delivery", name: "Personal Safety Alarm", sub: "High-volume audible alert · keychain-ready" },
+      { variant: "delivery", name: "Emergency Escape Tool", sub: "Seatbelt cutter · window breaker" },
+      { variant: "delivery", name: "Reflective Driver Kit", sub: "Visibility gear for roadside stops" },
     ],
   },
 ];
