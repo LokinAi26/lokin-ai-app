@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "printful_shipment_notifier",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "notify_shipped": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "printful-shipped-notifier",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Email shipped-order customers",
+            "description": "Polls Printful, emails new shipments via Gmail"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Printful Shipment Notifier",
+  "description": "Polls Printful every 10 minutes for newly shipped orders and emails each customer a shipping confirmation via the connected Gmail account.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/10 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
