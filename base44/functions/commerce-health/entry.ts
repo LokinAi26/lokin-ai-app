@@ -32,11 +32,13 @@ export default async function (req) {
     });
     if (r.ok) {
       const stores = Array.isArray(r.data?.result) ? r.data.result : [];
-      result.printful = {
-        connected: true,
-        store_count: stores.length,
-        store: stores[0] ? { id: stores[0].id, name: stores[0].name, type: stores[0].type } : null,
-      };
+      result.printful = stores.length
+        ? {
+            connected: true,
+            store_count: stores.length,
+            store: { id: stores[0].id, name: stores[0].name, type: stores[0].type },
+          }
+        : { connected: false, store_count: 0, error: "Printful token works, but no store is attached to it." };
     } else {
       result.printful = { connected: false, status: r.status, error: r.data?.error?.message || r.data?.error || "Printful check failed" };
     }
@@ -51,11 +53,13 @@ export default async function (req) {
     });
     if (r.ok) {
       const shops = Array.isArray(r.data) ? r.data : [];
-      result.printify = {
-        connected: true,
-        shop_count: shops.length,
-        shop: shops[0] ? { id: shops[0].id, title: shops[0].title, sales_channel: shops[0].sales_channel } : null,
-      };
+      result.printify = shops.length
+        ? {
+            connected: true,
+            shop_count: shops.length,
+            shop: { id: shops[0].id, title: shops[0].title, sales_channel: shops[0].sales_channel },
+          }
+        : { connected: false, shop_count: 0, error: "Printify token works, but no shop is attached to it." };
     } else {
       result.printify = { connected: false, status: r.status, error: r.data?.message || r.data?.error || "Printify check failed" };
     }
@@ -63,8 +67,12 @@ export default async function (req) {
     result.printify = { connected: false, error: "PRINTIFY_API_TOKEN missing" };
   }
 
-  const shopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
+  const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
   const shopifyToken = secrets.get("SHOPIFY_ACCESS_TOKEN");
+  const shopifyDomain = String(rawShopifyDomain || "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/\/+$/, "");
   if (shopifyDomain && shopifyToken) {
     const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
