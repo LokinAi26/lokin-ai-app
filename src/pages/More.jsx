@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -20,6 +20,7 @@ const GROUPS = [
       { to: "/on-the-road", icon: Truck, title: "On The Road", desc: "Truck stops, rest areas & RV parks", color: "text-accent" },
       { to: "/fuel", icon: FuelIcon, title: "Gas Discounts", desc: "Weekly codes & cashback", color: "text-accent" },
       { to: "/vehicle-care", icon: Wrench, title: "Vehicle Care", desc: "Maintenance & mechanic finder", color: "text-primary" },
+      { to: "/connectivity", icon: Satellite, title: "Stay Linked", desc: "Satellite & signal connectivity", color: "text-accent" },
     ],
   },
   {

@@ -32,6 +32,7 @@ import Safety from './pages/Safety';
 import BreakTime from './pages/BreakTime';
 import OnTheRoad from './pages/OnTheRoad';
 import Awareness from './pages/Awareness';
+import Connectivity from './pages/Connectivity';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -91,6 +92,7 @@ const AuthenticatedApp = () => {
           <Route path="/break-time" element={<BreakTime />} />
           <Route path="/on-the-road" element={<OnTheRoad />} />
           <Route path="/awareness" element={<Awareness />} />
+          <Route path="/connectivity" element={<Connectivity />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />
