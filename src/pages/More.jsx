@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -17,6 +17,7 @@ const GROUPS = [
   {
     label: "Road & Shopping",
     items: [
+      { to: "/5g", icon: Signal, title: "5G Signal Boost", desc: "Enhanced cellular connectivity", color: "text-primary" },
       { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops, rest areas & road tools", color: "text-accent" },
       { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts, cashback & costs", color: "text-accent" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },

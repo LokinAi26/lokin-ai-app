@@ -38,6 +38,7 @@ import AiGps from './pages/AiGps';
 import Connect from './pages/Connect';
 import Opportunities from './pages/Opportunities';
 import Showcase from './pages/Showcase';
+import FiveG from './pages/FiveG';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -103,6 +104,7 @@ const AuthenticatedApp = () => {
           <Route path="/connect" element={<Connect />} />
           <Route path="/opportunities" element={<Opportunities />} />
           <Route path="/showcase" element={<Showcase />} />
+          <Route path="/5g" element={<FiveG />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />
