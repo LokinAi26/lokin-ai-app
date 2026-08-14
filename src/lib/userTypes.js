@@ -5,7 +5,7 @@ export const USER_TYPES = [
     label: "Delivery Driver",
     short: "Driver",
     emoji: "🛵",
-    tagline: "Lock in. Make more.",
+    tagline: "Lock in. Level up.",
     homeTitle: "Command Center",
     accent: "primary",
   },
