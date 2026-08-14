@@ -19,6 +19,7 @@ const GROUPS = [
     items: [
       { to: "/5g", icon: Signal, title: "5G Signal Boost", desc: "Enhanced cellular connectivity", color: "text-primary" },
       { to: "/active-delivery", icon: Package, title: "Active Delivery", desc: "Live order, status & auto-updates", color: "text-primary" },
+      { to: "/driver-dispatch", icon: Truck, title: "Merchant Pickups", desc: "Accept pilot pickup offers & lock into GPS", color: "text-primary" },
       { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops, rest areas & road tools", color: "text-accent" },
       { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts, cashback & costs", color: "text-accent" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
