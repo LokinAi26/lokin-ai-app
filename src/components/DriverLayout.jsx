@@ -6,6 +6,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
 import QuickJumpRail from "@/components/QuickJumpRail";
+import CommandEngine from "@/components/CommandEngine";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
@@ -41,6 +42,7 @@ export default function DriverLayout() {
   const navigate = useNavigate();
   const [working, setWorking] = useState(false);
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
+  const [cmdOpen, setCmdOpen] = useState(false);
   const isNested = NESTED_PATHS.includes(loc.pathname);
   const currentTab = pathToTab(loc.pathname);
 
@@ -74,7 +76,7 @@ export default function DriverLayout() {
               <span className="text-sm font-medium text-white/80">Back</span>
             </button>
           ) : (
-            <button onClick={() => handleTabClick("home")} aria-label="LOKIN AI home" className="flex items-center gap-1.5 select-none">
+            <button onClick={() => setCmdOpen(true)} aria-label="LOKIN command engine" className="flex items-center gap-1.5 select-none">
               <LokinGlyph size={20} />
               <span className="font-display font-extrabold tracking-[0.22em] text-sm">
                 <span className="metal-text">L</span>
@@ -129,6 +131,7 @@ export default function DriverLayout() {
       </nav>
 
       <QuickJumpRail />
+      <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }
