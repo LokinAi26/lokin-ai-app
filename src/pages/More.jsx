@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -39,6 +39,7 @@ const GROUPS = [
       { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals, vehicle & preferences", color: "text-primary" },
       { to: "/support", icon: Headphones, title: "AI Support", desc: "Help, bugs & billing", color: "text-accent" },
       { to: "/connect", icon: Plug, title: "AI Connections", desc: "ChatGPT, Claude & Cursor", color: "text-accent" },
+      { to: "/showcase", icon: Smartphone, title: "App Showcase", desc: "See the full LOKIN vision", color: "text-primary" },
     ],
   },
 ];
