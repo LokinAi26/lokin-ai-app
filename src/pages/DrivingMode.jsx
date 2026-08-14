@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Navigation, MapPin, Clock, DollarSign, Check, Radar, Flag, RefreshCw } from "lucide-react";
+import { Navigation, MapPin, Clock, DollarSign, Check, Radar, Flag, RefreshCw, ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import DriveMusicPlayer from "@/components/DriveMusicPlayer";
@@ -175,6 +176,10 @@ export default function DrivingMode() {
               <Check className="h-4 w-4" /> Arrived
             </button>
           </div>
+          <Link to="/active-delivery" className="flex items-center justify-between rounded-2xl border border-primary/25 bg-primary/[0.06] px-3 py-2.5 active:scale-[0.99] transition-transform">
+            <span className="text-xs font-semibold text-primary">Open Active Delivery</span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-primary" />
+          </Link>
         </div>
       ) : loading ? (
         <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
