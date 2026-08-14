@@ -27,6 +27,7 @@ export const COMMAND_GROUPS = [
     label: "Earn & Optimize",
     commands: [
       { id: "gigs", title: "Gig Opportunities", subtitle: "Extra paid field tasks", icon: Briefcase, keywords: ["task", "work", "shop"], run: (n) => n("/gigs") },
+      { id: "opportunities", title: "Opportunity Scan", subtitle: "Weekly Hampton Roads courier jobs", icon: Radar, keywords: ["hampton", "roads", "courier", "job", "cannabis", "alcohol", "w2", "1099"], run: (n) => n("/opportunities") },
       { id: "hotspots", title: "Predictive Hotspots", subtitle: "Stronger earning zones", icon: Flame, keywords: ["zone", "heat", "busy"], run: (n) => n("/hotspots") },
       { id: "tax", title: "Tax Engine", subtitle: "Mileage & deductions", icon: Calculator, keywords: ["deduction", "irs", "write off"], run: (n) => n("/tax") },
       { id: "receipts", title: "Receipts", subtitle: "Purchase history", icon: Receipt, keywords: ["invoice", "spend"], run: (n) => n("/receipts") },

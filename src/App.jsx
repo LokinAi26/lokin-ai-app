@@ -36,6 +36,7 @@ import Connectivity from './pages/Connectivity';
 import ShopDeliver from './pages/ShopDeliver';
 import AiGps from './pages/AiGps';
 import Connect from './pages/Connect';
+import Opportunities from './pages/Opportunities';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -99,6 +100,7 @@ const AuthenticatedApp = () => {
           <Route path="/shop-deliver" element={<ShopDeliver />} />
           <Route path="/ai-gps" element={<AiGps />} />
           <Route path="/connect" element={<Connect />} />
+          <Route path="/opportunities" element={<Opportunities />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />

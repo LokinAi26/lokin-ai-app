@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -7,6 +7,7 @@ const GROUPS = [
   {
     label: "Earn & Optimize",
     items: [
+      { to: "/opportunities", icon: Radar, title: "Opportunity Scan", desc: "Weekly Hampton Roads courier jobs", color: "text-primary" },
       { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Extra paid work & field tasks", color: "text-primary" },
       { to: "/hotspots", icon: Flame, title: "Predictive Hotspots", desc: "Find stronger earning zones", color: "text-primary" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage, deductions & estimates", color: "text-primary" },

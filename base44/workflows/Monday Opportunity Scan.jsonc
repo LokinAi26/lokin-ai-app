@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "monday_opportunity_scan",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "scan": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "scanOpportunities",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Hampton Roads scan",
+            "description": "Web scan for new delivery & courier opportunities"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * 1",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Monday Opportunity Scan",
+  "description": "Every Monday morning, scans Hampton Roads for newly available delivery & courier opportunities (gig apps, W-2, 1099, medical, package, legal cannabis & alcohol delivery) and stores them in OpportunityScan."
+}

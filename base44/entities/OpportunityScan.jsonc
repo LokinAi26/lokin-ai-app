@@ -1,0 +1,83 @@
+{
+  "name": "OpportunityScan",
+  "type": "object",
+  "properties": {
+    "scan_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the scan ran."
+    },
+    "region": {
+      "type": "string",
+      "default": "Hampton Roads"
+    },
+    "title": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "gig_app",
+        "w2_driver",
+        "courier_1099",
+        "medical_courier",
+        "package_courier",
+        "cannabis_delivery",
+        "alcohol_delivery",
+        "other"
+      ],
+      "default": "other"
+    },
+    "role_type": {
+      "type": "string",
+      "enum": [
+        "personal_car",
+        "cargo_van",
+        "box_truck",
+        "any"
+      ],
+      "default": "any"
+    },
+    "pay": {
+      "type": "string",
+      "description": "Publicly listed pay, e.g. $25/hr, $200/day, per-delivery."
+    },
+    "pay_amount": {
+      "type": "number",
+      "description": "Normalized hourly/daily dollar figure for sorting (best estimate)."
+    },
+    "employment_type": {
+      "type": "string",
+      "description": "W-2, 1099, gig, contract, etc."
+    },
+    "vehicle_requirements": {
+      "type": "string"
+    },
+    "qualifications": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "apply_url": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_new": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}
