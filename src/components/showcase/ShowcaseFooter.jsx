@@ -60,7 +60,7 @@ export default function ShowcaseFooter() {
             <div className="text-left"><div className="text-[8px] text-white/50 leading-none">Get it on</div><div className="text-xs font-semibold text-white leading-tight">Google Play</div></div>
           </div>
         </div>
-        <div className="mt-5 font-display text-sm tracking-[0.28em] text-primary text-glow">LOCK IN. MAKE MORE.</div>
+        <div className="mt-5 font-display text-sm tracking-[0.28em] text-primary text-glow">LOCK IN. LEVEL UP.</div>
         <div className="mt-1 text-[10px] tracking-[0.2em] text-white/30">ONE APP. EVERY MILE. EVERY DRIVER. EVERY TRIP.</div>
       </div>
     </section>
