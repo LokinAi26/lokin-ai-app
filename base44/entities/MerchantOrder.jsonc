@@ -1,0 +1,129 @@
+{
+  "name": "MerchantOrder",
+  "type": "object",
+  "properties": {
+    "merchant_id": {
+      "type": "string"
+    },
+    "merchant_user_id": {
+      "type": "string"
+    },
+    "customer_reference": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "non_controlled",
+        "tobacco_nicotine",
+        "alcohol",
+        "cannabis_future"
+      ],
+      "default": "non_controlled"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready_for_pickup",
+        "driver_requested",
+        "driver_assigned",
+        "picked_up",
+        "delivered",
+        "refused",
+        "returned",
+        "canceled"
+      ],
+      "default": "draft"
+    },
+    "pickup_address": {
+      "type": "string"
+    },
+    "dropoff_address": {
+      "type": "string"
+    },
+    "sealed_order_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "id_check_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "assigned_driver_user_id": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "merchant_id",
+    "category",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.merchant_user_id": "{{user.id}}"
+        },
+        {
+          "data.assigned_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.merchant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.merchant_user_id": "{{user.id}}"
+        },
+        {
+          "data.assigned_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.merchant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
