@@ -34,13 +34,13 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
-    --primary: 80 100% 50%;
+    --primary: 80 100% 50%; /* LOKIN Neon Lime master: #AAFF00 */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 92%;
     --muted: 240 6% 11%;
     --muted-foreground: 220 10% 55%;
-    --accent: 188 95% 50%;
+    --accent: 188 95% 50%; /* LOKIN AI Cyan master: #06D9F9 */
     --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -75,13 +75,13 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
-    --primary: 80 100% 50%;
+    --primary: 80 100% 50%; /* LOKIN Neon Lime master: #AAFF00 */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 92%;
     --muted: 240 6% 11%;
     --muted-foreground: 220 10% 55%;
-    --accent: 188 95% 50%;
+    --accent: 188 95% 50%; /* LOKIN AI Cyan master: #06D9F9 */
     --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
