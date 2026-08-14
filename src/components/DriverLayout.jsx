@@ -4,7 +4,7 @@ import { Home, Route as RouteIcon, BarChart3, Menu, ChevronLeft } from "lucide-r
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
-import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
+
 import QuickJumpRail from "@/components/QuickJumpRail";
 
 const NESTED_PATHS = [
@@ -129,7 +129,6 @@ export default function DriverLayout() {
       </nav>
 
       <QuickJumpRail />
-      <GlobalVoiceAssistant />
     </div>
   );
 }
