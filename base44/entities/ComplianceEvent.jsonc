@@ -1,0 +1,90 @@
+{
+  "name": "ComplianceEvent",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "merchant_id": {
+      "type": "string"
+    },
+    "delivery_reference": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "age_check",
+        "id_verified",
+        "id_failed",
+        "pickup_custody",
+        "handoff",
+        "refusal",
+        "return_to_merchant",
+        "incident"
+      ],
+      "default": "age_check"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "refused",
+        "returned",
+        "not_applicable"
+      ],
+      "default": "not_applicable"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audit_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "category",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
