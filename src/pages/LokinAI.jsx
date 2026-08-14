@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
+import VoiceWaveform from "@/components/VoiceWaveform";
 
 const QUICK = [
   "What should I do next?",
@@ -145,6 +146,7 @@ export default function LokinAI() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent/40 bg-accent/10 glow-cyan mb-4">
               <LokinGlyph size={36} />
             </div>
+            <VoiceWaveform active={listening} className="mb-3" />
             <div className="text-sm text-white/60">Say <span className="text-accent font-semibold">“Hey LOKIN…”</span></div>
             <div className="text-xs text-white/40 mt-1">or tap a quick command below.</div>
           </div>
@@ -161,6 +163,7 @@ export default function LokinAI() {
             </div>
           </div>
         ))}
+        {listening && <div className="flex items-center gap-2 pl-1"><VoiceWaveform active bars={7} /><span className="text-xs text-accent">Listening…</span></div>}
         {busy && <div className="text-xs text-accent/70 pl-1 flex items-center gap-1"><Radio className="h-3 w-3 animate-pulse" /> LOKIN is thinking…</div>}
 
         {draft && (

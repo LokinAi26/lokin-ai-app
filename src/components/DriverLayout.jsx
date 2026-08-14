@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Route as RouteIcon, BarChart3, Menu, ChevronLeft } from "lucide-react";
+import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
@@ -30,7 +30,7 @@ function pathToTab(path) {
 }
 
 const NAV = [
-  { key: "home", label: "Home", icon: Home },
+  { key: "home", label: "Delivery", icon: Truck },
   { key: "route", label: "Route", icon: RouteIcon },
   { key: "lokin", label: "LOKIN", icon: LokinGlyph, center: true },
   { key: "earnings", label: "Earnings", icon: BarChart3 },

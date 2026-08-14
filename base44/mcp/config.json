@@ -58,6 +58,34 @@
         },
         "handler": "printful-catalog",
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "optimize_route",
+        "title": "Optimize delivery route",
+        "description": "Runs LOKIN's route optimizer for the signed-in driver. Pass mode (fastest, most_profit, most_money, goal_mode, low_stress, minimum_mileage, homeward). Returns the ranked stop sequence, route stats (miles, gross, fuel, net, $/hr), today's earnings, and the Lock In Score.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "description": "Optimization mode", "default": "most_profit" }
+          },
+          "required": []
+        },
+        "handler": "optimizeRoute",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "ask_lokin",
+        "title": "Ask the LOKIN AI assistant",
+        "description": "Asks the LOKIN AI voice assistant a question or request on behalf of the signed-in driver (e.g. 'what should I do next', 'tell my customer I'm 5 min away'). Returns a short reply and, for customer-comms requests, a drafted message to confirm sending.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "command": { "type": "string", "description": "The driver's question or request." }
+          },
+          "required": ["command"]
+        },
+        "handler": "lokinAssistant",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       }
     ]
   }

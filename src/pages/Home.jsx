@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3 } from "lucide-react";
+import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3, Package, Activity } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -131,10 +131,11 @@ export default function Home() {
       </div>
 
       {/* Stat row — Net/hr · Miles · Fuel */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatTile icon={Gauge} label="Net / hr" value={`$${netPerHour.toFixed(0)}`} accent />
+      <div className="grid grid-cols-4 gap-2.5">
+        <StatTile icon={Gauge} label="Net/HR" value={`$${netPerHour.toFixed(0)}`} accent />
+        <StatTile icon={Activity} label="Active" value={working ? "ON" : "OFF"} accent={working} />
+        <StatTile icon={Package} label="Orders" value={`${data?.stats?.stops ?? 0}`} />
         <StatTile icon={MapPin} label="Miles" value={`${miles.toFixed(0)}`} />
-        <StatTile icon={FuelIcon} label="Fuel" value={`$${fuel.toFixed(2)}`} />
       </div>
 
       {/* Futuristic command deck — consolidated shortcuts inspired by the LOKIN concept screens */}
