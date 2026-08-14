@@ -43,6 +43,7 @@ import ActiveDelivery from './pages/ActiveDelivery';
 import Certified from './pages/Certified';
 import MerchantHub from './pages/MerchantHub';
 import ComplianceHandoff from './pages/ComplianceHandoff';
+import MerchantPortal from './pages/MerchantPortal';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -113,6 +114,7 @@ const AuthenticatedApp = () => {
           <Route path="/certified" element={<Certified />} />
           <Route path="/merchant-hub" element={<MerchantHub />} />
           <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
+          <Route path="/merchant-portal" element={<MerchantPortal />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />
