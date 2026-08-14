@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
-import { X, Check, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { X, Check, Lock, Radar, Move } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS } from "@/lib/deliveryLabels";
 
 export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
+  const navigate = useNavigate();
   const [modes, setModes] = useState(prefs?.active_modes || ["delivery"]);
   const [filters, setFilters] = useState(prefs?.work_filters || []);
   const [saving, setSaving] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [focusMode, setFocusMode] = useState("locked");
 
   useEffect(() => {
     if (open) {
       setModes(prefs?.active_modes || ["delivery"]);
       setFilters(prefs?.work_filters || []);
       setLocked(false);
+      setFocusMode("locked");
     }
   }, [open, prefs]);
 
@@ -36,7 +40,10 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       else await base44.entities.DriverPreference.create(data);
       setLocked(true);
       onStarted?.();
-      setTimeout(() => { onClose(); }, 2200);
+      setTimeout(() => {
+        onClose();
+        navigate(focusMode === "locked" ? "/ai-gps?focus=locked" : "/ai-gps?focus=free");
+      }, 1200);
     } finally {
       setSaving(false);
     }
@@ -52,7 +59,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
               <LokinGlyph size={48} />
             </div>
             <div className="font-display text-2xl font-extrabold tracking-[0.15em] text-primary text-glow">YOU&apos;RE LOCKED IN.</div>
-            <div className="text-sm text-white/55 mt-2">Lock in your time. Make more.</div>
+            <div className="text-sm text-white/55 mt-2">{focusMode === "locked" ? "AI GPS launching. Distractions minimized." : "Free roam enabled. Full app access remains available."}</div>
           </div>
         ) : (
           <>
@@ -75,6 +82,22 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
                   </button>
                 );
               })}
+            </div>
+
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-accent/80 mb-2">Lock-In Experience</div>
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              <button onClick={() => setFocusMode("locked")}
+                className={`rounded-2xl border p-3 text-left transition-all ${focusMode === "locked" ? "border-primary bg-primary/10 glow-border" : "border-white/10 bg-white/[0.03]"}`}>
+                <Radar className={`h-5 w-5 mb-2 ${focusMode === "locked" ? "text-primary" : "text-white/40"}`} />
+                <div className="text-sm font-bold text-white">Locked-In GPS</div>
+                <div className="text-[11px] text-white/45 mt-1">Launch straight into distraction-free AI GPS with neon LOKIN route lines.</div>
+              </button>
+              <button onClick={() => setFocusMode("free")}
+                className={`rounded-2xl border p-3 text-left transition-all ${focusMode === "free" ? "border-accent bg-accent/10" : "border-white/10 bg-white/[0.03]"}`}>
+                <Move className={`h-5 w-5 mb-2 ${focusMode === "free" ? "text-accent" : "text-white/40"}`} />
+                <div className="text-sm font-bold text-white">Free Roam</div>
+                <div className="text-[11px] text-white/45 mt-1">Open AI GPS but keep normal navigation and the full app available.</div>
+              </button>
             </div>
 
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-accent/80 mb-2">Work Filters</div>
