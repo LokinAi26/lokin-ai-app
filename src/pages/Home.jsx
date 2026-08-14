@@ -109,119 +109,59 @@ export default function Home() {
         </div>
       </div>
 
-      <Ticker />
-
-      {/* Today's Goal hero — linear progress to match the design target */}
+      {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
         <div className="flex items-center justify-between">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Today&apos;s Goal</div>
-          <div className="text-sm font-bold text-primary">${dailyGoal}</div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-white/55"><Activity className="h-4 w-4 text-primary" /> Today&apos;s Goal</div>
+          <Link to="/goals" className="text-[10px] rounded-full border border-white/10 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
         </div>
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <div>
-            <div className="text-5xl font-bold font-display metal-text leading-none">${today.toFixed(2)}</div>
-            <div className="text-[11px] text-white/45 mt-1">earned</div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary text-glow leading-none">${remaining.toFixed(2)}</div>
-            <div className="text-[11px] text-white/45 mt-1">remaining</div>
-          </div>
+        <div className="mt-2 text-5xl font-extrabold font-display text-primary text-glow">${dailyGoal}</div>
+        <div className="relative mt-4 h-2.5 rounded-full bg-white/10 overflow-visible">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 14px hsl(80 100% 50% / .8)" }} />
+          <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #baff00"}} />
         </div>
-        <div className="mt-3 h-2.5 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 10px hsl(80 100% 50% / 0.7)" }} />
-        </div>
-        <div className="mt-1.5 text-right text-[11px] text-white/40">{pct}% of goal</div>
+        <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
       </div>
 
-      {/* Stat row — Net/hr · Miles · Fuel */}
-      <div className="grid grid-cols-2 gap-2">
-        {[["Net/HR", `$${netPerHour.toFixed(0)}`], ["Active", working ? "ON" : "OFF"], ["Orders", `${data?.stats?.stops ?? 0}`], ["Miles", `${miles.toFixed(0)}`]].map(([k, v]) => (
-          <div key={k} className="rounded-2xl border border-white/8 bg-white/[0.02] py-3 text-center">
-            <div className="text-xl font-bold text-primary">{v}</div>
-            <div className="text-[10px] text-white/40 mt-0.5">{k}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-4 gap-2">
+        {[["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", working ? "ON" : "OFF"], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
       </div>
 
-      {/* Futuristic command deck — consolidated shortcuts inspired by the LOKIN concept screens */}
-      <div className="rounded-3xl border border-primary/20 lokin-panel p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="text-[10px] tracking-[0.22em] text-primary/70 font-display">FUTURISTIC COMMAND DECK</div>
-            <div className="text-sm font-bold text-white">One tap to the tools that make money</div>
-          </div>
-          <Radar className="h-5 w-5 text-primary" />
-        </div>
-        <div className="grid grid-cols-2 gap-2.5">
-          <CommandCard to="/hotspots" icon={Radar} title="Predictive Hotspots" desc="Find stronger zones" />
-          <CommandCard to="/route" icon={Sparkles} title="Smart Route Builder" desc="Optimize every stop" />
-          <CommandCard to="/earnings" icon={TrendingUp} title="Earnings Predictor" desc="See pace and profit" />
-          <CommandCard to="/categories" icon={SlidersHorizontal} title="Work Filters" desc="Choose what you want" />
-          <CommandCard to="/locator" icon={ScanLine} title="Shopping AI" desc="Scan. Find. Get closer." />
-          <CommandCard to="/earnings" icon={BarChart3} title="Performance Insights" desc="Learn what pays" />
-        </div>
-      </div>
-
-      {/* Lock In Score */}
-      {data?.lockInScore && <LockInScore score={data.lockInScore} />}
-
-      {/* Upcoming Google Calendar shifts */}
-      <UpcomingShifts />
-
-      {/* AI recommendation */}
-      <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold mb-2 text-primary">
-          <Sparkles className="h-4 w-4" /> What should I do next?
-        </div>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-white/50">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LOKIN is analyzing your day…
-          </div>
-        ) : data?.briefing ? (
-          <p className="text-sm whitespace-pre-wrap leading-relaxed text-white/80">{data.briefing}</p>
-        ) : (
-          <p className="text-sm text-white/50">{data?.error || "No data yet."}</p>
-        )}
-      </div>
-
-      {/* Start work / locked in */}
+      {/* The lock is the visual center and the single primary action. */}
       {working ? (
-        <div className="space-y-3">
-          <Link to="/lokin" className="block rounded-3xl border border-accent/40 bg-accent/[0.07] p-6 text-center active:scale-[0.99] transition-transform">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-accent/10 glow-cyan">
-              <Brain className="h-7 w-7 text-accent" />
-            </div>
-            <div className="mt-3 font-display text-xl font-extrabold tracking-wider text-accent text-glow-cyan">YOU&apos;RE LOCKED IN.</div>
-            <div className="text-xs text-white/50 mt-1">Open LOKIN AI for hands-free help</div>
-            <div className="mt-2 inline-flex items-center gap-1 text-xs text-white/50">Tap to continue <ChevronRight className="h-3 w-3" /></div>
-          </Link>
-          <button onClick={tapOut}
-            className="w-full rounded-2xl border border-destructive/50 bg-destructive/[0.08] p-4 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
-            style={{ boxShadow: "0 0 16px -4px hsl(0 84% 60% / 0.45)" }}>
-            <Power className="h-4 w-4 text-destructive" />
-            <span className="font-display text-lg font-bold tracking-[0.18em] text-destructive" style={{ textShadow: "0 0 12px hsl(0 84% 60% / 0.55)" }}>TAP OUT</span>
-          </button>
+        <div className="space-y-3 text-center">
+          <Link to="/route" className="block rounded-3xl border border-primary/35 bg-primary/[.06] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : (
-        <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[0.99] transition-transform">
-          <div className="relative h-32 w-32">
-            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-              <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
-              <circle cx="50" cy="50" r="44" fill="none" stroke="#ccff00" strokeWidth="5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 44} strokeDashoffset={2 * Math.PI * 44 * (1 - pct / 100)} className="lokin-route" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center"><LokinGlyph size={52} className="lokin-pulse" /></div>
-          </div>
-          <div className="mt-4 rounded-full bg-primary text-black text-sm font-extrabold tracking-[0.18em] px-7 py-3 glow-primary">START WORK</div>
-          <div className="text-xs text-white/45 mt-2 tracking-wide">LOCK IN. MAKE MORE.</div>
+        <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
+          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(180,255,0,.13),transparent 64%)",boxShadow:"0 0 42px rgba(170,255,0,.12)"}}><LokinGlyph size={112} className="lokin-pulse"/></div>
+          <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">START WORK</div>
+          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">LOCK IN &amp; START EARNING</div>
         </button>
       )}
 
-      <div className="grid grid-cols-4 gap-2.5 pt-1">
-        <QuickLink to="/route" icon={Sparkles} label="Optimize" />
-        <QuickLink to="/on-the-road" icon={Truck} label="On Road" />
-        <QuickLink to="/earnings" icon={TrendingUp} label="Earnings" />
-        <QuickLink to="/more" icon={MapPin} label="More" />
+      <div className="grid grid-cols-4 gap-2">
+        <QuickLink to="/categories" icon={Package} label="Delivery" />
+        <QuickLink to="/locator" icon={ScanLine} label="Shop & Deliver" />
+        <QuickLink to="/route" icon={Truck} label="Rideshare" />
+        <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
       </div>
+
+      <Link to="/lokin" className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[.045] p-3.5 active:scale-[.99] transition-transform">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 glow-primary"><Brain className="h-5 w-5 text-primary"/></div>
+        <div className="min-w-0 flex-1"><div className="text-xs font-bold">LOKIN AI <span className="text-primary">COPILOT</span></div><div className="text-[11px] text-white/45">Your AI copilot is ready.</div></div>
+        <div className="rounded-full border border-white/10 px-3 py-2 text-[10px] text-white/70">TAP TO TALK</div>
+      </Link>
+
+      <div className="rounded-2xl border border-white/8 bg-white/[.02] p-3 flex items-center justify-between gap-3">
+        <div className="text-[11px] text-white/45">AI recommendation</div>
+        <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.briefing || "Ready when you are.")}</div>
+      </div>
+
+      <LockInSequence active={locking} onComplete={handleLockInComplete} />
+      <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
+      <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />
 
       <AwarenessBanner />
 
