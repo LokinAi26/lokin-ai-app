@@ -84,7 +84,7 @@ export default function More() {
       </button>
 
       <div className="text-center text-[11px] tracking-[0.18em] text-white/30 pt-1">
-        LOKIN AI · LOCK IN. MAKE MORE.<br />ONE APP. EVERY MILE. EVERY DRIVER. EVERY TRIP.
+        LOKIN AI · LOCK IN. LEVEL UP.<br />DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>
     </div>
   );
