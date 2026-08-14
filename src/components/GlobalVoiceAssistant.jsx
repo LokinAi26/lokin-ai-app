@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, Radio, X, Volume2, Ear } from "lucide-react";
+import { Mic, Radio, X, Volume2, Ear, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
@@ -20,6 +20,11 @@ const NAV_COMMANDS = [
   { keys: ["settings", "preferences", "goals"], to: "/settings", label: "Opening Settings" },
   { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode"], to: "/drive", label: "Opening Drive Mode" },
 ];
+
+function includesAny(text, phrases) {
+  const t = text.toLowerCase();
+  return phrases.some((p) => t.includes(p));
+}
 
 const MUSIC_ACTIONS = [
   { keys: ["play music", "play driving music", "start music", "play a station", "play some music"], action: "play", label: "Playing your drive music", nav: "/drive" },
@@ -71,6 +76,53 @@ export default function GlobalVoiceAssistant() {
     setBusy(true);
     setTranscript(command);
     setReply("");
+
+    const t = command.toLowerCase();
+    try {
+      const prefsList = await base44.entities.DriverPreference.filter({});
+      const prefs = prefsList[0] || null;
+      const me = await base44.auth.me().catch(() => null);
+
+      if (includesAny(t, ["level up", "start work", "start my shift", "begin work"])) {
+        const next = { work_status: "working" };
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
+        else await base44.entities.DriverPreference.create(next);
+        if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
+        const msg = "Leveling up. You're locked in. AI GPS is ready.";
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 350); setBusy(false); return;
+      }
+
+      if (includesAny(t, ["lock in", "locked in", "focus mode"])) {
+        const msg = "Locked in. Distractions minimized.";
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 300); setBusy(false); return;
+      }
+
+      if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause"])) {
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused" });
+        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
+        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
+        const msg = "Paused. Take your time. Say LOKIN, resume when you're ready to lock back in.";
+        setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
+      }
+
+      if (includesAny(t, ["resume", "resume work", "continue work", "lock back in"])) {
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working" });
+        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
+        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
+        const msg = "Welcome back. Recalculating and locking you back in.";
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 350); setBusy(false); return;
+      }
+
+      if (includesAny(t, ["tap out", "end work", "end my shift", "finish work"])) {
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off" });
+        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
+        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
+        const msg = "You're tapped out. Nice work today. I'll have your recap ready on the home screen.";
+        setReply(msg); speak(msg); setTimeout(() => navigate("/"), 400); setBusy(false); return;
+      }
+    } catch (e) {
+      // fall through to normal assistant handling if a session command fails
+    }
     const music = matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
@@ -263,8 +315,15 @@ export default function GlobalVoiceAssistant() {
                 </span>
               </button>
 
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/25 bg-primary/[0.06] p-2 text-center"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
+                <button onClick={() => handleCommand("pause")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Pause className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">PAUSE</div></button>
+                <button onClick={() => handleCommand("resume")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Play className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">RESUME</div></button>
+                <button onClick={() => handleCommand("tap out")} className="rounded-xl border border-red-500/25 bg-red-500/[0.05] p-2 text-center"><Power className="h-4 w-4 text-red-400 mx-auto"/><div className="text-[9px] text-red-300 mt-1">TAP OUT</div></button>
+              </div>
+
               <div className="mt-2 text-center text-[10px] text-white/35">
-                Hands-free commands: “open earnings”, “find gas”, “play music”, “what should I do next”
+                Try “Level up”, “Lock in”, “Pause”, “Resume”, “Tap out”, “find gas”, or “what should I do next”.
               </div>
             </motion.div>
           </motion.div>
