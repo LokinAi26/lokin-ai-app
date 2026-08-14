@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -38,6 +38,8 @@ const GROUPS = [
     label: "LOKIN System",
     items: [
       { to: "/certified", icon: GraduationCap, title: "LOKIN Certified", desc: "Driver academy & regulated-delivery training", color: "text-primary" },
+      { to: "/merchant-hub", icon: Store, title: "Merchant Hub", desc: "Pilot partners, onboarding & compliance gates", color: "text-primary" },
+      { to: "/compliance-handoff", icon: BadgeCheck, title: "Verified Handoff", desc: "ID check, refusal, return & audit workflow", color: "text-accent" },
       { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Apparel, gear & commerce", color: "text-primary" },
       { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals, vehicle & preferences", color: "text-primary" },
       { to: "/support", icon: Headphones, title: "AI Support", desc: "Help, bugs & billing", color: "text-accent" },
