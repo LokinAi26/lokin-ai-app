@@ -1,0 +1,22 @@
+import { useState } from "react";
+import { ShieldCheck, ScanLine, CheckCircle2, XCircle, RotateCcw, AlertTriangle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+
+export default function ComplianceHandoff(){
+ const [step,setStep]=useState(0); const [status,setStatus]=useState("ready"); const [note,setNote]=useState("");
+ const steps=["Confirm sealed pickup","Verify recipient is present","Check acceptable ID and required age","Confirm lawful handoff","Complete audit record"];
+ async function log(category,result,reason=""){
+  try{const me=await base44.auth.me(); await base44.entities.ComplianceEvent.create({user_id:me?.id||"",category,result,reason,occurred_at:new Date().toISOString(),audit_note:note});}catch{}
+ }
+ async function pass(){await log(step===2?"id_verified":step===0?"pickup_custody":"handoff","pass"); if(step<4)setStep(step+1);else setStatus("complete");}
+ async function refuse(){await log(step===2?"id_failed":"refusal","refused","Verification or lawful-handoff requirement not satisfied");setStatus("refused");}
+ async function returned(){await log("return_to_merchant","returned","Order returned under compliance workflow");setStatus("returned");}
+ return <div className="p-4 space-y-4 pb-8">
+  <div className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-5"><div className="flex gap-2 text-primary"><ShieldCheck className="h-5 w-5"/><span className="text-[11px] tracking-[0.2em] font-display">LOKIN COMPLIANCE</span></div><h1 className="text-3xl font-extrabold font-display metal-text mt-2">Verified Handoff</h1><p className="text-sm text-white/55 mt-2">A guided refusal-safe workflow for categories that legally require additional verification.</p></div>
+  {status==="ready"&&<><div className="rounded-3xl border border-white/10 lokin-panel p-4"><div className="flex items-center justify-between"><div><div className="text-xs text-white/40">STEP {step+1} OF {steps.length}</div><div className="font-bold text-white mt-1">{steps[step]}</div></div><ScanLine className="h-6 w-6 text-primary"/></div><div className="h-1.5 bg-white/5 rounded-full mt-4 overflow-hidden"><div className="h-full bg-primary" style={{width:`${((step+1)/steps.length)*100}%`}}/></div><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Optional compliance note" className="w-full mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm min-h-20 outline-none focus:border-primary/50"/></div><div className="grid grid-cols-2 gap-2"><button onClick={pass} className="rounded-2xl bg-primary text-primary-foreground py-3 font-bold flex items-center justify-center gap-2"><CheckCircle2 className="h-4 w-4"/>PASS</button><button onClick={refuse} className="rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive py-3 font-bold flex items-center justify-center gap-2"><XCircle className="h-4 w-4"/>REFUSE</button></div></>}
+  {status==="complete"&&<div className="rounded-3xl border border-primary/35 bg-primary/[0.07] p-6 text-center"><CheckCircle2 className="h-12 w-12 text-primary mx-auto"/><div className="font-display text-xl font-extrabold text-primary mt-3">HANDOFF VERIFIED</div><div className="text-xs text-white/50 mt-2">Compliance steps completed and audit events recorded.</div></div>}
+  {status==="refused"&&<div className="rounded-3xl border border-destructive/35 bg-destructive/[0.06] p-5"><AlertTriangle className="h-8 w-8 text-destructive"/><div className="font-bold mt-2">Delivery refused</div><div className="text-xs text-white/50 mt-1">Do not leave the regulated order. Follow the merchant return requirement for the applicable category.</div><button onClick={returned} className="mt-4 w-full rounded-2xl border border-white/15 py-3 font-bold flex items-center justify-center gap-2"><RotateCcw className="h-4 w-4"/>CONFIRM RETURN TO MERCHANT</button></div>}
+  {status==="returned"&&<div className="rounded-3xl border border-primary/30 lokin-panel p-6 text-center"><RotateCcw className="h-10 w-10 text-primary mx-auto"/><div className="font-bold mt-2">Return recorded</div><div className="text-xs text-white/50 mt-1">The refusal and return are now part of the compliance audit trail.</div></div>}
+  <div className="text-[11px] text-white/35 text-center">LOKIN does not enable a regulated category unless applicable law, licensing, merchant eligibility and platform compliance requirements are satisfied.</div>
+ </div>;
+}
