@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 
 import QuickJumpRail from "@/components/QuickJumpRail";
 import CommandEngine from "@/components/CommandEngine";
+import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
@@ -133,6 +134,7 @@ export default function DriverLayout() {
 
       {!lockedGps && <QuickJumpRail />}
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
+      <GlobalVoiceAssistant />
     </div>
   );
 }
