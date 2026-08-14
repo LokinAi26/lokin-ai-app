@@ -5,10 +5,10 @@ import GearShowcase from "@/components/GearShowcase";
 import CommerceConnections from "@/components/CommerceConnections";
 
 const PALETTE = [
-  { name: "Neon Lime", hex: "#A8FF00", text: "text-black" },
+  { name: "LOKIN Neon Lime™", hex: "#AAFF00", text: "text-black" },
   { name: "Vault Black", hex: "#000000", text: "text-white" },
   { name: "Carbon", hex: "#0b0f14", text: "text-white" },
-  { name: "Cyan Pulse", hex: "#00E5FF", text: "text-black" },
+  { name: "LOKIN AI Cyan™", hex: "#06D9F9", text: "text-black" },
   { name: "Metal Silver", hex: "#c8ced8", text: "text-black" },
   { name: "Neon Red", hex: "#FF3B3B", text: "text-white" },
 ];
@@ -106,6 +106,24 @@ export default function Brand() {
               <div className="bg-black/60 text-[10px] text-white/55 py-1 text-center">{c.name}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Master identity rule */}
+      <div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-4">
+        <div className="text-[11px] tracking-[0.22em] text-primary font-display">LOKIN MASTER IDENTITY · V1</div>
+        <div className="mt-2 text-sm font-bold text-white">Protect the identity. Keep creativity open.</div>
+        <p className="mt-1 text-xs leading-relaxed text-white/55">
+          Neon Lime is the LOKIN identity/action signal. Black and graphite form the environment. AI Cyan is reserved for intelligence and data. White/silver carries information. Red is reserved for safety, destructive actions, and exceptions.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+          <div className="rounded-xl border border-white/10 bg-black/50 p-2"><span className="text-primary font-bold">NEON LIME</span><div className="text-white/40 mt-0.5">Identity · action · route · active</div></div>
+          <div className="rounded-xl border border-white/10 bg-black/50 p-2"><span className="text-accent font-bold">AI CYAN</span><div className="text-white/40 mt-0.5">AI · analysis · scanning · data</div></div>
+          <div className="rounded-xl border border-white/10 bg-black/50 p-2"><span className="text-white font-bold">GRAPHITE / SILVER</span><div className="text-white/40 mt-0.5">Environment · information</div></div>
+          <div className="rounded-xl border border-red-500/20 bg-black/50 p-2"><span className="text-red-400 font-bold">RED</span><div className="text-white/40 mt-0.5">Safety · Tap Out · exception only</div></div>
+        </div>
+        <div className="mt-3 rounded-xl border border-white/10 bg-black/50 p-3 text-[10px] leading-relaxed text-white/45">
+          Master colors stay fixed. Opacity, glow, gradients, motion, dimensional effects, layouts and future visual treatments remain open to creative evolution.
         </div>
       </div>
 
