@@ -45,6 +45,7 @@ export default function DriverLayout() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const isNested = NESTED_PATHS.includes(loc.pathname);
   const currentTab = pathToTab(loc.pathname);
+  const lockedGps = loc.pathname === "/ai-gps" && new URLSearchParams(loc.search).get("focus") === "locked";
 
   useEffect(() => {
     base44.entities.DriverPreference.filter({}).then((p) => setWorking((p[0] && p[0].work_status) === "working"));
@@ -68,7 +69,7 @@ export default function DriverLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
-      <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
+      {!lockedGps && <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
           {isNested ? (
             <button onClick={() => navigate(TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
@@ -91,9 +92,9 @@ export default function DriverLayout() {
             </span>
           )}
         </div>
-      </header>
+      </header>}
 
-      <main className="flex-1 w-full max-w-md mx-auto px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
+      <main className={`flex-1 w-full max-w-md mx-auto px-0 ${lockedGps ? "pb-[env(safe-area-inset-bottom)]" : "pb-[calc(5.75rem+env(safe-area-inset-bottom))]"}`}>
         <motion.div
           key={loc.pathname}
           initial={{ opacity: 0, x: 16 }}
@@ -104,7 +105,7 @@ export default function DriverLayout() {
         </motion.div>
       </main>
 
-      <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
+      {!lockedGps && <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
         <div className="max-w-md mx-auto grid grid-cols-5">
           {NAV.map(({ key, label, icon: Icon, center }) => {
             const active = currentTab === key;
@@ -128,10 +129,10 @@ export default function DriverLayout() {
             );
           })}
         </div>
-      </nav>
+      </nav>}
 
-      <QuickJumpRail />
-      <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      {!lockedGps && <QuickJumpRail />}
+      {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
     </div>
   );
 }
