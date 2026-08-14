@@ -5,48 +5,39 @@ import PartnerApps from "@/components/PartnerApps";
 
 const GROUPS = [
   {
-    label: "Earn",
+    label: "Earn & Optimize",
     items: [
-      { to: "/route", icon: RouteIcon, title: "AI Route Optimizer", desc: "Sequenced by mode for max $/hr", color: "text-primary" },
-      { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Mystery shops & food reviews", color: "text-primary" },
+      { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Extra paid work & field tasks", color: "text-primary" },
+      { to: "/hotspots", icon: Flame, title: "Predictive Hotspots", desc: "Find stronger earning zones", color: "text-primary" },
+      { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage, deductions & estimates", color: "text-primary" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history & invoices", color: "text-white/60" },
-      { to: "/hotspots", icon: Flame, title: "Hot Spots", desc: "Heat map of high-paying zones", color: "text-primary" },
-      { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mile tracker, deductions & AI advisor", color: "text-primary" },
     ],
   },
   {
-    label: "On The Road",
+    label: "Road & Shopping",
     items: [
-      { to: "/on-the-road", icon: Truck, title: "On The Road", desc: "Truck stops, rest areas & RV parks", color: "text-accent" },
-      { to: "/fuel", icon: FuelIcon, title: "Gas Discounts", desc: "Weekly codes & cashback", color: "text-accent" },
-      { to: "/vehicle-care", icon: Wrench, title: "Vehicle Care", desc: "Maintenance & mechanic finder", color: "text-primary" },
-      { to: "/connectivity", icon: Satellite, title: "Stay Linked", desc: "Satellite & signal connectivity", color: "text-accent" },
-    ],
-  },
-  {
-    label: "Smart Tools",
-    items: [
+      { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops, rest areas & road tools", color: "text-accent" },
+      { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts, cashback & costs", color: "text-accent" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
-      { to: "/shop-deliver", icon: ShoppingBag, title: "Shop & Deliver Map", desc: "Route map for shop & deliver orders", color: "text-primary" },
-      { to: "/categories", icon: SlidersHorizontal, title: "Work Filters", desc: "Delivery types & preferences", color: "text-accent" },
-      { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Customers, stores & locations", color: "text-destructive" },
+      { to: "/shop-deliver", icon: ShoppingBag, title: "Shop & Deliver", desc: "Map and manage shopping runs", color: "text-primary" },
     ],
   },
   {
-    label: "Wellbeing",
+    label: "Control Center",
     items: [
-      { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS, location sharing & contacts", color: "text-destructive" },
-      { to: "/break-time", icon: Coffee, title: "Break Time", desc: "Stream & recharge between gigs", color: "text-primary" },
+      { to: "/categories", icon: SlidersHorizontal, title: "Work Filters", desc: "Choose the work you want", color: "text-accent" },
+      { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Block slow or unwanted stops", color: "text-destructive" },
+      { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS, sharing & emergency tools", color: "text-destructive" },
+      { to: "/break-time", icon: Coffee, title: "Break & Recharge", desc: "Music, reset & recharge", color: "text-primary" },
     ],
   },
   {
-    label: "Account & Support",
+    label: "LOKIN System",
     items: [
-      { to: "/pricing", icon: Crown, title: "Unlock Premium", desc: "Advanced routing & deeper AI", color: "text-primary" },
-      { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "MPG, fuel, goals, mileage cost", color: "text-primary" },
-      { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Brand system & apparel", color: "text-primary" },
-      { to: "/support", icon: Headphones, title: "AI Support Rep", desc: "Get help, report bugs, billing", color: "text-accent" },
-      { to: "/connect", icon: Plug, title: "Connect AI Clients", desc: "Link ChatGPT, Claude & Cursor", color: "text-accent" },
+      { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Apparel, gear & commerce", color: "text-primary" },
+      { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals, vehicle & preferences", color: "text-primary" },
+      { to: "/support", icon: Headphones, title: "AI Support", desc: "Help, bugs & billing", color: "text-accent" },
+      { to: "/connect", icon: Plug, title: "AI Connections", desc: "ChatGPT, Claude & Cursor", color: "text-accent" },
     ],
   },
 ];
