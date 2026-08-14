@@ -15,8 +15,8 @@ const PALETTE = [
 
 const TYPE = [
   { label: "Display", fam: "font-display", sample: "LOKIN", weight: "font-black tracking-widest" },
-  { label: "Heading", fam: "font-heading", sample: "Lock In. Make More.", weight: "font-bold" },
-  { label: "Body", fam: "font-body", sample: "Maximum earnings, every gig.", weight: "font-medium" },
+  { label: "Heading", fam: "font-heading", sample: "LOCK IN. LEVEL UP.", weight: "font-bold" },
+  { label: "Body", fam: "font-body", sample: "Drive safer. Work smarter. Live simpler.", weight: "font-medium" },
 ];
 
 // What LOKIN stands for — base44-style value grid.
@@ -52,8 +52,8 @@ export default function Brand() {
             EVERY DRIVER<br /><span className="text-primary text-glow">NEEDS A LOCK.</span>
           </h2>
           <p className="mt-3 text-sm text-white/60 leading-relaxed max-w-prose">
-            LOKIN AI is the operating system for delivery drivers, long-haul truckers, and road travelers —
-            one app that turns every mile, every gig, and every break into a step toward more.
+            LOKIN AI is an intelligent driver operating system built to make life on the road safer, smarter, and simpler —
+            a hands-free Co-Pilot that helps every mile, every gig, and every break work around the driver.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {["One app", "Every mile", "Every driver", "Every trip"].map((t) => (
