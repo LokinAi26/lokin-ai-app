@@ -5,7 +5,7 @@
 export default function SatelliteView({ status = "online", connected = 4 }) {
   // status: "online" | "weak" | "offline"
   const beamColor =
-    status === "online" ? "#A8FF00" : status === "weak" ? "#FFD200" : "#FF3B3B";
+    status === "online" ? "#AAFF00" : status === "weak" ? "#FFD200" : "#FF3B3B";
   const glow =
     status === "online"
       ? "drop-shadow(0 0 8px rgba(168,255,0,0.85))"

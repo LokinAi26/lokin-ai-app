@@ -12,7 +12,7 @@ const CATEGORIES = [
 export default function LockInScore({ score, compact = false }) {
   const overall = score?.overall ?? 0;
   const breakdown = score?.breakdown || {};
-  const color = overall >= 80 ? "#A8FF00" : overall >= 55 ? "#facc15" : "#f87171";
+  const color = overall >= 80 ? "#AAFF00" : overall >= 55 ? "#facc15" : "#f87171";
   const topLabel = overall >= 90 ? "Top 10% of LOKIN Drivers" : overall >= 80 ? "Top 25% of LOKIN Drivers" : overall >= 70 ? "Top 50% of LOKIN Drivers" : "Keep pushing — you're climbing";
   const r = 52;
   const circ = 2 * Math.PI * r;

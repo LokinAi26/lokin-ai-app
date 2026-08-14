@@ -29,7 +29,7 @@ const CAUSES = [
   },
   {
     name: "Mental Illness",
-    color: "#A8FF00",
+    color: "#AAFF00",
     tagline: "The long haul is heavier in the mind.",
     blurb: "You matter. The isolation of the road is real. Reach out, take breaks, and keep going — LOKIN is with you. You're never driving alone.",
     org: { name: "NAMI", url: "https://www.nami.org" },

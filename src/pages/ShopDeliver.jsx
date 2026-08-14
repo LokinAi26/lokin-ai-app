@@ -94,7 +94,7 @@ export default function ShopDeliver() {
                 <path d={pathD} stroke="hsl(80 100% 50%)" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.9))" }} />
                 {pts.map((p, i) => (
                   <g key={i}>
-                    <circle cx={p[0]} cy={p[1]} r={i === active ? 7 : 5} fill={i === 0 ? "#00E5FF" : "hsl(80 100% 50%)"} stroke="#000" strokeWidth="2" style={{ filter: i === active ? "drop-shadow(0 0 8px hsl(80 100% 50% / 0.9))" : "none" }} />
+                    <circle cx={p[0]} cy={p[1]} r={i === active ? 7 : 5} fill={i === 0 ? "#06D9F9" : "hsl(80 100% 50%)"} stroke="#000" strokeWidth="2" style={{ filter: i === active ? "drop-shadow(0 0 8px hsl(80 100% 50% / 0.9))" : "none" }} />
                     <text x={p[0]} y={p[1] + 1.5} textAnchor="middle" fontSize="6.5" fontWeight="700" fill="#000">{i + 1}</text>
                   </g>
                 ))}

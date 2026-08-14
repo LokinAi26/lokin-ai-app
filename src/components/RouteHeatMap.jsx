@@ -82,8 +82,8 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
           {/* Neon green route through the top-volume zones */}
           {routePoints.length >= 2 && (
             <>
-              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 12, opacity: 0.18 }} />
-              <Polyline positions={routePoints} pathOptions={{ color: "#A8FF00", weight: 5, opacity: 1, className: "lokin-route" }} />
+              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 12, opacity: 0.18 }} />
+              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 5, opacity: 1, className: "lokin-route" }} />
             </>
           )}
 
@@ -105,14 +105,14 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
           })}
 
           {/* Your location */}
-          <CircleMarker center={center} radius={6} pathOptions={{ color: "#A8FF00", fillColor: "#A8FF00", fillOpacity: 1, weight: 2 }} />
-          <CircleMarker center={center} radius={14} pathOptions={{ color: "#A8FF00", fillColor: "#A8FF00", fillOpacity: 0.15, weight: 0 }} />
+          <CircleMarker center={center} radius={6} pathOptions={{ color: "#AAFF00", fillColor: "#AAFF00", fillOpacity: 1, weight: 2 }} />
+          <CircleMarker center={center} radius={14} pathOptions={{ color: "#AAFF00", fillColor: "#AAFF00", fillOpacity: 0.15, weight: 0 }} />
         </MapContainer>
 
         {/* Legend */}
         <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full glass border border-white/10 px-2.5 py-1">
           <span className="text-[9px] tracking-widest text-white/50 font-display">LOW</span>
-          <span className="h-2 w-2 rounded-full" style={{ background: "#A8FF00" }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: "#AAFF00" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FFD200" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF8A00" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF3B3B" }} />

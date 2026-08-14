@@ -100,7 +100,7 @@ export default function Brand() {
         <div className="grid grid-cols-3 gap-2">
           {PALETTE.map((c) => (
             <div key={c.name} className="rounded-xl overflow-hidden border border-white/10">
-              <div className="h-12 flex items-center justify-center text-[10px] font-bold" style={{ background: c.hex, color: c.hex === "#000000" ? "#A8FF00" : undefined }}>
+              <div className="h-12 flex items-center justify-center text-[10px] font-bold" style={{ background: c.hex, color: c.hex === "#000000" ? "#AAFF00" : undefined }}>
                 <span className={c.text}>{c.hex}</span>
               </div>
               <div className="bg-black/60 text-[10px] text-white/55 py-1 text-center">{c.name}</div>

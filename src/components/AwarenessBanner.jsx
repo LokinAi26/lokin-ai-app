@@ -22,7 +22,7 @@ const CAUSES = [
   },
   {
     name: "Mental Illness",
-    color: "#A8FF00",
+    color: "#AAFF00",
     message: "You matter. The long haul is heavier in the mind than the mirrors. Reach out, take breaks, and keep going — LOKIN is with you.",
   },
 ];

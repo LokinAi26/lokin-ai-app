@@ -163,7 +163,7 @@ export default function Earnings() {
               <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
               <Tooltip cursor={{ stroke: "hsl(80 100% 50% / 0.4)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
               {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(80 100% 50%)" strokeDasharray="4 4" />}
-              <Line type="monotone" dataKey="value" stroke="#A8FF00" strokeWidth={3} dot={{ r: 3, fill: "#A8FF00" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.8))" }} />
+              <Line type="monotone" dataKey="value" stroke="#AAFF00" strokeWidth={3} dot={{ r: 3, fill: "#AAFF00" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.8))" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

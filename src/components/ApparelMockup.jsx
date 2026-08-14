@@ -1,7 +1,7 @@
 import { LokinGlyph } from "@/components/Brand";
 
 const SWATCH = "#0b0f14";
-const NEON = "#A8FF00";
+const NEON = "#AAFF00";
 
 function Tee({ glyphColor = NEON }) {
   return (

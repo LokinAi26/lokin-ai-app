@@ -257,7 +257,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
             {playing ? "❚❚" : "▶"}
           </button>
           <input type="range" min={0} max={1} step={0.001} value={time} onChange={(e) => onTime(parseFloat(e.target.value))}
-            className="flex-1 accent-[#00e5ff]" />
+            className="flex-1 accent-[#06d9f9]" />
         </div>
         <div className="mt-2 flex items-center justify-between">
           <button onClick={reroute} className="text-[11px] flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-white/70 active:scale-95">
