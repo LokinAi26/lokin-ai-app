@@ -69,6 +69,10 @@ export default function Earnings() {
   const avgTrip = trips > 0 ? miles / trips : 0;
   const hours = trips * 0.4;
   const netPerHour = hours > 0 ? net / hours : 0;
+  const basePay = filtered.reduce((s, r) => s + (r.base_pay != null ? r.base_pay : (r.tips != null || r.bonuses != null || r.adjustments != null ? 0 : (r.amount || 0))), 0);
+  const tipsTotal = filtered.reduce((s, r) => s + (r.tips || 0), 0);
+  const bonuses = filtered.reduce((s, r) => s + (r.bonuses || 0), 0);
+  const adjustments = filtered.reduce((s, r) => s + (r.adjustments || 0), 0);
   const goalPct = range === "today" ? Math.min(100, Math.round((gross / Math.max(1, dailyGoal)) * 100)) : null;
 
   const byPlatform = useMemo(() => {
@@ -133,9 +137,9 @@ export default function Earnings() {
       </div>
 
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">Gross Earnings {RANGES.find((r) => r.value === range)?.label}</div>
-        <div className="text-5xl font-bold font-display metal-text leading-none mt-1">${gross.toFixed(2)}</div>
-        <div className="text-xs text-white/45 mt-2">{trips} trips · {miles.toFixed(0)} mi · fuel ${fuel.toFixed(2)}</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/80">EARNINGS</div>
+        <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${gross.toFixed(2)}</div>
+        <div className="text-xs text-white/45 mt-2">Gross {RANGES.find((r) => r.value === range)?.label.toLowerCase()} · {trips} trips · {miles.toFixed(0)} mi</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -162,6 +166,18 @@ export default function Earnings() {
               <Line type="monotone" dataKey="value" stroke="#A8FF00" strokeWidth={3} dot={{ r: 3, fill: "#A8FF00" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.8))" }} />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="text-sm font-semibold text-white/80 mb-2">Breakdown</div>
+        <div className="space-y-1.5">
+          {[["Base Pay", basePay], ["Tips", tipsTotal], ["Bonuses", bonuses], ["Adjustments", adjustments]].map(([k, v]) => (
+            <div key={k} className="flex justify-between text-sm">
+              <span className="text-white/45">{k}</span>
+              <span className="text-white font-semibold">${(v || 0).toFixed(2)}</span>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3, Package, Activity } from "lucide-react";
+import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3, Package, Activity, Flame } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -98,11 +98,14 @@ export default function Home() {
       </div>
 
       {/* Profile + streak */}
-      <div>
-        <div className="text-xs text-white/45">{greeting()},</div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold font-heading metal-text">{firstName}</h1>
-          {working && <span className="text-lg leading-none" title="Locked-in streak">🔥</span>}
+      <div className="flex items-center gap-2.5">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center text-black font-bold">{(firstName || "L").charAt(0)}</div>
+        <div>
+          <div className="text-xs text-white/45">{greeting()},</div>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-xl font-bold font-heading metal-text">{firstName}</h1>
+            {working && <Flame className="h-4 w-4 text-orange-400" />}
+          </div>
         </div>
       </div>
 
@@ -131,11 +134,13 @@ export default function Home() {
       </div>
 
       {/* Stat row — Net/hr · Miles · Fuel */}
-      <div className="grid grid-cols-4 gap-2.5">
-        <StatTile icon={Gauge} label="Net/HR" value={`$${netPerHour.toFixed(0)}`} accent />
-        <StatTile icon={Activity} label="Active" value={working ? "ON" : "OFF"} accent={working} />
-        <StatTile icon={Package} label="Orders" value={`${data?.stats?.stops ?? 0}`} />
-        <StatTile icon={MapPin} label="Miles" value={`${miles.toFixed(0)}`} />
+      <div className="grid grid-cols-2 gap-2">
+        {[["Net/HR", `$${netPerHour.toFixed(0)}`], ["Active", working ? "ON" : "OFF"], ["Orders", `${data?.stats?.stops ?? 0}`], ["Miles", `${miles.toFixed(0)}`]].map(([k, v]) => (
+          <div key={k} className="rounded-2xl border border-white/8 bg-white/[0.02] py-3 text-center">
+            <div className="text-xl font-bold text-primary">{v}</div>
+            <div className="text-[10px] text-white/40 mt-0.5">{k}</div>
+          </div>
+        ))}
       </div>
 
       {/* Futuristic command deck — consolidated shortcuts inspired by the LOKIN concept screens */}
@@ -198,13 +203,16 @@ export default function Home() {
           </button>
         </div>
       ) : (
-        <button onClick={startLockIn}
-          className="w-full rounded-3xl glow-border lokin-panel radial-fade p-6 text-center active:scale-[0.99] transition-transform">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-primary/10 glow-primary">
-            <LokinGlyph size={40} />
+        <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[0.99] transition-transform">
+          <div className="relative h-32 w-32">
+            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#ccff00" strokeWidth="5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 44} strokeDashoffset={2 * Math.PI * 44 * (1 - pct / 100)} className="lokin-route" />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center"><LokinGlyph size={52} className="lokin-pulse" /></div>
           </div>
-          <div className="mt-3 font-display text-2xl font-extrabold tracking-[0.15em] text-primary text-glow">START WORK</div>
-          <div className="text-xs text-white/45 mt-1 tracking-wide">LOCK IN. MAKE MORE.</div>
+          <div className="mt-4 rounded-full bg-primary text-black text-sm font-extrabold tracking-[0.18em] px-7 py-3 glow-primary">START WORK</div>
+          <div className="text-xs text-white/45 mt-2 tracking-wide">LOCK IN. MAKE MORE.</div>
         </button>
       )}
 

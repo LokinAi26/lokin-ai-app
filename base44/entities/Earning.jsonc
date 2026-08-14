@@ -9,6 +9,22 @@
     "amount": {
       "type": "number"
     },
+    "base_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "tips": {
+      "type": "number",
+      "default": 0
+    },
+    "bonuses": {
+      "type": "number",
+      "default": 0
+    },
+    "adjustments": {
+      "type": "number",
+      "default": 0
+    },
     "trips": {
       "type": "number",
       "default": 0
