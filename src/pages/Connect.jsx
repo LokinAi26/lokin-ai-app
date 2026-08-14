@@ -127,7 +127,7 @@ export default function Connect() {
       </div>
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30">
-        LOKIN AI · ONE APP. EVERY GIG. MAXIMUM EARNINGS.
+        LOKIN AI · DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>
     </div>
   );

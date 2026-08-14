@@ -61,7 +61,7 @@ export default function ShowcaseFooter() {
           </div>
         </div>
         <div className="mt-5 font-display text-sm tracking-[0.28em] text-primary text-glow">LOCK IN. LEVEL UP.</div>
-        <div className="mt-1 text-[10px] tracking-[0.2em] text-white/30">ONE APP. EVERY MILE. EVERY DRIVER. EVERY TRIP.</div>
+        <div className="mt-1 text-[10px] tracking-[0.2em] text-white/30">DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.</div>
       </div>
     </section>
   );

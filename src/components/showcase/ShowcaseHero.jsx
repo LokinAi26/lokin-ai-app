@@ -17,7 +17,7 @@ export default function ShowcaseHero() {
       <LokinWordmark size={42} />
       <div className="mt-3 font-display text-[11px] tracking-[0.32em] text-primary text-glow">LOCK IN. LEVEL UP.</div>
       <h1 className="mt-5 text-2xl sm:text-4xl font-display font-extrabold metal-text leading-tight">
-        ONE APP. EVERY GIG. MAXIMUM EARNINGS.
+        DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </h1>
       <p className="mt-2 text-sm text-white/50 max-w-md mx-auto">
         The AI operating system for delivery drivers, truckers & road travelers.

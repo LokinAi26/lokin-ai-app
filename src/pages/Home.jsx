@@ -166,7 +166,7 @@ export default function Home() {
       <AwarenessBanner />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
-        ONE APP. EVERY GIG. MAXIMUM EARNINGS.
+        DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
