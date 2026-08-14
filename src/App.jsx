@@ -41,6 +41,8 @@ import Showcase from './pages/Showcase';
 import FiveG from './pages/FiveG';
 import ActiveDelivery from './pages/ActiveDelivery';
 import Certified from './pages/Certified';
+import MerchantHub from './pages/MerchantHub';
+import ComplianceHandoff from './pages/ComplianceHandoff';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -109,6 +111,8 @@ const AuthenticatedApp = () => {
           <Route path="/5g" element={<FiveG />} />
           <Route path="/active-delivery" element={<ActiveDelivery />} />
           <Route path="/certified" element={<Certified />} />
+          <Route path="/merchant-hub" element={<MerchantHub />} />
+          <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} />
