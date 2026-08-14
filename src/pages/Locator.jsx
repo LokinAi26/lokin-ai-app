@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ScanLine, MapPin, Volume2, VolumeX, X, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 
 const STEPS = ["SEARCH", "STORE MAP", "GET CLOSER"];
 
@@ -75,8 +76,9 @@ export default function Locator() {
 
   const intensity = Math.round(100 - distance);
   const activeStep = !result ? 0 : result.found ? (atItem ? 2 : 1) : 0;
-  const item = result?.item || null;
+  const item = result?.item ? normalizeInventoryItem(result.item) : null;
   const stock = stockMeta(item);
+  const freshness = inventoryFreshness(item?.last_inventory_update);
   const [px, py] = derivePoint(item);
 
   return (
@@ -119,7 +121,11 @@ export default function Locator() {
             <span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${stock.cls}`}><Boxes className="inline h-3.5 w-3.5 mr-1"/>{stock.label}</span>
             {item.map_zone && <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60"><Layers3 className="inline h-3.5 w-3.5 mr-1"/>Zone {item.map_zone}</span>}
           </div>
-          {item.last_inventory_update && <div className="mt-2 text-[10px] text-white/35 flex items-center gap-1"><Clock3 className="h-3 w-3"/>Inventory updated {new Date(item.last_inventory_update).toLocaleString()}</div>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/35">
+            <span className="flex items-center gap-1"><Clock3 className="h-3 w-3"/>{freshness.label}</span>
+            <span className={item.inventory_verified ? "text-primary/70" : "text-amber-300/70"}>{item.inventory_verified ? "VERIFIED STORE FEED" : "ESTIMATE / UNVERIFIED"}</span>
+            <span>{item.inventory_source_label}</span>
+          </div>
         </div>
 
         <div className="rounded-3xl border border-primary/20 bg-black overflow-hidden">
@@ -132,7 +138,7 @@ export default function Locator() {
             </div>
             <div className="absolute right-3 top-3 rounded-xl border border-primary/25 bg-black/80 px-3 py-2 text-right"><div className="text-[9px] text-white/40">TARGET</div><div className="text-xs font-bold text-primary">{item.aisle || "?"} · {item.shelf || "?"}</div></div>
           </div>
-          <div className="p-3 text-[10px] text-white/35">Map position uses the store layout feed when available; otherwise LOKIN estimates from aisle/shelf data.</div>
+          <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
         <div className="rounded-3xl border border-white/10 lokin-panel p-5 text-center radial-fade">
