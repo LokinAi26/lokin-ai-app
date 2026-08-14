@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp } from "lucide-react";
+import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import LockInScore from "@/components/LockInScore";
@@ -137,6 +137,25 @@ export default function Home() {
         <StatTile icon={FuelIcon} label="Fuel" value={`$${fuel.toFixed(2)}`} />
       </div>
 
+      {/* Futuristic command deck — consolidated shortcuts inspired by the LOKIN concept screens */}
+      <div className="rounded-3xl border border-primary/20 lokin-panel p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-[10px] tracking-[0.22em] text-primary/70 font-display">FUTURISTIC COMMAND DECK</div>
+            <div className="text-sm font-bold text-white">One tap to the tools that make money</div>
+          </div>
+          <Radar className="h-5 w-5 text-primary" />
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <CommandCard to="/hotspots" icon={Radar} title="Predictive Hotspots" desc="Find stronger zones" />
+          <CommandCard to="/route" icon={Sparkles} title="Smart Route Builder" desc="Optimize every stop" />
+          <CommandCard to="/earnings" icon={TrendingUp} title="Earnings Predictor" desc="See pace and profit" />
+          <CommandCard to="/categories" icon={SlidersHorizontal} title="Work Filters" desc="Choose what you want" />
+          <CommandCard to="/locator" icon={ScanLine} title="Shopping AI" desc="Scan. Find. Get closer." />
+          <CommandCard to="/earnings" icon={BarChart3} title="Performance Insights" desc="Learn what pays" />
+        </div>
+      </div>
+
       {/* Lock In Score */}
       {data?.lockInScore && <LockInScore score={data.lockInScore} />}
 
@@ -228,6 +247,16 @@ function QuickLink({ to, icon: Icon, label }) {
     <Link to={to} className="rounded-2xl border border-white/10 lokin-panel p-3 text-center active:scale-[0.97] transition-transform">
       <Icon className="h-5 w-5 mx-auto text-primary mb-1" />
       <div className="text-xs font-medium text-white/80">{label}</div>
+    </Link>
+  );
+}
+
+function CommandCard({ to, icon: Icon, title, desc }) {
+  return (
+    <Link to={to} className="rounded-2xl border border-white/10 bg-black/25 p-3 active:scale-[0.98] active:border-primary/40 transition-all">
+      <Icon className="h-4 w-4 text-primary mb-2" />
+      <div className="text-xs font-bold text-white leading-tight">{title}</div>
+      <div className="text-[10px] text-white/40 mt-1 leading-tight">{desc}</div>
     </Link>
   );
 }
