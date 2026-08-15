@@ -39,10 +39,12 @@ export function consumeExternalCommandFromLocation() {
   if (!command) return null;
   const payload = {};
   url.searchParams.forEach((value, key) => {
-    if (!["lokinCommand", "source"].includes(key)) payload[key] = value;
+    if (!["lokinCommand", "source", "nonce"].includes(key)) payload[key] = value;
   });
+  const nonce = url.searchParams.get("nonce") || "";
   url.searchParams.delete("lokinCommand");
   url.searchParams.delete("source");
+  url.searchParams.delete("nonce");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  return { command, payload, source: "external" };
+  return { command, payload, nonce, source: "external-link" };
 }
