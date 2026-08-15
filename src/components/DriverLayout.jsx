@@ -11,7 +11,7 @@ import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
-  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road",
+  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver",
 ];
 
 const TAB_ROOTS = {
