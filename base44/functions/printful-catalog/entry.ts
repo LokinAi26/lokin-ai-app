@@ -72,15 +72,42 @@ export default async function (req) {
     // ----- Connection status (works without a token) -----
     if (action === "connection") {
       const conn = await getPrintfulConnection(base44, user.id);
-      const hasPersonal = !!secrets.get("PRINTFUL_API_TOKEN");
+      const personalToken = secrets.get("PRINTFUL_API_TOKEN") || "";
+      const hasPersonal = !!personalToken;
+      const oauthConnected = !!(conn && conn.status !== "disconnected" && conn.access_token);
+
+      let personalConnected = false;
+      let personalStore = null;
+      let personalError = "";
+
+      // Validate the private token against Printful instead of treating mere
+      // secret presence as a successful connection.
+      if (!oauthConnected && hasPersonal) {
+        const probe = await pfGet(`/stores`, personalToken, "");
+        if (probe.ok && Array.isArray(probe.result) && probe.result.length > 0) {
+          personalConnected = true;
+          const s = probe.result[0];
+          personalStore = { id: s.id, name: s.name, type: s.type };
+        } else if (probe.ok) {
+          personalError = "Printful token is valid, but no store is attached to it.";
+        } else {
+          personalError = typeof probe.error === "string"
+            ? probe.error
+            : (probe.error?.message || probe.error?.reason || "Printful rejected the private token.");
+        }
+      }
+
       return Response.json({
-        connected: !!(conn && conn.status !== "disconnected" && conn.access_token),
-        source: conn && conn.access_token ? "oauth" : (hasPersonal ? "personal" : "none"),
+        connected: oauthConnected || personalConnected,
+        source: oauthConnected ? "oauth" : (personalConnected ? "personal" : "none"),
         oauth_configured: oauthConfigured(secrets),
-        store: conn ? { id: conn.store_id, name: conn.store_name, type: conn.store_type } : null,
+        store: oauthConnected
+          ? { id: conn.store_id, name: conn.store_name, type: conn.store_type }
+          : personalStore,
         connected_at: conn?.connected_at || null,
         expires_at: conn?.expires_at || 0,
         has_personal_token: hasPersonal,
+        error: personalError || null,
       });
     }
 

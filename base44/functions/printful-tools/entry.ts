@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { secrets } from "base44:runtime";
 import { getEffectiveToken } from "../../shared/printfulOAuth.ts";
 import { jsonRequest } from "../../shared/printRequest.ts";
 
