@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { ShoppingBag, Navigation, MapPin, Clock, DollarSign, ChevronRight, Package, RefreshCw, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
