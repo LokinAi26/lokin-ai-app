@@ -113,7 +113,7 @@ export default function Home() {
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-white/55"><Activity className="h-4 w-4 text-primary" /> Today&apos;s Goal</div>
-          <Link to="/goals" className="text-[10px] rounded-full border border-white/10 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
+          <Link to="/settings" className="text-[10px] rounded-full border border-white/10 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
         </div>
         <div className="mt-2 text-5xl font-extrabold font-display text-primary text-glow">${dailyGoal}</div>
         <div className="relative mt-4 h-2.5 rounded-full bg-white/10 overflow-visible">
