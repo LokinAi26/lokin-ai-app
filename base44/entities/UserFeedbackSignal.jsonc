@@ -1,0 +1,59 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "surface": {
+      "type": "string"
+    },
+    "feedback_type": {
+      "type": "string",
+      "enum": [
+        "helpful",
+        "not_helpful",
+        "bug",
+        "confusing",
+        "suggestion"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object"
+    },
+    "created_at_client": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "surface",
+    "feedback_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "UserFeedbackSignal"
+}

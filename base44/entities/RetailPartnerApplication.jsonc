@@ -1,0 +1,65 @@
+{
+  "type": "object",
+  "properties": {
+    "business_name": {
+      "type": "string"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "integration_interest": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stores_count": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "reviewing",
+        "approved",
+        "declined"
+      ]
+    },
+    "submitted_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "business_name",
+    "contact_email",
+    "status"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "RetailPartnerApplication"
+}

@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "rollout_percent": {
+      "type": "number"
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "beta",
+        "admin",
+        "merchant",
+        "driver"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "updated_at_client": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "enabled",
+    "audience"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "FeatureFlag"
+}

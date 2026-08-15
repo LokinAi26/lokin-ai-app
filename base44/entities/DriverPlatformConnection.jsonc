@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "platform_name": {
+      "type": "string"
+    },
+    "connection_type": {
+      "type": "string",
+      "enum": [
+        "official_oauth",
+        "partner",
+        "manual",
+        "import"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "connected",
+        "pending",
+        "expired",
+        "disconnected"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_sync_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "platform_name",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverPlatformConnection"
+}

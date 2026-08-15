@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "observation_type": {
+      "type": "string",
+      "enum": [
+        "inventory_seen",
+        "item_found",
+        "aisle_verified",
+        "shelf_verified",
+        "layout_change"
+      ]
+    },
+    "item_key": {
+      "type": "string"
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "quantity_seen": {
+      "type": "number"
+    },
+    "aisle": {
+      "type": "string"
+    },
+    "shelf": {
+      "type": "string"
+    },
+    "map_x": {
+      "type": "number"
+    },
+    "map_y": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "observed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "store_id",
+    "observation_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "StoreObservation"
+}

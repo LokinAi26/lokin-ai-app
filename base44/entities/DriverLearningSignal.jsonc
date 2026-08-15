@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "accepted_recommendation",
+        "dismissed_recommendation",
+        "route_choice",
+        "store_item_found",
+        "substitution",
+        "pause_pattern",
+        "work_pattern",
+        "preference"
+      ]
+    },
+    "feature_key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "object"
+    },
+    "weight": {
+      "type": "number"
+    },
+    "recorded_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "signal_type",
+    "recorded_at"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverLearningSignal"
+}

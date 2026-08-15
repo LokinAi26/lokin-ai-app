@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "declined",
+        "saved",
+        "expired"
+      ]
+    },
+    "score_at_decision": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "opportunity_id",
+    "decision"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "OpportunityDecision"
+}

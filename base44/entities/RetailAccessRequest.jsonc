@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "retailer_name": {
+      "type": "string"
+    },
+    "developer_portal_url": {
+      "type": "string"
+    },
+    "access_type": {
+      "type": "string",
+      "enum": [
+        "public_api",
+        "partner_api",
+        "enterprise",
+        "merchant_authorized",
+        "research"
+      ]
+    },
+    "requested_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "researching",
+        "ready_to_apply",
+        "applied",
+        "approved",
+        "denied",
+        "waitlisted"
+      ]
+    },
+    "owner_notes": {
+      "type": "string"
+    },
+    "last_action_at": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "retailer_name",
+    "access_type",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "RetailAccessRequest"
+}

@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "opportunity_type": {
+      "type": "string",
+      "enum": [
+        "delivery",
+        "courier",
+        "shopping",
+        "rideshare",
+        "route",
+        "merchant_direct"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "pickup_location": {
+      "type": "string"
+    },
+    "dropoff_location": {
+      "type": "string"
+    },
+    "estimated_pay": {
+      "type": "number"
+    },
+    "estimated_miles": {
+      "type": "number"
+    },
+    "estimated_minutes": {
+      "type": "number"
+    },
+    "vehicle_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "partner",
+        "official_api",
+        "manual",
+        "merchant"
+      ]
+    },
+    "source_verified": {
+      "type": "boolean"
+    },
+    "apply_url": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "claimed",
+        "expired"
+      ]
+    }
+  },
+  "required": [
+    "provider",
+    "opportunity_type",
+    "title",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "WorkOpportunity"
+}

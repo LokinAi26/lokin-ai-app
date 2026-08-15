@@ -2,6 +2,10 @@ import { Radar, Move, Lock, Mic, Pause, Power, Navigation, Sparkles, Volume2 } f
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
 
+function voice(command) {
+  window.dispatchEvent(new CustomEvent("lokin:voice-command", { detail: { command } }));
+}
+
 export default function AiGps() {
   const [params] = useSearchParams();
   const locked = params.get("focus") === "locked";
@@ -37,52 +41,33 @@ export default function AiGps() {
 
       {locked && (
         <>
-          <div className="rounded-3xl border border-primary/30 bg-primary/[0.06] p-4 shadow-[0_0_30px_-18px_hsl(80_100%_50%)]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[10px] tracking-[0.2em] text-primary/70">LOKIN COPILOT · LIVE</div>
-                <div className="mt-1 text-sm font-bold text-white">Only what matters, when it matters.</div>
-                <div className="mt-1 text-xs text-white/45">Route changes, earnings pace, customer updates, and safety alerts can surface here without leaving navigation.</div>
-              </div>
+          <div className="rounded-3xl border border-primary/30 bg-primary/[0.055] p-4 shadow-[0_0_30px_-18px_hsl(80_100%_50%)]">
+            <div className="flex items-center gap-3">
               <div className="h-12 w-12 shrink-0 rounded-full border border-primary/40 bg-black/60 flex items-center justify-center glow-primary">
                 <Volume2 className="h-5 w-5 text-primary" />
               </div>
-            </div>
-            <div className="mt-3 rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/65">
-              Say <span className="font-bold text-primary">“Hey LOKIN…”</span> and ask naturally. Example: “What should I do next?”
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center">
-              <Navigation className="mx-auto h-4 w-4 text-primary" />
-              <div className="mt-1 text-[10px] text-white/40">NAVIGATION</div>
-              <div className="text-xs font-bold text-white">ACTIVE</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center">
-              <Sparkles className="mx-auto h-4 w-4 text-primary" />
-              <div className="mt-1 text-[10px] text-white/40">AI COPILOT</div>
-              <div className="text-xs font-bold text-white">WATCHING</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center">
-              <Lock className="mx-auto h-4 w-4 text-primary" />
-              <div className="mt-1 text-[10px] text-white/40">FOCUS</div>
-              <div className="text-xs font-bold text-white">LOCKED</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] tracking-[0.2em] text-primary/70">LOKIN COPILOT · LIVE</div>
+                <div className="mt-1 text-base font-bold text-white">Route active · Focus locked</div>
+                <div className="mt-0.5 text-[11px] text-white/45">LOKIN handles the background. Keep your eyes on the road.</div>
+              </div>
             </div>
           </div>
 
           <div className="rounded-3xl border border-primary/25 bg-black/80 p-3 backdrop-blur-xl">
-            <div className="mb-2 text-center text-[10px] tracking-[0.2em] text-primary/70">HANDS-FREE DRIVE CONTROLS</div>
+            <div className="mb-2 text-center text-[10px] tracking-[0.2em] text-primary/70">DRIVE CONTROLS · VOICE FIRST</div>
             <div className="grid grid-cols-3 gap-2">
-              <Link to="/lokin" className="rounded-2xl bg-primary py-3 text-center text-black active:scale-[0.98]">
-                <Mic className="mx-auto h-5 w-5" /><div className="mt-1 text-[10px] font-extrabold">TALK TO LOKIN</div>
-              </Link>
-              <Link to="/break-time" className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-center text-white/70 active:scale-[0.98]">
-                <Pause className="mx-auto h-5 w-5" /><div className="mt-1 text-[10px] font-bold">PAUSE</div>
-              </Link>
-              <Link to="/" className="rounded-2xl border border-red-500/25 bg-red-500/[0.07] py-3 text-center text-red-400 active:scale-[0.98]">
-                <Power className="mx-auto h-5 w-5" /><div className="mt-1 text-[10px] font-bold">TAP OUT</div>
-              </Link>
+              <button onClick={() => voice("what should I do next")} className="min-h-[76px] rounded-2xl bg-primary py-3 text-center text-black active:scale-[0.98]">
+                <Mic className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-extrabold">ASK LOKIN</div>
+              </button>
+              <button onClick={() => voice("pause")} className="min-h-[76px] rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-center text-white/70 active:scale-[0.98]">
+                <Pause className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-bold">PAUSE</div>
+              </button>
+              <button onClick={() => voice("tap out")} className="min-h-[76px] rounded-2xl border border-red-500/25 bg-red-500/[0.07] py-3 text-center text-red-400 active:scale-[0.98]">
+                <Power className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-bold">TAP OUT</div>
+              </button>
             </div>
+            <div className="mt-2 text-center text-[10px] text-white/35">Say “Hey LOKIN” anytime · interactions can pause and resume</div>
           </div>
 
           <div className="sticky bottom-3 z-20 flex justify-center gap-2">

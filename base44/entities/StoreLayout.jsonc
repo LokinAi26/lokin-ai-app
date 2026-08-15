@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "retailer_connection_id": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "entrance": {
+      "type": "object"
+    },
+    "checkout": {
+      "type": "object"
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "updated_at_source": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "store_id",
+    "store_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "StoreLayout"
+}

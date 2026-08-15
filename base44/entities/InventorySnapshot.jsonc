@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "store_id": {
+      "type": "string"
+    },
+    "item_key": {
+      "type": "string"
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_stock",
+        "low_stock",
+        "out_of_stock",
+        "unknown"
+      ]
+    },
+    "aisle": {
+      "type": "string"
+    },
+    "shelf": {
+      "type": "string"
+    },
+    "map_x": {
+      "type": "number"
+    },
+    "map_y": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "observed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "store_id",
+    "item_key",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "InventorySnapshot"
+}
