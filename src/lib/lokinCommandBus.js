@@ -29,7 +29,9 @@ export function dispatchLokinCommand(command, payload = {}, source = "internal")
 }
 
 export function externalCommandUrl(command, params = {}) {
-  const search = new URLSearchParams({ lokinCommand: command, source: "external", ...params });
+  // Legacy web-only bridge. Native integrations should use the verified
+  // HTTPS /command Universal Link contract documented in /docs.
+  const search = new URLSearchParams({ lokinCommand: command, source: "internal", ...params });
   return `/?${search.toString()}`;
 }
 
@@ -37,6 +39,12 @@ export function consumeExternalCommandFromLocation() {
   const url = new URL(window.location.href);
   const command = url.searchParams.get("lokinCommand");
   if (!command) return null;
+  // The legacy query bridge is deliberately internal-only. Externally supplied
+  // native commands must enter through the validated /command contract.
+  if (url.searchParams.get("source") !== "internal") {
+    window.history.replaceState({}, "", url.pathname);
+    return null;
+  }
   const payload = {};
   url.searchParams.forEach((value, key) => {
     if (!["lokinCommand", "source", "nonce"].includes(key)) payload[key] = value;
@@ -46,5 +54,5 @@ export function consumeExternalCommandFromLocation() {
   url.searchParams.delete("source");
   url.searchParams.delete("nonce");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  return { command, payload, nonce, source: "external-link" };
+  return { command, payload, nonce, source: "internal" };
 }
