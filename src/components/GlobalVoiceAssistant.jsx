@@ -188,6 +188,19 @@ export default function GlobalVoiceAssistant() {
     try { rec.start(); } catch {}
   }
 
+  // Allow the rest of the LOKIN ecosystem to invoke the same assistant logic
+  // without navigating away from the driver's current task.
+  useEffect(() => {
+    const onVoiceCommand = (e) => {
+      const command = e?.detail?.command;
+      if (!command) return;
+      setOpen(true);
+      handleCommand(command);
+    };
+    window.addEventListener("lokin:voice-command", onVoiceCommand);
+    return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
+  }, []);
+
   // Always-on wake-word listener
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
