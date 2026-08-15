@@ -27,9 +27,12 @@ enum LOKINUniversalLinkValidator {
             seen.insert(item.name)
         }
         func value(_ key: String) -> String? { items.first(where: { $0.name == key })?.value }
-        guard let command = value("command"), allowedCommands.contains(command) else { return nil }
-        let source = value("source") ?? "external-link"
-        guard allowedSources.contains(source), (value("v") ?? "1") == "1" else { return nil }
+        // Contract fields are mandatory. Do not silently default malformed or
+        // legacy links into the current security contract.
+        guard seen.contains("command"), seen.contains("source"), seen.contains("v"),
+              let command = value("command"), allowedCommands.contains(command),
+              let source = value("source"), allowedSources.contains(source),
+              value("v") == "1" else { return nil }
 
         let nonce = value("nonce")
         if let nonce, nonce.range(of: #"^[A-Za-z0-9_-]{8,96}$"#, options: .regularExpression) == nil { return nil }
