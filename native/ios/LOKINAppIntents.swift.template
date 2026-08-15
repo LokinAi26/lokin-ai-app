@@ -9,8 +9,12 @@ private enum LokinCommand: String {
 
 private func lokinURL(_ command: LokinCommand) -> URL {
     // Replace with the production HTTPS LOKIN associated domain.
-    var c = URLComponents(string: "https://YOUR-LOKIN-DOMAIN.example/")!
-    c.queryItems = [URLQueryItem(name: "lokinCommand", value: command.rawValue), URLQueryItem(name: "source", value: "app-intent")]
+    var c = URLComponents(string: "https://YOUR-LOKIN-DOMAIN.example/command")!
+    c.queryItems = [
+        URLQueryItem(name: "command", value: command.rawValue),
+        URLQueryItem(name: "source", value: "siri"),
+        URLQueryItem(name: "v", value: "1")
+    ]
     return c.url!
 }
 
