@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
+import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -201,8 +202,19 @@ export default function GlobalVoiceAssistant() {
     window.addEventListener("lokin:voice-command", onVoiceCommand);
     const external = consumeExternalCommandFromLocation();
     if (external?.command) {
-      const phrases = { lock_in: "lock in", pause: "pause", resume: "resume", tap_out: "tap out", find_item: "find item", smart_shop: "smart shop", open_route: "best route", safety: "safety" };
-      setTimeout(() => onVoiceCommand({ detail: { command: phrases[external.command] || external.command, ...external } }), 250);
+      const validated = validateExternalCommand(external.command, external.payload);
+      if (validated.ok) {
+        const phrases = { lock_in: "lock in", pause: "pause", resume: "resume", tap_out: "tap out", find_item: "find item", smart_shop: "smart shop", open_route: "best route", safety: "safety" };
+        const phrase = phrases[external.command] || external.command;
+        // Destructive/session-ending external actions require the user to confirm in LOKIN.
+        if (validated.policy.confirmation === "explicit") {
+          setOpen(true);
+          setTranscript(`External request: ${phrase}`);
+          setReply(`LOKIN received “${phrase}”. Confirm it in the app before I execute it.`);
+        } else {
+          setTimeout(() => onVoiceCommand({ detail: { command: phrase, ...external, payload: validated.payload } }), 250);
+        }
+      }
     }
     return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
   }, []);
