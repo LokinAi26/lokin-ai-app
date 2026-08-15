@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ShieldAlert, Phone, Plus, Trash2, MapPin, Share2, Clock, UserPlus, MessageSquare } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import SecuritySentinel from "@/components/security/SecuritySentinel";
 
 export default function Safety() {
   const [contacts, setContacts] = useState([]);
@@ -105,6 +106,8 @@ export default function Safety() {
         <h1 className="text-xl font-bold font-heading metal-text">Safety</h1>
       </div>
       <p className="text-sm text-white/45 -mt-2">Emergency tools to keep you safe on the road.</p>
+
+      <SecuritySentinel />
 
       {/* SOS */}
       <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-5 text-center">
