@@ -4,7 +4,7 @@
       {
         "appIDs": ["YOUR_TEAM_ID.YOUR_BUNDLE_ID"],
         "components": [
-          { "/": "/", "?": { "lokinCommand": "*" }, "comment": "LOKIN external command ingress; app validates the command allowlist and payload." }
+          { "/": "/command", "?": { "command": "*" }, "comment": "LOKIN verified command ingress; native and web layers strictly validate command, source, version and payload." }
         ]
       }
     ]
