@@ -38,6 +38,8 @@ import ShopDeliver from './pages/ShopDeliver';
 import AiGps from './pages/AiGps';
 import CommandIngress from './pages/CommandIngress';
 import Connect from './pages/Connect';
+import PrintfulConnect from './pages/PrintfulConnect';
+import PrintfulCallback from './pages/PrintfulCallback';
 import Opportunities from './pages/Opportunities';
 import Showcase from './pages/Showcase';
 import FiveG from './pages/FiveG';
@@ -119,6 +121,8 @@ const AuthenticatedApp = () => {
           <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
           <Route path="/merchant-portal" element={<MerchantPortal />} />
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
+          <Route path="/printful-connect" element={<PrintfulConnect />} />
+          <Route path="/printful/callback" element={<PrintfulCallback />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />

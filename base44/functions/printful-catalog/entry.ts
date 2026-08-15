@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
+import { getEffectiveToken, getPrintfulConnection, oauthConfigured } from "../../shared/printfulOAuth.ts";
 
 /**
  * printful-catalog — LOKIN Brand Store <-> Printful integration.
@@ -32,7 +33,7 @@ import { jsonRequest } from "../../shared/printRequest.ts";
  */
 
 const API = "https://api.printful.com";
-const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog", "warehouse", "createProduct"];
+const VALID_ACTIONS = ["store", "stores", "products", "product", "availability", "orders", "order", "catalog", "warehouse", "createProduct", "connection", "disconnect"];
 
 async function pfGet(path, token, storeId) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -68,13 +69,34 @@ export default async function (req) {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
-    const token = secrets.get("PRINTFUL_API_TOKEN");
-    if (!token) {
-      return Response.json({ error: "PRINTFUL_API_TOKEN is not configured." }, { status: 500 });
+    // ----- Connection status (works without a token) -----
+    if (action === "connection") {
+      const conn = await getPrintfulConnection(base44, user.id);
+      const hasPersonal = !!secrets.get("PRINTFUL_API_TOKEN");
+      return Response.json({
+        connected: !!(conn && conn.status !== "disconnected" && conn.access_token),
+        source: conn && conn.access_token ? "oauth" : (hasPersonal ? "personal" : "none"),
+        oauth_configured: oauthConfigured(),
+        store: conn ? { id: conn.store_id, name: conn.store_name, type: conn.store_type } : null,
+        connected_at: conn?.connected_at || null,
+        expires_at: conn?.expires_at || 0,
+        has_personal_token: hasPersonal,
+      });
     }
-    // Printful requires the store ID for the Store API when a personal token has
-    // multiple stores. Accept a payload override or a stored secret; not sensitive.
-    const storeId = payload.storeId || "";
+
+    // ----- Disconnect OAuth (works without a token) -----
+    if (action === "disconnect") {
+      const conn = await getPrintfulConnection(base44, user.id);
+      if (conn) await base44.asServiceRole.entities.PrintfulConnection.delete(conn.id);
+      return Response.json({ disconnected: true });
+    }
+
+    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user);
+    if (!token) {
+      return Response.json({ error: "No Printful OAuth connection or PRINTFUL_API_TOKEN is configured." }, { status: 500 });
+    }
+    // storeId: prefer explicit payload override, else the OAuth connection's store.
+    const storeId = payload.storeId || tokenStoreId || "";
 
     // ----- Stores list (auto-resolve store ID; the id itself is not sensitive) -----
     if (action === "stores") {

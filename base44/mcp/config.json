@@ -148,6 +148,83 @@
         "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
       },
       {
+        "name": "printful_file_library",
+        "title": "Printful file library",
+        "description": "Access the connected Printful account's file library. action 'addFile' uploads a new file (pass file_url, optional file_name) and returns the created file record; action 'file' retrieves a single file by id. Operates over the connected OAuth account (falls back to the shared token).",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: addFile, file." },
+            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
+            "id": { "type": "string", "description": "File id; required for the 'file' action." },
+            "file_url": { "type": "string", "description": "Public URL of the file to add; required for 'addFile'." },
+            "file_name": { "type": "string", "description": "Optional display name for the new file." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-tools",
+        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+      },
+      {
+        "name": "printful_templates",
+        "title": "Printful product templates",
+        "description": "Reads the connected Printful account's product templates. action 'templates' lists templates (paginated); action 'template' gets a single template by id. Read-only.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: templates, template." },
+            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
+            "id": { "type": "string", "description": "Template id; required for the 'template' action." },
+            "limit": { "type": "number", "description": "Max templates for 'templates' (1–100, default 50)." },
+            "offset": { "type": "number", "description": "Pagination offset (default 0)." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-tools",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "printful_mockups",
+        "title": "Printful mockup generator",
+        "description": "Generates product mockup images via the connected Printful account. action 'mockupTask' creates a generation task (pass product_id, variant_ids[], files[] with placements/layers); action 'mockupResult' polls a task by id for status + mockup URLs; action 'printfiles' retrieves printfile specs for a product/variant; action 'layoutTemplates' lists available layout templates. Mockup generation is asynchronous — create a task then poll mockupResult until done.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: mockupTask, mockupResult, printfiles, layoutTemplates." },
+            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
+            "product_id": { "type": "number", "description": "Printful catalog product id; required for mockupTask and printfiles." },
+            "variant_ids": { "type": "array", "items": { "type": "number" }, "description": "Catalog variant ids to generate mockups for (mockupTask)." },
+            "files": { "type": "array", "items": { "type": "object" }, "description": "Design file placements/layers for mockupTask (each {placement, technique, layers:[{type,url,...]}])." },
+            "format": { "type": "string", "description": "Output format for mockupTask (jpg/png). Defaults to jpg." },
+            "id": { "type": "string", "description": "Mockup task id; required for mockupResult." },
+            "variant_id": { "type": "number", "description": "Variant id for printfiles (optional)." },
+            "technique": { "type": "string", "description": "Print technique for printfiles/layoutTemplates (e.g. dtg, embroidery)." },
+            "limit": { "type": "number", "description": "Max results for layoutTemplates (1–100, default 50)." },
+            "offset": { "type": "number", "description": "Pagination offset for layoutTemplates." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-tools",
+        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+      },
+      {
+        "name": "printful_webhooks",
+        "title": "Printful webhooks",
+        "description": "Manages the connected Printful account's webhook configuration. action 'getWebhook' reads the current webhook URL and subscribed events; action 'setWebhook' sets the webhook URL and (optionally) the events array (e.g. package_shipped, order_created, stock_updated). Read/write.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: getWebhook, setWebhook." },
+            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
+            "url": { "type": "string", "description": "Webhook receiver URL; required for setWebhook." },
+            "events": { "type": "array", "items": { "type": "string" }, "description": "Webhook events to subscribe for setWebhook (e.g. package_shipped, order_created, order_updated, stock_updated)." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-tools",
+        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+      },
+      {
         "name": "optimize_route",
         "title": "Optimize delivery route",
         "description": "Runs LOKIN's route optimizer for the signed-in driver. Pass mode (fastest, most_profit, most_money, goal_mode, low_stress, minimum_mileage, homeward). Returns the ranked stop sequence, route stats (miles, gross, fuel, net, $/hr), today's earnings, and the Lock In Score.",
