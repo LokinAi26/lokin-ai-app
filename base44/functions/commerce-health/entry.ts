@@ -32,15 +32,37 @@ export default async function (req) {
     });
     if (r.ok) {
       const stores = Array.isArray(r.data?.result) ? r.data.result : [];
-      result.printful = stores.length
-        ? {
+      if (!stores.length) {
+        result.printful = { connected: false, store_count: 0, error: "Printful token works, but no store is attached to it." };
+      } else {
+        const store = stores[0];
+        const catalogProbe = await safeJson("https://api.printful.com/store/products?limit=1", {
+          headers: {
+            Authorization: `Bearer ${printfulToken}`,
+            "Content-Type": "application/json",
+            "X-PF-Store-Id": String(store.id),
+          },
+        });
+        if (catalogProbe.ok) {
+          result.printful = {
             connected: true,
             store_count: stores.length,
-            store: { id: stores[0].id, name: stores[0].name, type: stores[0].type },
-          }
-        : { connected: false, store_count: 0, error: "Printful token works, but no store is attached to it." };
+            catalog_readable: true,
+            store: { id: store.id, name: store.name, type: store.type },
+          };
+        } else {
+          result.printful = {
+            connected: false,
+            store_count: stores.length,
+            catalog_readable: false,
+            status: catalogProbe.status,
+            store: { id: store.id, name: store.name, type: store.type },
+            error: catalogProbe.data?.error?.message || catalogProbe.data?.error?.reason || (typeof catalogProbe.data?.result === "string" ? catalogProbe.data.result : null) || catalogProbe.data?.message || "Printful token can list stores but cannot read sync products. Recreate the token with sync_products/read access.",
+          };
+        }
+      }
     } else {
-      result.printful = { connected: false, status: r.status, error: r.data?.error?.message || r.data?.error || "Printful check failed" };
+      result.printful = { connected: false, status: r.status, error: r.data?.error?.message || r.data?.error?.reason || (typeof r.data?.result === "string" ? r.data.result : null) || r.data?.error || "Printful check failed" };
     }
   } else {
     // No real token -> storefront falls back to demo/sandbox data.
