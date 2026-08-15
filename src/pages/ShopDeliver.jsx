@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ShoppingBag, Navigation, MapPin, Clock, DollarSign, ChevronRight, Package, RefreshCw } from "lucide-react";
+import { ShoppingBag, Navigation, MapPin, Clock, DollarSign, ChevronRight, Package, RefreshCw, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -132,6 +132,10 @@ export default function ShopDeliver() {
             {current.dropoff_address && (
               <div className="mt-2 text-xs truncate text-white/45"><span className="text-primary">→ </span>{current.dropoff_address}</div>
             )}
+            <Link to="/locator" className="mt-3 flex items-center justify-between rounded-2xl border border-primary/25 bg-black/30 px-3 py-2.5 active:scale-[0.99] transition-transform">
+              <span className="flex items-center gap-2 text-xs font-semibold text-primary"><ScanLine className="h-4 w-4"/>Open Smart Shop Item Locator</span>
+              <ChevronRight className="h-4 w-4 text-primary/60"/>
+            </Link>
           </div>
         )}
 
