@@ -44,20 +44,108 @@
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       },
       {
-        "name": "read_printful_catalog",
-        "title": "Read Printful catalog",
-        "description": "Reads the LOKIN Printful store. Pass action 'store' for the resolved store info, 'products' (with store_id) for the product list, or 'product' (with store_id + id) for a single product's variants and pricing. The real PRINTFUL_API_TOKEN is already configured.",
+        "name": "printful_account_status",
+        "title": "Printful account status",
+        "description": "Reads the connected LOKIN Printful account. Pass action 'stores' to list every store owned by the configured PRINTFUL_API_TOKEN (returns id + name + type), or 'store' for the current store's full info (admin only). Use this first to resolve the storeId the other Printful tools need when a token owns more than one store. The real PRINTFUL_API_TOKEN is already configured server-side.",
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: store, products, product, catalog. Read-only storefront reads." },
-            "store_id": { "type": "string", "description": "Printful store id; required for products/product/catalog. Use the id from the 'store' action." },
-            "id": { "type": "string", "description": "Product id; required for the 'product' action." }
+            "action": { "type": "string", "description": "One of: stores, store. 'stores' is open to any user; 'store' is admin only." },
+            "storeId": { "type": "string", "description": "Printful store id; required for 'store' when the token owns more than one store. Use the id returned by the 'stores' action." }
           },
           "required": ["action"]
         },
         "handler": "printful-catalog",
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "read_printful_catalog",
+        "title": "Read Printful catalog",
+        "description": "Reads the LOKIN Printful storefront catalog. Pass action 'products' (with storeId) for the paginated sync-product list, 'product' (with storeId + id) for a single product's variants with pricing and images, or 'catalog' for the enriched all-products view with min/max prices. Read-only.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: products, product, catalog. Read-only storefront reads." },
+            "storeId": { "type": "string", "description": "Printful store id; required for products/product/catalog when the token owns more than one store." },
+            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
+            "limit": { "type": "number", "description": "Max products for 'products' (1–100, default 50) or 'catalog' (1–200, default 200)." },
+            "offset": { "type": "number", "description": "Pagination offset for 'products' (default 0)." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "printful_stock",
+        "title": "Check Printful stock",
+        "description": "Checks real-time stock availability for one or more Printful sync variants by variant id. Pass an array of numeric variant ids (up to 100). Read-only; any logged-in user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "Must be 'availability'.", "default": "availability" },
+            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
+            "ids": { "type": "array", "items": { "type": "number" }, "description": "Array of Printful sync_variant ids to check (1–100)." }
+          },
+          "required": ["action", "ids"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "printful_orders",
+        "title": "Read Printful orders",
+        "description": "Reads LOKIN Printful orders and shipments (admin only). Pass action 'orders' for a paginated order list (optionally filtered by status) with fulfillment status and tracking, or 'order' (with id) for a single order's full detail including line items, costs, and shipment tracking. Use this to answer 'where is my order' or 'what's the tracking number'.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: orders, order." },
+            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
+            "id": { "type": "string", "description": "Order id or external id; required for the 'order' action." },
+            "limit": { "type": "number", "description": "Max orders for 'orders' (1–100, default 50)." },
+            "offset": { "type": "number", "description": "Pagination offset for 'orders' (default 0)." },
+            "status": { "type": "string", "description": "Optional order status filter for 'orders' (e.g. draft, pending, inprocess, fulfilled, canceled)." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "printful_warehouse",
+        "title": "Browse Printful warehouse blanks",
+        "description": "Browses the Printful blank-product warehouse catalog (the base garments/items before artwork). Pass action 'warehouse' for a paginated list of blank products with brand, model, image, and available variant ids. Read-only; any logged-in user. Use the variant_id from a blank here to create a sync product via printful_create_product.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "Must be 'warehouse'.", "default": "warehouse" },
+            "limit": { "type": "number", "description": "Max blank products (1–100, default 50)." },
+            "offset": { "type": "number", "description": "Pagination offset (default 0)." }
+          },
+          "required": ["action"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "printful_create_product",
+        "title": "Create Printful product",
+        "description": "Creates a new sync product in the LOKIN Printful store from a Printful warehouse blank (admin only). Provide a product name, the warehouse blank's variant_id (from printful_warehouse), a retail_price (string e.g. '24.99'), and optionally a design file URL + placement (front/back). The product appears in the Printful store and storefront catalog immediately.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "Must be 'createProduct'.", "default": "createProduct" },
+            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
+            "name": { "type": "string", "description": "Display name for the new sync product." },
+            "variant_id": { "type": "number", "description": "Printful warehouse blank variant_id to base the product on (from printful_warehouse)." },
+            "retail_price": { "type": "string", "description": "Retail price as a string, e.g. '24.99'. Must be >= 0.50 in the store currency." },
+            "file_url": { "type": "string", "description": "Optional design artwork file URL. Omit to create a blank product and add art later in Printful." },
+            "placement": { "type": "string", "description": "Optional print placement when file_url is set (e.g. front, back). Defaults to 'front'." }
+          },
+          "required": ["action", "name", "variant_id", "retail_price"]
+        },
+        "handler": "printful-catalog",
+        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
       },
       {
         "name": "optimize_route",
