@@ -130,7 +130,7 @@ export default function Home() {
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="space-y-3 text-center">
-          <Link to="/route" className="block rounded-3xl border border-primary/35 bg-primary/[.06] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="block rounded-3xl border border-primary/35 bg-primary/[.06] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : (
@@ -159,10 +159,6 @@ export default function Home() {
         <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.briefing || "Ready when you are.")}</div>
       </div>
 
-      <LockInSequence active={locking} onComplete={handleLockInComplete} />
-      <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
-      <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />
-
       <AwarenessBanner />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
@@ -170,11 +166,8 @@ export default function Home() {
       </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
-
-      <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs}
-        onStarted={() => loadCommand()} />
-      <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs}
-        onSaved={() => loadCommand()} />
+      <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
+      <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />
     </div>
     </PullToRefresh>
   );
