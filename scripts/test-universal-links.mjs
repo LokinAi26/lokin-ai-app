@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { parseLokinUniversalLink } from '../src/lib/lokinUniversalLink.js';
 
-const host = 'app.lokin.example';
+const host = 'lokin-ai-app-604c3139.base44.app';
 const cases = [
   ['valid pause', `https://${host}/command?command=pause&source=siri&v=1`, true],
   ['valid ask', `https://${host}/command?command=ask&source=shortcut&v=1&q=Find%20my%20next%20stop`, true],
