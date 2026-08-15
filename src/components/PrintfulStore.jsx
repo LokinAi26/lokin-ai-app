@@ -49,7 +49,11 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       setLive(true);
       setError(null);
     } catch (e) {
-      setError(e?.message || "Failed to load store");
+      const detail = e?.response?.data?.error || e?.data?.error || e?.message || "Failed to load store";
+      const friendly = /status code 400/i.test(String(detail))
+        ? "Printful rejected the catalog request. Re-test Commerce Connections; the token may need sync_products/read access or the store context may need to be refreshed."
+        : String(detail);
+      setError(friendly);
       setLive(false);
     }
   }, [storeId, limit]);
