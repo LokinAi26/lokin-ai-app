@@ -1,4 +1,4 @@
-import { LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
+import { LOKIN_COMMANDS } from "./lokinCommandBus.js";
 
 const ALLOWED = new Set(Object.values(LOKIN_COMMANDS));
 const ALLOWED_KEYS = new Set(["command", "source", "nonce", "v", "q"]);
