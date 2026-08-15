@@ -1,0 +1,43 @@
+import Foundation
+
+/// Native gate that mirrors the web command contract. Keep both implementations
+/// aligned and test them with the same malformed-link corpus before release.
+enum LOKINUniversalLinkValidator {
+    static let allowedCommands: Set<String> = ["lock_in","pause","resume","tap_out","ask","find_item","smart_shop","open_route","safety"]
+    static let allowedSources: Set<String> = ["siri","shortcut","widget","action-button","watch","spotlight","external-link","web"]
+    static let allowedKeys: Set<String> = ["command","source","nonce","v","q"]
+
+    struct ValidatedCommand {
+        let command: String
+        let source: String
+        let nonce: String?
+        let query: String?
+    }
+
+    static func validate(_ url: URL, expectedHost: String) -> ValidatedCommand? {
+        guard url.scheme == "https", url.host == expectedHost, url.port == nil,
+              url.user == nil, url.password == nil, url.fragment == nil,
+              url.path == "/command",
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
+
+        let items = components.queryItems ?? []
+        var seen = Set<String>()
+        for item in items {
+            guard allowedKeys.contains(item.name), !seen.contains(item.name) else { return nil }
+            seen.insert(item.name)
+        }
+        func value(_ key: String) -> String? { items.first(where: { $0.name == key })?.value }
+        guard let command = value("command"), allowedCommands.contains(command) else { return nil }
+        let source = value("source") ?? "external-link"
+        guard allowedSources.contains(source), (value("v") ?? "1") == "1" else { return nil }
+
+        let nonce = value("nonce")
+        if let nonce, nonce.range(of: #"^[A-Za-z0-9_-]{8,96}$"#, options: .regularExpression) == nil { return nil }
+        let query = value("q")
+        if let query {
+            guard command == "ask", query.count <= 120,
+                  query.range(of: #"^[\p{L}\p{N} .,'!?&+\-]{1,120}$"#, options: .regularExpression) != nil else { return nil }
+        }
+        return ValidatedCommand(command: command, source: source, nonce: nonce, query: query)
+    }
+}
