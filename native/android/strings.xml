@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LOKIN AI — Google Assistant App Actions string resources.
+  Place at: app/src/main/res/values/strings.xml (merge into existing file).
+
+  queryPatterns: the spoken phrases Google Assistant matches on.
+  Replace \u003Capp_name\u003E-free phrasing with your app name in production
+  (App Actions support a literal app-name token once approved).
+-->
+<resources>
+    <string-array name="lokin_route_queries">
+        <item>open my LOKIN route</item>
+        <item>optimize my LOKIN route</item>
+        <item>run my LOKIN route</item>
+    </string-array>
+
+    <string-array name="lokin_assistant_queries">
+        <item>ask LOKIN</item>
+        <item>open LOKIN assistant</item>
+        <item>talk to LOKIN</item>
+    </string-array>
+
+    <string-array name="lokin_earnings_queries">
+        <item>show my LOKIN earnings</item>
+        <item>what did I earn on LOKIN</item>
+        <item>LOKIN earnings</item>
+    </string-array>
+</resources>

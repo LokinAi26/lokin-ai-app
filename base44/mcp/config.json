@@ -86,6 +86,20 @@
         },
         "handler": "lokinAssistant",
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
+        "name": "open_lokin",
+        "title": "Open LOKIN via Siri or Google Assistant",
+        "description": "Returns the deep-link URL, custom scheme, and exact Siri / Google Assistant voice phrases to launch a specific LOKIN screen (route, lokin assistant, earnings, home) on a device with the native app installed. Use this when the driver asks to open LOKIN by voice or wants a tappable launch link for Siri or Google Assistant.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "target": { "type": "string", "enum": ["route", "lokin", "earnings", "home"], "description": "Which LOKIN screen to launch. Defaults to route." }
+          },
+          "required": []
+        },
+        "handler": "native-launch",
+        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       }
     ]
   }

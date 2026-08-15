@@ -126,6 +126,36 @@ export default function Connect() {
         </div>
       </div>
 
+      {/* Native voice integration */}
+      <div className="rounded-3xl border border-primary/30 bg-primary/[0.05] p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Plug className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold text-white">Siri & Google Assistant</h2>
+        </div>
+        <p className="text-sm text-white/60 leading-relaxed">
+          LOKIN ships native voice-intent reference code so the published app
+          can be launched by voice. Say <span className="text-primary font-medium">“Hey Siri, optimize my LOKIN route”</span> or
+          <span className="text-primary font-medium"> “Hey Google, ask LOKIN”</span> on a device with the app installed — it deep-links straight in.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+            <div className="text-[10px] tracking-[0.18em] text-white/40 font-display mb-1">SIRI PHRASE</div>
+            <div className="text-xs text-white/80">“Optimize my LOKIN route”</div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+            <div className="text-[10px] tracking-[0.18em] text-white/40 font-display mb-1">ASSISTANT PHRASE</div>
+            <div className="text-xs text-white/80">“Hey Google, ask LOKIN”</div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 flex items-start gap-2">
+          <Code2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+          <p className="text-xs text-white/50">
+            Native App Intent + App Action source lives in <code className="text-primary/80">native/</code> in the repo.
+            ChatGPT can call the <code className="text-primary/80">open_lokin</code> MCP tool to hand back the real deep link + voice phrase.
+          </p>
+        </div>
+      </div>
+
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30">
         LOKIN AI · DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>

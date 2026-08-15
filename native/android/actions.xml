@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LOKIN AI — Google Assistant App Actions (capability.xml)
+  Reference implementation. Port into your Android Studio project at:
+    app/src/main/res/xml/actions.xml
+  and reference it from AndroidManifest.xml <application>:
+    <meta-data android:name="com.google.actions" android:resource="@xml/actions"/>
+
+  Each <action> maps a spoken query pattern to a deep link the native shell
+  loads in its WebView. The LOKIN React app reads ?via=assistant and
+  surfaces a brief acknowledgment.
+
+  Replace https://lokin-app.web.app with your published app domain
+  (the same one exposed at /api/mcp).
+-->
+<actions>
+    <!-- "Hey Google, open my LOKIN route" / "optimize my LOKIN route" -->
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_route_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-app.web.app/route?action=route&amp;via=assistant">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <!-- "Hey Google, ask LOKIN" -->
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_assistant_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-app.web.app/lokin?action=lokin&amp;via=assistant">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <!-- "Hey Google, show my LOKIN earnings" -->
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_earnings_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-app.web.app/earnings?action=earnings&amp;via=assistant">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+</actions>
