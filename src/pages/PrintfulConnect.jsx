@@ -68,6 +68,7 @@ export default function PrintfulConnect() {
 
   const connected = status?.connected;
   const source = status?.source;
+  const usingPrivateToken = connected && source === "personal";
 
   return (
     <div className="p-4 space-y-5 pb-6">
@@ -87,11 +88,12 @@ export default function PrintfulConnect() {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
             <div className="flex-1">
-              <div className="font-semibold text-primary">Connected via OAuth</div>
+              <div className="font-semibold text-primary">{usingPrivateToken ? "Connected via Private Token" : "Connected via OAuth"}</div>
               <div className="text-xs text-white/50 mt-0.5">
                 {status.store?.name ? `${status.store.name}${status.store.type ? ` · ${status.store.type}` : ""}` : "Store info unavailable"}
               </div>
-              {status.connected_at && <div className="text-[11px] text-white/35 mt-1">Connected {new Date(status.connected_at).toLocaleDateString()}</div>}
+              {status.connected_at && !usingPrivateToken && <div className="text-[11px] text-white/35 mt-1">Connected {new Date(status.connected_at).toLocaleDateString()}</div>}
+              {usingPrivateToken && <div className="text-[11px] text-white/35 mt-1">Validated live against the Printful Stores API</div>}
             </div>
           </div>
         ) : (
@@ -111,10 +113,16 @@ export default function PrintfulConnect() {
 
       <div className="flex gap-2">
         {connected ? (
-          <button onClick={handleDisconnect} disabled={busy}
-            className="flex-1 rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive py-3 flex items-center justify-center gap-2 text-sm font-bold disabled:opacity-60">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />} Disconnect
-          </button>
+          usingPrivateToken ? (
+            <div className="flex-1 rounded-2xl border border-primary/30 bg-primary/[0.06] text-primary py-3 flex items-center justify-center gap-2 text-sm font-bold">
+              <CheckCircle2 className="h-4 w-4" /> Private Token Active
+            </div>
+          ) : (
+            <button onClick={handleDisconnect} disabled={busy}
+              className="flex-1 rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive py-3 flex items-center justify-center gap-2 text-sm font-bold disabled:opacity-60">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />} Disconnect
+            </button>
+          )
         ) : (
           <button onClick={handleConnect} disabled={busy || (status && !status.oauth_configured)}
             className="flex-1 rounded-2xl bg-primary text-primary-foreground py-3 flex items-center justify-center gap-2 text-sm font-bold glow-primary disabled:opacity-60">
@@ -127,9 +135,15 @@ export default function PrintfulConnect() {
         </button>
       </div>
 
-      {status && !status.oauth_configured && !loading && (
+      {status && !status.oauth_configured && !loading && !usingPrivateToken && (
         <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/[0.06] p-3 text-xs text-yellow-200/80">
-          OAuth isn't fully configured yet. Add your <span className="font-semibold">Printful Public App</span> client id, secret, and redirect URL in the Base44 secrets panel, then republish.
+          OAuth isn't fully configured yet. You can either add a Printful Public App client id, secret, and redirect URL, or use a validated <span className="font-semibold">PRINTFUL_API_TOKEN</span> private token.
+        </div>
+      )}
+
+      {usingPrivateToken && (
+        <div className="rounded-xl border border-primary/30 bg-primary/[0.05] p-3 text-xs text-white/65 leading-relaxed">
+          Your private token is enough for this single-account LOKIN ↔ Printful connection. Public App OAuth credentials are optional unless you later want multiple users to connect their own Printful accounts.
         </div>
       )}
 
