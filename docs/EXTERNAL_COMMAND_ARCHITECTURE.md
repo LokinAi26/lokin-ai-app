@@ -45,5 +45,15 @@ When the Android shell is available, map App Actions/shortcuts to the same comma
 - Driving mode keeps nonessential UI quiet; external controls should favor voice/audio confirmation.
 - Commands must be idempotent where possible: pausing an already-paused session or resuming an active session should not create duplicate sessions.
 
+## Apple App Intents implementation package
+The repository now includes `native/ios/LOKINAppIntents.swift.template` and `native/ios/apple-app-site-association.template.json`. They are implementation templates for the generated Xcode/native target, not active Swift code in the current web build.
+
+Use verified HTTPS Universal Links as the production ingress. Configure Associated Domains in Xcode and publish the AASA file on the production LOKIN domain. Keep the existing semantic command allowlist as the trust boundary. Validate all URL parameters and never permit arbitrary executable payloads.
+
+The first App Shortcuts are Lock In, Pause, Resume, Find Item, and Tap Out. Tap Out is deliberately confirmation-gated when it arrives externally. App Shortcuts can then be surfaced by Siri, Shortcuts, Spotlight and supported Action-button workflows without creating a second business-logic implementation.
+
+## 2026 evolution path
+Apple's 2026 App Intents additions include supported execution modes/targets, cancellation and long-running behaviors, and URL-representable intents/entities. Adopt those selectively in the native target once its deployment target/Xcode toolchain is known. Do not make the Base44 web layer pretend those native APIs are active before the generated iOS target exists.
+
 ## Next native milestone
-Implement the iOS App Intents bridge in the generated native project once Base44 produces the IPA/native wrapper. The web command engine is now ready to receive those external invocations without duplicating session logic.
+When Base44 produces the native iOS/Xcode wrapper, replace the template domain/team/bundle placeholders, enable Associated Domains, add the Swift template to the target, compile in Xcode, test cold-launch and warm-launch universal links, then verify every Siri/App Shortcut maps to the same LOKIN command bus. Add malformed-link and replay/duplicate-command tests before release.
