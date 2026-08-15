@@ -36,6 +36,7 @@ import Awareness from './pages/Awareness';
 import Connectivity from './pages/Connectivity';
 import ShopDeliver from './pages/ShopDeliver';
 import AiGps from './pages/AiGps';
+import CommandIngress from './pages/CommandIngress';
 import Connect from './pages/Connect';
 import Opportunities from './pages/Opportunities';
 import Showcase from './pages/Showcase';
@@ -120,6 +121,7 @@ const AuthenticatedApp = () => {
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
         </Route>
       </Route>
+      <Route path="/command" element={<CommandIngress />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
