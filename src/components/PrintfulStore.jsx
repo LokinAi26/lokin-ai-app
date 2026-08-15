@@ -30,6 +30,8 @@ function templateToCard(t) {
     colors: t.colors || [],
     sizes: t.sizes || [],
     placements: t.placements || [],
+    created_at: t.created_at || null,
+    is_new: t.created_at ? Date.now() / 1000 - t.created_at < 14 * 24 * 3600 : false,
   };
 }
 
@@ -201,6 +203,9 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                     <Shirt className="h-2.5 w-2.5" /> POD
                   </span>
                 )}
+                {p.is_new && (
+                  <span className="absolute bottom-1.5 left-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-black tracking-wider text-black">NEW</span>
+                )}
                 <span className="absolute top-1.5 right-1.5 rounded-full bg-black/70 border border-primary/30 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-primary backdrop-blur">
                   {p.variants?.length || 0}
                 </span>
@@ -321,12 +326,23 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                 </>
               )}
 
-              <button
-                onClick={() => notify(selected.name)}
-                className="w-full rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform"
-              >
-                Notify me when available
-              </button>
+              {selected.is_template ? (
+                <a
+                  href="https://www.printful.com/dashboard/products"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-xl border border-accent/40 bg-accent/10 py-3 text-sm font-bold text-accent text-center active:scale-[0.99] transition-transform inline-flex items-center justify-center gap-2"
+                >
+                  <Shirt className="h-4 w-4" /> Set price & sync in Printful
+                </a>
+              ) : (
+                <button
+                  onClick={() => notify(selected.name)}
+                  className="w-full rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform"
+                >
+                  Notify me when available
+                </button>
+              )}
             </div>
           </div>
         </div>
