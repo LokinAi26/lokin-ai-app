@@ -23,6 +23,15 @@ const cases = [
   ['query on pause', `https://${host}/command?command=pause&source=siri&v=1&q=hello`, false, 'query_not_allowed'],
   ['oversized ask', `https://${host}/command?command=ask&source=siri&v=1&q=${'a'.repeat(121)}`, false, 'invalid_query'],
   ['encoded script chars', `https://${host}/command?command=ask&source=siri&v=1&q=%3Cscript%3E`, false, 'invalid_query'],
+  ['empty command', `https://${host}/command?command=&source=siri&v=1`, false, 'unsupported_command'],
+  ['empty source', `https://${host}/command?command=pause&source=&v=1`, false, 'unsupported_source'],
+  ['empty version', `https://${host}/command?command=pause&source=siri&v=`, false, 'unsupported_version'],
+  ['duplicate source', `https://${host}/command?command=pause&source=siri&source=web&v=1`, false, 'duplicate_parameter'],
+  ['duplicate version', `https://${host}/command?command=pause&source=siri&v=1&v=1`, false, 'duplicate_parameter'],
+  ['duplicate query', `https://${host}/command?command=ask&source=siri&v=1&q=hello&q=world`, false, 'duplicate_parameter'],
+  ['encoded redirect key', `https://${host}/command?command=pause&source=siri&v=1&%72edirect=x`, false, 'unknown_parameter'],
+  ['path traversal variant', `https://${host}/command/../admin?command=pause&source=siri&v=1`, false, 'unsupported_path'],
+  ['unicode ask valid', `https://${host}/command?command=ask&source=siri&v=1&q=${encodeURIComponent('Find café 24')}`, true],
   ['malformed URL', `not a url`, false, 'malformed_url'],
 ];
 
