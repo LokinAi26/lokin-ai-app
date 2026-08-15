@@ -13,8 +13,10 @@ export async function jsonRequest({ url, method = "GET", headers = {}, body }) {
   if (!res.ok) {
     const error =
       data?.error?.message ||
-      data?.error ||
+      data?.error?.reason ||
+      (typeof data?.result === "string" ? data.result : null) ||
       data?.message ||
+      (typeof data?.error === "string" ? data.error : null) ||
       `Request failed (${res.status})`;
     return { ok: false, status: res.status, error };
   }

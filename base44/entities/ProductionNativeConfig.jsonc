@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "production_domain": {
+      "type": "string"
+    },
+    "apple_team_id": {
+      "type": "string"
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "aasa_status": {
+      "type": "string",
+      "enum": [
+        "placeholder",
+        "empty",
+        "ready",
+        "verified"
+      ]
+    },
+    "native_target_status": {
+      "type": "string",
+      "enum": [
+        "not_available",
+        "base44_ipa_only",
+        "external_xcode_ready",
+        "verified"
+      ]
+    },
+    "associated_domains_value": {
+      "type": "string"
+    },
+    "last_verified_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "production_domain"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "ProductionNativeConfig"
+}
