@@ -6,12 +6,9 @@
 //   token:      POST https://www.printful.com/oauth/token  (form-urlencoded, grant_type=authorization_code|refresh_token)
 //   access_token expires in 1h; refresh_token expires in 90 days.
 
-import { secrets } from "base44:runtime";
-
 const TOKEN_URL = "https://www.printful.com/oauth/token";
 
-async function hmacSign(msg: string): Promise<string> {
-  const keyMaterial = secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") || "lokin-printful-fallback";
+async function hmacSign(msg: string, keyMaterial: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(keyMaterial),
@@ -27,25 +24,25 @@ async function hmacSign(msg: string): Promise<string> {
 }
 
 // Stateless, signed OAuth state token: userId.expiresAt.nonce.signature
-export async function makeState(userId: string): Promise<string> {
+export async function makeState(userId: string, clientSecret = "lokin-printful-fallback"): Promise<string> {
   const exp = Math.floor(Date.now() / 1000) + 600;
   const nonce = crypto.randomUUID();
-  const sig = await hmacSign(`${userId}.${exp}.${nonce}`);
+  const sig = await hmacSign(`${userId}.${exp}.${nonce}`, clientSecret);
   return `${userId}.${exp}.${nonce}.${sig}`;
 }
 
-export async function verifyState(state: string, userId: string): Promise<boolean> {
+export async function verifyState(state: string, userId: string, clientSecret = "lokin-printful-fallback"): Promise<boolean> {
   if (!state || typeof state !== "string") return false;
   const parts = state.split(".");
   if (parts.length !== 4) return false;
   const [uid, exp, nonce, sig] = parts;
   if (uid !== String(userId)) return false;
   if (Number(exp) < Math.floor(Date.now() / 1000)) return false;
-  const expected = await hmacSign(`${uid}.${exp}.${nonce}`);
+  const expected = await hmacSign(`${uid}.${exp}.${nonce}`, clientSecret);
   return expected === sig;
 }
 
-export function oauthConfigured(): boolean {
+export function oauthConfigured(secrets: any): boolean {
   return !!(secrets.get("PRINTFUL_OAUTH_CLIENT_ID") && secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") && secrets.get("PRINTFUL_OAUTH_REDIRECT_URI"));
 }
 
@@ -55,7 +52,7 @@ export async function getPrintfulConnection(base44: any, userId: string): Promis
   return list && list[0] ? list[0] : null;
 }
 
-async function refreshPrintfulToken(base44: any, conn: any): Promise<any | null> {
+async function refreshPrintfulToken(base44: any, conn: any, secrets: any): Promise<any | null> {
   const clientSecret = secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET");
   if (!clientSecret || !conn.refresh_token) return null;
   const body = new URLSearchParams({
@@ -94,12 +91,12 @@ async function refreshPrintfulToken(base44: any, conn: any): Promise<any | null>
 //   - OAuth access_token (auto-refreshed within 5 min of expiry) if a connection exists
 //   - else the shared personal PRINTFUL_API_TOKEN
 // Returns { token, storeId, source, storeName }.
-export async function getEffectiveToken(base44: any, user: { id: string }): Promise<{ token: string; storeId: string; source: string; storeName: string }> {
+export async function getEffectiveToken(base44: any, user: { id: string }, secrets: any): Promise<{ token: string; storeId: string; source: string; storeName: string }> {
   const conn = await getPrintfulConnection(base44, user.id);
   if (conn && conn.access_token && conn.status !== "disconnected") {
     const now = Math.floor(Date.now() / 1000);
     if (conn.expires_at && conn.expires_at - now < 300) {
-      const refreshed = await refreshPrintfulToken(base44, conn);
+      const refreshed = await refreshPrintfulToken(base44, conn, secrets);
       if (refreshed) {
         return { token: refreshed.access_token, storeId: refreshed.store_id || "", source: "oauth", storeName: refreshed.store_name || "" };
       }

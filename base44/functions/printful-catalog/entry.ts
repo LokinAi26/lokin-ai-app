@@ -76,7 +76,7 @@ export default async function (req) {
       return Response.json({
         connected: !!(conn && conn.status !== "disconnected" && conn.access_token),
         source: conn && conn.access_token ? "oauth" : (hasPersonal ? "personal" : "none"),
-        oauth_configured: oauthConfigured(),
+        oauth_configured: oauthConfigured(secrets),
         store: conn ? { id: conn.store_id, name: conn.store_name, type: conn.store_type } : null,
         connected_at: conn?.connected_at || null,
         expires_at: conn?.expires_at || 0,
@@ -91,7 +91,7 @@ export default async function (req) {
       return Response.json({ disconnected: true });
     }
 
-    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user);
+    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user, secrets);
     if (!token) {
       return Response.json({ error: "No Printful OAuth connection or PRINTFUL_API_TOKEN is configured." }, { status: 500 });
     }

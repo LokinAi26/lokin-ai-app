@@ -17,13 +17,13 @@ export default async function (req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!oauthConfigured()) {
+    if (!oauthConfigured(secrets)) {
       return Response.json({ configured: false, error: "Printful OAuth is not fully configured. Set PRINTFUL_OAUTH_CLIENT_ID, PRINTFUL_OAUTH_CLIENT_SECRET, and PRINTFUL_OAUTH_REDIRECT_URI." }, { status: 503 });
     }
 
     const clientId = secrets.get("PRINTFUL_OAUTH_CLIENT_ID");
     const redirectUri = secrets.get("PRINTFUL_OAUTH_REDIRECT_URI");
-    const state = await makeState(user.id);
+    const state = await makeState(user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") || "lokin-printful-fallback");
     const authorizeUrl = `https://www.printful.com/oauth/authorize?client_id=${encodeURIComponent(clientId)}&state=${encodeURIComponent(state)}&redirect_url=${encodeURIComponent(redirectUri)}`;
 
     return Response.json({ configured: true, authorizeUrl, state });

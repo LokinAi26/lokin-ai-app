@@ -55,7 +55,7 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: `Invalid action. Use one of: ${VALID_ACTIONS.join(", ")}` }, { status: 400 });
     }
 
-    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user);
+    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user, secrets);
     if (!token) return Response.json({ error: "No Printful OAuth connection or PRINTFUL_API_TOKEN configured." }, { status: 500 });
     const storeId = payload.storeId || tokenStoreId || "";
 
