@@ -24,7 +24,7 @@ const TAB_ROOTS = {
 
 function pathToTab(path) {
   if (path === "/") return "home";
-  if (path.startsWith("/route") || path.startsWith("/drive")) return "route";
+  if (path.startsWith("/route") || path.startsWith("/drive") || path.startsWith("/ai-gps")) return "route";
   if (path.startsWith("/lokin")) return "lokin";
   if (path.startsWith("/earnings")) return "earnings";
   return "more";
@@ -45,6 +45,7 @@ export default function DriverLayout() {
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
   const isNested = NESTED_PATHS.includes(loc.pathname);
+  const isShopFlow = loc.pathname === "/locator" || loc.pathname === "/shop-deliver";
   const currentTab = pathToTab(loc.pathname);
   const lockedGps = loc.pathname === "/ai-gps" && new URLSearchParams(loc.search).get("focus") === "locked";
 
@@ -73,7 +74,7 @@ export default function DriverLayout() {
       {!lockedGps && <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
           {isNested ? (
-            <button onClick={() => navigate(TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
+            <button onClick={() => navigate(isShopFlow && loc.pathname === "/locator" ? "/shop-deliver" : TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
               <ChevronLeft className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-white/80">Back</span>
             </button>
