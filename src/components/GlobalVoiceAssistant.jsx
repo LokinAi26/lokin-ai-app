@@ -19,6 +19,8 @@ const NAV_COMMANDS = [
   { keys: ["brand", "merch", "apparel", "shiesty"], to: "/brand", label: "Opening Brand" },
   { keys: ["settings", "preferences", "goals"], to: "/settings", label: "Opening Settings" },
   { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode"], to: "/drive", label: "Opening Drive Mode" },
+  { keys: ["find item", "item locator", "locate item", "where is this item", "smart shop", "find everything"], to: "/locator", label: "Opening Smart Shop Item Locator" },
+  { keys: ["shop and deliver", "shopping orders", "shopping route"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
 ];
 
 function includesAny(text, phrases) {
