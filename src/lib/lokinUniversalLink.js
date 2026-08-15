@@ -22,10 +22,16 @@ export function parseLokinUniversalLink(input, expectedHost) {
     seen.add(key);
   }
 
+  // Require the contract fields explicitly. Defaults make malformed or legacy
+  // links look valid and weaken our ability to retire old contracts safely.
+  if (!seen.has("command")) return { ok: false, reason: "command_required" };
+  if (!seen.has("source")) return { ok: false, reason: "source_required" };
+  if (!seen.has("v")) return { ok: false, reason: "version_required" };
+
   const command = url.searchParams.get("command") || "";
-  const source = url.searchParams.get("source") || "external-link";
+  const source = url.searchParams.get("source") || "";
   const nonce = url.searchParams.get("nonce") || "";
-  const version = url.searchParams.get("v") || "1";
+  const version = url.searchParams.get("v") || "";
   const query = url.searchParams.get("q") || "";
 
   if (!ALLOWED.has(command)) return { ok: false, reason: "unsupported_command" };
