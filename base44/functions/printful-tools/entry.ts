@@ -11,27 +11,27 @@ import { jsonRequest } from "../../shared/printRequest.ts";
  *
  * Client call: base44.functions.invoke('printful-tools', { action, ... })
  *
- * Actions (payload.action):
- *   addFile         file library — add a new file (file_url, optional file_name)
- *   file            file library — get a single file by id
- *   templates       product templates — list (paginated)
- *   template        product templates — single by id
- *   mockupTask      mockup generator — create a generation task (product_id, variant_ids[], files[])
- *   mockupResult    mockup generator — poll a task by id for status + mockup URLs
- *   printfiles      mockup generator — retrieve printfile specs for a product/variant
- *   layoutTemplates mockup generator — list layout templates
- *   getWebhook      webhook config — read current webhook url + events
- *   setWebhook      webhook config — set webhook url + events[]
+ * V1 endpoint paths (https://developers.printful.com, Postman collection):
+ *   addFile         POST files                              — add a file (url, filename?)
+ *   file            GET  files/{id}                         — get a file
+ *   templates       GET  product-templates?offset=&limit=   — list product templates
+ *   template        GET  product-templates/{id}             — single product template
+ *   mockupTask      POST mockup-generator/create-task/{pid}  — create a mockup task
+ *   mockupResult    GET  mockup-generator/task?task_key=     — poll a mockup task
+ *   layoutTemplates GET  mockup-generator/templates/{pid}   — layout templates for a product
+ *   getWebhook      GET  webhooks                           — read webhook config
+ *   setWebhook      POST webhooks                           — set webhook url + events
  *
- * Docs: https://developers.printful.com
+ * Store-scoped resources use the X-PF-Store-Id header (sent when storeId is provided,
+ * or auto-resolved from the OAuth connection).
  */
 const API = "https://api.printful.com";
-const VALID_ACTIONS = ["addFile", "file", "templates", "template", "mockupTask", "mockupResult", "printfiles", "layoutTemplates", "getWebhook", "setWebhook"];
+const VALID_ACTIONS = ["addFile", "file", "templates", "template", "mockupTask", "mockupResult", "layoutTemplates", "getWebhook", "setWebhook"];
 
 async function pfGet(path: string, token: string, storeId: string) {
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   if (storeId) headers["X-PF-Store-Id"] = String(storeId);
-  const r = await jsonRequest({ url: `${API}${path}`, headers });
+  const r = await jsonRequest({ url: `${API}/${path}`, headers });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   return { ok: true, code: r.data?.code, result: r.data?.result, paging: r.data?.paging, extras: r.data?.extras };
 }
@@ -39,7 +39,7 @@ async function pfGet(path: string, token: string, storeId: string) {
 async function pfPost(path: string, token: string, storeId: string, body: any) {
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   if (storeId) headers["X-PF-Store-Id"] = String(storeId);
-  const r = await jsonRequest({ url: `${API}${path}`, method: "POST", headers, body });
+  const r = await jsonRequest({ url: `${API}/${path}`, method: "POST", headers, body });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   return { ok: true, code: r.data?.code, result: r.data?.result };
 }
@@ -51,7 +51,7 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const payload = await req.json().catch(() => ({}));
-    const action = String(payload.action || "").toLowerCase();
+    const action = String(payload.action || "");
     if (!VALID_ACTIONS.includes(action)) {
       return Response.json({ error: `Invalid action. Use one of: ${VALID_ACTIONS.join(", ")}` }, { status: 400 });
     }
@@ -66,8 +66,8 @@ export default async function (req: Request): Promise<Response> {
       const fileName = String(payload.file_name || "").trim();
       if (!fileUrl) return Response.json({ error: "file_url is required." }, { status: 400 });
       const body: any = { url: fileUrl };
-      if (fileName) body.name = fileName;
-      const r = await pfPost(`/store/files`, token, storeId, body);
+      if (fileName) { body.filename = fileName; body.name = fileName; }
+      const r = await pfPost(`files`, token, storeId, body);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ file: r.result });
     }
@@ -76,7 +76,7 @@ export default async function (req: Request): Promise<Response> {
     if (action === "file") {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required." }, { status: 400 });
-      const r = await pfGet(`/store/files/${encodeURIComponent(id)}`, token, storeId);
+      const r = await pfGet(`files/${encodeURIComponent(id)}`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ file: r.result });
     }
@@ -85,7 +85,7 @@ export default async function (req: Request): Promise<Response> {
     if (action === "templates") {
       const offset = Math.max(0, Number(payload.offset) || 0);
       const limit = Math.min(100, Math.max(1, Number(payload.limit) || 50));
-      const r = await pfGet(`/store/product-templates?offset=${offset}&limit=${limit}`, token, storeId);
+      const r = await pfGet(`product-templates?offset=${offset}&limit=${limit}`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ templates: r.result, paging: r.paging });
     }
@@ -94,7 +94,7 @@ export default async function (req: Request): Promise<Response> {
     if (action === "template") {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required." }, { status: 400 });
-      const r = await pfGet(`/store/product-templates/${encodeURIComponent(id)}`, token, storeId);
+      const r = await pfGet(`product-templates/${encodeURIComponent(id)}`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ template: r.result });
     }
@@ -106,52 +106,41 @@ export default async function (req: Request): Promise<Response> {
       const variantIds = Array.isArray(payload.variant_ids) ? payload.variant_ids : [];
       const files = Array.isArray(payload.files) ? payload.files : [];
       const body: any = {
-        product_id: productId,
         variant_ids: variantIds,
         files,
         format: payload.format || "jpg",
-        crop: payload.crop !== undefined ? payload.crop : true,
       };
       if (payload.options) body.options = payload.options;
-      const r = await pfPost(`/mockup-generator/tasks`, token, storeId, body);
+      const r = await pfPost(`mockup-generator/create-task/${productId}`, token, storeId, body);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ task: r.result });
     }
 
-    // ----- Mockup generator: task result -----
+    // ----- Mockup generator: task result (poll) -----
     if (action === "mockupResult") {
-      const id = String(payload.id || payload.task_id || "");
-      if (!id) return Response.json({ error: "id is required." }, { status: 400 });
-      const r = await pfGet(`/mockup-generator/tasks/${encodeURIComponent(id)}`, token, storeId);
+      const taskKey = String(payload.task_key || payload.id || "");
+      if (!taskKey) return Response.json({ error: "task_key is required." }, { status: 400 });
+      const r = await pfGet(`mockup-generator/task?task_key=${encodeURIComponent(taskKey)}`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ task: r.result });
     }
 
-    // ----- Mockup generator: variant printfiles -----
-    if (action === "printfiles") {
+    // ----- Mockup generator: layout templates for a product -----
+    if (action === "layoutTemplates") {
       const productId = Number(payload.product_id);
       if (!productId) return Response.json({ error: "product_id is required." }, { status: 400 });
-      const variantId = payload.variant_id ? `&variant_id=${encodeURIComponent(payload.variant_id)}` : "";
-      const technique = payload.technique ? `&technique=${encodeURIComponent(payload.technique)}` : "";
-      const r = await pfGet(`/mockup-generator/printfiles/${productId}?${variantId}${technique}`, token, storeId);
+      const params = new URLSearchParams();
+      if (payload.orientation) params.set("orientation", String(payload.orientation));
+      if (payload.technique) params.set("technique", String(payload.technique));
+      const qs = params.toString();
+      const r = await pfGet(`mockup-generator/templates/${productId}${qs ? `?${qs}` : ""}`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      return Response.json({ printfiles: r.result });
-    }
-
-    // ----- Mockup generator: layout templates -----
-    if (action === "layoutTemplates") {
-      const offset = Math.max(0, Number(payload.offset) || 0);
-      const limit = Math.min(100, Math.max(1, Number(payload.limit) || 50));
-      const technique = payload.technique ? `&technique=${encodeURIComponent(payload.technique)}` : "";
-      const productId = payload.product_id ? `&product_id=${encodeURIComponent(payload.product_id)}` : "";
-      const r = await pfGet(`/mockup-generator/layout-templates?offset=${offset}&limit=${limit}${technique}${productId}`, token, storeId);
-      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      return Response.json({ layout_templates: r.result, paging: r.paging });
+      return Response.json({ layout_templates: r.result });
     }
 
     // ----- Webhooks: get config -----
     if (action === "getWebhook") {
-      const r = await pfGet(`/store/webhooks`, token, storeId);
+      const r = await pfGet(`webhooks`, token, storeId);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ webhook: r.result });
     }
@@ -162,7 +151,7 @@ export default async function (req: Request): Promise<Response> {
       if (!url) return Response.json({ error: "url is required." }, { status: 400 });
       const body: any = { url };
       if (Array.isArray(payload.events)) body.events = payload.events;
-      const r = await pfPost(`/store/webhooks`, token, storeId, body);
+      const r = await pfPost(`webhooks`, token, storeId, body);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ webhook: r.result });
     }

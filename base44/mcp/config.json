@@ -186,21 +186,19 @@
       {
         "name": "printful_mockups",
         "title": "Printful mockup generator",
-        "description": "Generates product mockup images via the connected Printful account. action 'mockupTask' creates a generation task (pass product_id, variant_ids[], files[] with placements/layers); action 'mockupResult' polls a task by id for status + mockup URLs; action 'printfiles' retrieves printfile specs for a product/variant; action 'layoutTemplates' lists available layout templates. Mockup generation is asynchronous — create a task then poll mockupResult until done.",
+        "description": "Generates product mockup images via the connected Printful account (Printful V1 Mockup Generator API). action 'mockupTask' creates a generation task for a catalog product (pass product_id, variant_ids[], files[] with placements/layers); action 'mockupResult' polls a task by task_key for status + mockup URLs; action 'layoutTemplates' lists layout templates for a product (pass product_id, optional orientation/technique). Mockup generation is asynchronous — create a task then poll mockupResult until done.",
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: mockupTask, mockupResult, printfiles, layoutTemplates." },
+            "action": { "type": "string", "description": "One of: mockupTask, mockupResult, layoutTemplates." },
             "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
-            "product_id": { "type": "number", "description": "Printful catalog product id; required for mockupTask and printfiles." },
+            "product_id": { "type": "number", "description": "Printful catalog product id; required for mockupTask and layoutTemplates." },
             "variant_ids": { "type": "array", "items": { "type": "number" }, "description": "Catalog variant ids to generate mockups for (mockupTask)." },
-            "files": { "type": "array", "items": { "type": "object" }, "description": "Design file placements/layers for mockupTask (each {placement, technique, layers:[{type,url,...]}])." },
+            "files": { "type": "array", "items": { "type": "object" }, "description": "Design file placements for mockupTask (each {placement, technique, layers:[{type,url,...}]} per Printful docs)." },
             "format": { "type": "string", "description": "Output format for mockupTask (jpg/png). Defaults to jpg." },
-            "id": { "type": "string", "description": "Mockup task id; required for mockupResult." },
-            "variant_id": { "type": "number", "description": "Variant id for printfiles (optional)." },
-            "technique": { "type": "string", "description": "Print technique for printfiles/layoutTemplates (e.g. dtg, embroidery)." },
-            "limit": { "type": "number", "description": "Max results for layoutTemplates (1–100, default 50)." },
-            "offset": { "type": "number", "description": "Pagination offset for layoutTemplates." }
+            "task_key": { "type": "string", "description": "Mockup task key; required for mockupResult (returned by mockupTask)." },
+            "orientation": { "type": "string", "description": "Optional orientation filter for layoutTemplates." },
+            "technique": { "type": "string", "description": "Optional print technique for layoutTemplates (e.g. dtg, embroidery)." }
           },
           "required": ["action"]
         },
