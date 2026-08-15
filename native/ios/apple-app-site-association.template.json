@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["YOUR_TEAM_ID.YOUR_BUNDLE_ID"],
+        "appIDs": ["YOUR_TEAM_ID.com.base6a7a1c830b6bae64604c3139.app"],
         "components": [
           { "/": "/command", "?": { "command": "*" }, "comment": "LOKIN verified command ingress; native and web layers strictly validate command, source, version and payload." }
         ]
