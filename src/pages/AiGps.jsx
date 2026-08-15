@@ -1,10 +1,7 @@
 import { Radar, Move, Lock, Mic, Pause, Power, Navigation, Sparkles, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
-
-function voice(command) {
-  window.dispatchEvent(new CustomEvent("lokin:voice-command", { detail: { command } }));
-}
+import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 
 export default function AiGps() {
   const [params] = useSearchParams();
@@ -57,13 +54,13 @@ export default function AiGps() {
           <div className="rounded-3xl border border-primary/25 bg-black/80 p-3 backdrop-blur-xl">
             <div className="mb-2 text-center text-[10px] tracking-[0.2em] text-primary/70">DRIVE CONTROLS · VOICE FIRST</div>
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => voice("what should I do next")} className="min-h-[76px] rounded-2xl bg-primary py-3 text-center text-black active:scale-[0.98]">
+              <button onClick={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-control")} className="min-h-[76px] rounded-2xl bg-primary py-3 text-center text-black active:scale-[0.98]">
                 <Mic className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-extrabold">ASK LOKIN</div>
               </button>
-              <button onClick={() => voice("pause")} className="min-h-[76px] rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-center text-white/70 active:scale-[0.98]">
+              <button onClick={() => dispatchLokinCommand(LOKIN_COMMANDS.PAUSE, {}, "gps-control")} className="min-h-[76px] rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-center text-white/70 active:scale-[0.98]">
                 <Pause className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-bold">PAUSE</div>
               </button>
-              <button onClick={() => voice("tap out")} className="min-h-[76px] rounded-2xl border border-red-500/25 bg-red-500/[0.07] py-3 text-center text-red-400 active:scale-[0.98]">
+              <button onClick={() => dispatchLokinCommand(LOKIN_COMMANDS.TAP_OUT, {}, "gps-control")} className="min-h-[76px] rounded-2xl border border-red-500/25 bg-red-500/[0.07] py-3 text-center text-red-400 active:scale-[0.98]">
                 <Power className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-bold">TAP OUT</div>
               </button>
             </div>
