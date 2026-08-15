@@ -1,0 +1,51 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "dismissed",
+        "completed",
+        "paused",
+        "resumed",
+        "voice_used",
+        "manual_override"
+      ]
+    },
+    "context": {
+      "type": "string"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "metadata_json": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "signal_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverLearningSignalV2"
+}

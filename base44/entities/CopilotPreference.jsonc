@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "voice_first": {
+      "type": "boolean"
+    },
+    "auto_speak_critical": {
+      "type": "boolean"
+    },
+    "auto_speak_route": {
+      "type": "boolean"
+    },
+    "quiet_nonessential_while_driving": {
+      "type": "boolean"
+    },
+    "resume_interrupted_tasks": {
+      "type": "boolean"
+    },
+    "preferred_prompt_style": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "balanced",
+        "coach"
+      ]
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "CopilotPreference"
+}

@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "driving",
+        "shopping",
+        "delivery",
+        "parked",
+        "break"
+      ]
+    },
+    "distraction_policy": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "normal"
+      ]
+    },
+    "voice_priority": {
+      "type": "boolean"
+    },
+    "last_path": {
+      "type": "string"
+    },
+    "changed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "mode"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverContextState"
+}

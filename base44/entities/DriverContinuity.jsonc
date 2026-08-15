@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "active_context": {
+      "type": "string",
+      "enum": [
+        "driving",
+        "shopping",
+        "delivery",
+        "parked",
+        "break"
+      ]
+    },
+    "current_route": {
+      "type": "string"
+    },
+    "current_order_id": {
+      "type": "string"
+    },
+    "last_safe_checkpoint": {
+      "type": "string"
+    },
+    "pending_action": {
+      "type": "string"
+    },
+    "resume_label": {
+      "type": "string"
+    },
+    "updated_at_client": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverContinuity"
+}
