@@ -4,6 +4,7 @@ import { Mic, Radio, X, Volume2, Ear, Pause, Play, Power, Lock } from "lucide-re
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
+import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -188,8 +189,8 @@ export default function GlobalVoiceAssistant() {
     try { rec.start(); } catch {}
   }
 
-  // Allow the rest of the LOKIN ecosystem to invoke the same assistant logic
-  // without navigating away from the driver's current task.
+  // One command ingress for UI controls, deep links, Siri/App Intents,
+  // Android App Actions, widgets, hardware buttons, and future integrations.
   useEffect(() => {
     const onVoiceCommand = (e) => {
       const command = e?.detail?.command;
@@ -198,6 +199,11 @@ export default function GlobalVoiceAssistant() {
       handleCommand(command);
     };
     window.addEventListener("lokin:voice-command", onVoiceCommand);
+    const external = consumeExternalCommandFromLocation();
+    if (external?.command) {
+      const phrases = { lock_in: "lock in", pause: "pause", resume: "resume", tap_out: "tap out", find_item: "find item", smart_shop: "smart shop", open_route: "best route", safety: "safety" };
+      setTimeout(() => onVoiceCommand({ detail: { command: phrases[external.command] || external.command, ...external } }), 250);
+    }
     return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
   }, []);
 
