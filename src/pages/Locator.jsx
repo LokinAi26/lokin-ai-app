@@ -30,7 +30,9 @@ export default function Locator() {
   const [muted, setMuted] = useState(false);
   const [distance, setDistance] = useState(100);
   const [simulating, setSimulating] = useState(false);
-  const [tripItems, setTripItems] = useState([]);
+  const [tripItems, setTripItems] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
+  });
   const simRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -54,6 +56,7 @@ export default function Locator() {
     simRef.current = setInterval(() => setDistance((d) => Math.round(Math.max(0, d - 4 + (Math.random() * 6 - 3)))), 700);
   }
   useEffect(() => () => clearInterval(simRef.current), []);
+  useEffect(() => { localStorage.setItem("lokin_smart_shop", JSON.stringify(tripItems)); }, [tripItems]);
 
   const beepHz = distance <= 4 ? 1 : distance <= 20 ? 2.5 : distance <= 50 ? 1.2 : 0.6;
   const atItem = distance <= 3;
@@ -88,6 +91,13 @@ export default function Locator() {
     if (!item || tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode))) return;
     setTripItems((xs) => [...xs, item]);
   }
+
+  function removeFromTrip(target) {
+    const key = target.id || target.barcode || target.name;
+    setTripItems((xs) => xs.filter((x) => (x.id || x.barcode || x.name) !== key));
+  }
+
+  function clearTrip() { setTripItems([]); }
 
   return (
     <div className="p-4 space-y-4 pb-8">
@@ -159,8 +169,8 @@ export default function Locator() {
       </>}
 
       {tripItems.length > 0 && <div className="rounded-3xl border border-primary/20 lokin-panel p-4">
-        <div className="flex items-center justify-between"><div><div className="text-[10px] tracking-[0.18em] text-primary">SMART SHOP ROUTE</div><div className="text-sm font-bold text-white">{tripItems.length} item{tripItems.length === 1 ? "" : "s"} · optimized walking order</div></div><Navigation className="h-5 w-5 text-primary"/></div>
-        <div className="mt-3 space-y-2">{optimizedTrip.map((x) => <div key={x.id || x.barcode || x.name} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5"><div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold flex items-center justify-center">{x.route_order}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">{x.name}</div><div className="text-[10px] text-white/40">Aisle {x.aisle || "?"} · Shelf {x.shelf || "?"}{x._point?.estimated ? " · estimated map point" : " · store map point"}</div></div><div className={`text-[9px] font-bold ${substitutionRisk(x) === "high" ? "text-red-400" : substitutionRisk(x) === "medium" ? "text-amber-300" : "text-primary/70"}`}>{substitutionRisk(x) === "high" ? "SUB NEEDED" : substitutionRisk(x) === "medium" ? "LOW STOCK" : "READY"}</div></div>)}</div>
+        <div className="flex items-center justify-between"><div><div className="text-[10px] tracking-[0.18em] text-primary">SMART SHOP ROUTE</div><div className="text-sm font-bold text-white">{tripItems.length} item{tripItems.length === 1 ? "" : "s"} · optimized walking order</div></div><button onClick={clearTrip} className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-semibold text-white/45">CLEAR</button></div>
+        <div className="mt-3 space-y-2">{optimizedTrip.map((x) => <div key={x.id || x.barcode || x.name} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5"><div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold flex items-center justify-center">{x.route_order}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">{x.name}</div><div className="text-[10px] text-white/40">Aisle {x.aisle || "?"} · Shelf {x.shelf || "?"}{x._point?.estimated ? " · estimated map point" : " · store map point"}</div></div><div className="text-right"><div className={`text-[9px] font-bold ${substitutionRisk(x) === "high" ? "text-red-400" : substitutionRisk(x) === "medium" ? "text-amber-300" : "text-primary/70"}`}>{substitutionRisk(x) === "high" ? "SUB NEEDED" : substitutionRisk(x) === "medium" ? "LOW STOCK" : "READY"}</div><button onClick={() => removeFromTrip(x)} className="mt-1 text-[9px] text-white/30">REMOVE</button></div></div>)}</div>
         <div className="mt-3 text-[10px] text-white/35">LOKIN orders stops from the entrance using available store coordinates. Low/out-of-stock items are surfaced before you waste time walking to them.</div>
       </div>}
 
