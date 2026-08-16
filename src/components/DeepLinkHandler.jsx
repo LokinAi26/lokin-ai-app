@@ -34,13 +34,13 @@ export default function DeepLinkHandler() {
     if (via === "siri") {
       toast({
         title: "Siri opened LOKIN",
-        description: "Locked in. Say “Hey LOKIN” for hands-free help.",
+        description: "Locked in. Use Siri hands-free, or say “Hey LOKIN” while the native app is open.",
         duration: 2600,
       });
     } else if (via === "assistant") {
       toast({
         title: "Assistant opened LOKIN",
-        description: "Locked in. Say “Hey LOKIN” for hands-free help.",
+        description: "Locked in. Use Siri hands-free, or say “Hey LOKIN” while the native app is open.",
         duration: 2600,
       });
     }
