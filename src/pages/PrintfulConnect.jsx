@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, AlertTriangle, Loader2, Unlink, RefreshCw, ExternalLink, Package, ShoppingBag, FileImage, Layers, Image as ImageIcon, Webhook } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const CAPS = [
   { icon: Package, label: "Product Syncing" },
@@ -19,11 +20,11 @@ export default function PrintfulConnect() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadStatus() {
+  async function loadStatus(force = false) {
     setLoading(true);
     setError("");
     try {
-      const res = await base44.functions.invoke("printful-catalog", { action: "connection" });
+      const res = await guardedInvoke(base44, "printful-catalog", { action: "connection" }, { force, userInitiated: force });
       setStatus(res.data);
     } catch (e) {
       setStatus(null);
@@ -58,7 +59,7 @@ export default function PrintfulConnect() {
     setBusy(true);
     try {
       await base44.functions.invoke("printful-catalog", { action: "disconnect" });
-      await loadStatus();
+      await loadStatus(true);
     } catch (e) {
       setError(e.response?.data?.error || e.message);
     } finally {
