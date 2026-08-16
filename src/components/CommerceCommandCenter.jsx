@@ -14,14 +14,20 @@ function badge(status = "") {
 
 export default function CommerceCommandCenter() {
   const [orders, setOrders] = useState([]);
+  const [printfulOrders, setPrintfulOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const res = await base44.functions.invoke("shopify-catalog", { action: "orders", limit: 50, status: "any" });
-      setOrders(res?.data?.orders || []);
+      const [shopifyRes, printfulRes] = await Promise.allSettled([
+        base44.functions.invoke("shopify-catalog", { action: "orders", limit: 50, status: "any" }),
+        base44.functions.invoke("printful-catalog", { action: "orders", limit: 50 }),
+      ]);
+      if (shopifyRes.status === "fulfilled") setOrders(shopifyRes.value?.data?.orders || []);
+      if (printfulRes.status === "fulfilled") setPrintfulOrders(printfulRes.value?.data?.orders || []);
+      if (shopifyRes.status === "rejected" && printfulRes.status === "rejected") throw shopifyRes.reason || printfulRes.reason;
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load orders";
       setError(String(msg));
@@ -34,8 +40,9 @@ export default function CommerceCommandCenter() {
     const revenue = orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
     const paid = orders.filter((o) => ["paid", "partially_refunded"].includes(o.financial_status)).length;
     const moving = orders.filter((o) => ["fulfilled", "partial"].includes(o.fulfillment_status)).length;
-    return { revenue, paid, moving, pending: Math.max(0, orders.length - moving) };
-  }, [orders]);
+    const tracked = printfulOrders.filter((o) => (o.tracking || []).some((t) => t.tracking_number || t.tracking_url)).length;
+    return { revenue, paid, moving, tracked };
+  }, [orders, printfulOrders]);
 
   return (
     <section className="rounded-3xl border border-accent/20 lokin-panel p-4 space-y-3">
@@ -43,7 +50,7 @@ export default function CommerceCommandCenter() {
         <div>
           <div className="text-[11px] tracking-[0.24em] text-accent/80 font-display">POST-PURCHASE INTELLIGENCE</div>
           <div className="text-lg font-bold text-white flex items-center gap-2"><Activity className="h-4 w-4 text-accent" /> Commerce Command Center</div>
-          <div className="mt-1 text-xs text-white/45">Shopify orders · fulfillment pulse · shipment readiness</div>
+          <div className="mt-1 text-xs text-white/45">Shopify payment signal → Printful fulfillment → tracking telemetry</div>
         </div>
         <button onClick={load} disabled={loading} className="rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 text-xs font-bold text-accent disabled:opacity-50">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -57,7 +64,7 @@ export default function CommerceCommandCenter() {
           <Metric icon={DollarSign} label="ORDER VALUE" value={money(stats.revenue, orders[0]?.currency || "USD")} />
           <Metric icon={PackageCheck} label="PAID" value={`${stats.paid}/${orders.length}`} />
           <Metric icon={Truck} label="FULFILLED" value={String(stats.moving)} />
-          <Metric icon={Clock3} label="IN QUEUE" value={String(stats.pending)} />
+          <Metric icon={Clock3} label="TRACKED" value={String(stats.tracked)} />
         </div>
 
         <div className="space-y-2">
@@ -74,6 +81,9 @@ export default function CommerceCommandCenter() {
             </div>
           ))}
           {!loading && orders.length === 0 && <div className="rounded-2xl border border-white/10 bg-black/30 p-5 text-center text-xs text-white/40">No Shopify orders yet. New purchases will surface here automatically.</div>}
+          <div className="rounded-xl border border-white/8 bg-black/30 p-3 text-[11px] leading-relaxed text-white/45">
+            <span className="font-semibold text-white/70">Fail-closed commerce rule:</span> checkout never counts as fulfillment. LOKIN only treats an order as shipped/tracked after a fulfillment-provider signal is present.
+          </div>
         </div>
       </>}
     </section>
