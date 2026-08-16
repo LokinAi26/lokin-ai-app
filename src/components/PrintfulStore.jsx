@@ -62,6 +62,7 @@ function shopifyToCard(p, domain) {
     is_shopify: true,
     status: p.status,
     checkout_url: domain && p.handle ? `https://${domain}/products/${p.handle}` : null,
+    cart_base_url: domain ? `https://${domain}/cart` : null,
   };
 }
 
@@ -387,7 +388,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
 
               {selected.is_shopify && selected.checkout_url ? (
                 <a
-                  href={selected.checkout_url}
+                  href={selectedVariant?.id && selected.cart_base_url ? `${selected.cart_base_url}/${selectedVariant.id}:1` : selected.checkout_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full rounded-xl border border-primary/50 bg-primary py-3 text-sm font-black text-black text-center active:scale-[0.99] transition-transform inline-flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(170,255,0,0.18)]"
