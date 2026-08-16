@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ShoppingBag, RefreshCw, X, Check, Shirt } from "lucide-react";
+import { ShoppingBag, ShoppingCart, RefreshCw, X, Check, Shirt } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
 import { LokinGlyph } from "@/components/Brand";
@@ -32,6 +32,36 @@ function templateToCard(t) {
     placements: t.placements || [],
     created_at: t.created_at || null,
     is_new: t.created_at ? Date.now() / 1000 - t.created_at < 14 * 24 * 3600 : false,
+  };
+}
+
+function normalizeName(value = "") {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function shopifyToCard(p, domain) {
+  const variants = (p.variants || []).map((v) => ({
+    ...v,
+    id: v.id,
+    name: v.title,
+    retail_price: v.price,
+    currency: p.currency || "USD",
+    in_stock: v.available == null ? true : Number(v.available) !== 0,
+    thumbnail_url: p.thumbnail_url,
+  }));
+  return {
+    id: `shopify-${p.id}`,
+    external_id: String(p.id),
+    name: p.title,
+    handle: p.handle,
+    thumbnail_url: p.thumbnail_url,
+    variants,
+    min_price: p.min_price,
+    max_price: p.max_price,
+    currency: p.currency || "USD",
+    is_shopify: true,
+    status: p.status,
+    checkout_url: domain && p.handle ? `https://${domain}/products/${p.handle}` : null,
   };
 }
 
