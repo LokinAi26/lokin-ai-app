@@ -223,6 +223,22 @@
         "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
       },
       {
+        "name": "audit_commerce_schemas",
+        "title": "Audit LOKIN commerce schemas",
+        "description": "Admin-only preserve-first auditor for the LOKIN commerce model estate. action 'summary' returns audit progress, 'scanBatch' checks a bounded batch for stored records and active code dependencies, and 'candidate' returns zero-record/zero-direct-ref models requiring second-pass certification. This tool never deletes schemas or records.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "description": "One of: summary, scanBatch, candidate." },
+            "offset": { "type": "number", "description": "Batch offset for scanBatch." },
+            "limit": { "type": "number", "description": "Batch size for scanBatch; max 25." }
+          },
+          "required": ["action"]
+        },
+        "handler": "commerce-schema-auditor",
+        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": true }
+      },
+      {
         "name": "optimize_route",
         "title": "Optimize delivery route",
         "description": "Runs LOKIN's route optimizer for the signed-in driver. Pass mode (fastest, most_profit, most_money, goal_mode, low_stress, minimum_mileage, homeward). Returns the ranked stop sequence, route stats (miles, gross, fuel, net, $/hr), today's earnings, and the Lock In Score.",
