@@ -72,7 +72,12 @@ export default async function (req) {
         if (!email) { errors.push({ id: o.id, error: "no customer email" }); continue; }
 
         const trackingLines = shipments
-          .map((s) => (s.tracking_number ? `${s.carrier || "Carrier"}: ${s.tracking_number}` : (s.carrier || "Shipped")))
+          .map((s) => {
+            if (!s.tracking_number) return s.carrier || "Shipped";
+            return s.tracking_url
+              ? `${s.carrier || "Carrier"}: ${s.tracking_number}\n  Track package: ${s.tracking_url}`
+              : `${s.carrier || "Carrier"}: ${s.tracking_number}`;
+          })
           .filter(Boolean);
         const trackingBlock = trackingLines.length
           ? trackingLines.map((l) => `• ${l}`).join("\n")
@@ -92,6 +97,7 @@ export default async function (req) {
           customer_email: email,
           customer_name: name,
           tracking: shipments.map((s) => s.tracking_number).filter(Boolean).join(", "),
+          tracking_url: shipments.map((s) => s.tracking_url).filter(Boolean).join(", "),
           carrier: shipments.map((s) => s.carrier).filter(Boolean).join(", "),
           shipped_at: new Date().toISOString(),
         });
