@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
 import { LokinGlyph } from "@/components/Brand";
 import { useToast } from "@/components/ui/use-toast";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 function priceLabel(p) {
   if (p.is_template) return "";
@@ -120,7 +121,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       if (storeId) {
         stores = [{ id: storeId, type: "native" }];
       } else {
-        const sres = await base44.functions.invoke("printful-catalog", { action: "stores" });
+        const sres = await guardedInvoke(base44, "printful-catalog", { action: "stores" }, { force, userInitiated: force });
         stores = sres.data?.stores || [];
       }
       if (!stores.length) {
@@ -139,13 +140,13 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
         // Sync-product catalog only works on Manual Order / API (native) platform stores.
         if (s.type !== "shopify") {
           try {
-            const res = await base44.functions.invoke("printful-catalog", { action: "catalog", storeId: sid, limit });
+            const res = await guardedInvoke(base44, "printful-catalog", { action: "catalog", storeId: sid, limit }, { force, userInitiated: force });
             syncProducts.push(...(res.data?.products || []));
           } catch {}
         }
         // Product templates (Printful's modern published products) work across stores.
         try {
-          const tres = await base44.functions.invoke("printful-tools", { action: "templates", storeId: sid, limit });
+          const tres = await guardedInvoke(base44, "printful-tools", { action: "templates", storeId: sid, limit }, { force, userInitiated: force });
           const items = tres.data?.templates?.items || [];
           templates.push(...items.map(templateToCard));
         } catch {}
@@ -154,7 +155,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       // Shopify is the customer-facing checkout surface. Pull its live catalog too,
       // then merge it with Printful so synced products become immediately buyable in-app.
       try {
-        const storefrontRes = await base44.functions.invoke("shopify-catalog", { action: "storefront", limit: 250 });
+        const storefrontRes = await guardedInvoke(base44, "shopify-catalog", { action: "storefront", limit: 250 }, { force, userInitiated: force });
         shopifyDomain = storefrontRes.data?.shop?.domain || "";
         shopifyProducts = (storefrontRes.data?.products || [])
           .filter((p) => !p.status || p.status === "active")
