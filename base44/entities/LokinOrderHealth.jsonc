@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "healthy": {
+      "type": "boolean"
+    },
+    "shopify_orders": {
+      "type": "number"
+    },
+    "printful_orders": {
+      "type": "number"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "healthy"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinOrderHealth"
+}

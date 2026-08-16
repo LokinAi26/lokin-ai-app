@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "active_products": {
+      "type": "number"
+    },
+    "active_variants": {
+      "type": "number"
+    },
+    "out_of_stock": {
+      "type": "number"
+    },
+    "mapping_issues": {
+      "type": "number"
+    },
+    "price_issues": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCatalogCounter"
+}

@@ -1,0 +1,51 @@
+{
+  "type": "object",
+  "properties": {
+    "service": {
+      "type": "string"
+    },
+    "connected": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "service",
+    "connected"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinIntegrationState"
+}

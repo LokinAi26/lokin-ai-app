@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "open": {
+      "type": "number"
+    },
+    "critical": {
+      "type": "number"
+    },
+    "resolved": {
+      "type": "number"
+    },
+    "avg_resolution_hours": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceExceptionCounter"
+}

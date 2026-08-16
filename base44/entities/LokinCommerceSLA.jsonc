@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "component": {
+      "type": "string"
+    },
+    "target_ms": {
+      "type": "number"
+    },
+    "actual_ms": {
+      "type": "number"
+    },
+    "met": {
+      "type": "boolean"
+    },
+    "measured_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "component",
+    "target_ms"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceSLA"
+}

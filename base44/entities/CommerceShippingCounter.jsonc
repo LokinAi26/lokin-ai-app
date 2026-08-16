@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "labels_created": {
+      "type": "number"
+    },
+    "in_transit": {
+      "type": "number"
+    },
+    "delivered": {
+      "type": "number"
+    },
+    "exceptions": {
+      "type": "number"
+    },
+    "avg_transit_hours": {
+      "type": "number"
+    },
+    "on_time_rate": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceShippingCounter"
+}

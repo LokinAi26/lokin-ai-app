@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "requests": {
+      "type": "number"
+    },
+    "successes": {
+      "type": "number"
+    },
+    "failures": {
+      "type": "number"
+    },
+    "avg_latency_ms": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "provider",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProviderCounter"
+}

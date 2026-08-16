@@ -414,14 +414,14 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
 
               {selected.is_shopify && selected.checkout_url ? (
                 <a
-                  href={selectedVariant?.id && selected.cart_base_url ? `${selected.cart_base_url}/${selectedVariant.id}:1` : selected.checkout_url}
+                  href={selectedVariant?.id && selected.cart_base_url ? `${selected.cart_base_url}/${selectedVariant.id}:1?ref=lokin-ai` : selected.checkout_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-disabled={selectedVariant?.in_stock === false}
                   onClick={(e) => { if (selectedVariant?.in_stock === false) e.preventDefault(); }}
                   className={`w-full rounded-xl border py-3 text-sm font-black text-center transition-transform inline-flex items-center justify-center gap-2 ${selectedVariant?.in_stock === false ? "border-white/10 bg-white/5 text-white/30 pointer-events-none" : "border-primary/50 bg-primary text-black active:scale-[0.99] shadow-[0_0_24px_rgba(170,255,0,0.18)]"}`}
                 >
-                  <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Shopify
+                  <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Secure checkout
                 </a>
               ) : null}
 

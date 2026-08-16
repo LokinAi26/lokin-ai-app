@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "new_customers": {
+      "type": "number"
+    },
+    "repeat_customers": {
+      "type": "number"
+    },
+    "vip_customers": {
+      "type": "number"
+    },
+    "support_cases": {
+      "type": "number"
+    },
+    "avg_experience_score": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerCounter"
+}

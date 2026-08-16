@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "issue": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name",
+    "issue"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceSyncIssue"
+}

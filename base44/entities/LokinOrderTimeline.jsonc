@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "order_key": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tracking_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "order_key",
+    "stage",
+    "provider"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinOrderTimeline"
+}

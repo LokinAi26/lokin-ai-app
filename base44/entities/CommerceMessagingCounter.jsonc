@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "queued": {
+      "type": "number"
+    },
+    "sent": {
+      "type": "number"
+    },
+    "delivered": {
+      "type": "number"
+    },
+    "failed": {
+      "type": "number"
+    },
+    "suppressed": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceMessagingCounter"
+}

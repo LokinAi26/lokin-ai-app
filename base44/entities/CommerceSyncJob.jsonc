@@ -1,0 +1,63 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "job_type": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "attempt": {
+      "type": "number"
+    },
+    "next_retry_at": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "job_type",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceSyncJob"
+}

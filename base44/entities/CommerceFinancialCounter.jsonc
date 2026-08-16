@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "gross_sales": {
+      "type": "number"
+    },
+    "discounts": {
+      "type": "number"
+    },
+    "refunds": {
+      "type": "number"
+    },
+    "taxes": {
+      "type": "number"
+    },
+    "shipping": {
+      "type": "number"
+    },
+    "fees": {
+      "type": "number"
+    },
+    "net_sales": {
+      "type": "number"
+    },
+    "estimated_profit": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceFinancialCounter"
+}

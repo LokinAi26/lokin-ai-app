@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "printful_id": {
+      "type": "string"
+    },
+    "shopify_id": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "product_name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceCatalogLink"
+}

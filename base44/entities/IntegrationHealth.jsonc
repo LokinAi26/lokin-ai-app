@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "last_success_at": {
+      "type": "string"
+    },
+    "last_error_at": {
+      "type": "string"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "rate_limit_remaining": {
+      "type": "number"
+    },
+    "checked_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "IntegrationHealth"
+}

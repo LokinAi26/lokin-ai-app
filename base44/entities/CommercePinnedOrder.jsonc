@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "pinned_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "CommercePinnedOrder"
+}

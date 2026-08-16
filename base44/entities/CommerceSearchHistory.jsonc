@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "query"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "CommerceSearchHistory"
+}

@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "view": {
+      "type": "string"
+    },
+    "range": {
+      "type": "string"
+    },
+    "compact": {
+      "type": "boolean"
+    },
+    "updated_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "CommerceDashboardPreference"
+}

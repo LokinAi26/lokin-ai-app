@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "test": {
+      "type": "string"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "details": {
+      "type": "string"
+    },
+    "tested_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "test",
+    "passed"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceDiagnostic"
+}

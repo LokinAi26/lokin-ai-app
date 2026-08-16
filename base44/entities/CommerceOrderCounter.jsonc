@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "created": {
+      "type": "number"
+    },
+    "paid": {
+      "type": "number"
+    },
+    "fulfilled": {
+      "type": "number"
+    },
+    "shipped": {
+      "type": "number"
+    },
+    "delivered": {
+      "type": "number"
+    },
+    "cancelled": {
+      "type": "number"
+    },
+    "refunded": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOrderCounter"
+}

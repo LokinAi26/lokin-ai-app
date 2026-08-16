@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "task": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "number"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "task",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceQueue"
+}

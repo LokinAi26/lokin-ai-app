@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "overall": {
+      "type": "number"
+    },
+    "commerce": {
+      "type": "number"
+    },
+    "fulfillment": {
+      "type": "number"
+    },
+    "shipping": {
+      "type": "number"
+    },
+    "customer": {
+      "type": "number"
+    },
+    "automation": {
+      "type": "number"
+    },
+    "calculated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsScore"
+}

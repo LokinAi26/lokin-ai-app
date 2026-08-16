@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "component": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "component",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinSystemPulse"
+}

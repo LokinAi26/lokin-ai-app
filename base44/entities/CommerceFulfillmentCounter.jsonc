@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "queued": {
+      "type": "number"
+    },
+    "in_production": {
+      "type": "number"
+    },
+    "fulfilled": {
+      "type": "number"
+    },
+    "failed": {
+      "type": "number"
+    },
+    "reprints": {
+      "type": "number"
+    },
+    "avg_production_hours": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceFulfillmentCounter"
+}
