@@ -158,13 +158,31 @@ export default function GlobalVoiceAssistant() {
       return;
     }
     try {
-      const [earnings, prefsList, offers] = await Promise.all([
+      const me = await base44.auth.me().catch(() => null);
+      const userId = me?.id;
+      const [earnings, prefsList, offers, continuityRows, contextRows, shopRows, opportunities, recommendations] = await Promise.all([
         base44.entities.Earning.filter({}),
         base44.entities.DriverPreference.filter({}),
         base44.entities.Offer.filter({}).catch(() => []),
+        userId ? base44.entities.DriverContinuity.filter({ user_id: userId }).catch(() => []) : [],
+        userId ? base44.entities.DriverContextState.filter({ user_id: userId }).catch(() => []) : [],
+        userId ? base44.entities.SmartShopList.filter({ user_id: userId, status: "active" }).catch(() => []) : [],
+        base44.entities.WorkOpportunity.filter({ status: "available" }).catch(() => []),
+        userId ? base44.entities.CopilotRecommendation.filter({ user_id: userId, status: "queued" }).catch(() => []) : [],
       ]);
       const p = prefsList[0] || {};
-      const contextSnapshot = buildLokinContext({ earnings, prefs: p, offers });
+      const rankedOpportunities = [...opportunities].sort((a, b) => Number(b?.estimated_pay || 0) - Number(a?.estimated_pay || 0));
+      const rankedRecommendations = [...recommendations].sort((a, b) => Number(b?.priority || 0) - Number(a?.priority || 0));
+      const contextSnapshot = buildLokinContext({
+        earnings,
+        prefs: p,
+        offers,
+        continuity: continuityRows[0] || null,
+        driverContext: contextRows[0] || null,
+        smartShop: shopRows[0] || null,
+        opportunities: rankedOpportunities.slice(0, 5),
+        recommendation: rankedRecommendations[0] || null,
+      });
       const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
         mode: intelligence.mode || "assistant",
