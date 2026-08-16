@@ -1,4 +1,4 @@
-import { Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight } from "lucide-react";
+import { Route, TrendingUp, Fuel, Truck, ShieldAlert, Coffee, Sparkles, ArrowUpRight, Dumbbell, BrainCircuit, ShoppingBag, BatteryCharging } from "lucide-react";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import PrintfulStore from "@/components/PrintfulStore";
 import GearShowcase from "@/components/GearShowcase";
@@ -23,12 +23,16 @@ const TYPE = [
 
 // What LOKIN stands for — base44-style value grid.
 const VALUES = [
+  { icon: BrainCircuit, title: "LOKIN Intelligence", desc: "Local-first AI routing, learning and contextual decisions across the ecosystem." },
   { icon: Route, title: "Route AI", desc: "Sequenced by mode for max $/hr. Not the shortest path — the most profitable one." },
   { icon: TrendingUp, title: "Earnings OS", desc: "Live net-per-hour, goal tracking, and a Lock In Score that grades your shift." },
   { icon: Fuel, title: "Fuel Deals", desc: "Weekly discount codes and cashback so every gallon pays you back." },
   { icon: Truck, title: "On The Road", desc: "Truck stops, weigh stations, rest areas and RV parks — found along your route." },
   { icon: ShieldAlert, title: "Safety Net", desc: "SOS, live location sharing, and a fake-call scheduler for tough spots." },
   { icon: Coffee, title: "Break Recharge", desc: "Breathing coach, motivation pep talks, and free streaming between shifts." },
+  { icon: Dumbbell, title: "Fitness Intelligence", desc: "Driver wellness, form guidance, training and recovery designed around earning windows." },
+  { icon: BatteryCharging, title: "Performance AI", desc: "Balances responsiveness, protected driving systems and battery pressure." },
+  { icon: ShoppingBag, title: "LOKIN Commerce", desc: "Apparel, driver gear and connected fulfillment under one branded commerce layer." },
 ];
 
 // Your Printful store ID (numeric). Find it in Printful → Store Settings.
@@ -40,7 +44,7 @@ export default function Brand() {
     <div className="p-4 space-y-6 pb-8">
       <div>
         <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">BRAND SYSTEM</div>
-        <h1 className="text-2xl font-bold font-heading metal-text">Lock in. Level up</h1>
+        <h1 className="text-2xl font-bold font-heading metal-text">Lock in. Level up.</h1>
       </div>
 
       {/* Manifesto hero */}
@@ -54,11 +58,10 @@ export default function Brand() {
             EVERY DRIVER<br /><span className="text-primary text-glow">NEEDS A LOCK.</span>
           </h2>
           <p className="mt-3 text-sm text-white/60 leading-relaxed max-w-prose">
-            LOKIN AI is an intelligent driver operating system built to make life on the road safer, smarter, and simpler —
-            a hands-free Co-Pilot that helps every mile, every gig, and every break work around the driver.
+            LOKIN AI is evolving into a personal performance operating system — connecting income, driving intelligence, safety, fitness, recovery, commerce and AI into one cohesive experience built around the user.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {["One app", "Every mile", "Every driver", "Every trip"].map((t) => (
+            {["Earn", "Train", "Protect", "Recover", "Level Up"].map((t) => (
               <span key={t} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-white/70">{t}</span>
             ))}
           </div>
@@ -67,7 +70,7 @@ export default function Brand() {
 
       {/* The whole stack value grid */}
       <div>
-        <div className="text-[11px] tracking-[0.24em] text-white/40 font-display mb-2">THE WHOLE STACK · NO TAB JUGGLING</div>
+        <div className="text-[11px] tracking-[0.24em] text-white/40 font-display mb-2">THE LOKIN ECOSYSTEM · ONE PERFORMANCE IDENTITY</div>
         <div className="grid grid-cols-2 gap-3">
           {VALUES.map((v) => (
             <div key={v.title} className="rounded-2xl border border-white/10 lokin-panel p-4">
@@ -149,12 +152,11 @@ export default function Brand() {
       <CommerceCommandCenter />
 
       {/* In-app LOKIN gear collection — every card represents an individual sellable product */}
-      <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4">
-        <div className="text-[11px] tracking-[0.22em] text-primary/80 font-display">PRINT-ON-DEMAND READY</div>
-        <div className="mt-1 text-sm font-bold text-white">Individual Product Catalog</div>
-        <p className="mt-1 text-xs leading-relaxed text-white/50">
-          Each item below is separated as its own product so artwork, mockups, variants, pricing, and fulfillment can be managed independently in Printful or Printify.
-        </p>
+      <div className="rounded-3xl border border-primary/20 lokin-surface p-5">
+        <div className="lokin-kicker">LOKIN PRODUCTS</div>
+        <div className="mt-2 text-xl font-bold text-white">Wear the system. Equip the mission.</div>
+        <p className="mt-2 text-xs leading-relaxed text-white/50">The product universe now follows the same performance identity as the app: apparel, driver utility, fitness, recovery and future connected gear. Every sellable item remains independently manageable for artwork, variants, pricing and fulfillment.</p>
+        <div className="mt-4 flex flex-wrap gap-2"><span className="lokin-chip">APPAREL</span><span className="lokin-chip">DRIVER GEAR</span><span className="lokin-chip">FITNESS</span><span className="lokin-chip">RECOVERY</span><span className="lokin-chip">ACCESSORIES</span></div>
       </div>
       <GearShowcase />
 
