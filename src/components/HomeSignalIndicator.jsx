@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Signal, WifiOff } from "lucide-react";
+import useLokinPerformance, { cadenceFor } from "@/hooks/useLokinPerformance";
 
 // Real-time cellular/network signal pill for the Home screen.
 // Reads the Network Information API + navigator.onLine, maps to a 1–5 bar
@@ -30,6 +31,7 @@ function barsFromNet(net, online) {
 export default function HomeSignalIndicator() {
   const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
   const [net, setNet] = useState(null);
+  const perf = useLokinPerformance();
 
   useEffect(() => {
     function up() { setOnline(true); setNet(getNetInfo()); }
@@ -39,13 +41,13 @@ export default function HomeSignalIndicator() {
     const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (c) c.addEventListener?.("change", () => setNet(getNetInfo()));
     setNet(getNetInfo());
-    const id = setInterval(() => setNet(getNetInfo()), 5000);
+    const id = setInterval(() => setNet(getNetInfo()), cadenceFor(perf, 5000, 20000, 60000));
     return () => {
       window.removeEventListener("online", up);
       window.removeEventListener("offline", down);
       clearInterval(id);
     };
-  }, []);
+  }, [perf?.effectiveMode, perf?.pauseNonessential]);
 
   const bars = barsFromNet(net, online);
   const label = !online
