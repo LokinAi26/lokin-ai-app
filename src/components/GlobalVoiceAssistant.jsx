@@ -64,6 +64,7 @@ export default function GlobalVoiceAssistant() {
   const [reply, setReply] = useState("");
   const recRef = useRef(null);
   const wakeRef = useRef(null);
+  const conversationRef = useRef([]);
   const alwaysOnRef = useRef(alwaysOn);
   alwaysOnRef.current = alwaysOn;
 
@@ -153,6 +154,7 @@ export default function GlobalVoiceAssistant() {
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
+      const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
         mode: "assistant",
         command,
@@ -162,10 +164,12 @@ export default function GlobalVoiceAssistant() {
           netPerHour: p.min_per_hour || 22,
           hoursWorked: 0,
           platform: "mixed",
+          recentConversation: JSON.stringify(recentConversation).slice(0, 1800),
         },
       });
       const data = res?.data ?? res ?? {};
       const answer = data.reply || "I didn't catch that.";
+      conversationRef.current = [...recentConversation, { role: "user", text: command }, { role: "assistant", text: answer }].slice(-8);
       setReply(answer);
       speak(answer);
     } catch (e) {
@@ -187,7 +191,8 @@ export default function GlobalVoiceAssistant() {
       setListening(true);
       setReply("Listening — speak your command now.");
       recorder.start();
-      await new Promise((resolve) => setTimeout(resolve, 4200));
+      // Give natural commands a little more room while keeping latency low.
+      await new Promise((resolve) => setTimeout(resolve, 6000));
       const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
       recorder.stop();
       await stopped;
@@ -204,7 +209,7 @@ export default function GlobalVoiceAssistant() {
       const res = await base44.functions.invoke("voice-transcribe", { audioBase64, mimeType: blob.type });
       const text = String(res?.data?.text || res?.text || "").trim();
       if (!text) throw new Error("I couldn't make out the command.");
-      const cleaned = text.replace(/^hey\s+lo+kin[,.!?\s-]*/i, "").trim();
+      const cleaned = text.replace(/^hey\s+(?:lo+kin|lock\s*in)[,.!?\s-]*/i, "").trim();
       await handleCommand(cleaned || "what should I do next");
     } catch (e) {
       setListening(false);
