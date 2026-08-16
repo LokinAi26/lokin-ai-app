@@ -55,6 +55,11 @@ function shopifyToCard(p, domain) {
     name: p.title,
     handle: p.handle,
     thumbnail_url: p.thumbnail_url,
+    images: p.images || (p.thumbnail_url ? [p.thumbnail_url] : []),
+    description: p.description || "",
+    vendor: p.vendor,
+    product_type: p.product_type,
+    options: p.options || [],
     variants,
     min_price: p.min_price,
     max_price: p.max_price,
@@ -93,6 +98,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const [live, setLive] = useState(false);
   const [selected, setSelected] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const lastLoadAtRef = useRef(0);
 
@@ -291,7 +297,11 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
           {products.map((p) => (
             <button
               key={p.id}
-              onClick={() => { setSelected(p); setSelectedVariant(p.variants?.find((v) => v.in_stock) || p.variants?.[0] || null); }}
+              onClick={() => {
+                const remembered = p.is_shopify ? localStorage.getItem(`lokin:vault:variant:${p.external_id}`) : null;
+                const variant = p.variants?.find((v) => String(v.id) === remembered && v.in_stock !== false) || p.variants?.find((v) => v.in_stock) || p.variants?.[0] || null;
+                setSelected(p); setSelectedVariant(variant); setSelectedImage(p.images?.[0] || p.thumbnail_url || null);
+              }}
               className="group text-left rounded-2xl border border-white/10 lokin-panel p-2.5 active:scale-[0.98] active:border-primary/40 active:glow-primary transition-all"
             >
               <div className="relative rounded-xl bg-black/50 border border-white/5 overflow-hidden">
@@ -350,8 +360,8 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
             <div className="p-4 space-y-3">
               <div className="flex items-center gap-4">
                 <div className="h-20 w-20 shrink-0 rounded-xl bg-black/50 border border-white/5 overflow-hidden">
-                  {selected.thumbnail_url ? (
-                    <Image src={selected.thumbnail_url} alt={selected.name} fittingType="fit" className="h-20 w-20" />
+                  {selectedImage || selected.thumbnail_url ? (
+                    <Image src={selectedImage || selected.thumbnail_url} alt={selected.name} fittingType="fit" className="h-20 w-20" />
                   ) : (
                     <div className="h-20 w-20 flex items-center justify-center"><LokinGlyph size={28} /></div>
                   )}
@@ -376,6 +386,27 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   )}
                 </div>
               </div>
+
+              {selected.is_shopify && (selected.images || []).length > 1 && (
+                <div>
+                  <div className="text-[11px] tracking-widest text-white/40 font-display mb-2">PRODUCT VIEWS</div>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {selected.images.slice(0, 8).map((src, i) => (
+                      <button key={src} onClick={() => setSelectedImage(src)} className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${selectedImage === src ? "border-primary/60 bg-primary/10" : "border-white/10 bg-black/40"}`}>
+                        <Image src={src} alt={`${selected.name} view ${i + 1}`} fittingType="fit" className="h-16 w-16" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selected.is_shopify && selected.description && (
+                <div className="rounded-xl border border-white/8 bg-black/35 p-3">
+                  <div className="text-[10px] tracking-[.16em] text-primary/70 font-display">PRODUCT INTELLIGENCE</div>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">{selected.description.slice(0, 420)}{selected.description.length > 420 ? "…" : ""}</p>
+                  {(selected.vendor || selected.product_type) && <div className="mt-2 text-[10px] text-white/30">{[selected.vendor, selected.product_type].filter(Boolean).join(" · ")}</div>}
+                </div>
+              )}
 
               {selected.is_template ? (
                 <div className="space-y-2">
@@ -426,7 +457,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   )}
                   <div className="space-y-2">
                     {(selected.variants || []).map((v) => (
-                      <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full flex items-center gap-3 rounded-xl border p-2 text-left transition-all ${selectedVariant?.id === v.id ? "border-primary/50 bg-primary/10" : "border-white/8 bg-black/40"}`}> 
+                      <button key={v.id} onClick={() => { setSelectedVariant(v); if (selected.is_shopify) localStorage.setItem(`lokin:vault:variant:${selected.external_id}`, String(v.id)); }} className={`w-full flex items-center gap-3 rounded-xl border p-2 text-left transition-all ${selectedVariant?.id === v.id ? "border-primary/50 bg-primary/10" : "border-white/8 bg-black/40"}`}> 
                         <div className="h-12 w-12 shrink-0 rounded-lg bg-black/60 border border-white/5 overflow-hidden">
                           {v.thumbnail_url ? (
                             <Image src={v.thumbnail_url} alt={v.name} fittingType="fit" className="h-12 w-12" />
@@ -469,7 +500,10 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
               ) : null}
 
               {selected.is_shopify && selected.checkout_url && (
-                <div className="rounded-xl border border-white/8 bg-black/40 px-3 py-2.5">
+                <div className="rounded-xl border border-white/8 bg-black/40 px-3 py-2.5 space-y-2">
+                  <div className="grid grid-cols-3 gap-1 text-center text-[9px] font-bold text-white/45">
+                    <span>1 · LOCK IT IN</span><span>2 · PRINTED</span><span>3 · TRACKED</span>
+                  </div>
                   <div className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-wider text-white/55">
                     <ShieldCheck className="h-3.5 w-3.5 text-primary" /> SHOPIFY SECURE CHECKOUT
                     <span className="text-white/20">•</span>
