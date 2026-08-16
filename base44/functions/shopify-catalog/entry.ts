@@ -119,6 +119,7 @@ export default async function (req) {
       const products = (r.data?.products || []).map((p) => ({
         id: p.id,
         title: p.title,
+        handle: p.handle,
         status: p.status,
         vendor: p.vendor,
         product_type: p.product_type,
@@ -140,6 +141,7 @@ export default async function (req) {
         product: {
           id: p.id,
           title: p.title,
+          handle: p.handle,
           body_html: p.body_html,
           vendor: p.vendor,
           product_type: p.product_type,
@@ -161,6 +163,7 @@ export default async function (req) {
         return {
           id: p.id,
           title: p.title,
+          handle: p.handle,
           thumbnail_url: p.image?.src,
           status: p.status,
           variants,

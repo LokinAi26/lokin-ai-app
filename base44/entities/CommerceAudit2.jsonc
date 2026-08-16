@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "source": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "CommerceAudit2"
+}
