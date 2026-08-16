@@ -1,3 +1,5 @@
+import { guardianPolicyFor } from "./creditGuardianManifest";
+
 const CACHE_PREFIX = "lokin:guardian:";
 
 export const CREDIT_GUARDIAN = Object.freeze({
@@ -36,4 +38,21 @@ export function guardianDecision({ essential = false, userInitiated = false, cac
   if (essential || userInitiated) return "allow";
   if (cacheAvailable) return "cache";
   return CREDIT_GUARDIAN.mode === "preservation" ? "defer" : "allow";
+}
+
+export async function guardedInvoke(base44, name, payload = {}, { force = false, userInitiated = false } = {}) {
+  const policy = guardianPolicyFor(name);
+  if (policy.tier === "MISSION_CRITICAL") return base44.functions.invoke(name, payload);
+  if (policy.tier === "EXTERNALIZE" && !userInitiated && CREDIT_GUARDIAN.mode === "preservation") {
+    const err = new Error(`${name} deferred by LOKIN Credit Guardian preservation mode`);
+    err.code = "LOKIN_CREDIT_DEFERRED";
+    throw err;
+  }
+  const ttl = Number(policy.ttl || 0);
+  if (ttl > 0) {
+    const key = `${name}:${JSON.stringify(payload)}`;
+    const result = await guardedCall(key, () => base44.functions.invoke(name, payload), { maxAge: ttl, force });
+    return result.data;
+  }
+  return base44.functions.invoke(name, payload);
 }
