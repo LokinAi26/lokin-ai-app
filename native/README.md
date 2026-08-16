@@ -16,6 +16,13 @@ LOKIN to a specific screen.
 
 ## What it enables
 
+The native architecture now has two complementary voice paths:
+
+1. **Foreground LOKIN Native Voice** — while the native app is open, `LOKINNativeVoiceBridge.swift.template` uses Apple Speech + AVAudioEngine to listen for “Hey LOKIN”, capture the following command, and inject it into the existing React command bus. The web app remains the single command/AI brain.
+2. **System hands-free path** — when the app is backgrounded or the phone is locked, use Siri App Intents / Shortcuts. `LOKINAskIntent.swift.template` supports spoken questions such as “Hey Siri, ask LOKIN what should I do next?” and hands the question to the verified `/command` Universal Link contract.
+
+This avoids pretending that a third-party iOS app can own a system-wide custom wake word while suspended. “Hey LOKIN” is the foreground native wake phrase; Siri is the OS-authorized background/locked-device entry point.
+
 Once ported, a driver can say:
 
 | Voice | Phrase | Opens |
@@ -44,11 +51,15 @@ not a placeholder.
 
 ## iOS porting checklist
 
-1. Add `native/ios/LokinIntents.swift` and `native/ios/LokinShortcuts.swift`
-   to your Xcode project target.
-2. Register the custom URL scheme `lokin` in `Info.plist`:
+1. Add `native/ios/LokinIntents.swift`, `native/ios/LokinShortcuts.swift`, `native/ios/LOKINNativeVoiceBridge.swift.template`, and `native/ios/LOKINAskIntent.swift.template` to your Xcode project target (rename `.template` files to `.swift`).
+2. Add the required usage descriptions to Info.plist:
+   - `NSMicrophoneUsageDescription` = `LOKIN uses the microphone for hands-free voice commands.`
+   - `NSSpeechRecognitionUsageDescription` = `LOKIN uses speech recognition to understand your voice commands.`
+3. Instantiate `LOKINNativeVoiceBridge(webView: webView)` after creating the app's WKWebView and retain it for the lifetime of the WebView. The bridge registers the `lokinVoice` script-message channel and exposes native status/commands to `window.LOKINNativeVoice` in React.
+4. Add the Associated Domains entitlement for the production LOKIN domain and keep the Universal Link validator contract synchronized with `/command`.
+5. Register the custom URL scheme `lokin` in Info.plist for legacy/open-screen shortcuts:
    - `URL types` → item 0 → `URL Schemes` → item 0 = `lokin`
-3. In `SceneDelegate.scene(_:openURLContexts:)` (or
+6. In `SceneDelegate.scene(_:openURLContexts:)` (or
    `AppDelegate.application(_:open:options:)`), map `lokin://<target>` to
    the WebView URL:
    ```swift
@@ -60,9 +71,10 @@ not a placeholder.
        webView.load(URL(string: "\(appBase)\(path)?action=\(target)&via=siri")!)
    }
    ```
-4. Set `appBase` to your published app domain.
-5. Build and run on a device (Siri Shortcuts require a real device, not the
-   simulator) and test "Hey Siri, optimize my LOKIN route."
+7. Set `appBase` to your published app domain.
+8. Build and run on a real device. Test both paths:
+   - Foreground: enable native voice, then say “Hey LOKIN, what should I do next?”
+   - Background/locked: “Hey Siri, ask LOKIN what should I do next?”
 
 ## Android porting checklist
 
