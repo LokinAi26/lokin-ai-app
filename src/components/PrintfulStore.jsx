@@ -75,6 +75,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const [live, setLive] = useState(false);
   const [selected, setSelected] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -139,6 +140,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       });
 
       setProducts(all);
+      setLastSyncedAt(new Date());
       setLive(all.length > 0);
       setError(all.length === 0 ? "No products or templates found in your Printful stores yet." : null);
     } catch (e) {
@@ -166,7 +168,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
     setRefreshing(true);
     await load();
     setRefreshing(false);
-    toast({ title: "Storefront synced", description: "Pulled the latest from Printful." });
+    toast({ title: "Vault synced", description: "Pulled the latest sellable catalog from Shopify + Printful." });
   }
 
   function notify(name) {
@@ -182,7 +184,10 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <ShoppingBag className="h-4 w-4 text-primary" />
-        <div className="text-sm font-semibold text-white/80">The Vault</div>
+        <div>
+          <div className="text-sm font-semibold text-white/80">The Vault</div>
+          {lastSyncedAt && <div className="text-[9px] text-white/30">Shopify checkout · Printful fulfillment · synced {lastSyncedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>}
+        </div>
         {live && !error && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-widest text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LIVE · {products.length}
@@ -381,6 +386,12 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                     <div className="text-[11px] tracking-widest text-white/40 font-display">VARIANTS & PRICING</div>
                     {selected.is_shopify && <span className="text-[10px] font-bold text-primary">SELECT SIZE / OPTION</span>}
                   </div>
+                  {selected.is_shopify && selectedVariant && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/[0.05] px-3 py-2">
+                      <div className="text-[9px] tracking-[.15em] text-white/35">YOUR SELECTION</div>
+                      <div className="mt-0.5 flex items-center justify-between gap-2"><span className="text-xs font-bold text-white">{selectedVariant.name || "Selected option"}</span><span className="text-sm font-black text-primary">{variantPrice(selectedVariant)}</span></div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {(selected.variants || []).map((v) => (
                       <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full flex items-center gap-3 rounded-xl border p-2 text-left transition-all ${selectedVariant?.id === v.id ? "border-primary/50 bg-primary/10" : "border-white/8 bg-black/40"}`}> 
@@ -421,7 +432,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   onClick={(e) => { if (selectedVariant?.in_stock === false) e.preventDefault(); }}
                   className={`w-full rounded-xl border py-3 text-sm font-black text-center transition-transform inline-flex items-center justify-center gap-2 ${selectedVariant?.in_stock === false ? "border-white/10 bg-white/5 text-white/30 pointer-events-none" : "border-primary/50 bg-primary text-black active:scale-[0.99] shadow-[0_0_24px_rgba(170,255,0,0.18)]"}`}
                 >
-                  <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Secure checkout
+                  <ShoppingCart className="h-4 w-4" /> LOCK IT IN{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""}
                 </a>
               ) : null}
 
