@@ -66,8 +66,10 @@ export default function LokinAI() {
           platform: "mixed",
         },
       });
-      const data = res.data;
-      setLog((l) => [...l, { role: "lokin", text: data.reply }]);
+      const data = res?.data ?? res ?? {};
+      const answer = data.reply || "I didn't catch that.";
+      setLog((l) => [...l, { role: "lokin", text: answer }]);
+      speak(answer);
       if (data.draftedMessage) setDraft(data.draftedMessage);
     } catch (e) {
       setLog((l) => [...l, { role: "lokin", text: `Error: ${e.message}` }]);
