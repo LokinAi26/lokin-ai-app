@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Dumbbell, BatteryCharging } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Dumbbell, BatteryCharging, BrainCircuit } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -60,7 +60,12 @@ export default function More() {
   }
   return (
     <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold font-heading metal-text">More</h1>
+      <div className="rounded-3xl border border-primary/20 lokin-surface p-5">
+        <div className="lokin-kicker">LOKIN ECOSYSTEM</div>
+        <h1 className="mt-2 text-3xl font-bold font-heading metal-text">Your performance OS.</h1>
+        <p className="mt-2 text-sm text-white/50">Earn, move, protect, shop, connect and level up from one intelligent control system.</p>
+        <div className="mt-4 flex flex-wrap gap-2"><span className="lokin-chip">EARN</span><span className="lokin-chip">FITNESS</span><span className="lokin-chip">SAFETY</span><span className="lokin-chip">COMMERCE</span><span className="lokin-chip">AI</span></div>
+      </div>
 
       {GROUPS.map((g) => (
         <div key={g.label}>
