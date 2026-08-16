@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Radar, Clock, MapPin, RefreshCw, Camera, Save, KeyRound, Building2, Check, Maximize2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // Lay stops along a gentle curve in the XZ plane; `perturb` shifts positions
 // when the live re-route runs so the 4D sequence visibly evolves over time.
@@ -49,7 +50,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
       return;
     }
     setLoading(true);
-    base44.functions.invoke("optimizeRoute", { mode: "most_profit" })
+    guardedInvoke(base44, "optimizeRoute", { mode: "most_profit" })
       .then((res) => {
         const s = res.data?.sequenced || [];
         setStops(s);
