@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Wand2, Sparkles, Lightbulb, X, Check, ChevronDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const TONES = ["professional", "casual", "concise", "friendly"];
 
@@ -22,7 +23,7 @@ export default function AiKeyboardBar({ value, onApply, disabled }) {
     setShowTone(false);
     setBusy(mode);
     try {
-      const res = await base44.functions.invoke("aiTextAssist", { text: value, mode, tone: useTone });
+      const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "text", text: value, writingMode: mode, tone: useTone });
       const data = res.data;
       if (data.error) throw new Error(data.error);
       if (mode === "complete") {
