@@ -6,6 +6,7 @@ import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
 import RouteHeatMap from "@/components/RouteHeatMap";
 import AiGps4D from "@/components/AiGps4D";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 export default function RoutePlanner() {
   const [origin, setOrigin] = useState("");
@@ -25,7 +26,7 @@ export default function RoutePlanner() {
   async function optimize() {
     setLoading(true); setError(""); setData(null);
     try {
-      const res = await base44.functions.invoke("optimizeRoute", { originAddress: origin, mode });
+      const res = await guardedInvoke(base44, "optimizeRoute", { originAddress: origin, mode }, { force: true, userInitiated: true });
       setData(res.data);
       if (prefs?.id) base44.entities.DriverPreference.update(prefs.id, { optimization_mode: mode });
     } catch (e) {
