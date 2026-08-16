@@ -2,6 +2,19 @@ import { LokinGlyph, LokinApparelMark } from "@/components/Brand";
 
 const SWATCH = "#0b0f14";
 const NEON = "#AAFF00";
+const METAL = "#c8ced8";
+
+function ProductStage({ children }) {
+  return <>
+    <defs>
+      <radialGradient id="product-stage" cx="50%" cy="42%" r="58%"><stop offset="0" stopColor="#17200c" stopOpacity=".5"/><stop offset=".62" stopColor="#07090b" stopOpacity=".2"/><stop offset="1" stopColor="#020304" stopOpacity="0"/></radialGradient>
+      <linearGradient id="product-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#AAFF00" stopOpacity=".12"/><stop offset="1" stopColor="#AAFF00" stopOpacity="0"/></linearGradient>
+    </defs>
+    <ellipse cx="120" cy="208" rx="72" ry="12" fill="#000" opacity=".5"/>
+    <ellipse cx="120" cy="205" rx="58" ry="7" fill="url(#product-floor)"/>
+    {children}
+  </>;
+}
 
 function Tee({ glyphColor = NEON }) {
   return (
