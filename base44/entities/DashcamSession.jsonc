@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recording",
+        "saved",
+        "stopped",
+        "failed"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "stopped_at": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "voice",
+        "manual",
+        "native"
+      ]
+    },
+    "storage_mode": {
+      "type": "string",
+      "enum": [
+        "local_device",
+        "native_device",
+        "cloud_future"
+      ]
+    },
+    "camera_facing": {
+      "type": "string",
+      "enum": [
+        "environment",
+        "user"
+      ]
+    },
+    "has_audio": {
+      "type": "boolean"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "incident_marked": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "status",
+    "started_at"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DashcamSession"
+}
