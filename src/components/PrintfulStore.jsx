@@ -73,6 +73,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const [error, setError] = useState(null);
   const [live, setLive] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -234,7 +235,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
           {products.map((p) => (
             <button
               key={p.id}
-              onClick={() => setSelected(p)}
+              onClick={() => { setSelected(p); setSelectedVariant(p.variants?.find((v) => v.in_stock) || p.variants?.[0] || null); }}
               className="group text-left rounded-2xl border border-white/10 lokin-panel p-2.5 active:scale-[0.98] active:border-primary/40 active:glow-primary transition-all"
             >
               <div className="relative rounded-xl bg-black/50 border border-white/5 overflow-hidden">
@@ -359,7 +360,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   <div className="text-[11px] tracking-widest text-white/40 font-display">VARIANTS & PRICING</div>
                   <div className="space-y-2">
                     {(selected.variants || []).map((v) => (
-                      <div key={v.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/40 p-2">
+                      <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full flex items-center gap-3 rounded-xl border p-2 text-left transition-all ${selectedVariant?.id === v.id ? "border-primary/50 bg-primary/10" : "border-white/8 bg-black/40"}`}> 
                         <div className="h-12 w-12 shrink-0 rounded-lg bg-black/60 border border-white/5 overflow-hidden">
                           {v.thumbnail_url ? (
                             <Image src={v.thumbnail_url} alt={v.name} fittingType="fit" className="h-12 w-12" />
@@ -378,7 +379,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                           </div>
                         </div>
                         <div className="text-sm font-bold text-primary shrink-0">{variantPrice(v)}</div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </>
@@ -391,7 +392,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   rel="noopener noreferrer"
                   className="w-full rounded-xl border border-primary/50 bg-primary py-3 text-sm font-black text-black text-center active:scale-[0.99] transition-transform inline-flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(170,255,0,0.18)]"
                 >
-                  <ShoppingCart className="h-4 w-4" /> Buy now · Shopify checkout
+                  <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Shopify
                 </a>
               ) : selected.is_template ? (
                 <a
