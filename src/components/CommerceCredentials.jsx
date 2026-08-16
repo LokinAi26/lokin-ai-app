@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import {
   RefreshCw, CheckCircle2, XCircle, Copy, Check, KeyRound, ShieldCheck, AlertTriangle,
 } from "lucide-react";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // LOKIN Commerce Credentials manager.
 //
@@ -61,11 +62,11 @@ export default function CommerceCredentials() {
   const [error, setError] = useState("");
   const { copied, copy } = useCopy();
 
-  const check = async () => {
+  const check = async (force = false) => {
     setLoading(true);
     setError("");
     try {
-      const res = await base44.functions.invoke("commerce-health", {});
+      const res = await guardedInvoke(base44, "commerce-health", {}, { force, userInitiated: force });
       setData(res?.data || res);
     } catch (e) {
       setError(e?.message || "Connection check failed");
@@ -89,7 +90,7 @@ export default function CommerceCredentials() {
           </div>
           <div className="text-xs text-white/45 mt-1">Printful · Printify · Shopify · Gmail</div>
         </div>
-        <button onClick={check} disabled={loading}
+        <button onClick={() => check(true)} disabled={loading}
           className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary disabled:opacity-50 select-none">
           <span className="flex items-center gap-2">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> {loading ? "Testing…" : "Re-test"}
