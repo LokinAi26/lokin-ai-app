@@ -131,8 +131,12 @@ export const COMMERCE_SCHEMA_MANIFEST = [
   {
     "name": "CommerceCommand",
     "isCore": true,
-    "directReferenceCount": 4,
+    "directReferenceCount": 7,
     "references": [
+      {
+        "path": "src/components/CommerceCommandCenter.jsx",
+        "count": 3
+      },
       {
         "path": "base44/shared/commerceModelRegistry.ts",
         "count": 1
@@ -1000,6 +1004,21 @@ export const COMMERCE_SCHEMA_MANIFEST = [
     "isCore": false,
     "directReferenceCount": 0,
     "references": []
+  },
+  {
+    "name": "CommerceSchemaAudit",
+    "isCore": true,
+    "directReferenceCount": 8,
+    "references": [
+      {
+        "path": "base44/functions/commerce-schema-auditor/entry.ts",
+        "count": 7
+      },
+      {
+        "path": "base44/shared/commerceModelRegistry.ts",
+        "count": 1
+      }
+    ]
   },
   {
     "name": "CommerceSearchHistory",
