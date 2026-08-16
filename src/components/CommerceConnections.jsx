@@ -37,7 +37,7 @@ export default function CommerceConnections() {
         <div>
           <div className="text-[11px] tracking-[0.24em] text-primary/70 font-display">COMMERCE CONNECTIONS</div>
           <div className="text-lg font-bold text-white flex items-center gap-2"><Link2 className="h-4 w-4 text-primary" /> LOKIN Commerce Hub</div>
-          <div className="text-xs text-white/45 mt-1">Printful · Printify · Shopify · Gmail</div>
+          <div className="text-xs text-white/45 mt-1">Printful fulfillment · Shopify checkout · tracking intelligence</div>
         </div>
         <button onClick={check} disabled={loading}
           className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary disabled:opacity-50">
@@ -71,7 +71,7 @@ export default function CommerceConnections() {
 
       {data && (
         <div className={`rounded-xl px-3 py-2 text-xs font-semibold ${data.all_connected ? "border border-primary/25 bg-primary/10 text-primary" : "border border-white/10 bg-white/[0.03] text-white/55"}`}>
-          {data.all_connected ? "All systems connected — LOKIN commerce is live." : `${data.connected_count || 0}/4 services connected.`}
+          {data.all_connected ? "Commerce mesh online — catalog, checkout, fulfillment and messaging are connected." : `${data.connected_count || 0}/4 services connected · degraded services stay isolated.`}
         </div>
       )}
     </section>
