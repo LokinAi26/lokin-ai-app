@@ -76,7 +76,7 @@ export default async function(req) {
       method: "POST",
       timeoutMs: 20000,
       headers: { Authorization: `Bearer ${apiKey}` },
-      body: { model, input: prompt, store: false, max_output_tokens: 900 },
+      body: { model, input: prompt },
     });
     if (!r.ok) return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
 
