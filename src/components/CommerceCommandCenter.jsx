@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Activity, CheckCircle2, Clock3, DollarSign, PackageCheck, RefreshCw, ShieldCheck, Truck } from "lucide-react";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 function money(value, currency = "USD") {
   const n = Number(value || 0);
@@ -24,8 +25,8 @@ export default function CommerceCommandCenter() {
     setLoading(true); setError("");
     try {
       const [shopifyRes, printfulRes] = await Promise.allSettled([
-        base44.functions.invoke("shopify-catalog", { action: "orders", limit: 50, status: "any" }),
-        base44.functions.invoke("printful-catalog", { action: "orders", limit: 50 }),
+        guardedInvoke(base44, "shopify-catalog", { action: "orders", limit: 50, status: "any" }),
+        guardedInvoke(base44, "printful-catalog", { action: "orders", limit: 50 }),
       ]);
       if (shopifyRes.status === "fulfilled") setOrders(shopifyRes.value?.data?.orders || []);
       if (printfulRes.status === "fulfilled") setPrintfulOrders(printfulRes.value?.data?.orders || []);
