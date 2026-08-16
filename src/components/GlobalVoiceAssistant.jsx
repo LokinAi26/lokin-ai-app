@@ -164,11 +164,13 @@ export default function GlobalVoiceAssistant() {
           platform: "mixed",
         },
       });
-      const data = res.data;
-      setReply(data.reply || "I didn't catch that.");
-      speak(data.reply || "I didn't catch that.");
+      const data = res?.data ?? res ?? {};
+      const answer = data.reply || "I didn't catch that.";
+      setReply(answer);
+      speak(answer);
     } catch (e) {
-      setReply("Sorry, something went wrong.");
+      const message = e?.response?.data?.error || e?.message || "Something went wrong.";
+      setReply(`LOKIN couldn't complete that request: ${message}`);
     } finally {
       setBusy(false);
     }
