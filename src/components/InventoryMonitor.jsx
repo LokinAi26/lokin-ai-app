@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import {
   Package, RefreshCw, AlertTriangle, CheckCircle2, PackageX, Boxes, ChevronDown,
 } from "lucide-react";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // Printify inventory monitor.
 //
@@ -30,11 +31,11 @@ export default function InventoryMonitor() {
   const [threshold, setThreshold] = useState(loadThreshold);
   const [openLow, setOpenLow] = useState(true);
 
-  async function load() {
+  async function load(force = false) {
     setLoading(true);
     setError("");
     try {
-      const shopsRes = await base44.functions.invoke("printify-catalog", { action: "shops" });
+      const shopsRes = await guardedInvoke(base44, "printify-catalog", { action: "shops" }, { force, userInitiated: force });
       const shopsData = shopsRes?.data || shopsRes;
       const shops = shopsData?.shops || [];
       const sid = String(shops[0]?.id || "");
@@ -45,7 +46,7 @@ export default function InventoryMonitor() {
         setError("No Printify shop found on your account.");
         return;
       }
-      const catRes = await base44.functions.invoke("printify-catalog", { action: "catalog", shop_id: sid });
+      const catRes = await guardedInvoke(base44, "printify-catalog", { action: "catalog", shop_id: sid }, { force, userInitiated: force });
       const catData = catRes?.data || catRes;
       setDemo(Boolean(catData?.demo));
       setProducts(Array.isArray(catData?.products) ? catData.products : []);
@@ -92,7 +93,7 @@ export default function InventoryMonitor() {
             {demo && <span className="ml-1.5 rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/50">demo data</span>}
           </div>
         </div>
-        <button onClick={load} disabled={loading}
+        <button onClick={() => load(true)} disabled={loading}
           className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary disabled:opacity-50 select-none">
           <span className="flex items-center gap-2">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> {loading ? "Scanning…" : "Rescan"}
