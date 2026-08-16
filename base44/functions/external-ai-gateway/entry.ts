@@ -44,7 +44,9 @@ export default async function(req) {
 
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
-    const apiKey = secrets.get("OPENAI_API_KEY");
+    // Prefer the canonical secret name, but keep the legacy OPENAI secret as a safe fallback
+    // during credential migration so existing deployments do not drop into local fallback.
+    const apiKey = secrets.get("OPENAI_API_KEY") || secrets.get("OPENAI");
     const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
 
     const safe = {
