@@ -36,7 +36,7 @@ function systemFor(mode) {
   if (mode === "text") return `${common} Improve the supplied text according to the requested writing mode and tone. Return only JSON.`;
   if (mode === "motivation") return `${common} Give an energetic but grounded pep talk, usually 2-4 sentences. Return only JSON.`;
   if (mode === "support") return `${common} Help troubleshoot the user's LOKIN issue. Prefer concrete steps and avoid inventing account state. Return only JSON.`;
-  return `${common} Answer the driver's command using the supplied context. If recentConversation is supplied, use it for natural multi-turn continuity and resolve pronouns or follow-up questions from that recent exchange. Never invent facts that are not in context. Return only JSON.`;
+  return `${common} Answer the driver's command using the supplied context. If recentConversation is supplied, use it for natural multi-turn continuity and resolve pronouns or follow-up questions from that recent exchange. If learning context is supplied, personalize recommendations toward accepted/preferred patterns and away from dismissed patterns without treating weak signals as certainty. If fitness context is supplied, you may incorporate general fitness, hydration, activity, or recovery suggestions when relevant, but do not diagnose, treat, or make medical claims. Never invent facts that are not in context. Return only JSON.`;
 }
 
 function schemaFor(mode) {
