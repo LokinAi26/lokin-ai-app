@@ -246,11 +246,15 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   </div>
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 to-transparent" />
-                {p.is_template && (
+                {p.is_shopify ? (
+                  <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-primary/15 border border-primary/40 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-primary backdrop-blur">
+                    <ShoppingCart className="h-2.5 w-2.5" /> LIVE
+                  </span>
+                ) : p.is_template ? (
                   <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-accent/15 border border-accent/40 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-accent backdrop-blur">
                     <Shirt className="h-2.5 w-2.5" /> POD
                   </span>
-                )}
+                ) : null}
                 {p.is_new && (
                   <span className="absolute bottom-1.5 left-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-black tracking-wider text-black">NEW</span>
                 )}
@@ -295,7 +299,13 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   )}
                 </div>
                 <div>
-                  {selected.is_template ? (
+                  {selected.is_shopify ? (
+                    <>
+                      <div className="text-sm font-bold font-display text-primary text-glow tracking-wide">LIVE IN SHOPIFY</div>
+                      <div className="text-2xl font-bold font-display text-primary text-glow mt-0.5">{priceLabel(selected) || "—"}</div>
+                      <div className="text-xs text-white/45">Printful fulfilled · {selected.variants?.length || 0} variants</div>
+                    </>
+                  ) : selected.is_template ? (
                     <>
                       <div className="text-sm font-bold font-display text-accent text-glow-cyan tracking-wide">PRODUCT TEMPLATE</div>
                       <div className="text-xs text-white/45 mt-0.5">Print-on-demand · {selected.variants?.length || 0} variants</div>
@@ -374,7 +384,16 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                 </>
               )}
 
-              {selected.is_template ? (
+              {selected.is_shopify && selected.checkout_url ? (
+                <a
+                  href={selected.checkout_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-xl border border-primary/50 bg-primary py-3 text-sm font-black text-black text-center active:scale-[0.99] transition-transform inline-flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(170,255,0,0.18)]"
+                >
+                  <ShoppingCart className="h-4 w-4" /> Buy now · Shopify checkout
+                </a>
+              ) : selected.is_template ? (
                 <a
                   href="https://www.printful.com/dashboard/products"
                   target="_blank"
