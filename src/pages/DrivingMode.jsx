@@ -149,7 +149,7 @@ export default function DrivingMode() {
           </div>
           <div className="font-display text-xl font-extrabold tracking-wider text-primary text-glow">ROUTE COMPLETE</div>
           <div className="text-xs text-white/50 mt-1">All stops cleared. Lock in the next run.</div>
-          <button onClick={load} className="mt-4 w-full rounded-2xl border border-white/10 lokin-panel py-3 flex items-center justify-center gap-2 text-sm font-semibold text-white/80">
+          <button onClick={() => load(true)} className="mt-4 w-full rounded-2xl border border-white/10 lokin-panel py-3 flex items-center justify-center gap-2 text-sm font-semibold text-white/80">
             <RefreshCw className="h-4 w-4 text-primary" /> Recompute route
           </button>
         </div>
@@ -191,7 +191,7 @@ export default function DrivingMode() {
       ) : (
         <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
           <div className="text-sm text-white/50">{data?.error || "No offers match your filters."}</div>
-          <button onClick={load} className="mt-3 w-full rounded-2xl border border-white/10 lokin-panel py-2.5 flex items-center justify-center gap-2 text-sm text-white/70">
+          <button onClick={() => load(true)} className="mt-3 w-full rounded-2xl border border-white/10 lokin-panel py-2.5 flex items-center justify-center gap-2 text-sm text-white/70">
             <RefreshCw className="h-4 w-4 text-primary" /> Retry
           </button>
         </div>
