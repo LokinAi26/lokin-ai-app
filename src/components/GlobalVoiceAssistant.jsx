@@ -8,6 +8,7 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { buildLokinContext, routeLokinIntelligence } from "@/lib/lokinIntelligenceRouter";
+import { summarizeDriverLearning } from "@/lib/lokinLearningIntelligence";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -160,7 +161,7 @@ export default function GlobalVoiceAssistant() {
     try {
       const me = await base44.auth.me().catch(() => null);
       const userId = me?.id;
-      const [earnings, prefsList, offers, continuityRows, contextRows, shopRows, opportunities, recommendations] = await Promise.all([
+      const [earnings, prefsList, offers, continuityRows, contextRows, shopRows, opportunities, recommendations, learningSignals, learningSignalsV2, fitnessProfiles, fitnessLogs] = await Promise.all([
         base44.entities.Earning.filter({}),
         base44.entities.DriverPreference.filter({}),
         base44.entities.Offer.filter({}).catch(() => []),
@@ -169,10 +170,28 @@ export default function GlobalVoiceAssistant() {
         userId ? base44.entities.SmartShopList.filter({ user_id: userId, status: "active" }).catch(() => []) : [],
         base44.entities.WorkOpportunity.filter({ status: "available" }).catch(() => []),
         userId ? base44.entities.CopilotRecommendation.filter({ user_id: userId, status: "queued" }).catch(() => []) : [],
+        userId ? base44.entities.DriverLearningSignal.filter({ user_id: userId }).catch(() => []) : [],
+        userId ? base44.entities.DriverLearningSignalV2.filter({ user_id: userId }).catch(() => []) : [],
+        userId ? base44.entities.FitnessProfile.filter({ user_id: userId }).catch(() => []) : [],
+        userId ? base44.entities.FitnessDailyLog.filter({ user_id: userId, date: new Date().toISOString().slice(0,10) }).catch(() => []) : [],
       ]);
       const p = prefsList[0] || {};
       const rankedOpportunities = [...opportunities].sort((a, b) => Number(b?.estimated_pay || 0) - Number(a?.estimated_pay || 0));
       const rankedRecommendations = [...recommendations].sort((a, b) => Number(b?.priority || 0) - Number(a?.priority || 0));
+      const learning = summarizeDriverLearning(learningSignals, learningSignalsV2);
+      const fp = fitnessProfiles[0] || null;
+      const fl = fitnessLogs[0] || null;
+      const fitness = fp ? {
+        enabled: fp.fitness_mode_enabled !== false,
+        primaryGoal: fp.primary_goal,
+        stepsToday: fl?.steps || 0,
+        stepGoal: fp.daily_steps_target || 0,
+        waterOz: fl?.water_oz || 0,
+        waterGoalOz: fp.daily_water_oz_target || 0,
+        activeMinutes: fl?.active_minutes || 0,
+        sleepHours: fl?.sleep_hours || 0,
+        recoveryScore: fl?.recovery_score || 0,
+      } : null;
       const contextSnapshot = buildLokinContext({
         earnings,
         prefs: p,
@@ -182,6 +201,8 @@ export default function GlobalVoiceAssistant() {
         smartShop: shopRows[0] || null,
         opportunities: rankedOpportunities.slice(0, 5),
         recommendation: rankedRecommendations[0] || null,
+        learning,
+        fitness,
       });
       const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
