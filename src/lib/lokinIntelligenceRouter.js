@@ -41,11 +41,13 @@ export function routeLokinIntelligence(command = "") {
   const text = String(command).trim().toLowerCase();
   if (!text) return { lane: "reject", reason: "empty" };
 
-  const session = SESSION.find((x) => hit(text, x.phrases));
-  if (session) return { lane: "local-session", intent: session.intent, reason: "deterministic-session-command" };
-
+  // Specific media phrases must win over generic session words such as
+  // “pause”; otherwise “pause music” could accidentally pause a work shift.
   const music = MUSIC.find((x) => hit(text, x.phrases));
   if (music) return { lane: "local-music", ...music, reason: "deterministic-media-command" };
+
+  const session = SESSION.find((x) => hit(text, x.phrases));
+  if (session) return { lane: "local-session", intent: session.intent, reason: "deterministic-session-command" };
 
   const nav = LOCAL_ROUTES.find((x) => hit(text, x.phrases));
   if (nav) return { lane: "local-navigation", ...nav, reason: "deterministic-navigation-command" };
