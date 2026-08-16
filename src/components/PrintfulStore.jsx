@@ -148,12 +148,9 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       // Shopify is the customer-facing checkout surface. Pull its live catalog too,
       // then merge it with Printful so synced products become immediately buyable in-app.
       try {
-        const [shopRes, catRes] = await Promise.all([
-          base44.functions.invoke("shopify-catalog", { action: "shop" }),
-          base44.functions.invoke("shopify-catalog", { action: "catalog", limit: 250 }),
-        ]);
-        shopifyDomain = shopRes.data?.shop?.domain || "";
-        shopifyProducts = (catRes.data?.products || [])
+        const storefrontRes = await base44.functions.invoke("shopify-catalog", { action: "storefront", limit: 250 });
+        shopifyDomain = storefrontRes.data?.shop?.domain || "";
+        shopifyProducts = (storefrontRes.data?.products || [])
           .filter((p) => !p.status || p.status === "active")
           .map((p) => shopifyToCard(p, shopifyDomain));
       } catch {}
