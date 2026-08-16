@@ -3,6 +3,7 @@ import { ScanLine, MapPin, Volume2, VolumeX, X, Crosshair, PackageSearch, Store,
 import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const STEPS = ["SEARCH", "STORE MAP", "GET CLOSER"];
 
@@ -40,7 +41,7 @@ export default function Locator() {
     if (!query.trim()) return;
     setLoading(true); setError(""); setResult(null);
     try {
-      const res = await base44.functions.invoke("locateItem", { query });
+      const res = await guardedInvoke(base44, "locateItem", { query }, { userInitiated: true });
       setResult(res.data);
       if (res.data?.found) {
         setDistance(res.data.distance ?? 80);
