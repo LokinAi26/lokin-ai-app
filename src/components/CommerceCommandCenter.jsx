@@ -21,12 +21,12 @@ export default function CommerceCommandCenter() {
   const [schemaAudit, setSchemaAudit] = useState(null);
   const [schemaBusy, setSchemaBusy] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     setLoading(true); setError("");
     try {
       const [shopifyRes, printfulRes] = await Promise.allSettled([
-        guardedInvoke(base44, "shopify-catalog", { action: "orders", limit: 50, status: "any" }),
-        guardedInvoke(base44, "printful-catalog", { action: "orders", limit: 50 }),
+        guardedInvoke(base44, "shopify-catalog", { action: "orders", limit: 50, status: "any" }, { force, userInitiated: force }),
+        guardedInvoke(base44, "printful-catalog", { action: "orders", limit: 50 }, { force, userInitiated: force }),
       ]);
       if (shopifyRes.status === "fulfilled") setOrders(shopifyRes.value?.data?.orders || []);
       if (printfulRes.status === "fulfilled") setPrintfulOrders(printfulRes.value?.data?.orders || []);
@@ -100,7 +100,7 @@ export default function CommerceCommandCenter() {
           <div className="text-lg font-bold text-white flex items-center gap-2"><Activity className="h-4 w-4 text-accent" /> Commerce Command Center</div>
           <div className="mt-1 text-xs text-white/45">Shopify payment signal → Printful fulfillment → tracking telemetry</div>
         </div>
-        <button onClick={load} disabled={loading} className="rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 text-xs font-bold text-accent disabled:opacity-50">
+        <button onClick={() => load(true)} disabled={loading} className="rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 text-xs font-bold text-accent disabled:opacity-50">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
