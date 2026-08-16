@@ -7,7 +7,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
-import { routeLokinIntelligence } from "@/lib/lokinIntelligenceRouter";
+import { buildLokinContext, routeLokinIntelligence } from "@/lib/lokinIntelligenceRouter";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -158,22 +158,20 @@ export default function GlobalVoiceAssistant() {
       return;
     }
     try {
-      const [earnings, prefsList] = await Promise.all([
+      const [earnings, prefsList, offers] = await Promise.all([
         base44.entities.Earning.filter({}),
         base44.entities.DriverPreference.filter({}),
+        base44.entities.Offer.filter({}).catch(() => []),
       ]);
-      const today = new Date().toISOString().slice(0, 10);
-      const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
+      const contextSnapshot = buildLokinContext({ earnings, prefs: p, offers });
       const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
         mode: intelligence.mode || "assistant",
         command,
         context: {
-          todayEarnings,
-          dailyGoal: p.daily_goal || 150,
-          netPerHour: p.min_per_hour || 22,
-          hoursWorked: 0,
+          ...contextSnapshot,
+          netPerHourTarget: p.min_per_hour || 22,
           platform: "mixed",
           recentConversation: JSON.stringify(recentConversation).slice(0, 1800),
         },
