@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ShoppingBag, ShoppingCart, RefreshCw, X, Check, Shirt, ShieldCheck, Truck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
@@ -66,6 +66,24 @@ function shopifyToCard(p, domain) {
   };
 }
 
+const VAULT_CACHE_KEY = "lokin:vault:catalog:v2";
+const VAULT_CACHE_TTL_MS = 5 * 60 * 1000;
+const FOCUS_REFRESH_COOLDOWN_MS = 60 * 1000;
+
+function readVaultCache() {
+  try {
+    const raw = sessionStorage.getItem(VAULT_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.savedAt || Date.now() - parsed.savedAt > VAULT_CACHE_TTL_MS) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function writeVaultCache(products) {
+  try { sessionStorage.setItem(VAULT_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), products })); } catch {}
+}
+
 export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const { toast } = useToast();
   const [products, setProducts] = useState([]);
@@ -76,8 +94,20 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const [selected, setSelected] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const lastLoadAtRef = useRef(0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ force = false } = {}) => {
+    if (!force) {
+      const cached = readVaultCache();
+      if (cached?.products?.length) {
+        setProducts(cached.products);
+        setLive(true);
+        setError(null);
+        setLastSyncedAt(new Date(cached.savedAt));
+        lastLoadAtRef.current = cached.savedAt;
+        return;
+      }
+    }
     try {
       // Resolve the list of stores to scan. Prefer an explicit storeId, else scan every store.
       let stores = [];
@@ -140,7 +170,10 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       });
 
       setProducts(all);
-      setLastSyncedAt(new Date());
+      const syncedAt = Date.now();
+      setLastSyncedAt(new Date(syncedAt));
+      lastLoadAtRef.current = syncedAt;
+      if (all.length) writeVaultCache(all);
       setLive(all.length > 0);
       setError(all.length === 0 ? "No products or templates found in your Printful stores yet." : null);
     } catch (e) {
@@ -159,14 +192,16 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   }, [load]);
 
   useEffect(() => {
-    const onFocus = () => load();
+    const onFocus = () => {
+      if (Date.now() - lastLoadAtRef.current >= FOCUS_REFRESH_COOLDOWN_MS) load({ force: true });
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [load]);
 
   async function refresh() {
     setRefreshing(true);
-    await load();
+    await load({ force: true });
     setRefreshing(false);
     toast({ title: "Vault synced", description: "Pulled the latest sellable catalog from Shopify + Printful." });
   }
