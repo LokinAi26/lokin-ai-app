@@ -13,6 +13,7 @@ import Ticker from "@/components/Ticker";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 function greeting() {
   const h = new Date().getHours();
@@ -54,10 +55,10 @@ export default function Home() {
     return p[0] || null;
   }
 
-  async function loadCommand() {
+  async function loadCommand(force = false) {
     setLoading(true);
     try {
-      const res = await base44.functions.invoke("optimizeRoute", { mode: (await loadPrefs())?.optimization_mode || "most_profit" });
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: (await loadPrefs())?.optimization_mode || "most_profit" }, { force, userInitiated: force });
       setData(res.data);
     } catch (e) {
       setData({ error: e.message });
@@ -83,7 +84,7 @@ export default function Home() {
   const firstName = (me?.full_name?.split(" ")[0]) || role.short;
 
   return (
-    <PullToRefresh onRefresh={loadCommand}>
+    <PullToRefresh onRefresh={() => loadCommand(true)}>
     <div className="p-4 space-y-4">
       {/* Brand header */}
       <div className="flex items-center justify-between pt-1">
