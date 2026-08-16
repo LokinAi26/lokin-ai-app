@@ -133,6 +133,13 @@ export default function GlobalVoiceAssistant() {
     } catch (e) {
       // fall through to normal assistant handling if a session command fails
     }
+    if (intelligence.lane === "local-dashcam") {
+      window.dispatchEvent(new CustomEvent("lokin:dashcam", { detail: { action: intelligence.action, source: "voice" } }));
+      speak(intelligence.reply);
+      setReply(intelligence.reply);
+      setBusy(false);
+      return;
+    }
     const music = intelligence.lane === "local-music" ? intelligence : matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
