@@ -30,7 +30,7 @@ import { shopifyDemo } from "../../shared/demoCatalog.ts";
  */
 
 const API_VERSION = "2026-07";
-const VALID_ACTIONS = ["shop", "products", "product", "catalog", "orders", "order", "createProduct"];
+const VALID_ACTIONS = ["shop", "products", "product", "catalog", "storefront", "orders", "order", "createProduct"];
 
 function baseUrl(domain) {
   return `https://${domain}/admin/api/${API_VERSION}`;
