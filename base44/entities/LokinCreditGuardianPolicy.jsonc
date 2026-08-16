@@ -1,0 +1,59 @@
+{
+  "name": "LokinCreditGuardianPolicy",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string"
+    },
+    "base44_remaining_percent": {
+      "type": "number"
+    },
+    "message_budget_floor_percent": {
+      "type": "number"
+    },
+    "integration_budget_floor_percent": {
+      "type": "number"
+    },
+    "prefer_direct_code": {
+      "type": "boolean"
+    },
+    "prefer_external_provider": {
+      "type": "boolean"
+    },
+    "cache_runtime_calls": {
+      "type": "boolean"
+    },
+    "batch_build_changes": {
+      "type": "boolean"
+    },
+    "block_nonessential_ai": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "required": []
+}
