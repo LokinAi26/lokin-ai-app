@@ -135,9 +135,10 @@ export default function GlobalVoiceAssistant() {
     const music = intelligence.lane === "local-music" ? intelligence : matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
-      speak(music.label);
-      setReply(music.label);
-      if (music.nav) setTimeout(() => navigate(music.nav), 400);
+      const musicReply = music.label || music.reply;
+      speak(musicReply);
+      setReply(musicReply);
+      if (music.nav || music.to) setTimeout(() => navigate(music.nav || music.to), 400);
       setBusy(false);
       return;
     }
