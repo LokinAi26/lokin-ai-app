@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_name": {
+      "type": "string"
+    },
+    "is_core": {
+      "type": "boolean"
+    },
+    "direct_reference_count": {
+      "type": "number"
+    },
+    "has_records": {
+      "type": "boolean"
+    },
+    "sample_record_id": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string"
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "last_scanned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scan_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_name",
+    "classification"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceSchemaAudit"
+}
