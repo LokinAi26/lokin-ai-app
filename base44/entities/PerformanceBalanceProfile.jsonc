@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "fitness_priority": {
+      "type": "number"
+    },
+    "income_priority": {
+      "type": "number"
+    },
+    "preferred_training_window": {
+      "type": "string"
+    },
+    "max_work_block_minutes": {
+      "type": "number"
+    },
+    "recovery_break_minutes": {
+      "type": "number"
+    },
+    "weekly_training_days": {
+      "type": "number"
+    },
+    "income_goal_weekly": {
+      "type": "number"
+    },
+    "fitness_goal": {
+      "type": "string"
+    },
+    "balance_mode": {
+      "type": "string",
+      "enum": [
+        "balanced",
+        "income_focus",
+        "fitness_focus",
+        "recovery_focus"
+      ]
+    },
+    "updated_at_client": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "PerformanceBalanceProfile"
+}
