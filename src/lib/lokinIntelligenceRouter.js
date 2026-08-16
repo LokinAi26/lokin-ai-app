@@ -18,6 +18,7 @@ const LOCAL_ROUTES = [
   { intent: "drive", phrases: ["companion", "keep me company", "road companion", "drive mode", "driving mode"], to: "/drive", reply: "Opening Drive Mode" },
   { intent: "locator", phrases: ["find item", "item locator", "locate item", "where is this item", "smart shop", "find everything"], to: "/locator", reply: "Opening Smart Shop Item Locator" },
   { intent: "shop-deliver", phrases: ["shop and deliver", "shopping orders", "shopping route"], to: "/shop-deliver", reply: "Opening Shop and Deliver" },
+  { intent: "form-guide", phrases: ["form guide", "check my form", "exercise form", "proper form", "lifting form", "rep quality"], to: "/fitness/form-guide", reply: "Opening LOKIN Form Guide" },
   { intent: "fitness", phrases: ["fitness", "workout", "exercise", "mobility", "hydration", "water goal", "recovery"], to: "/fitness", reply: "Opening LOKIN Fitness" },
 ];
 
