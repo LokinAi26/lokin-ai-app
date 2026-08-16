@@ -4,6 +4,7 @@ import PrintfulStore from "@/components/PrintfulStore";
 import GearShowcase from "@/components/GearShowcase";
 import CommerceConnections from "@/components/CommerceConnections";
 import CommerceCommandCenter from "@/components/CommerceCommandCenter";
+import MyLokinOrders from "@/components/MyLokinOrders";
 
 const PALETTE = [
   { name: "LOKIN Neon Lime™", hex: "#AAFF00", text: "text-black" },
@@ -159,6 +160,8 @@ export default function Brand() {
 
       {/* Live Printful store — auto-resolves store ID & pulls every product/price */}
       <PrintfulStore storeId={PRINTFUL_STORE_ID} limit={200} />
+
+      <MyLokinOrders />
 
       {/* Built on base44 stamp */}
       <a href="https://base44.com" target="_blank" rel="noopener noreferrer"
