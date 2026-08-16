@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "lokin_product_key": {
+      "type": "string"
+    },
+    "shopify_product_id": {
+      "type": "string"
+    },
+    "printful_product_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "lokin_product_key",
+    "state"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommerceSyncMap"
+}

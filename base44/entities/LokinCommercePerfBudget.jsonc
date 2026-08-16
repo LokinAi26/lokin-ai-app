@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "surface": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "budget": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "surface",
+    "metric",
+    "budget"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "LokinCommercePerfBudget"
+}
