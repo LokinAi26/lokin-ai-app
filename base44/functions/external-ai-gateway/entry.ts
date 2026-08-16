@@ -44,10 +44,10 @@ export default async function(req) {
 
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
-    // Prefer the canonical secret name, but keep the legacy OPENAI secret as a safe fallback
-    // during credential migration so existing deployments do not drop into local fallback.
-    const apiKey = secrets.get("OPENAI_API_KEY") || secrets.get("OPENAI");
-    const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
+    const apiKey = secrets.get("OPENAI_API_KEY");
+    // OpenAI Responses API model. Override via OPENAI_MODEL secret.
+    // Valid defaults: gpt-5-mini, gpt-5, gpt-4o-mini, gpt-4o.
+    const model = secrets.get("OPENAI_MODEL") || "gpt-5-mini";
 
     const safe = {
       command: String(body.command || "").slice(0, 4000),
@@ -80,7 +80,10 @@ export default async function(req) {
       headers: { Authorization: `Bearer ${apiKey}` },
       body: { model, input: prompt, store: false, max_output_tokens: 900 },
     });
-    if (!r.ok) return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
+    if (!r.ok) {
+      console.error("external-ai-gateway provider error", { status: r.status, model, requestId: r.requestId, body: r.data });
+      return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
+    }
 
     const text = extractText(r.data).trim();
     let parsed;
