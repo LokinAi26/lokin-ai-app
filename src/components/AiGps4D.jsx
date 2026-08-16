@@ -5,6 +5,7 @@ import { Radar, Clock, MapPin, RefreshCw, Camera, Save, KeyRound, Building2, Che
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import useLokinPerformance from "@/hooks/useLokinPerformance";
 
 // Lay stops along a gentle curve in the XZ plane; `perturb` shifts positions
 // when the live re-route runs so the 4D sequence visibly evolves over time.
@@ -22,7 +23,7 @@ function stopPositions(n, perturb = 0) {
 
 export default function AiGps4D({ stops: stopsProp, compact = false }) {
   const containerRef = useRef(null);
-  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1 });
+  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1, frame: 0, frameSkip: 1, pauseVisuals: false });
   const rebuildRef = useRef(null);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -32,6 +33,12 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
   const [pins, setPins] = useState([]);
   const [form, setForm] = useState({ apt: "", gate_code: "", note: "", photo_url: "" });
   const [saving, setSaving] = useState(false);
+  const perf = useLokinPerformance();
+
+  useEffect(() => {
+    stateRef.current.frameSkip = perf?.effectiveMode === "battery_saver" ? 4 : perf?.effectiveMode === "balanced" ? 2 : 1;
+    stateRef.current.pauseVisuals = Boolean(perf?.pauseNonessential);
+  }, [perf?.effectiveMode, perf?.pauseNonessential]);
 
   const total = stops.length;
   const idx = total > 1 ? Math.round(time * (total - 1)) : 0;
@@ -139,6 +146,9 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
     let raf, camAngle = 0;
     function animate() {
       raf = requestAnimationFrame(animate);
+      stateRef.current.frame += 1;
+      if (stateRef.current.pauseVisuals) return;
+      if (stateRef.current.frame % Math.max(1, stateRef.current.frameSkip || 1) !== 0) return;
       camAngle += 0.0014;
       const r = 17;
       camera.position.set(Math.sin(camAngle) * r, 10.5, Math.cos(camAngle) * r);
