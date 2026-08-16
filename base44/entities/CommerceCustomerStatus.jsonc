@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string"
+    },
+    "open_orders": {
+      "type": "number"
+    },
+    "in_transit": {
+      "type": "number"
+    },
+    "delivered": {
+      "type": "number"
+    },
+    "lifetime_orders": {
+      "type": "number"
+    },
+    "lifetime_value": {
+      "type": "number"
+    },
+    "updated_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerStatus"
+}

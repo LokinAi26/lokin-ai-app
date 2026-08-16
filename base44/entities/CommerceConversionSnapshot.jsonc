@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "string"
+    },
+    "sessions": {
+      "type": "number"
+    },
+    "product_views": {
+      "type": "number"
+    },
+    "add_to_cart": {
+      "type": "number"
+    },
+    "checkouts": {
+      "type": "number"
+    },
+    "orders": {
+      "type": "number"
+    },
+    "conversion_rate": {
+      "type": "number"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceConversionSnapshot"
+}

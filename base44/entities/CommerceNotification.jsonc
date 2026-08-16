@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "template": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id",
+    "channel"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceNotification"
+}

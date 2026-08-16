@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "component": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "last_seen_at": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "component"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsHeartbeat"
+}

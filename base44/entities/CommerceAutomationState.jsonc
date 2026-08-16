@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "last_run_at": {
+      "type": "string"
+    },
+    "last_success_at": {
+      "type": "string"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "processed_orders": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceAutomationState"
+}

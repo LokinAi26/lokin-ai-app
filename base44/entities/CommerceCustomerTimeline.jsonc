@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string"
+    },
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_email",
+    "event_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerTimeline"
+}

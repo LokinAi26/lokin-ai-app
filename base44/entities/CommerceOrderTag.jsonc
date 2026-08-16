@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id",
+    "tag"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOrderTag"
+}

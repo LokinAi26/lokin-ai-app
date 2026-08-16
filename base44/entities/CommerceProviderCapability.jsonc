@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    },
+    "checked_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "capability"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProviderCapability"
+}

@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "last_order_id": {
+      "type": "string"
+    },
+    "lifetime_value": {
+      "type": "number"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "updated_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerJourney"
+}

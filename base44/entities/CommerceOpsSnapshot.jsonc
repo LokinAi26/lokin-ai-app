@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "captured_at": {
+      "type": "string"
+    },
+    "health_score": {
+      "type": "number"
+    },
+    "open_orders": {
+      "type": "number"
+    },
+    "in_fulfillment": {
+      "type": "number"
+    },
+    "in_transit": {
+      "type": "number"
+    },
+    "exceptions": {
+      "type": "number"
+    },
+    "revenue": {
+      "type": "number"
+    },
+    "estimated_profit": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "captured_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsSnapshot"
+}

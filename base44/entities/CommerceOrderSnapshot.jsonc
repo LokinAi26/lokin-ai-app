@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "order_name": {
+      "type": "string"
+    },
+    "financial_status": {
+      "type": "string"
+    },
+    "fulfillment_status": {
+      "type": "string"
+    },
+    "total_price": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "customer_email": {
+      "type": "string"
+    },
+    "items_count": {
+      "type": "number"
+    },
+    "ordered_at": {
+      "type": "string"
+    },
+    "last_synced_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOrderSnapshot"
+}

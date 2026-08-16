@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "service": {
+      "type": "string"
+    },
+    "charged_to_customer": {
+      "type": "number"
+    },
+    "provider_cost": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceShippingCostSnapshot"
+}

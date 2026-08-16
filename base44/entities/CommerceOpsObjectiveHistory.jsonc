@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "objective_key": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "target": {
+      "type": "number"
+    },
+    "actual": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "objective_key",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsObjectiveHistory"
+}

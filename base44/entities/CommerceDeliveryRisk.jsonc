@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "level": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "recommended_action": {
+      "type": "string"
+    },
+    "calculated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceDeliveryRisk"
+}

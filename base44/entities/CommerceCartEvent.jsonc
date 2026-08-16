@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "variant_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number"
+    },
+    "value": {
+      "type": "number"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "event"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCartEvent"
+}

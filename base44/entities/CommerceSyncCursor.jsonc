@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "resource": {
+      "type": "string"
+    },
+    "cursor": {
+      "type": "string"
+    },
+    "updated_since": {
+      "type": "string"
+    },
+    "last_completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "resource"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceSyncCursor"
+}

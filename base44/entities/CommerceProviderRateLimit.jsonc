@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "remaining": {
+      "type": "number"
+    },
+    "limit": {
+      "type": "number"
+    },
+    "reset_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "checked_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProviderRateLimit"
+}

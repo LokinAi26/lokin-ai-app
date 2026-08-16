@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "order_updates": {
+      "type": "boolean"
+    },
+    "shipping_updates": {
+      "type": "boolean"
+    },
+    "marketing_opt_in": {
+      "type": "boolean"
+    },
+    "updated_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerPreference"
+}

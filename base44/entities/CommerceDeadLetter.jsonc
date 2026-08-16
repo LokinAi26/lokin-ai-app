@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "external_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "payload_summary": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "reason"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceDeadLetter"
+}

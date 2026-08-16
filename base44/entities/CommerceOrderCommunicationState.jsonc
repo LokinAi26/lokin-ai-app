@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "confirmation_sent": {
+      "type": "boolean"
+    },
+    "production_sent": {
+      "type": "boolean"
+    },
+    "shipping_sent": {
+      "type": "boolean"
+    },
+    "delivery_sent": {
+      "type": "boolean"
+    },
+    "last_message_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOrderCommunicationState"
+}

@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "granted": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_email",
+    "type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceCustomerConsent"
+}

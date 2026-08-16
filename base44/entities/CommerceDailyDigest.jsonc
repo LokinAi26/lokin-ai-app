@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string"
+    },
+    "orders": {
+      "type": "number"
+    },
+    "gross_sales": {
+      "type": "number"
+    },
+    "fulfilled": {
+      "type": "number"
+    },
+    "exceptions": {
+      "type": "number"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceDailyDigest"
+}

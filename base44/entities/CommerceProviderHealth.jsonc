@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "connected": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "last_checked_at": {
+      "type": "string"
+    },
+    "last_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProviderHealth"
+}

@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_product_id": {
+      "type": "string"
+    },
+    "shopify_variant_id": {
+      "type": "string"
+    },
+    "printful_product_id": {
+      "type": "string"
+    },
+    "printful_variant_id": {
+      "type": "string"
+    },
+    "printify_product_id": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "last_verified_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_variant_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProductMapping"
+}

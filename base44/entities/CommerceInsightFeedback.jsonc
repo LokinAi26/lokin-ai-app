@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "insight_id": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "useful": {
+      "type": "boolean"
+    },
+    "note": {
+      "type": "string"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "insight_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceInsightFeedback"
+}

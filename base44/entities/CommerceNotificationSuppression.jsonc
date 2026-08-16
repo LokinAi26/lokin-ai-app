@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "recipient": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipient",
+    "channel"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceNotificationSuppression"
+}

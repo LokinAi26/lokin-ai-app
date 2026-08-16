@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "orders": {
+      "type": "number"
+    },
+    "avg_production_days": {
+      "type": "number"
+    },
+    "failure_rate": {
+      "type": "number"
+    },
+    "reprint_rate": {
+      "type": "number"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceFulfillmentPerformance"
+}

@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "revenue": {
+      "type": "number"
+    },
+    "fulfillment_cost": {
+      "type": "number"
+    },
+    "shipping_cost": {
+      "type": "number"
+    },
+    "platform_fees": {
+      "type": "number"
+    },
+    "refunds": {
+      "type": "number"
+    },
+    "profit": {
+      "type": "number"
+    },
+    "margin_pct": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "calculated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shopify_order_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOrderProfit"
+}

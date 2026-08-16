@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "resource": {
+      "type": "string"
+    },
+    "current": {
+      "type": "number"
+    },
+    "capacity": {
+      "type": "number"
+    },
+    "utilization_pct": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resource"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsCapacity"
+}

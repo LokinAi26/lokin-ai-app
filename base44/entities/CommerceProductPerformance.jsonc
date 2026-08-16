@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "units_sold": {
+      "type": "number"
+    },
+    "revenue": {
+      "type": "number"
+    },
+    "estimated_profit": {
+      "type": "number"
+    },
+    "return_rate": {
+      "type": "number"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_id",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceProductPerformance"
+}

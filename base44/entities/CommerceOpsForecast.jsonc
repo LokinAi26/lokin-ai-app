@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "resource": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "forecast": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resource",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsForecast"
+}

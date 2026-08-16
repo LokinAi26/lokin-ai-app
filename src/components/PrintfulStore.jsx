@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ShoppingBag, ShoppingCart, RefreshCw, X, Check, Shirt } from "lucide-react";
+import { ShoppingBag, ShoppingCart, RefreshCw, X, Check, Shirt, ShieldCheck, Truck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
 import { LokinGlyph } from "@/components/Brand";
@@ -176,6 +176,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
   const showSkeleton = loading && products.length === 0 && !error;
   const showEmpty = !loading && (error || products.length === 0);
   const showGrid = products.length > 0;
+  const liveProducts = products.filter((p) => p.is_shopify).length;
 
   return (
     <div>
@@ -232,7 +233,24 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
       )}
 
       {showGrid && (
-        <div className="grid grid-cols-2 gap-3">
+        <>
+          {liveProducts > 0 && (
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-2 py-2 text-center">
+                <ShieldCheck className="mx-auto h-4 w-4 text-primary" />
+                <div className="mt-1 text-[9px] font-bold tracking-wider text-white/70">SECURE CHECKOUT</div>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-2 py-2 text-center">
+                <Shirt className="mx-auto h-4 w-4 text-primary" />
+                <div className="mt-1 text-[9px] font-bold tracking-wider text-white/70">PRINTFUL POD</div>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/[0.06] px-2 py-2 text-center">
+                <Truck className="mx-auto h-4 w-4 text-primary" />
+                <div className="mt-1 text-[9px] font-bold tracking-wider text-white/70">TRACKED DELIVERY</div>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
           {products.map((p) => (
             <button
               key={p.id}
@@ -275,7 +293,8 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
               </div>
             </button>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {selected && (
@@ -404,6 +423,19 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                 >
                   <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Shopify
                 </a>
+              ) : null}
+
+              {selected.is_shopify && selected.checkout_url && (
+                <div className="rounded-xl border border-white/8 bg-black/40 px-3 py-2.5">
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-wider text-white/55">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" /> SHOPIFY SECURE CHECKOUT
+                    <span className="text-white/20">•</span>
+                    <Truck className="h-3.5 w-3.5 text-primary" /> PRINTFUL FULFILLMENT
+                  </div>
+                </div>
+              )}
+
+              {selected.is_shopify ? null : selected.is_template ? (
               ) : selected.is_template ? (
                 <a
                   href="https://www.printful.com/dashboard/products"

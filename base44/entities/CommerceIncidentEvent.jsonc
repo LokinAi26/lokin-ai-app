@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "event"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceIncidentEvent"
+}

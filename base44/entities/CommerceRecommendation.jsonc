@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "expected_impact": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "recommendation"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceRecommendation"
+}

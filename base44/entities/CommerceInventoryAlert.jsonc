@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "variant_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "variant_name": {
+      "type": "string"
+    },
+    "inventory": {
+      "type": "number"
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "detected_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "variant_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceInventoryAlert"
+}

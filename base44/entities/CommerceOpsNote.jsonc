@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "shopify_order_id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "pinned": {
+      "type": "boolean"
+    },
+    "created_at_external": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "note"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceOpsNote"
+}

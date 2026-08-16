@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "carrier": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string"
+    },
+    "shipments": {
+      "type": "number"
+    },
+    "avg_transit_days": {
+      "type": "number"
+    },
+    "on_time_rate": {
+      "type": "number"
+    },
+    "exceptions": {
+      "type": "number"
+    },
+    "captured_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "carrier",
+    "period"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "CommerceShippingPerformance"
+}
