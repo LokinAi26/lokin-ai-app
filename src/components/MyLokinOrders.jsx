@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle2, ExternalLink, Loader2, PackageCheck, Truck } from "lucide-react";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const label = (s) => String(s || "pending").replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase());
 
 export default function MyLokinOrders() {
   const [orders, setOrders] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  useEffect(() => { (async () => { try { const r = await base44.functions.invoke("my-lokin-orders", {}); setOrders(r?.data?.orders || []); } catch(e) { setError(e?.response?.data?.error || e?.message || "Unable to load orders"); } finally { setLoading(false); } })(); }, []);
+  useEffect(() => { (async () => { try { const r = await guardedInvoke(base44, "my-lokin-orders", {}); setOrders(r?.data?.orders || []); } catch(e) { setError(e?.response?.data?.error || e?.message || "Unable to load orders"); } finally { setLoading(false); } })(); }, []);
   if (loading) return <section className="rounded-3xl border border-white/10 lokin-panel p-5 text-center text-xs text-white/45"><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin text-primary"/>Loading your LOKIN orders…</section>;
   return <section className="rounded-3xl border border-primary/20 lokin-panel p-4 space-y-3">
     <div><div className="text-[11px] tracking-[.24em] text-primary/80 font-display">MY LOKIN ORDERS</div><div className="text-lg font-black text-white">From lock-in to doorstep</div><div className="text-xs text-white/45">Private order status matched to your signed-in account.</div></div>
