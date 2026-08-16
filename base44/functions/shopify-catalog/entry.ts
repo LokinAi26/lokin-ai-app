@@ -110,6 +110,38 @@ export default async function (req) {
       });
     }
 
+    // ----- Storefront bundle (shop identity + active catalog in one round-trip) -----
+    if (action === "storefront") {
+      const cap = Math.min(250, Math.max(1, Number(payload.limit) || 250));
+      const [shopR, productsR] = await Promise.all([
+        shoGet(`${base}/shop.json`),
+        shoGet(`${base}/products.json?limit=${cap}`),
+      ]);
+      if (!shopR.ok) return Response.json({ error: shopR.error }, { status: shopR.status });
+      if (!productsR.ok) return Response.json({ error: productsR.error }, { status: productsR.status });
+      const s = shopR.data?.shop || {};
+      const products = (productsR.data?.products || []).map((p) => {
+        const variants = (p.variants || []).map(variantSummary);
+        const prices = variants.map((v) => Number(v.price)).filter((n) => !isNaN(n));
+        return {
+          id: p.id,
+          title: p.title,
+          handle: p.handle,
+          thumbnail_url: p.image?.src,
+          status: p.status,
+          variants,
+          min_price: prices.length ? Math.min(...prices).toFixed(2) : null,
+          max_price: prices.length ? Math.max(...prices).toFixed(2) : null,
+          currency: s.currency || "USD",
+        };
+      });
+      return Response.json({
+        shop: { id: s.id, name: s.name, domain: s.domain, currency: s.currency, country: s.country },
+        products,
+        count: products.length,
+      });
+    }
+
     // ----- Products list -----
     if (action === "products") {
       const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
