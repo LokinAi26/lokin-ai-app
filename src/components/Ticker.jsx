@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Cloud, Trophy, TrendingUp, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import useLokinPerformance, { cadenceFor } from "@/hooks/useLokinPerformance";
 
 // Horizontal scrolling ticker: weather, sports scores, stock prices.
 export default function Ticker({ location }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const perf = useLokinPerformance();
 
   async function load() {
     setLoading(true);
@@ -42,9 +44,9 @@ export default function Ticker({ location }) {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 5 * 60 * 1000); // refresh every 5 min
+    const id = setInterval(load, cadenceFor(perf, 5 * 60 * 1000, 15 * 60 * 1000, 30 * 60 * 1000));
     return () => clearInterval(id);
-  }, [location]);
+  }, [location, perf?.effectiveMode, perf?.pauseNonessential]);
 
   function Glyph({ item }) {
     if (item.icon === "weather") return <Cloud className={`h-3.5 w-3.5 shrink-0 ${item.color}`} />;
@@ -64,7 +66,7 @@ export default function Ticker({ location }) {
   const loop = [...items, ...items]; // duplicate for seamless scroll
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/10 lokin-panel py-2">
-      <div className="flex gap-8 whitespace-nowrap ticker-scroll will-change-transform">
+      <div className={`flex gap-8 whitespace-nowrap will-change-transform ${perf?.reduceAnimations ? "" : "ticker-scroll"}`}>
         {loop.map((it, i) => (
           <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium text-white/70 shrink-0">
             <Glyph item={it} /> {it.text}
