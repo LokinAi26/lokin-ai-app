@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Dumbbell, Droplets, Footprints, Moon, Play, Plus, Sparkles, Trophy } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Activity, Dumbbell, Droplets, Footprints, Moon, Play, Plus, Sparkles, Trophy, ScanLine, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { summarizeFitnessLearning } from "@/lib/lokinLearningIntelligence";
 
@@ -86,6 +87,10 @@ export default function Fitness() {
       <div className="text-sm text-white/60 mt-2">{learning.preferredWorkouts.length ? `Learning your style: ${learning.preferredWorkouts.join(", ")}.` : "Complete a few sessions and LOKIN will begin learning which workouts fit you best."}</div>
       <div className="text-xs text-white/35 mt-1">Completion learning: {learning.completionRate}% · {learning.signalCount} fitness signals</div>
     </div>
+
+    <Link to="/fitness/form-guide" className="block rounded-3xl border border-primary/30 bg-primary/[0.07] p-5 active:scale-[0.99] transition-transform">
+      <div className="flex items-center justify-between"><div><div className="flex items-center gap-2 text-primary text-xs font-bold tracking-[.16em]"><ScanLine className="h-4 w-4"/> FORM GUIDE INTELLIGENCE</div><div className="text-xl font-bold mt-2">Maximize the quality of every rep.</div><div className="text-xs text-white/50 mt-1">Technique cues + learning intelligence + work/fitness balance.</div></div><TrendingUp className="h-7 w-7 text-primary shrink-0 ml-3"/></div>
+    </Link>
 
     <div className="grid grid-cols-2 gap-3">
       <button disabled={busy} onClick={startDriverReset} className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-4 text-left active:scale-[0.98]"><Play className="h-5 w-5 text-primary mb-2"/><div className="font-semibold text-sm">7-Min Driver Reset</div><div className="text-xs text-white/45 mt-1">Neck, hips, back & circulation</div></button>
