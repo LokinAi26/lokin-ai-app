@@ -22,6 +22,7 @@ All NEW commerce backend work should use the canonical models below rather than 
 - `LokinCommercePolicy` — runtime commerce policy values.
 - `LokinCommerceProviderHealth` — normalized provider health state.
 - `LokinCommerceTrace` — request/latency/success trace telemetry.
+- `LokinCommerceCoreVersion` — singleton metadata identifying the active core contract/version.
 
 The machine-readable registry lives at `base44/shared/commerceModelRegistry.ts`.
 
@@ -34,7 +35,7 @@ Even for models with zero records, schema deletion is deferred until a complete 
 ## Consolidation tiers
 
 ### Tier A — authoritative core
-Use for all new writes and new backend features. The twelve models listed above.
+Use for all new writes and new backend features. The thirteen models listed above.
 
 ### Tier B — preserved legacy/data candidates
 Every other commerce-oriented entity remains physically preserved. Existing records, if any, remain untouched. New code should not create new writes to these models unless a migration plan promotes that model into Tier A.
