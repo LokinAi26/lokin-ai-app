@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Headphones, Send, LifeBuoy, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const QUICK = [
   "How do I start a shift?",
@@ -43,7 +44,7 @@ export default function Support() {
     setMessages(next);
     setBusy(true);
     try {
-      const res = await base44.functions.invoke("lokinSupport", { message: msg, history });
+      const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "support", message: msg, context: { history_count: history.length } });
       setMessages([...next, { role: "assistant", text: res.data.reply }]);
     } catch (e) {
       setMessages([...next, { role: "assistant", text: "Something went wrong on my end. Try again in a moment." }]);
