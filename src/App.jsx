@@ -50,6 +50,7 @@ import MerchantHub from './pages/MerchantHub';
 import ComplianceHandoff from './pages/ComplianceHandoff';
 import MerchantPortal from './pages/MerchantPortal';
 import DriverDispatch from './pages/DriverDispatch';
+import Fitness from './pages/Fitness';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -122,6 +123,7 @@ const AuthenticatedApp = () => {
           <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
           <Route path="/merchant-portal" element={<MerchantPortal />} />
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
+          <Route path="/fitness" element={<Fitness />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
         </Route>
