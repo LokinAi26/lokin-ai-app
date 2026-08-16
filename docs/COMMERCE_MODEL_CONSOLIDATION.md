@@ -54,6 +54,22 @@ Examples include `CommerceAudit2` and the many `LokinCommerce*State`, `*Metric`,
 7. Webhooks must be idempotent and recorded before side effects are considered complete.
 8. Shopify remains the checkout/payment authority; Printful/Printify remain fulfillment authorities; LOKIN is the orchestration/intelligence layer.
 
+## CommerceCommand-driven Schema Guard
+
+LOKIN Commerce Intelligence Core v1.1 adds a preserve-first schema auditor at `base44/functions/commerce-schema-auditor/entry.ts`. The Commerce Command Center now creates explicit `CommerceCommand` records for each scan batch and invokes the auditor in bounded batches of at most 25 schemas.
+
+The generated dependency manifest at `base44/shared/commerceSchemaManifest.ts` records the current commerce schema estate and static code/backend reference evidence. Each runtime scan writes or updates one `CommerceSchemaAudit` record with record-presence evidence, dependency count, classification, recommendation, scan version, and timestamp.
+
+Classification is fail-closed:
+
+- `core` — authoritative model; keep.
+- `dependency` — active direct reference exists; keep.
+- `data` — persisted record exists; keep and migrate only after field-level verification.
+- `candidate` — zero records and zero direct references; preserve for a second-pass dependency certification.
+- `error` — runtime verification could not be completed; keep and investigate.
+
+Automatic deletion is intentionally disabled. A `candidate` is **not** a deletion approval. Removal requires a second dependency scan, confirmed zero-record state, migration/backfill review, checkpoint, and explicit targeted cleanup.
+
 ## Migration strategy
 
-Future cleanup should run in small batches: inventory records for a legacy schema, map its fields to a Tier A destination, migrate records with verification, freeze new writes, observe for a stability window, then archive/remove only after a final dependency scan. Never bulk-delete the legacy model family in one operation.
+Future cleanup runs in small batches through Schema Guard: inventory records for a legacy schema, map its fields to a Tier A destination, migrate records with verification, freeze new writes, observe for a stability window, then archive/remove only after a final dependency scan. Never bulk-delete the legacy model family in one operation.
