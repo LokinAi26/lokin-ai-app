@@ -176,22 +176,67 @@ export default function GlobalVoiceAssistant() {
     }
   }
 
+  async function transcribeRecordedCommand() {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferred = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find((t) => window.MediaRecorder?.isTypeSupported?.(t));
+      const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
+      setListening(true);
+      setReply("Listening — speak your command now.");
+      recorder.start();
+      await new Promise((resolve) => setTimeout(resolve, 4200));
+      const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+      recorder.stop();
+      await stopped;
+      setListening(false);
+      const blob = new Blob(chunks, { type: recorder.mimeType || preferred || "audio/webm" });
+      if (!blob.size) throw new Error("No microphone audio was captured.");
+      const audioBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      setReply("LOKIN heard you. Transcribing…");
+      const res = await base44.functions.invoke("voice-transcribe", { audioBase64, mimeType: blob.type });
+      const text = String(res?.data?.text || res?.text || "").trim();
+      if (!text) throw new Error("I couldn't make out the command.");
+      const cleaned = text.replace(/^hey\s+lo+kin[,.!?\s-]*/i, "").trim();
+      await handleCommand(cleaned || "what should I do next");
+    } catch (e) {
+      setListening(false);
+      const denied = /permission|notallowed|not allowed/i.test(String(e?.name || "") + String(e?.message || ""));
+      setReply(denied ? "Microphone access is blocked. Allow microphone access for Base44 in Safari, then tap the talk button again." : `Voice capture failed: ${e?.message || "Please try again."}`);
+    } finally {
+      stream?.getTracks?.().forEach((t) => t.stop());
+    }
+  }
+
   function startOnce() {
+    // iOS Safari/Base44 previews can expose SpeechRecognition but never deliver
+    // a result. Use recorded-audio transcription there instead of showing a
+    // false “Listening…” state forever.
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { handleCommand("What should I do next?"); return; }
+    if (isiOS || !SR) { transcribeRecordedCommand(); return; }
     setListening(true);
+    let gotResult = false;
     const rec = new SR();
     rec.lang = "en-US";
     rec.interimResults = false;
     rec.onstart = () => setListening(true);
-    rec.onend = () => setListening(false);
+    rec.onend = () => { setListening(false); if (!gotResult) transcribeRecordedCommand(); };
     rec.onresult = (e) => {
+      gotResult = true;
       const text = e.results[0][0].transcript;
-      handleCommand(text);
+      handleCommand(text.replace(/^hey\s+lo+kin[,.!?\s-]*/i, "").trim() || "what should I do next");
     };
-    rec.onerror = () => setListening(false);
+    rec.onerror = () => { setListening(false); if (!gotResult) transcribeRecordedCommand(); };
     recRef.current = rec;
-    try { rec.start(); } catch {}
+    try { rec.start(); } catch { transcribeRecordedCommand(); }
   }
 
   // One command ingress for UI controls, deep links, Siri/App Intents,
