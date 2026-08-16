@@ -19,9 +19,10 @@ export const COMMERCE_CORE_MODELS = Object.freeze({
   providerHealth: "LokinCommerceProviderHealth",
   trace: "LokinCommerceTrace",
   coreVersion: "LokinCommerceCoreVersion",
+  schemaAudit: "CommerceSchemaAudit",
 });
 
-export const COMMERCE_CORE_VERSION = "1.0.0";
+export const COMMERCE_CORE_VERSION = "1.1.0";
 
 export const COMMERCE_MODEL_POLICY = Object.freeze({
   writeNewCommerceDataOnlyToCoreModels: true,
