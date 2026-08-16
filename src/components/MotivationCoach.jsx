@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flame, Volume2, Square, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const MOODS = [
   { id: "in a slump", label: "In a slump" },
@@ -20,7 +21,7 @@ export default function MotivationCoach() {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setSpeaking(false);
     try {
-      const res = await base44.functions.invoke("motivationCoach", { mood });
+      const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "motivation", mood });
       setMsg(res.data?.message || "You've got this. Lock in and go make that money.");
     } catch {
       setMsg("You've got this. Lock in and go make that money.");
