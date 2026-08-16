@@ -45,7 +45,6 @@ export default async function(req) {
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
     const apiKey = secrets.get("OPENAI_API_KEY");
-    if (!apiKey) return Response.json({ error: "External AI provider is not configured", code: "EXTERNAL_AI_NOT_CONFIGURED" }, { status: 503 });
     const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
 
     const safe = {
@@ -57,6 +56,19 @@ export default async function(req) {
       message: String(body.message || "").slice(0, 4000),
       context: compactContext(body.context),
     };
+
+    if (!apiKey) {
+      if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false });
+      if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false });
+      if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false });
+      const earnings = Number(safe.context?.todayEarnings || 0);
+      const goal = Number(safe.context?.dailyGoal || 0);
+      const remaining = goal > 0 ? Math.max(0, goal - earnings) : 0;
+      const reply = /how much|made|earn/i.test(safe.command)
+        ? `You have $${earnings.toFixed(2)} logged today${goal ? `, with $${remaining.toFixed(2)} left toward your $${goal.toFixed(0)} goal` : ""}.`
+        : "LOKIN is in credit-preservation mode. Core navigation, routing, commerce, and safety systems remain available; richer generative replies will activate when an external AI provider key is configured.";
+      return Response.json({ reply, draftedMessage: "", provider: "local-fallback", configured: false });
+    }
 
     const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
     const r = await jsonRequest({
