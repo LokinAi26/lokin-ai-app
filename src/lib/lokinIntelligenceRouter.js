@@ -52,6 +52,11 @@ export function routeLokinIntelligence(command = "") {
   if (hit(text, ["save dashcam", "save incident", "mark incident", "save this clip", "protect this clip"])) return { lane: "local-dashcam", action: "incident", reply: "Saving this dashcam incident", reason: "deterministic-safety-command" };
   if (hit(text, ["stop dashcam", "turn off dashcam", "dashcam off", "stop recording road"])) return { lane: "local-dashcam", action: "stop", reply: "Stopping LOKIN Dashcam", reason: "deterministic-safety-command" };
 
+  if (hit(text, ["battery saver", "save my battery", "low power mode", "battery mode"])) return { lane: "local-performance", mode: "battery_saver", reply: "Battery Saver is on", reason: "deterministic-performance-command" };
+  if (hit(text, ["peak performance", "performance mode", "maximum performance", "full performance"])) return { lane: "local-performance", mode: "performance", reply: "Peak Performance is on", reason: "deterministic-performance-command" };
+  if (hit(text, ["adaptive performance", "adaptive mode", "smart battery", "smart performance"])) return { lane: "local-performance", mode: "adaptive", reply: "Adaptive Performance is on", reason: "deterministic-performance-command" };
+  if (hit(text, ["balanced mode", "balanced performance"])) return { lane: "local-performance", mode: "balanced", reply: "Balanced Performance is on", reason: "deterministic-performance-command" };
+
   const session = SESSION.find((x) => hit(text, x.phrases));
   if (session) return { lane: "local-session", intent: session.intent, reason: "deterministic-session-command" };
 
