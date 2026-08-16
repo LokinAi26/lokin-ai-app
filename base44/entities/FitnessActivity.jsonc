@@ -1,0 +1,83 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "workout",
+        "walk",
+        "run",
+        "cycling",
+        "mobility",
+        "stretch",
+        "strength",
+        "cardio",
+        "sports",
+        "driver_break"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "duration_minutes": {
+      "type": "number"
+    },
+    "distance_miles": {
+      "type": "number"
+    },
+    "steps": {
+      "type": "number"
+    },
+    "calories_estimate": {
+      "type": "number"
+    },
+    "intensity": {
+      "type": "string",
+      "enum": [
+        "light",
+        "moderate",
+        "hard"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "lokin",
+        "device",
+        "import"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "activity_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "FitnessActivity"
+}

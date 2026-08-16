@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "workout_completed",
+        "workout_skipped",
+        "workout_preferred",
+        "workout_disliked",
+        "goal_changed",
+        "break_completed",
+        "hydration_logged",
+        "manual_override"
+      ]
+    },
+    "feature": {
+      "type": "string"
+    },
+    "context": {
+      "type": "string"
+    },
+    "value_json": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "number"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "signal_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "FitnessLearningSignal"
+}

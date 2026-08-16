@@ -1,0 +1,65 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "preferred_recommendation_contexts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dismissed_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accepted_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "preferred_work_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "preferred_break_minutes": {
+      "type": "number"
+    },
+    "voice_usage_score": {
+      "type": "number"
+    },
+    "recommendation_acceptance_score": {
+      "type": "number"
+    },
+    "learning_confidence": {
+      "type": "number"
+    },
+    "last_recomputed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "DriverIntelligenceProfile"
+}

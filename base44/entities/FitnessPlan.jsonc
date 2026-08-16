@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed"
+      ]
+    },
+    "weekly_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "created_at_client": {
+      "type": "string"
+    },
+    "updated_at_client": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "name",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "FitnessPlan"
+}
