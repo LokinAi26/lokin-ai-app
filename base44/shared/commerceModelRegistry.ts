@@ -18,6 +18,7 @@ export const COMMERCE_CORE_MODELS = Object.freeze({
   policy: "LokinCommercePolicy",
   providerHealth: "LokinCommerceProviderHealth",
   trace: "LokinCommerceTrace",
+  coreVersion: "LokinCommerceCoreVersion",
 });
 
 export const COMMERCE_CORE_VERSION = "1.0.0";
