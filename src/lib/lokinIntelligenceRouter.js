@@ -48,6 +48,10 @@ export function routeLokinIntelligence(command = "") {
   const music = MUSIC.find((x) => hit(text, x.phrases));
   if (music) return { lane: "local-music", ...music, reason: "deterministic-media-command" };
 
+  if (hit(text, ["start dashcam", "turn on dashcam", "dashcam on", "start recording road", "record the road"])) return { lane: "local-dashcam", action: "start", reply: "Starting LOKIN Dashcam", reason: "deterministic-safety-command" };
+  if (hit(text, ["save dashcam", "save incident", "mark incident", "save this clip", "protect this clip"])) return { lane: "local-dashcam", action: "incident", reply: "Saving this dashcam incident", reason: "deterministic-safety-command" };
+  if (hit(text, ["stop dashcam", "turn off dashcam", "dashcam off", "stop recording road"])) return { lane: "local-dashcam", action: "stop", reply: "Stopping LOKIN Dashcam", reason: "deterministic-safety-command" };
+
   const session = SESSION.find((x) => hit(text, x.phrases));
   if (session) return { lane: "local-session", intent: session.intent, reason: "deterministic-session-command" };
 
