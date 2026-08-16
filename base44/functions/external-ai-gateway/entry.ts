@@ -116,7 +116,20 @@ export default async function(req) {
     try { parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()); }
     catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : { reply: text, draftedMessage: "" }; }
 
-    await recordTelemetry(base44, { mode, provider: "openai", model, status: "success", latency_ms: Date.now() - startedAt, provider_status: r.status || 200, request_id: r.requestId || "", configured: true });
+    const usage = r.data?.usage || {};
+    await recordTelemetry(base44, {
+      mode,
+      provider: "openai",
+      model,
+      status: "success",
+      latency_ms: Date.now() - startedAt,
+      provider_status: r.status || 200,
+      request_id: r.requestId || "",
+      configured: true,
+      input_tokens: Number(usage.input_tokens || 0),
+      output_tokens: Number(usage.output_tokens || 0),
+      total_tokens: Number(usage.total_tokens || 0),
+    });
     return Response.json({ ...parsed, provider: "external", model, configured: true });
   } catch (e) {
     console.error("external-ai-gateway", e);
