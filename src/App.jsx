@@ -52,6 +52,7 @@ import MerchantPortal from './pages/MerchantPortal';
 import DriverDispatch from './pages/DriverDispatch';
 import Fitness from './pages/Fitness';
 import FormGuide from './pages/FormGuide';
+import PerformanceCenter from './pages/PerformanceCenter';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -126,6 +127,7 @@ const AuthenticatedApp = () => {
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
           <Route path="/fitness" element={<Fitness />} />
           <Route path="/fitness/form-guide" element={<FormGuide />} />
+          <Route path="/performance" element={<PerformanceCenter />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
         </Route>
