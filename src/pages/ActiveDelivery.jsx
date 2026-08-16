@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Navigation, MapPin, Clock, DollarSign, Check, ChevronLeft, ChevronRight, MessageSquare, Package, Flame, ArrowUpRight, Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // Mirrors the LOKIN "Active Delivery" mockup: customer card, ETA/distance,
 // earnings + $/hr, quick status actions, auto-update messages toggle.
@@ -21,7 +22,7 @@ export default function ActiveDelivery() {
 
   useEffect(() => { load(); }, []);
 
-  async function load() {
+  async function load(force = false) {
     setLoading(true);
     setIdx(0);
     setStatusIdx(-1);
@@ -29,7 +30,7 @@ export default function ActiveDelivery() {
       const pl = await base44.entities.DriverPreference.filter({});
       const p = pl[0] || null;
       setPrefs(p);
-      const res = await base44.functions.invoke("optimizeRoute", { mode: p?.optimization_mode || "most_profit" });
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: p?.optimization_mode || "most_profit" }, { force, userInitiated: force });
       setData(res.data);
     } catch (e) {
       setData({ error: e.message });
@@ -80,7 +81,7 @@ export default function ActiveDelivery() {
           </div>
           <div className="font-display text-xl font-extrabold tracking-wider text-primary text-glow">ALL DELIVERIES DONE</div>
           <div className="text-xs text-white/50 mt-1">Route cleared. Lock in the next run.</div>
-          <button onClick={load} className="mt-4 w-full rounded-2xl border border-white/10 lokin-panel py-3 text-sm font-semibold text-white/80">
+          <button onClick={() => load(true)} className="mt-4 w-full rounded-2xl border border-white/10 lokin-panel py-3 text-sm font-semibold text-white/80">
             Recompute route
           </button>
         </div>
