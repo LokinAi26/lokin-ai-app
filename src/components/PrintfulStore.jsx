@@ -358,7 +358,10 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                 </div>
               ) : (
                 <>
-                  <div className="text-[11px] tracking-widest text-white/40 font-display">VARIANTS & PRICING</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] tracking-widest text-white/40 font-display">VARIANTS & PRICING</div>
+                    {selected.is_shopify && <span className="text-[10px] font-bold text-primary">SELECT SIZE / OPTION</span>}
+                  </div>
                   <div className="space-y-2">
                     {(selected.variants || []).map((v) => (
                       <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full flex items-center gap-3 rounded-xl border p-2 text-left transition-all ${selectedVariant?.id === v.id ? "border-primary/50 bg-primary/10" : "border-white/8 bg-black/40"}`}> 
@@ -386,12 +389,18 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                 </>
               )}
 
+              {selected.is_shopify && selected.checkout_url && selectedVariant && selectedVariant.in_stock === false && (
+                <div className="rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-200">This option is currently unavailable. Choose another variant.</div>
+              )}
+
               {selected.is_shopify && selected.checkout_url ? (
                 <a
                   href={selectedVariant?.id && selected.cart_base_url ? `${selected.cart_base_url}/${selectedVariant.id}:1` : selected.checkout_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full rounded-xl border border-primary/50 bg-primary py-3 text-sm font-black text-black text-center active:scale-[0.99] transition-transform inline-flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(170,255,0,0.18)]"
+                  aria-disabled={selectedVariant?.in_stock === false}
+                  onClick={(e) => { if (selectedVariant?.in_stock === false) e.preventDefault(); }}
+                  className={`w-full rounded-xl border py-3 text-sm font-black text-center transition-transform inline-flex items-center justify-center gap-2 ${selectedVariant?.in_stock === false ? "border-white/10 bg-white/5 text-white/30 pointer-events-none" : "border-primary/50 bg-primary text-black active:scale-[0.99] shadow-[0_0_24px_rgba(170,255,0,0.18)]"}`}
                 >
                   <ShoppingCart className="h-4 w-4" /> Buy now{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""} · Shopify
                 </a>
