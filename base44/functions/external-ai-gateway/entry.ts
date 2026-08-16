@@ -26,7 +26,7 @@ function compactContext(value) {
   if (!value || typeof value !== "object") return {};
   const out = {};
   for (const [k, v] of Object.entries(value)) {
-    if (["string", "number", "boolean"].includes(typeof v) && String(v).length <= 500) out[k] = v;
+    if (["string", "number", "boolean"].includes(typeof v) && String(v).length <= 2000) out[k] = v;
   }
   return out;
 }
@@ -36,7 +36,7 @@ function systemFor(mode) {
   if (mode === "text") return `${common} Improve the supplied text according to the requested writing mode and tone. Return only JSON.`;
   if (mode === "motivation") return `${common} Give an energetic but grounded pep talk, usually 2-4 sentences. Return only JSON.`;
   if (mode === "support") return `${common} Help troubleshoot the user's LOKIN issue. Prefer concrete steps and avoid inventing account state. Return only JSON.`;
-  return `${common} Answer the driver's command using the supplied context. Return only JSON.`;
+  return `${common} Answer the driver's command using the supplied context. If recentConversation is supplied, use it for natural multi-turn continuity and resolve pronouns or follow-up questions from that recent exchange. Never invent facts that are not in context. Return only JSON.`;
 }
 
 function schemaFor(mode) {
