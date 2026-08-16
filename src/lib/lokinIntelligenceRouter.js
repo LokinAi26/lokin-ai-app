@@ -18,6 +18,7 @@ const LOCAL_ROUTES = [
   { intent: "drive", phrases: ["companion", "keep me company", "road companion", "drive mode", "driving mode"], to: "/drive", reply: "Opening Drive Mode" },
   { intent: "locator", phrases: ["find item", "item locator", "locate item", "where is this item", "smart shop", "find everything"], to: "/locator", reply: "Opening Smart Shop Item Locator" },
   { intent: "shop-deliver", phrases: ["shop and deliver", "shopping orders", "shopping route"], to: "/shop-deliver", reply: "Opening Shop and Deliver" },
+  { intent: "fitness", phrases: ["fitness", "workout", "exercise", "mobility", "hydration", "water goal", "recovery"], to: "/fitness", reply: "Opening LOKIN Fitness" },
 ];
 
 const MUSIC = [
@@ -55,7 +56,7 @@ export function routeLokinIntelligence(command = "") {
   return { lane: "external-ai", mode: "assistant", reason: "reasoning-required" };
 }
 
-export function buildLokinContext({ earnings = [], prefs = {}, offers = [], continuity = null, driverContext = null, smartShop = null, opportunities = [], recommendation = null, location = null } = {}) {
+export function buildLokinContext({ earnings = [], prefs = {}, offers = [], continuity = null, driverContext = null, smartShop = null, opportunities = [], recommendation = null, learning = null, fitness = null, location = null } = {}) {
   const today = new Date().toISOString().slice(0, 10);
   const todayRows = earnings.filter((e) => e?.date === today);
   const todayEarnings = todayRows.reduce((sum, e) => sum + Number(e?.amount || 0), 0);
@@ -104,6 +105,25 @@ export function buildLokinContext({ earnings = [], prefs = {}, offers = [], cont
       title: recommendation.title || "",
       message: recommendation.message || "",
       actionRoute: recommendation.action_route || "",
+    } : null,
+    learning: learning ? {
+      acceptedFeatures: learning.acceptedFeatures || [],
+      dismissedFeatures: learning.dismissedFeatures || [],
+      preferredContexts: learning.preferredContexts || [],
+      recommendationAcceptanceScore: Number(learning.recommendationAcceptanceScore || 0),
+      learningConfidence: Number(learning.learningConfidence || 0),
+      signalCount: Number(learning.signalCount || 0),
+    } : null,
+    fitness: fitness ? {
+      enabled: Boolean(fitness.enabled),
+      primaryGoal: fitness.primaryGoal || null,
+      stepsToday: Number(fitness.stepsToday || 0),
+      stepGoal: Number(fitness.stepGoal || 0),
+      waterOz: Number(fitness.waterOz || 0),
+      waterGoalOz: Number(fitness.waterGoalOz || 0),
+      activeMinutes: Number(fitness.activeMinutes || 0),
+      sleepHours: Number(fitness.sleepHours || 0),
+      recoveryScore: Number(fitness.recoveryScore || 0),
     } : null,
     location: location && Number.isFinite(location.lat) && Number.isFinite(location.lng)
       ? { lat: Number(location.lat.toFixed(3)), lng: Number(location.lng.toFixed(3)) }
