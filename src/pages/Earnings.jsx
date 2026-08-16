@@ -4,6 +4,7 @@ import { Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } fro
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
   { value: "today", label: "Today" },
@@ -29,7 +30,7 @@ export default function Earnings() {
   // lightweight Lock In Score for the earnings view
   useEffect(() => {
     let on = true;
-    base44.functions.invoke("optimizeRoute", { mode: prefs?.optimization_mode || "most_profit" })
+    guardedInvoke(base44, "optimizeRoute", { mode: prefs?.optimization_mode || "most_profit" })
       .then((res) => { if (on) setScore(res.data?.lockInScore || null); })
       .catch(() => {});
     return () => { on = false; };
@@ -43,7 +44,7 @@ export default function Earnings() {
     setRecords(e);
     setPrefs(p[0] || null);
     try {
-      const res = await base44.functions.invoke("optimizeRoute", { mode: p[0]?.optimization_mode || "most_profit" });
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: p[0]?.optimization_mode || "most_profit" }, { force: true, userInitiated: true });
       setScore(res.data?.lockInScore || null);
     } catch {}
   }
