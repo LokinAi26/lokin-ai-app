@@ -3,6 +3,7 @@ import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import PrintfulStore from "@/components/PrintfulStore";
 import GearShowcase from "@/components/GearShowcase";
 import CommerceConnections from "@/components/CommerceConnections";
+import CommerceCommandCenter from "@/components/CommerceCommandCenter";
 
 const PALETTE = [
   { name: "LOKIN Neon Lime™", hex: "#AAFF00", text: "text-black" },
@@ -142,6 +143,9 @@ export default function Brand() {
 
       {/* Commerce health — live status for Printful, Printify, Shopify and Gmail */}
       <CommerceConnections />
+
+      {/* Admin-only post-purchase intelligence — Shopify order and fulfillment pulse */}
+      <CommerceCommandCenter />
 
       {/* In-app LOKIN gear collection — every card represents an individual sellable product */}
       <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4">
