@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { RefreshCw, CheckCircle2, XCircle, Link2 } from "lucide-react";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const LABELS = {
   printful: "Printful",
@@ -14,11 +15,11 @@ export default function CommerceConnections() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const check = async () => {
+  const check = async (force = false) => {
     setLoading(true);
     setError("");
     try {
-      const res = await base44.functions.invoke("commerce-health", {});
+      const res = await guardedInvoke(base44, "commerce-health", {}, { force, userInitiated: force });
       setData(res?.data || res);
     } catch (e) {
       setError(e?.message || "Connection check failed");
@@ -39,7 +40,7 @@ export default function CommerceConnections() {
           <div className="text-lg font-bold text-white flex items-center gap-2"><Link2 className="h-4 w-4 text-primary" /> LOKIN Commerce Hub</div>
           <div className="text-xs text-white/45 mt-1">Printful fulfillment · Shopify checkout · tracking intelligence</div>
         </div>
-        <button onClick={check} disabled={loading}
+        <button onClick={() => check(true)} disabled={loading}
           className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary disabled:opacity-50">
           <span className="flex items-center gap-2"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Test</span>
         </button>
