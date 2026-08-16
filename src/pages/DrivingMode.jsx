@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import DriveMusicPlayer from "@/components/DriveMusicPlayer";
 import AiGps4D from "@/components/AiGps4D";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 function routePoints(n, W = 360, H = 360) {
   if (n <= 1) return [[W / 2, H / 2]];
@@ -27,14 +28,14 @@ export default function DrivingMode() {
 
   useEffect(() => { load(); }, []);
 
-  async function load() {
+  async function load(force = false) {
     setLoading(true);
     setIdx(0);
     try {
       const pl = await base44.entities.DriverPreference.filter({});
       const p = pl[0] || null;
       setPrefs(p);
-      const res = await base44.functions.invoke("optimizeRoute", { mode: p?.optimization_mode || "most_profit" });
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: p?.optimization_mode || "most_profit" }, { force, userInitiated: force });
       setData(res.data);
     } catch (e) {
       setData({ error: e.message });
