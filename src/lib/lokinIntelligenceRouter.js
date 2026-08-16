@@ -55,7 +55,7 @@ export function routeLokinIntelligence(command = "") {
   return { lane: "external-ai", mode: "assistant", reason: "reasoning-required" };
 }
 
-export function buildLokinContext({ earnings = [], prefs = {}, offers = [], location = null } = {}) {
+export function buildLokinContext({ earnings = [], prefs = {}, offers = [], continuity = null, driverContext = null, smartShop = null, opportunities = [], recommendation = null, location = null } = {}) {
   const today = new Date().toISOString().slice(0, 10);
   const todayRows = earnings.filter((e) => e?.date === today);
   const todayEarnings = todayRows.reduce((sum, e) => sum + Number(e?.amount || 0), 0);
@@ -78,6 +78,32 @@ export function buildLokinContext({ earnings = [], prefs = {}, offers = [], loca
       payout: Number(activeOffers[0].payout || 0),
       miles: Number(activeOffers[0].miles || 0),
       category: activeOffers[0].category || "",
+    } : null,
+    driverMode: driverContext?.mode || continuity?.active_context || null,
+    distractionPolicy: driverContext?.distraction_policy || null,
+    currentRoute: continuity?.current_route || null,
+    currentOrderId: continuity?.current_order_id || null,
+    pendingAction: continuity?.pending_action || null,
+    resumeLabel: continuity?.resume_label || null,
+    shopping: smartShop ? {
+      active: smartShop.status === "active",
+      storeName: smartShop.store_name || "",
+      itemCount: Array.isArray(smartShop.items) ? smartShop.items.length : 0,
+    } : { active: false, storeName: "", itemCount: 0 },
+    opportunityCount: opportunities.length,
+    bestOpportunity: opportunities[0] ? {
+      provider: opportunities[0].provider || "",
+      title: opportunities[0].title || "",
+      estimatedPay: Number(opportunities[0].estimated_pay || 0),
+      estimatedMiles: Number(opportunities[0].estimated_miles || 0),
+      estimatedMinutes: Number(opportunities[0].estimated_minutes || 0),
+      sourceVerified: Boolean(opportunities[0].source_verified),
+    } : null,
+    queuedRecommendation: recommendation ? {
+      context: recommendation.context || "",
+      title: recommendation.title || "",
+      message: recommendation.message || "",
+      actionRoute: recommendation.action_route || "",
     } : null,
     location: location && Number.isFinite(location.lat) && Number.isFinite(location.lng)
       ? { lat: Number(location.lat.toFixed(3)), lng: Number(location.lng.toFixed(3)) }
