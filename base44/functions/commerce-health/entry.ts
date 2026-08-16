@@ -97,7 +97,7 @@ export default async function (req) {
     .replace(/^https?:\/\//i, "")
     .replace(/\/+$/, "");
   if (shopifyDomain && shopifyToken) {
-    const r = await safeJson(`https://${shopifyDomain}/admin/api/2024-07/shop.json`, {
+    const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
     });
     if (r.ok) {
