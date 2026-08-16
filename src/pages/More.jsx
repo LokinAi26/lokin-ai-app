@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2 } from "lucide-react";
+import { Route as RouteIcon, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, Crown, ClipboardList, Receipt as ReceiptIcon, Headphones, Wrench, ShieldAlert, Coffee, Truck, Car, Zap, Flame, Calculator, Satellite, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Dumbbell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -33,6 +33,7 @@ const GROUPS = [
       { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Block slow or unwanted stops", color: "text-destructive" },
       { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS, sharing & emergency tools", color: "text-destructive" },
       { to: "/break-time", icon: Coffee, title: "Break & Recharge", desc: "Music, reset & recharge", color: "text-primary" },
+      { to: "/fitness", icon: Dumbbell, title: "LOKIN Fitness", desc: "Move, recover & level up", color: "text-primary" },
     ],
   },
   {
