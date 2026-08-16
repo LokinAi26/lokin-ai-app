@@ -5,6 +5,7 @@ import {
   Radio, Zap, Battery, ArrowUpRight, RefreshCw, RadioTower,
 } from "lucide-react";
 import SatelliteView from "@/components/SatelliteView";
+import useLokinPerformance, { cadenceFor } from "@/hooks/useLokinPerformance";
 
 // Read the Network Information API safely (not all browsers expose it).
 function getNetInfo() {
@@ -17,10 +18,11 @@ function getNetInfo() {
 // Simulated Starlink satellite constellation link — deterministic per session.
 function useConstellation(online) {
   const [tick, setTick] = useState(0);
+  const perf = useLokinPerformance();
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 2200);
+    const id = setInterval(() => setTick((t) => t + 1), cadenceFor(perf, 2200, 9000, 30000));
     return () => clearInterval(id);
-  }, []);
+  }, [perf?.effectiveMode, perf?.pauseNonessential]);
   // Base connected count wiggles ±1; offline forces 0
   const base = online ? 3 + ((tick % 3) === 0 ? 1 : 0) : 0;
   const connected = online ? Math.max(2, base) : 0;
@@ -57,6 +59,7 @@ export default function Connectivity() {
   const [scanning, setScanning] = useState(false);
   const [history, setHistory] = useState([]);
   const tickRef = useRef(0);
+  const perf = useLokinPerformance();
 
   // Listen for connectivity changes
   useEffect(() => {
@@ -93,9 +96,9 @@ export default function Connectivity() {
         return next;
       });
       tickRef.current++;
-    }, 3000);
+    }, cadenceFor(perf, 3000, 12000, 30000));
     return () => clearInterval(id);
-  }, []);
+  }, [perf?.effectiveMode, perf?.pauseNonessential]);
 
   const constellation = useConstellation(online);
   const deadZones = useDeadZones(pos);
