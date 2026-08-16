@@ -140,6 +140,13 @@ export default function GlobalVoiceAssistant() {
       setBusy(false);
       return;
     }
+    if (intelligence.lane === "local-performance") {
+      window.dispatchEvent(new CustomEvent("lokin:set-performance-profile", { detail: { mode: intelligence.mode } }));
+      speak(intelligence.reply);
+      setReply(intelligence.reply);
+      setBusy(false);
+      return;
+    }
     const music = intelligence.lane === "local-music" ? intelligence : matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
