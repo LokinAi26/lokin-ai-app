@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Cloud, Trophy, TrendingUp, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // Horizontal scrolling ticker: weather, sports scores, stock prices.
 export default function Ticker({ location }) {
@@ -10,7 +11,7 @@ export default function Ticker({ location }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await base44.functions.invoke("getTicker", { location: location || "" });
+      const res = await guardedInvoke(base44, "getTicker", { location: location || "" });
       const d = res.data;
       const list = [];
       if (d?.weather && (d.weather.temp_f || d.weather.temp_f === 0)) {
