@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Activity, CheckCircle2, Clock3, DollarSign, PackageCheck, RefreshCw, Truck } from "lucide-react";
+import { Activity, CheckCircle2, Clock3, DollarSign, PackageCheck, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 
 function money(value, currency = "USD") {
   const n = Number(value || 0);
@@ -17,6 +17,8 @@ export default function CommerceCommandCenter() {
   const [printfulOrders, setPrintfulOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [schemaAudit, setSchemaAudit] = useState(null);
+  const [schemaBusy, setSchemaBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -35,6 +37,51 @@ export default function CommerceCommandCenter() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadSchemaAudit = useCallback(async () => {
+    try {
+      const res = await base44.functions.invoke("commerce-schema-auditor", { action: "summary" });
+      setSchemaAudit(res?.data || res);
+    } catch {
+      setSchemaAudit(null);
+    }
+  }, []);
+
+  useEffect(() => { loadSchemaAudit(); }, [loadSchemaAudit]);
+
+  async function scanNextSchemaBatch() {
+    if (schemaBusy) return;
+    setSchemaBusy(true);
+    const requestedAt = new Date().toISOString();
+    let command = null;
+    try {
+      command = await base44.entities.CommerceCommand.create({
+        command: "schema_audit_scan_batch",
+        status: "running",
+        requested_at: requestedAt,
+        result: `Starting at offset ${schemaAudit?.audited_count || 0}`,
+      });
+      const res = await base44.functions.invoke("commerce-schema-auditor", {
+        action: "scanBatch",
+        offset: schemaAudit?.audited_count || 0,
+        limit: 20,
+      });
+      if (command?.id) await base44.entities.CommerceCommand.update(command.id, {
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        result: `Scanned ${res?.data?.scanned || 0} schemas; deletion remained disabled.`,
+      });
+      await loadSchemaAudit();
+    } catch (e) {
+      if (command?.id) await base44.entities.CommerceCommand.update(command.id, {
+        status: "failed",
+        completed_at: new Date().toISOString(),
+        result: String(e?.message || "Schema audit failed"),
+      }).catch(() => {});
+    } finally {
+      setSchemaBusy(false);
+    }
+  }
 
   const stats = useMemo(() => {
     const revenue = orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
@@ -65,6 +112,27 @@ export default function CommerceCommandCenter() {
           <Metric icon={PackageCheck} label="PAID" value={`${stats.paid}/${orders.length}`} />
           <Metric icon={Truck} label="FULFILLED" value={String(stats.moving)} />
           <Metric icon={Clock3} label="TRACKED" value={String(stats.tracked)} />
+        </div>
+
+        <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-1.5 text-[10px] tracking-[.16em] text-primary font-display"><ShieldCheck className="h-3.5 w-3.5" /> SCHEMA GUARD</div>
+              <div className="mt-1 text-xs text-white/55">
+                {schemaAudit ? `${schemaAudit.audited_count}/${schemaAudit.manifest_count} commerce schemas audited · deletion disabled` : "Loading preserve-first schema audit…"}
+              </div>
+            </div>
+            <button onClick={scanNextSchemaBatch} disabled={schemaBusy || !schemaAudit || schemaAudit.remaining_count === 0}
+              className="rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[10px] font-bold text-primary disabled:opacity-40">
+              {schemaBusy ? "SCANNING…" : schemaAudit?.remaining_count === 0 ? "AUDITED" : "SCAN NEXT 20"}
+            </button>
+          </div>
+          {schemaAudit && <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[9px]">
+            <div className="rounded-lg bg-black/30 p-1.5"><div className="text-white/30">CORE</div><div className="font-bold text-white">{schemaAudit.counts?.core || 0}</div></div>
+            <div className="rounded-lg bg-black/30 p-1.5"><div className="text-white/30">DEPEND</div><div className="font-bold text-accent">{schemaAudit.counts?.dependency || 0}</div></div>
+            <div className="rounded-lg bg-black/30 p-1.5"><div className="text-white/30">DATA</div><div className="font-bold text-white">{schemaAudit.counts?.data || 0}</div></div>
+            <div className="rounded-lg bg-black/30 p-1.5"><div className="text-white/30">CANDIDATE</div><div className="font-bold text-primary">{schemaAudit.counts?.candidate || 0}</div></div>
+          </div>}
         </div>
 
         <div className="space-y-2">
