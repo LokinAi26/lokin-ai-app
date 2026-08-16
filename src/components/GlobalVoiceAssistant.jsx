@@ -7,6 +7,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { routeLokinIntelligence } from "@/lib/lokinIntelligenceRouter";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -85,6 +86,7 @@ export default function GlobalVoiceAssistant() {
     setReply("");
 
     const t = command.toLowerCase();
+    const intelligence = routeLokinIntelligence(command);
     try {
       const prefsList = await base44.entities.DriverPreference.filter({});
       const prefs = prefsList[0] || null;
@@ -130,7 +132,7 @@ export default function GlobalVoiceAssistant() {
     } catch (e) {
       // fall through to normal assistant handling if a session command fails
     }
-    const music = matchMusic(command);
+    const music = intelligence.lane === "local-music" ? intelligence : matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
       speak(music.label);
@@ -139,11 +141,18 @@ export default function GlobalVoiceAssistant() {
       setBusy(false);
       return;
     }
-    const nav = matchCommand(command);
+    const nav = intelligence.lane === "local-navigation" ? { to: intelligence.to, label: intelligence.reply } : matchCommand(command);
     if (nav) {
       speak(nav.label);
       setReply(nav.label);
       setTimeout(() => { navigate(nav.to); }, 500);
+      setBusy(false);
+      return;
+    }
+    // Only the reasoning lane may spend an external AI call. All recognized
+    // deterministic lanes have already returned above.
+    if (intelligence.lane !== "external-ai") {
+      setReply("LOKIN couldn't safely route that command.");
       setBusy(false);
       return;
     }
@@ -157,7 +166,7 @@ export default function GlobalVoiceAssistant() {
       const p = prefsList[0] || {};
       const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: "assistant",
+        mode: intelligence.mode || "assistant",
         command,
         context: {
           todayEarnings,
