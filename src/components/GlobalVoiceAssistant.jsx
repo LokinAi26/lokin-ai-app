@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -152,7 +153,8 @@ export default function GlobalVoiceAssistant() {
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
-      const res = await base44.functions.invoke("lokinAssistant", {
+      const res = await guardedInvoke(base44, "external-ai-gateway", {
+        mode: "assistant",
         command,
         context: {
           todayEarnings,
