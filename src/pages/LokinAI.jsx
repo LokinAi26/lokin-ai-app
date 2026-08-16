@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Volume2, Radio, Ear, Power } from "lucide-react";
+import { Mic, Send, Volume2, Radio, Ear } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
