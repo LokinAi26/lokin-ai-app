@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Signal, Zap, Activity, RadioTower, RefreshCw, ArrowUpRight, Wifi, Layers, Gauge as GaugeIcon, Sparkles } from "lucide-react";
+import useLokinPerformance, { cadenceFor } from "@/hooks/useLokinPerformance";
 
 // Read the Network Information API safely.
 function getNetInfo() {
@@ -43,16 +44,17 @@ export default function FiveG() {
   const [boost, setBoost] = useState(false);
   const [tick, setTick] = useState(0);
   const [scanning, setScanning] = useState(false);
+  const perf = useLokinPerformance();
 
   useEffect(() => {
     function up() { setOnline(true); setNet(getNetInfo()); }
     function down() { setOnline(false); }
     window.addEventListener("online", up);
     window.addEventListener("offline", down);
-    const id = setInterval(() => { setNet(getNetInfo()); setTick((t) => t + 1); }, 2000);
+    const id = setInterval(() => { setNet(getNetInfo()); setTick((t) => t + 1); }, cadenceFor(perf, 2000, 10000, 30000));
     setNet(getNetInfo());
     return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); clearInterval(id); };
-  }, []);
+  }, [perf?.effectiveMode, perf?.pauseNonessential]);
 
   let bars = barsFromNet(net, online);
   if (mode === "lte") bars = Math.min(bars, 4);
@@ -97,8 +99,8 @@ export default function FiveG() {
         <div className="relative flex flex-col items-center">
           <div className="relative h-44 w-44">
             {/* pulse rings */}
-            <div className="absolute inset-0 rounded-full border border-primary/20 lokin-pulse" />
-            <div className="absolute inset-3 rounded-full border border-primary/10 lokin-pulse" style={{ animationDelay: "0.6s" }} />
+            <div className={`absolute inset-0 rounded-full border border-primary/20 ${perf?.reduceAnimations ? "" : "lokin-pulse"}`} />
+            <div className={`absolute inset-3 rounded-full border border-primary/10 ${perf?.reduceAnimations ? "" : "lokin-pulse"}`} style={{ animationDelay: "0.6s" }} />
             <svg viewBox="0 0 140 140" className="absolute inset-0 h-full w-full -rotate-90">
               <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
               <circle cx="70" cy="70" r={R} fill="none" stroke="#ccff00" strokeWidth="9" strokeLinecap="round"
