@@ -436,7 +436,6 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
               )}
 
               {selected.is_shopify ? null : selected.is_template ? (
-              ) : selected.is_template ? (
                 <a
                   href="https://www.printful.com/dashboard/products"
                   target="_blank"
