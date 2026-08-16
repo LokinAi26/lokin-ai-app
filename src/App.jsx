@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/SplashScreen';
 import DeepLinkHandler from './components/DeepLinkHandler';
+import NativeVoiceBridge from './components/NativeVoiceBridge';
 // Add page imports here
 import Home from './pages/Home';
 import RoutePlanner from './pages/RoutePlanner';
@@ -147,6 +148,7 @@ function App() {
           <ScrollToTop />
           <SplashScreen />
           <DeepLinkHandler />
+          <NativeVoiceBridge />
           <AuthenticatedApp />
         </Router>
         <Toaster />
