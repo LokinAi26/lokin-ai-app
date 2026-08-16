@@ -3,6 +3,7 @@ import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 import PrintfulStore from "@/components/PrintfulStore";
 import GearShowcase from "@/components/GearShowcase";
 import CommerceConnections from "@/components/CommerceConnections";
+import CommerceOps from "@/components/CommerceOps";
 import CommerceCommandCenter from "@/components/CommerceCommandCenter";
 
 const PALETTE = [
@@ -143,6 +144,9 @@ export default function Brand() {
 
       {/* Commerce health — live status for Printful, Printify, Shopify and Gmail */}
       <CommerceConnections />
+
+      {/* Order intelligence — Shopify payment signal → Printful fulfillment/tracking */}
+      <CommerceOps />
 
       {/* Admin-only post-purchase intelligence — Shopify order and fulfillment pulse */}
       <CommerceCommandCenter />
