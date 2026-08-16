@@ -5,6 +5,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const QUICK = [
   "What should I do next?",
@@ -54,7 +55,8 @@ export default function LokinAI() {
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
-      const res = await base44.functions.invoke("lokinAssistant", {
+      const res = await guardedInvoke(base44, "external-ai-gateway", {
+        mode: "assistant",
         command,
         context: {
           todayEarnings,
