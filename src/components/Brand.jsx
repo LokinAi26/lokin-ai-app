@@ -85,6 +85,22 @@ export function LokinGlyph({ size = 28, className = "" }) {
   );
 }
 
+export function LokinApparelMark({ size = 84, treatment = "signature", className = "" }) {
+  const compact = treatment === "stealth";
+  return (
+    <svg width={size * 1.75} height={size} viewBox="0 0 175 100" className={className} fill="none" role="img" aria-label="LOKIN AI apparel mark">
+      <defs>
+        <linearGradient id="apparel-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff"/><stop offset=".55" stopColor="#c8ced8"/><stop offset="1" stopColor="#737b86"/></linearGradient>
+        <filter id="apparel-glow" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g transform="translate(4 10)"><LokinGlyph size={80}/></g>
+      <text x="86" y="49" fill="url(#apparel-metal)" fontFamily="Orbitron, sans-serif" fontWeight="900" fontSize="25" letterSpacing="2">LOKIN</text>
+      <text x="88" y="69" fill="#AAFF00" fontFamily="Orbitron, sans-serif" fontWeight="900" fontSize="15" letterSpacing="3" filter={compact ? undefined : "url(#apparel-glow)"}>AI</text>
+      {!compact && <><line x1="88" y1="76" x2="164" y2="76" stroke="#AAFF00" strokeWidth="1" opacity=".55"/><text x="88" y="89" fill="#c8ced8" opacity=".68" fontFamily="Sora, sans-serif" fontWeight="700" fontSize="6.5" letterSpacing="1.2">LOCK IN · LEVEL UP</text></>}
+    </svg>
+  );
+}
+
 export function LokinWordmark({ size = 28, className = "" }) {
   return (
     <span className={`inline-flex items-center ${className}`}>
