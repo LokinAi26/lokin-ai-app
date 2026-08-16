@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Radar, RefreshCw, ExternalLink, MapPin, BadgeDollarSign, Car, Briefcase, Filter } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 const CATEGORIES = [
   { value: "all", label: "All" },
@@ -35,7 +36,7 @@ export default function Opportunities() {
   async function runScan() {
     setScanning(true);
     try {
-      await base44.functions.invoke("scanOpportunities", {});
+      await guardedInvoke(base44, "scanOpportunities", {}, { force: true, userInitiated: true });
       await load();
     } catch (e) {
       console.error(e);
