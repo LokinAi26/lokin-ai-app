@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Volume2, Radio } from "lucide-react";
+import { Mic, Send, Volume2, Radio, Ear, Power } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -26,9 +26,13 @@ export default function LokinAI() {
   const [log, setLog] = useState([]); // { role, text, draft }
   const [draft, setDraft] = useState(null);
   const recRef = useRef(null);
+  const wakeRef = useRef(null);
+  const wakeRestartRef = useRef(null);
   const scrollRef = useRef(null);
   const [voices, setVoices] = useState([]);
   const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem("lokin_voice") || "");
+  const [wakeEnabled, setWakeEnabled] = useState(() => localStorage.getItem("lokin_ai_wake") !== "0");
+  const [wakeStatus, setWakeStatus] = useState("idle");
 
   useEffect(() => {
     function loadVoices() { setVoices(window.speechSynthesis?.getVoices() || []); }
@@ -78,7 +82,62 @@ export default function LokinAI() {
     }
   }
 
+  function stopWakeListener() {
+    if (wakeRestartRef.current) { clearTimeout(wakeRestartRef.current); wakeRestartRef.current = null; }
+    if (wakeRef.current) { try { wakeRef.current.onend = null; wakeRef.current.stop(); } catch {} wakeRef.current = null; }
+  }
+
+  function startWakeListener() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR || !wakeEnabled || listening || busy || wakeRef.current) return;
+    const wake = new SR();
+    wake.lang = "en-US";
+    wake.continuous = true;
+    wake.interimResults = true;
+    wake.onstart = () => setWakeStatus("ready");
+    wake.onresult = (e) => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const heard = String(e.results[i][0]?.transcript || "").toLowerCase();
+        if (/\b(hey\s+)?lo+kin\b/.test(heard)) {
+          setWakeStatus("heard");
+          stopWakeListener();
+          const after = heard.replace(/^.*?\b(?:hey\s+)?lo+kin\b\s*/i, "").trim();
+          speak("I'm listening.");
+          if (after) ask(after);
+          else wakeRestartRef.current = setTimeout(() => startListening(), 300);
+          return;
+        }
+      }
+    };
+    wake.onerror = (e) => {
+      setWakeStatus(e?.error === "not-allowed" ? "permission" : "retrying");
+    };
+    wake.onend = () => {
+      wakeRef.current = null;
+      if (wakeEnabled && !listening && !busy) {
+        wakeRestartRef.current = setTimeout(startWakeListener, 650);
+      }
+    };
+    wakeRef.current = wake;
+    try { wake.start(); } catch { wakeRef.current = null; setWakeStatus("tap-to-enable"); }
+  }
+
+  useEffect(() => {
+    if (wakeEnabled) startWakeListener();
+    else { stopWakeListener(); setWakeStatus("off"); }
+    return stopWakeListener;
+  }, [wakeEnabled, listening, busy]);
+
+  function toggleWake() {
+    setWakeEnabled((v) => {
+      const next = !v;
+      localStorage.setItem("lokin_ai_wake", next ? "1" : "0");
+      return next;
+    });
+  }
+
   function startListening() {
+    stopWakeListener();
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       ask("What should I do next?");
@@ -88,13 +147,13 @@ export default function LokinAI() {
     rec.lang = "en-US";
     rec.interimResults = false;
     rec.onstart = () => setListening(true);
-    rec.onend = () => setListening(false);
+    rec.onend = () => { setListening(false); if (wakeEnabled) wakeRestartRef.current = setTimeout(startWakeListener, 700); };
     rec.onresult = (e) => {
       const text = e.results[0][0].transcript;
       setTranscript(text);
       ask(text);
     };
-    rec.onerror = () => setListening(false);
+    rec.onerror = (e) => { setListening(false); if (e?.error === "not-allowed") setWakeStatus("permission"); };
     recRef.current = rec;
     rec.start();
   }
@@ -143,6 +202,11 @@ export default function LokinAI() {
           Preview
         </button>
       </div>
+
+      <button onClick={toggleWake} className={`w-full rounded-xl border px-3 py-2.5 flex items-center justify-between text-xs transition-all ${wakeEnabled ? "border-accent/35 bg-accent/10 text-accent" : "border-white/10 bg-white/[0.03] text-white/45"}`}>
+        <span className="flex items-center gap-2"><Ear className="h-4 w-4" /> Always Listening</span>
+        <span className="font-bold">{wakeEnabled ? (wakeStatus === "permission" ? "MIC PERMISSION NEEDED" : wakeStatus === "ready" ? "ON · SAY ‘HEY LOKIN’" : "ON · ARMING…") : "OFF"}</span>
+      </button>
 
       <div ref={scrollRef} className="flex-1 space-y-2.5 overflow-y-auto no-scrollbar pb-2">
         {log.length === 0 && (
