@@ -13,7 +13,8 @@ const MODES = [
 export default function PerformanceCenter() {
   const [profile, setProfile] = useState(null);
   const [events, setEvents] = useState([]);
-  const [signals, setSignals] = useState([]);
+  const [legacySignals, setLegacySignals] = useState([]);
+  const [v2Signals, setV2Signals] = useState([]);
   const [runtime, setRuntime] = useState(() => window.LOKINPerformance || null);
   const [saving, setSaving] = useState(false);
 
@@ -28,7 +29,8 @@ export default function PerformanceCenter() {
     ]);
     setProfile(p[0] || { mode: "adaptive", low_battery_threshold: 20 });
     setEvents(e.slice(-20));
-    setSignals([...s1, ...s2]);
+    setLegacySignals(s1);
+    setV2Signals(s2);
   }
 
   useEffect(() => {
@@ -38,10 +40,7 @@ export default function PerformanceCenter() {
     return () => window.removeEventListener("lokin:performance-mode", onMode);
   }, []);
 
-  const learning = useMemo(() => summarizeDriverLearning(
-    signals.filter(x => x.signal_type !== "manual_override"),
-    signals.filter(x => x.signal_type === "manual_override")
-  ), [signals]);
+  const learning = useMemo(() => summarizeDriverLearning(legacySignals, v2Signals), [legacySignals, v2Signals]);
 
   async function setMode(mode) {
     setSaving(true);
