@@ -62,6 +62,7 @@ export default function GlobalVoiceAssistant() {
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [reply, setReply] = useState("");
+  const [nativeVoice, setNativeVoice] = useState({ available: false, state: "web-fallback" });
   const recRef = useRef(null);
   const wakeRef = useRef(null);
   const conversationRef = useRef([]);
@@ -273,8 +274,28 @@ export default function GlobalVoiceAssistant() {
     return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
   }, []);
 
+  // Native shells report their voice capability through NativeVoiceBridge.
+  // The web preview remains a deliberate fallback; it must never pretend that
+  // iOS Safari can provide a true background wake word.
+  useEffect(() => {
+    const onNativeStatus = (e) => setNativeVoice({
+      available: Boolean(e?.detail?.available),
+      state: e?.detail?.state || "ready",
+    });
+    window.addEventListener("lokin:native-voice-status", onNativeStatus);
+    const available = Boolean(window.LOKINNativeVoice?.isAvailable?.());
+    setNativeVoice({ available, state: available ? "ready" : "web-fallback" });
+    return () => window.removeEventListener("lokin:native-voice-status", onNativeStatus);
+  }, []);
+
   // Always-on wake-word listener
   useEffect(() => {
+    if (nativeVoice.available) {
+      if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
+      if (alwaysOn) window.LOKINNativeVoice?.startWake?.();
+      else window.LOKINNativeVoice?.stopWake?.();
+      return () => window.LOKINNativeVoice?.stopWake?.();
+    }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || !alwaysOn) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
@@ -309,13 +330,17 @@ export default function GlobalVoiceAssistant() {
     wakeRef.current = wake;
     try { wake.start(); } catch {}
     return () => { try { wake.stop(); } catch {} wakeRef.current = null; };
-  }, [alwaysOn]);
+  }, [alwaysOn, nativeVoice.available]);
 
   function toggleAlwaysOn() {
     setAlwaysOn((v) => {
       const next = !v;
       localStorage.setItem("lokin_always_on", next ? "1" : "0");
-      if (next) speak("Always listening. Say Hey LOKIN.");
+      if (next) {
+        speak(nativeVoice.available
+          ? "Hands free voice is on. Say Hey LOKIN."
+          : "Wake word preview is on. Keep LOKIN open, or tap the microphone on iPhone Safari.");
+      }
       return next;
     });
   }
@@ -370,7 +395,7 @@ export default function GlobalVoiceAssistant() {
                   {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                 </button>
                 <div className="mt-2 text-xs text-white/55">
-                  {listening ? "Listening…" : busy ? "Thinking…" : "Tap to speak"}
+                  {listening ? "Listening…" : busy ? "Thinking…" : nativeVoice.available ? "Tap or say Hey LOKIN" : "Tap to speak"}
                 </div>
               </div>
 
@@ -398,9 +423,14 @@ export default function GlobalVoiceAssistant() {
                   Always Listening
                 </span>
                 <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                  {alwaysOn ? "ON · say “Hey LOKIN”" : "OFF"}
+                  {alwaysOn ? (nativeVoice.available ? "ON · native wake word" : "ON · foreground preview") : "OFF"}
                 </span>
               </button>
+              {!nativeVoice.available && alwaysOn && (
+                <div className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2 text-[10px] leading-relaxed text-amber-100/70">
+                  Browser mode: iPhone Safari cannot provide a reliable system-level “Hey LOKIN” wake word. Tap-to-speak works now; true hands-free wake activation switches on automatically in the native iOS app.
+                </div>
+              )}
 
               <div className="mt-3 grid grid-cols-4 gap-2">
                 <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/25 bg-primary/[0.06] p-2 text-center"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
