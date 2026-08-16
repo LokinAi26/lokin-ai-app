@@ -1,0 +1,62 @@
+{
+  "name": "LokinAIGatewayTelemetry",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "provider_status": {
+      "type": "number"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "configured": {
+      "type": "boolean"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "mode",
+    "provider",
+    "status",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -4,6 +4,24 @@ import { jsonRequest } from "../../shared/printRequest.ts";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 
+const TOKEN_BUDGET = {
+  assistant: 650,
+  text: 450,
+  motivation: 300,
+  support: 650,
+};
+
+async function recordTelemetry(base44, row) {
+  try {
+    await base44.asServiceRole.entities.LokinAIGatewayTelemetry.create({
+      ...row,
+      occurred_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn("LOKIN AI telemetry write skipped", e?.message || e);
+  }
+}
+
 function compactContext(value) {
   if (!value || typeof value !== "object") return {};
   const out = {};
@@ -37,6 +55,7 @@ function extractText(data) {
 }
 
 export default async function(req) {
+  const startedAt = Date.now();
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -60,6 +79,7 @@ export default async function(req) {
     };
 
     if (!apiKey) {
+      await recordTelemetry(base44, { mode, provider: "local-fallback", model, status: "missing_key", latency_ms: Date.now() - startedAt, configured: false });
       if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false });
       if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false });
       if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false });
@@ -78,11 +98,17 @@ export default async function(req) {
       method: "POST",
       timeoutMs: 20000,
       headers: { Authorization: `Bearer ${apiKey}` },
-      body: { model, input: prompt, store: false, max_output_tokens: 900 },
+      body: { model, input: prompt, store: false, max_output_tokens: TOKEN_BUDGET[mode] || 650 },
     });
     if (!r.ok) {
       console.error("external-ai-gateway provider error", { status: r.status, model, requestId: r.requestId, body: r.data });
-      return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
+      await recordTelemetry(base44, { mode, provider: "openai", model, status: "provider_error", latency_ms: Date.now() - startedAt, provider_status: r.status, request_id: r.requestId || "", configured: true });
+      const gracefulReply = mode === "motivation"
+        ? { message: "Keep moving with the next best controllable step. LOKIN's live AI provider is temporarily unavailable, but your core tools are still online." }
+        : mode === "text"
+          ? { result: safe.text, suggestions: [] }
+          : { reply: "LOKIN's live AI provider is temporarily unavailable. Your core routing, commerce, earnings, and safety tools are still online; try again in a moment.", draftedMessage: "" };
+      return Response.json({ ...gracefulReply, provider: "graceful-fallback", configured: true, provider_status: r.status, request_id: r.requestId || "" });
     }
 
     const text = extractText(r.data).trim();
@@ -90,7 +116,8 @@ export default async function(req) {
     try { parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()); }
     catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : { reply: text, draftedMessage: "" }; }
 
-    return Response.json({ ...parsed, provider: "external", model });
+    await recordTelemetry(base44, { mode, provider: "openai", model, status: "success", latency_ms: Date.now() - startedAt, provider_status: r.status || 200, request_id: r.requestId || "", configured: true });
+    return Response.json({ ...parsed, provider: "external", model, configured: true });
   } catch (e) {
     console.error("external-ai-gateway", e);
     return Response.json({ error: "External AI gateway unavailable" }, { status: 500 });
