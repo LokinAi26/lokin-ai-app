@@ -55,6 +55,36 @@ export function routeLokinIntelligence(command = "") {
   return { lane: "external-ai", mode: "assistant", reason: "reasoning-required" };
 }
 
+export function buildLokinContext({ earnings = [], prefs = {}, offers = [], location = null } = {}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRows = earnings.filter((e) => e?.date === today);
+  const todayEarnings = todayRows.reduce((sum, e) => sum + Number(e?.amount || 0), 0);
+  const todayTrips = todayRows.reduce((sum, e) => sum + Number(e?.trips || 0), 0);
+  const dailyGoal = Number(prefs?.daily_goal || 150);
+  const remainingToGoal = Math.max(0, dailyGoal - todayEarnings);
+  const activeOffers = offers.filter((o) => !["delivered", "completed", "cancelled"].includes(String(o?.status || "").toLowerCase()));
+  return {
+    todayEarnings: Number(todayEarnings.toFixed(2)),
+    todayTrips,
+    dailyGoal,
+    remainingToGoal: Number(remainingToGoal.toFixed(2)),
+    goalProgressPct: dailyGoal > 0 ? Math.min(100, Math.round((todayEarnings / dailyGoal) * 100)) : 0,
+    workStatus: prefs?.work_status || "off",
+    optimizationMode: prefs?.optimization_mode || "most_profit",
+    activeModes: prefs?.active_modes || ["delivery"],
+    activeOfferCount: activeOffers.length,
+    nextOffer: activeOffers[0] ? {
+      merchant: activeOffers[0].merchant || "",
+      payout: Number(activeOffers[0].payout || 0),
+      miles: Number(activeOffers[0].miles || 0),
+      category: activeOffers[0].category || "",
+    } : null,
+    location: location && Number.isFinite(location.lat) && Number.isFinite(location.lng)
+      ? { lat: Number(location.lat.toFixed(3)), lng: Number(location.lng.toFixed(3)) }
+      : null,
+  };
+}
+
 export function intelligenceLaneLabel(decision) {
   if (!decision) return "unknown";
   if (decision.lane === "external-ai") return "OpenAI reasoning";
