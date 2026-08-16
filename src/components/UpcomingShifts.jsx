@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Calendar, Clock, MapPin, RefreshCw, Link2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { guardedInvoke } from "@/lib/creditGuardian";
 
 function fmt(d) {
   if (!d) return "";
@@ -23,7 +24,7 @@ export default function UpcomingShifts() {
   async function load(silent = false) {
     if (silent) setRefreshing(true); else setLoading(true);
     try {
-      const res = await base44.functions.invoke("getUpcomingShifts", {});
+      const res = await guardedInvoke(base44, "getUpcomingShifts", {}, { force: silent, userInitiated: silent });
       setData(res.data);
     } catch {
       setData({ connected: false, events: [] });
