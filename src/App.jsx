@@ -56,6 +56,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
+import ShopifyEmbed from './pages/ShopifyEmbed';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -126,6 +127,8 @@ const AuthenticatedApp = () => {
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />
+      <Route path="/shopify" element={<ShopifyEmbed />} />
+      <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

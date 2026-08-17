@@ -1,7 +1,14 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { jsonRequest } from "../../shared/printRequest.ts";
 import { shopifyDemo } from "../../shared/demoCatalog.ts";
-import { getShopifyAdminToken, normalizeShopifyDomain } from "../../shared/shopifyAuth.ts";
+import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
+import {
+  shopifyAdminBase,
+  shoGet,
+  variantSummary,
+  mapShopSummary,
+  mapStorefront,
+  mapOrders,
+} from "../../shared/shopifyReads.ts";
 
 /**
  * shopify-catalog — LOKIN Brand Store <-> Shopify Admin REST API integration.
@@ -10,63 +17,30 @@ import { getShopifyAdminToken, normalizeShopifyDomain } from "../../shared/shopi
  * never reaches the client. Client call:
  *   base44.functions.invoke('shopify-catalog', { action, ... })
  *
- * Secrets: SHOPIFY_STORE_DOMAIN (e.g. store.myshopify.com) + SHOPIFY_ACCESS_TOKEN — server-side only.
- * Header: X-Shopify-Access-Token. Admin API version pinned to 2024-07.
+ * Secrets: SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN / client-credentials — server-side only.
+ * Header: X-Shopify-Access-Token. Admin API version pinned to 2026-07.
  *
  * Auth model — storefront reads are open to any logged-in user; fulfillment +
  * billing actions are admin-only:
- *   shop / products / product / catalog  -> any user
- *   orders / order / createProduct       -> admin only
- *
- * Actions (payload.action):
- *   shop          shop info
- *   products      paginated products list (page_info cursor via Link header)
- *   product       single product + variants
- *   catalog       enriched storefront catalog (all products + variants, min/max price)
- *   orders/order  order list/detail (admin)
- *   createProduct create a product (admin)
- *
- * Docs: https://shopify.dev/docs/api/admin-rest
+ *   shop / products / product / catalog / storefront  -> any user
+ *   orders / order / createProduct                    -> admin only
  */
 
-const API_VERSION = "2026-07";
 const VALID_ACTIONS = ["shop", "products", "product", "catalog", "storefront", "orders", "order", "createProduct"];
 
-function baseUrl(domain) {
-  return `https://${normalizeShopifyDomain(domain)}/admin/api/${API_VERSION}`;
-}
-
-async function shoGet(path, token) {
-  const r = await jsonRequest({ url: path, headers: { "X-Shopify-Access-Token": token } });
-  if (!r.ok) return { ok: false, status: r.status, error: r.error };
-  return { ok: true, data: r.data };
-}
-
-async function shoPost(path, body, token) {
-  const r = await jsonRequest({
-    url: path,
+async function shoPost(path: string, body: any, token: string) {
+  const r = await fetch(path, {
     method: "POST",
-    headers: { "X-Shopify-Access-Token": token },
-    body,
+    headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-  if (!r.ok) return { ok: false, status: r.status, error: r.error };
-  return { ok: true, data: r.data };
+  let data: any = null;
+  try { data = await r.json(); } catch { data = null; }
+  if (!r.ok) return { ok: false as const, status: r.status, error: data?.error?.message || data?.errors || `Request failed (${r.status})` };
+  return { ok: true as const, data };
 }
 
-function variantSummary(v) {
-  return {
-    id: v.id,
-    title: v.title,
-    sku: v.sku,
-    price: v.price,
-    compare_at_price: v.compare_at_price,
-    available: v.inventory_quantity ?? null,
-    option1: v.option1,
-    option2: v.option2,
-  };
-}
-
-export default async function (req) {
+export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -90,23 +64,13 @@ export default async function (req) {
       return Response.json({ ...shopifyDemo(action, payload), shopify_auth_error: shopifyAuth.error || null });
     }
 
-    const base = baseUrl(domain);
+    const base = shopifyAdminBase(domain);
 
     // ----- Shop info -----
     if (action === "shop") {
       const r = await shoGet(`${base}/shop.json`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      const s = r.data?.shop || {};
-      return Response.json({
-        shop: {
-          id: s.id,
-          name: s.name,
-          domain: s.domain,
-          currency: s.currency,
-          country: s.country,
-          plan: s.plan_name,
-        },
-      });
+      return Response.json({ shop: mapShopSummary(r.data?.shop || {}) });
     }
 
     // ----- Storefront bundle (shop identity + active catalog in one round-trip) -----
@@ -118,32 +82,7 @@ export default async function (req) {
       ]);
       if (!shopR.ok) return Response.json({ error: shopR.error }, { status: shopR.status });
       if (!productsR.ok) return Response.json({ error: productsR.error }, { status: productsR.status });
-      const s = shopR.data?.shop || {};
-      const products = (productsR.data?.products || []).map((p) => {
-        const variants = (p.variants || []).map(variantSummary);
-        const prices = variants.map((v) => Number(v.price)).filter((n) => !isNaN(n));
-        return {
-          id: p.id,
-          title: p.title,
-          handle: p.handle,
-          thumbnail_url: p.image?.src,
-          images: (p.images || []).map((img) => img.src).filter(Boolean),
-          description: String(p.body_html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
-          vendor: p.vendor,
-          product_type: p.product_type,
-          options: p.options || [],
-          status: p.status,
-          variants,
-          min_price: prices.length ? Math.min(...prices).toFixed(2) : null,
-          max_price: prices.length ? Math.max(...prices).toFixed(2) : null,
-          currency: s.currency || "USD",
-        };
-      });
-      return Response.json({
-        shop: { id: s.id, name: s.name, domain: s.domain, currency: s.currency, country: s.country },
-        products,
-        count: products.length,
-      });
+      return Response.json(mapStorefront(shopR.data?.shop || {}, productsR.data));
     }
 
     // ----- Products list -----
@@ -152,7 +91,7 @@ export default async function (req) {
       const pageInfo = payload.page_info ? `&page_info=${encodeURIComponent(payload.page_info)}` : "";
       const r = await shoGet(`${base}/products.json?limit=${limit}${pageInfo}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      const products = (r.data?.products || []).map((p) => ({
+      const products = (r.data?.products || []).map((p: any) => ({
         id: p.id,
         title: p.title,
         handle: p.handle,
@@ -193,9 +132,9 @@ export default async function (req) {
       const cap = Math.min(250, Math.max(1, Number(payload.limit) || 250));
       const r = await shoGet(`${base}/products.json?limit=${cap}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      const products = (r.data?.products || []).map((p) => {
+      const products = (r.data?.products || []).map((p: any) => {
         const variants = (p.variants || []).map(variantSummary);
-        const prices = variants.map((v) => Number(v.price)).filter((n) => !isNaN(n));
+        const prices = variants.map((v: any) => Number(v.price)).filter((n: number) => !isNaN(n));
         return {
           id: p.id,
           title: p.title,
@@ -217,18 +156,7 @@ export default async function (req) {
       const status = payload.status ? `&status=${encodeURIComponent(payload.status)}` : "";
       const r = await shoGet(`${base}/orders.json?limit=${limit}${status}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      const orders = (r.data?.orders || []).map((o) => ({
-        id: o.id,
-        name: o.name,
-        financial_status: o.financial_status,
-        fulfillment_status: o.fulfillment_status,
-        total_price: o.total_price,
-        currency: o.currency,
-        customer: o.customer ? { email: o.customer.email, name: `${o.customer.first_name || ""} ${o.customer.last_name || ""}`.trim() } : null,
-        created_at: o.created_at,
-        items_count: (o.line_items || []).length,
-      }));
-      return Response.json({ orders });
+      return Response.json({ orders: mapOrders(r.data) });
     }
 
     // ----- Single order (admin-only) -----
