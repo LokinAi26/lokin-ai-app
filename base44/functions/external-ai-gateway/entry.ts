@@ -65,6 +65,19 @@ function compactStrategies(strategies) {
     }));
 }
 
+function estimateCost(usage, cfg) {
+  const input = Number(usage?.input_tokens || 0);
+  const output = Number(usage?.output_tokens || 0);
+  const inputRate = Number(cfg?.input_rate_per_million || 0);
+  const outputRate = Number(cfg?.output_rate_per_million || 0);
+  return Math.max(0, (input / 1_000_000) * inputRate + (output / 1_000_000) * outputRate);
+}
+
+function monthStart() {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -74,7 +87,29 @@ export default async function(req) {
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
     const apiKey = secrets.get("OPENAI_API_KEY");
-    const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
+    const defaultModel = secrets.get("OPENAI_MODEL") || "gpt-5.6";
+    const lowCostModel = secrets.get("OPENAI_LOW_COST_MODEL") || "";
+    let model = defaultModel;
+    let guardianMode = "normal";
+    let guardianConfig = null;
+
+    try {
+      const configs = await base44.asServiceRole.entities.OpenAIGuardianConfig.filter({ user_id: user.id }, "-updated_date", 1);
+      guardianConfig = configs?.[0] || null;
+      if (guardianConfig?.enabled !== false && Number(guardianConfig?.monthly_budget_usd || 0) > 0) {
+        const events = await base44.asServiceRole.entities.OpenAIUsageEvent.filter({ user_id: user.id, occurred_at: { $gte: monthStart() } }, "-occurred_at", 500);
+        const spent = (events || []).reduce((sum, e) => sum + Number(e.estimated_cost_usd || 0), 0);
+        const pct = (spent / Number(guardianConfig.monthly_budget_usd)) * 100;
+        const warnAt = Number(guardianConfig.warning_percent || 70);
+        const preserveAt = Number(guardianConfig.preservation_percent || 90);
+        if (pct >= 100 && guardianConfig.block_when_over_budget === true) guardianMode = "block";
+        else if (pct >= preserveAt) guardianMode = "preserve";
+        else if (pct >= warnAt) guardianMode = "warn";
+        if (guardianMode === "preserve" && lowCostModel) model = lowCostModel;
+      }
+    } catch (e) {
+      console.warn("guardian preflight unavailable", e?.message || e);
+    }
 
     let profile = null;
     let learnedMemories = [];
@@ -111,6 +146,15 @@ export default async function(req) {
       } : null,
     };
 
+    if (guardianMode === "block") {
+      return Response.json({
+        error: "OpenAI monthly budget cap reached",
+        provider: "guardian",
+        configured: Boolean(apiKey),
+        guardian: { mode: guardianMode, blocked: true, api_key_exposed: false },
+      }, { status: 429 });
+    }
+
     if (!apiKey) {
       if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
@@ -132,7 +176,42 @@ export default async function(req) {
       headers: { Authorization: `Bearer ${apiKey}` },
       body: { model, input: prompt },
     });
-    if (!r.ok) return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
+    if (!r.ok) {
+      try {
+        await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+          user_id: user.id,
+          request_id: String(r.requestId || ""),
+          model,
+          mode,
+          input_tokens: 0,
+          output_tokens: 0,
+          total_tokens: 0,
+          estimated_cost_usd: 0,
+          status: "provider_error",
+          occurred_at: new Date().toISOString(),
+        });
+      } catch {}
+      return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId, guardian: { mode: guardianMode, api_key_exposed: false } }, { status: 502 });
+    }
+
+    const usage = r.data?.usage || {};
+    const estimatedCost = estimateCost(usage, guardianConfig);
+    try {
+      await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+        user_id: user.id,
+        request_id: String(r.requestId || r.data?.id || ""),
+        model,
+        mode,
+        input_tokens: Number(usage.input_tokens || 0),
+        output_tokens: Number(usage.output_tokens || 0),
+        total_tokens: Number(usage.total_tokens || (Number(usage.input_tokens || 0) + Number(usage.output_tokens || 0))),
+        estimated_cost_usd: estimatedCost,
+        status: "success",
+        occurred_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("usage telemetry write unavailable", e?.message || e);
+    }
 
     const text = extractText(r.data).trim();
     let parsed;
@@ -159,7 +238,19 @@ export default async function(req) {
       console.warn("learning event write unavailable", e?.message || e);
     }
 
-    return Response.json({ ...parsed, provider: "external", model, learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length, strategyCount: learnedStrategies.length, profileVersion: Number(profile?.version || 1), engineVersion: 2 } });
+    return Response.json({
+      ...parsed,
+      provider: "external",
+      model,
+      usage: {
+        input_tokens: Number(usage.input_tokens || 0),
+        output_tokens: Number(usage.output_tokens || 0),
+        total_tokens: Number(usage.total_tokens || 0),
+        estimated_cost_usd: Number(estimatedCost.toFixed(6)),
+      },
+      guardian: { mode: guardianMode, api_key_exposed: false, low_cost_model_active: model !== defaultModel },
+      learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length, strategyCount: learnedStrategies.length, profileVersion: Number(profile?.version || 1), engineVersion: 2 }
+    });
   } catch (e) {
     console.error("external-ai-gateway", e);
     return Response.json({ error: "External AI gateway unavailable" }, { status: 500 });
