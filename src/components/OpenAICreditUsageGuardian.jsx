@@ -38,7 +38,19 @@ export default function OpenAICreditUsageGuardian() {
   async function save() {
     setSaving(true); setError("");
     try {
-      const res = await base44.functions.invoke("openai-usage-guardian", { action: "save-config", ...form });
+      const normalized = {
+        ...form,
+        monthly_budget_usd: Math.max(0, Number(form.monthly_budget_usd || 0)),
+        starting_credit_usd: Math.max(0, Number(form.starting_credit_usd || 0)),
+        input_rate_per_million: Math.max(0, Number(form.input_rate_per_million || 0)),
+        output_rate_per_million: Math.max(0, Number(form.output_rate_per_million || 0)),
+        warning_percent: Math.min(100, Math.max(1, Number(form.warning_percent || 70))),
+        preservation_percent: Math.min(100, Math.max(1, Number(form.preservation_percent || 90))),
+      };
+      if (normalized.preservation_percent <= normalized.warning_percent) {
+        throw new Error("Preservation threshold must be higher than warning threshold.");
+      }
+      const res = await base44.functions.invoke("openai-usage-guardian", { action: "save-config", ...normalized });
       setData(res.data);
       setForm((f) => ({ ...f, ...res.data?.config }));
     } catch (e) { setError(e.message || "Could not save guardian settings"); }
@@ -107,5 +119,24 @@ function Stat({ icon: Icon, label, value }) {
 }
 
 function Num({ label, value, onChange }) {
-  return <label className="text-[10px] text-white/45"><span>{label}</span><input type="number" step="0.01" value={value} onChange={(e) => onChange(Math.max(0, Number(e.target.value || 0)))} className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-white" /></label>;
+  return (
+    <label className="text-[10px] text-white/45">
+      <span>{label}</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        min="0"
+        step="0.01"
+        value={value ?? ""}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") return onChange("");
+          const next = Number(raw);
+          if (Number.isFinite(next)) onChange(Math.max(0, next));
+        }}
+        className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-white"
+      />
+    </label>
+  );
 }
