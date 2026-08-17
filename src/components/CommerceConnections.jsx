@@ -65,6 +65,11 @@ export default function CommerceConnections() {
                 <div className="mt-1 truncate text-[10px] text-white/35">{s?.store?.name || s?.shop?.title || s?.shop?.name}</div>
               )}
               {!ok && s?.error && <div className="mt-1 line-clamp-2 text-[10px] text-red-300/70">{String(s.error)}</div>}
+          {!ok && key === "printify" && s?.token_received && (
+            <div className="mt-1 text-[9px] text-white/35 font-mono">
+              HTTP {s.status || "?"} · len {s.token_length ?? "?"} · segments {s.token_segments ?? "?"} · shape {s.token_shape_ok ? "OK" : "BAD"}
+            </div>
+          )}
             </div>
           );
         })}
