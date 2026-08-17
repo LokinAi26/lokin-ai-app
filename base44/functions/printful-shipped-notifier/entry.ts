@@ -30,7 +30,12 @@ export default async function (req) {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
-    const pfToken = secrets.get("PRINTFUL_API_TOKEN");
+    const pfToken = String(secrets.get("PRINTFUL_API_TOKEN") || "")
+      .trim()
+      .replace(/^Bearer\s+/i, "")
+      .replace(/^['\"]|['\"]$/g, "")
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+      .trim();
     if (!pfToken) return Response.json({ error: "PRINTFUL_API_TOKEN not configured" }, { status: 500 });
 
     // Resolve the Printful store id (first store on the token).
