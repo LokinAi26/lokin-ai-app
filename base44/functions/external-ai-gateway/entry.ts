@@ -14,11 +14,11 @@ function compactContext(value) {
 }
 
 function systemFor(mode) {
-  const common = "You are LOKIN AI, a concise, practical copilot for gig drivers. Be accurate, useful, and brief. Never claim an action was completed unless the app confirms it. If drafting a customer message, return the draft separately.";
+  const common = "You are LOKIN AI, a concise, practical copilot for gig drivers. Be accurate, useful, and brief. Never claim an action was completed unless the app confirms it. Use learned user preferences only as soft personalization, never as authoritative facts. Do not infer sensitive traits. If drafting a customer message, return the draft separately.";
   if (mode === "text") return `${common} Improve the supplied text according to the requested writing mode and tone. Return only JSON.`;
   if (mode === "motivation") return `${common} Give an energetic but grounded pep talk, usually 2-4 sentences. Return only JSON.`;
   if (mode === "support") return `${common} Help troubleshoot the user's LOKIN issue. Prefer concrete steps and avoid inventing account state. Return only JSON.`;
-  return `${common} Answer the driver's command using the supplied context. Return only JSON.`;
+  return `${common} Answer the driver's command using the supplied context and relevant learned preferences. Return only JSON.`;
 }
 
 function schemaFor(mode) {
@@ -36,6 +36,19 @@ function extractText(data) {
   return "";
 }
 
+function compactLearning(memories) {
+  return (memories || [])
+    .filter((m) => m?.active !== false && Number(m?.confidence || 0) >= 0.45)
+    .slice(0, 8)
+    .map((m) => ({
+      type: m.memory_type,
+      topic: String(m.topic || "").slice(0, 160),
+      summary: String(m.summary || "").slice(0, 500),
+      confidence: Number(m.confidence || 0),
+      evidence: Number(m.evidence_count || 0),
+    }));
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -47,6 +60,19 @@ export default async function(req) {
     const apiKey = secrets.get("OPENAI_API_KEY");
     const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
 
+    let profile = null;
+    let learnedMemories = [];
+    try {
+      const profiles = await base44.asServiceRole.entities.LokinLearningProfile.filter({ user_id: user.id }, "-updated_date", 1);
+      profile = profiles?.[0] || null;
+      if (profile?.learning_enabled !== false) {
+        const memories = await base44.asServiceRole.entities.LokinLearningMemory.filter({ user_id: user.id, active: true }, "-updated_date", 20);
+        learnedMemories = compactLearning(memories);
+      }
+    } catch (e) {
+      console.warn("learning context unavailable", e?.message || e);
+    }
+
     const safe = {
       command: String(body.command || "").slice(0, 4000),
       text: String(body.text || "").slice(0, 4000),
@@ -55,19 +81,25 @@ export default async function(req) {
       mood: String(body.mood || "").slice(0, 200),
       message: String(body.message || "").slice(0, 4000),
       context: compactContext(body.context),
+      learnedContext: learnedMemories,
+      learningProfile: profile ? {
+        version: Number(profile.version || 1),
+        style: String(profile.preferred_response_style || "").slice(0, 300),
+        strategy: String(profile.strategy_summary || "").slice(0, 500),
+      } : null,
     };
 
     if (!apiKey) {
-      if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false });
-      if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false });
-      if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false });
+      if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
+      if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
+      if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       const earnings = Number(safe.context?.todayEarnings || 0);
       const goal = Number(safe.context?.dailyGoal || 0);
       const remaining = goal > 0 ? Math.max(0, goal - earnings) : 0;
       const reply = /how much|made|earn/i.test(safe.command)
         ? `You have $${earnings.toFixed(2)} logged today${goal ? `, with $${remaining.toFixed(2)} left toward your $${goal.toFixed(0)} goal` : ""}.`
         : "LOKIN is in credit-preservation mode. Core navigation, routing, commerce, and safety systems remain available; richer generative replies will activate when an external AI provider key is configured.";
-      return Response.json({ reply, draftedMessage: "", provider: "local-fallback", configured: false });
+      return Response.json({ reply, draftedMessage: "", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
     }
 
     const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
@@ -85,7 +117,27 @@ export default async function(req) {
     try { parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()); }
     catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : { reply: text, draftedMessage: "" }; }
 
-    return Response.json({ ...parsed, provider: "external", model });
+    try {
+      await base44.asServiceRole.entities.LokinLearningEvent.create({
+        user_id: user.id,
+        event_type: "interaction",
+        feature: mode,
+        input_text: String(safe.command || safe.text || safe.message || "").slice(0, 4000),
+        response_text: String(parsed.reply || parsed.result || parsed.message || "").slice(0, 4000),
+        rating: 0,
+        metadata_json: JSON.stringify({ provider: "openai", model, memory_count: learnedMemories.length }),
+        occurred_at: new Date().toISOString(),
+      });
+      if (profile) {
+        await base44.asServiceRole.entities.LokinLearningProfile.update(profile.id, {
+          total_events: Number(profile.total_events || 0) + 1,
+        });
+      }
+    } catch (e) {
+      console.warn("learning event write unavailable", e?.message || e);
+    }
+
+    return Response.json({ ...parsed, provider: "external", model, learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length, profileVersion: Number(profile?.version || 1) } });
   } catch (e) {
     console.error("external-ai-gateway", e);
     return Response.json({ error: "External AI gateway unavailable" }, { status: 500 });
