@@ -32,8 +32,18 @@ import { shopifyDemo } from "../../shared/demoCatalog.ts";
 const API_VERSION = "2026-07";
 const VALID_ACTIONS = ["shop", "products", "product", "catalog", "storefront", "orders", "order", "createProduct"];
 
+function normalizeDomain(raw) {
+  const normalized = String(raw || "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^admin\.shopify\.com\/store\//i, "")
+    .split("/")[0]
+    .replace(/\/+$/, "");
+  return normalized && !normalized.includes(".") ? `${normalized}.myshopify.com` : normalized;
+}
+
 function baseUrl(domain) {
-  return `https://${domain}/admin/api/${API_VERSION}`;
+  return `https://${normalizeDomain(domain)}/admin/api/${API_VERSION}`;
 }
 
 async function shoGet(path) {
@@ -82,7 +92,7 @@ export default async function (req) {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
-    const domain = secrets.get("SHOPIFY_STORE_DOMAIN");
+    const domain = normalizeDomain(secrets.get("SHOPIFY_STORE_DOMAIN"));
     const token = secrets.get("SHOPIFY_ACCESS_TOKEN");
     // Demo/sandbox fallback: when either secret is missing, serve clearly-flagged
     // sample data so the storefront renders instead of erroring. Add the real
