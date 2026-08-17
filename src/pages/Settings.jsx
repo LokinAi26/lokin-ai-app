@@ -10,6 +10,7 @@ import {
 import CommerceCredentials from "@/components/CommerceCredentials";
 import InventoryMonitor from "@/components/InventoryMonitor";
 import StockAlertSetup from "@/components/StockAlertSetup";
+import OpenAICreditUsageGuardian from "@/components/OpenAICreditUsageGuardian";
 
 export default function Settings() {
   const [prefs, setPrefs] = useState(null);
@@ -133,6 +134,8 @@ export default function Settings() {
       <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2 select-none">
         {saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save settings</>}
       </button>
+
+      <OpenAICreditUsageGuardian />
 
       <CommerceCredentials />
 
