@@ -73,6 +73,7 @@ export default async function (req) {
       .trim()
       .replace(/^Bearer\s+/i, "")
       .replace(/^['\"]|['\"]$/g, "")
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
       .trim();
     // Demo/sandbox fallback: when no real token is set, serve clearly-flagged
     // sample data so the storefront renders instead of erroring. Add the real
