@@ -113,7 +113,9 @@ export default function Settings() {
                 ${g}
               </button>
             ))}
-            <input type="number" value={form.daily_goal} onChange={(e) => set("daily_goal", parseFloat(e.target.value) || 0)}
+            <input type="number" inputMode="decimal" value={form.daily_goal ?? ""}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => set("daily_goal", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
               className="w-20 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white" placeholder="Custom" />
           </div>
         </div>
@@ -193,7 +195,14 @@ function Field({ label, children }) {
 }
 function Num({ value, onChange, step = 1 }) {
   return (
-    <input type="number" value={value} step={step} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+    <input type="number" inputMode="decimal" min="0" value={value ?? ""} step={step}
+      onFocus={(e) => e.currentTarget.select()}
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (raw === "") return onChange("");
+        const next = Number(raw);
+        if (Number.isFinite(next)) onChange(Math.max(0, next));
+      }}
       className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white" />
   );
 }
