@@ -1,6 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
+import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 
 const API_VERSION = "2026-07";
 
@@ -10,9 +10,10 @@ export default async function(req) {
     const user = await base44.auth.me();
     if (!user?.email) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const domain = secrets.get("SHOPIFY_STORE_DOMAIN");
-    const token = secrets.get("SHOPIFY_ACCESS_TOKEN");
-    if (!domain || !token) return Response.json({ orders: [], live: false });
+    const shopifyAuth = await getShopifyAdminToken();
+    const domain = shopifyAuth.domain;
+    const token = shopifyAuth.token;
+    if (!domain || !token) return Response.json({ orders: [], live: false, shopify_auth_error: shopifyAuth.error || null });
 
     const url = `https://${domain}/admin/api/${API_VERSION}/orders.json?status=any&limit=100`;
     const r = await jsonRequest({ url, headers: { "X-Shopify-Access-Token": token } });
