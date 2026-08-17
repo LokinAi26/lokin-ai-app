@@ -122,7 +122,12 @@ export default async function (req) {
   }
 
   const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
-  const shopifyToken = secrets.get("SHOPIFY_ACCESS_TOKEN");
+  const shopifyToken = String(secrets.get("SHOPIFY_ACCESS_TOKEN") || "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^['\"]|['\"]$/g, "")
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+    .trim();
   const normalizedShopify = String(rawShopifyDomain || "")
     .trim()
     .replace(/^https?:\/\//i, "")
@@ -134,13 +139,26 @@ export default async function (req) {
     : normalizedShopify;
   if (shopifyDomain && shopifyToken) {
     const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
-      headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
+      headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json", Accept: "application/json" },
     });
     if (r.ok) {
       const s = r.data?.shop || {};
-      result.shopify = { connected: true, shop: { id: s.id, name: s.name, domain: s.domain, currency: s.currency } };
+      result.shopify = { connected: true, tested_domain: shopifyDomain, shop: { id: s.id, name: s.name, domain: s.domain, myshopify_domain: s.myshopify_domain, currency: s.currency } };
     } else {
-      result.shopify = { connected: false, status: r.status, error: r.data?.errors || r.data?.error || "Shopify check failed" };
+      const apiError = r.data?.errors || r.data?.error || "Shopify check failed";
+      result.shopify = {
+        connected: false,
+        status: r.status,
+        tested_domain: shopifyDomain,
+        domain_is_myshopify: shopifyDomain.endsWith(".myshopify.com"),
+        error: r.status === 404
+          ? `Shopify store not found at ${shopifyDomain}. SHOPIFY_STORE_DOMAIN must be the permanent *.myshopify.com domain (or the admin.shopify.com/store/<handle> URL), not a custom storefront domain.`
+          : r.status === 401
+            ? "Shopify rejected the Admin API access token. Verify SHOPIFY_ACCESS_TOKEN is from a custom app installed on this exact store."
+            : r.status === 403
+              ? "Shopify accepted the store/token but the app lacks permission to read shop data."
+              : apiError,
+      };
     }
   } else {
     result.shopify = { connected: false, mode: "demo", error: "SHOPIFY credentials missing — serving demo data" };
