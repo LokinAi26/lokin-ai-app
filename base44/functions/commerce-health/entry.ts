@@ -83,15 +83,31 @@ export default async function (req) {
         : { connected: false, shop_count: 0, error: "Printify token works, but no shop is attached to it." };
     } else {
       const raw = r.data?.message || r.data?.error || "Printify check failed";
+      const parts = printifyToken.split(".");
+      let tokenAlg = null;
+      try {
+        if (parts[0]) {
+          const padded = parts[0].replace(/-/g, "+").replace(/_/g, "/") + "===".slice((parts[0].length + 3) % 4);
+          const header = JSON.parse(atob(padded));
+          tokenAlg = header?.alg || null;
+        }
+      } catch {}
+      const looksLikeSignedJwt = tokenAlg && String(tokenAlg).toLowerCase() !== "none";
+      const missingJwtSignature = looksLikeSignedJwt && parts.length === 2;
       result.printify = {
         connected: false,
         status: r.status,
         token_received: true,
         token_length: printifyToken.length,
-        token_segments: printifyToken.split(".").length,
-        token_shape_ok: printifyToken.startsWith("eyJ") && printifyToken.split(".").length === 3,
+        token_segments: parts.length,
+        token_segment_lengths: parts.map((p) => p.length),
+        token_alg: tokenAlg,
+        token_shape_ok: !looksLikeSignedJwt || parts.length === 3,
+        missing_signature: missingJwtSignature,
         error: r.status === 401
-          ? "Printify rejected the token after normalization. Verify the new Personal Access Token was copied in full and saved to PRINTIFY_API_TOKEN."
+          ? (missingJwtSignature
+              ? `Printify credential is incomplete: it declares ${tokenAlg} signing but contains only 2 token segments. Generate a new Personal Access Token and use Printify's Copy to clipboard button so the signature segment is included.`
+              : "Printify rejected the credential. The request format is correct; verify the Personal Access Token is current and has shops.read access.")
           : raw,
       };
     }
