@@ -68,7 +68,12 @@ export default async function (req) {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
-    const token = secrets.get("PRINTIFY_API_TOKEN");
+    const rawToken = secrets.get("PRINTIFY_API_TOKEN");
+    const token = String(rawToken || "")
+      .trim()
+      .replace(/^Bearer\s+/i, "")
+      .replace(/^['\"]|['\"]$/g, "")
+      .trim();
     // Demo/sandbox fallback: when no real token is set, serve clearly-flagged
     // sample data so the storefront renders instead of erroring. Add the real
     // PRINTIFY_API_TOKEN in Settings -> Secrets to switch to live data.
