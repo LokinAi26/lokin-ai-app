@@ -49,6 +49,22 @@ function compactLearning(memories) {
     }));
 }
 
+function compactStrategies(strategies) {
+  return (strategies || [])
+    .filter((s) => s?.active !== false && Number(s?.confidence || 0) >= 0.3)
+    .slice(0, 6)
+    .map((s) => ({
+      strategy: String(s.strategy_key || "").slice(0, 180),
+      samples: Number(s.sample_count || 0),
+      avgNetPerHour: Number(s.avg_net_per_hour || 0),
+      avgDollarsPerMile: Number(s.avg_dollars_per_mile || 0),
+      successScore: Number(s.avg_success_score || 0),
+      confidence: Number(s.confidence || 0),
+      rankScore: Number(s.rank_score || 0),
+      summary: String(s.summary || "").slice(0, 500),
+    }));
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -62,12 +78,17 @@ export default async function(req) {
 
     let profile = null;
     let learnedMemories = [];
+    let learnedStrategies = [];
     try {
       const profiles = await base44.asServiceRole.entities.LokinLearningProfile.filter({ user_id: user.id }, "-updated_date", 1);
       profile = profiles?.[0] || null;
       if (profile?.learning_enabled !== false) {
-        const memories = await base44.asServiceRole.entities.LokinLearningMemory.filter({ user_id: user.id, active: true }, "-updated_date", 20);
+        const [memories, strategies] = await Promise.all([
+          base44.asServiceRole.entities.LokinLearningMemory.filter({ user_id: user.id, active: true }, "-updated_date", 20),
+          base44.asServiceRole.entities.LokinStrategyPerformance.filter({ user_id: user.id, active: true }, "-rank_score", 10),
+        ]);
         learnedMemories = compactLearning(memories);
+        learnedStrategies = compactStrategies(strategies);
       }
     } catch (e) {
       console.warn("learning context unavailable", e?.message || e);
@@ -82,6 +103,7 @@ export default async function(req) {
       message: String(body.message || "").slice(0, 4000),
       context: compactContext(body.context),
       learnedContext: learnedMemories,
+      outcomeRankings: learnedStrategies,
       learningProfile: profile ? {
         version: Number(profile.version || 1),
         style: String(profile.preferred_response_style || "").slice(0, 300),
@@ -137,7 +159,7 @@ export default async function(req) {
       console.warn("learning event write unavailable", e?.message || e);
     }
 
-    return Response.json({ ...parsed, provider: "external", model, learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length, profileVersion: Number(profile?.version || 1) } });
+    return Response.json({ ...parsed, provider: "external", model, learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length, strategyCount: learnedStrategies.length, profileVersion: Number(profile?.version || 1), engineVersion: 2 } });
   } catch (e) {
     console.error("external-ai-gateway", e);
     return Response.json({ error: "External AI gateway unavailable" }, { status: 500 });
