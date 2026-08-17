@@ -61,6 +61,19 @@ import ShopifyEmbed from './pages/ShopifyEmbed';
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
+  // Shopify's embedded app must render without waiting for or requiring a Base44 session.
+  // These routes are intentionally handled before any Base44 auth/loading gate so the
+  // Shopify Admin iframe can load them even when no Base44 user is signed in.
+  const pathname = window.location.pathname;
+  if (pathname === '/shopify' || pathname === '/shopify/auth/callback') {
+    return (
+      <Routes>
+        <Route path="/shopify" element={<ShopifyEmbed />} />
+        <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
+      </Routes>
+    );
+  }
+
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -127,8 +140,6 @@ const AuthenticatedApp = () => {
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />
-      <Route path="/shopify" element={<ShopifyEmbed />} />
-      <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
