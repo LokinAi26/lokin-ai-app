@@ -62,6 +62,7 @@ export default async function (req) {
     .trim()
     .replace(/^Bearer\s+/i, "")
     .replace(/^['\"]|['\"]$/g, "")
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
     .trim();
   if (printifyToken) {
     const r = await safeJson("https://api.printify.com/v1/shops.json", {
@@ -87,6 +88,8 @@ export default async function (req) {
         status: r.status,
         token_received: true,
         token_length: printifyToken.length,
+        token_segments: printifyToken.split(".").length,
+        token_shape_ok: printifyToken.startsWith("eyJ") && printifyToken.split(".").length === 3,
         error: r.status === 401
           ? "Printify rejected the token after normalization. Verify the new Personal Access Token was copied in full and saved to PRINTIFY_API_TOKEN."
           : raw,
