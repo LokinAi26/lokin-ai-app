@@ -1,0 +1,87 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "outcome_type": {
+      "type": "string",
+      "enum": [
+        "delivery",
+        "route",
+        "opportunity",
+        "session",
+        "strategy"
+      ]
+    },
+    "strategy_key": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "day_part": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "lunch",
+        "afternoon",
+        "dinner",
+        "late_night",
+        "unknown"
+      ]
+    },
+    "day_of_week": {
+      "type": "string"
+    },
+    "gross_earnings": {
+      "type": "number"
+    },
+    "tips": {
+      "type": "number"
+    },
+    "miles": {
+      "type": "number"
+    },
+    "duration_minutes": {
+      "type": "number"
+    },
+    "net_per_hour": {
+      "type": "number"
+    },
+    "dollars_per_mile": {
+      "type": "number"
+    },
+    "success_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "metadata_json": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "outcome_type",
+    "strategy_key"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "LokinOutcomeLearning"
+}
