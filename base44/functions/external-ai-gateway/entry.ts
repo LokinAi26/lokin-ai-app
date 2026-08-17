@@ -65,11 +65,19 @@ function compactStrategies(strategies) {
     }));
 }
 
-function estimateCost(usage, cfg) {
+const MODEL_PRICING = Object.freeze({
+  "gpt-5.6": { input: 5, output: 30 },
+  "gpt-5.6-sol": { input: 5, output: 30 },
+  "gpt-5.6-terra": { input: 2.5, output: 15 },
+  "gpt-5.6-luna": { input: 1, output: 6 },
+});
+
+function estimateCost(usage, cfg, model) {
   const input = Number(usage?.input_tokens || 0);
   const output = Number(usage?.output_tokens || 0);
-  const inputRate = Number(cfg?.input_rate_per_million || 0);
-  const outputRate = Number(cfg?.output_rate_per_million || 0);
+  const price = MODEL_PRICING[model] || null;
+  const inputRate = price?.input ?? Number(cfg?.input_rate_per_million || 0);
+  const outputRate = price?.output ?? Number(cfg?.output_rate_per_million || 0);
   return Math.max(0, (input / 1_000_000) * inputRate + (output / 1_000_000) * outputRate);
 }
 
@@ -195,7 +203,7 @@ export default async function(req) {
     }
 
     const usage = r.data?.usage || {};
-    const estimatedCost = estimateCost(usage, guardianConfig);
+    const estimatedCost = estimateCost(usage, guardianConfig, model);
     try {
       await base44.asServiceRole.entities.OpenAIUsageEvent.create({
         user_id: user.id,
