@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Volume2, Radio } from "lucide-react";
+import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, Brain } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -29,6 +29,17 @@ export default function LokinAI() {
   const scrollRef = useRef(null);
   const [voices, setVoices] = useState([]);
   const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem("lokin_voice") || "");
+  const [learning, setLearning] = useState({ enabled: true, memoryCount: 0, profileVersion: 1 });
+
+  useEffect(() => {
+    base44.functions.invoke("learning-intelligence", { action: "context" })
+      .then((res) => setLearning({
+        enabled: res.data?.learning_enabled !== false,
+        memoryCount: res.data?.memories?.length || 0,
+        profileVersion: res.data?.profile?.version || 1,
+      }))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function loadVoices() { setVoices(window.speechSynthesis?.getVoices() || []); }
@@ -67,12 +78,39 @@ export default function LokinAI() {
         },
       });
       const data = res.data;
-      setLog((l) => [...l, { role: "lokin", text: data.reply }]);
+      setLog((l) => [...l, { role: "lokin", text: data.reply, input: command, feedback: null }]);
+      if (data.learning) setLearning((prev) => ({ ...prev, ...data.learning }));
       if (data.draftedMessage) setDraft(data.draftedMessage);
     } catch (e) {
       setLog((l) => [...l, { role: "lokin", text: `Error: ${e.message}` }]);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function sendFeedback(index, rating) {
+    const message = log[index];
+    if (!message || message.role !== "lokin" || message.feedback) return;
+    setLog((items) => items.map((item, i) => i === index ? { ...item, feedback: rating } : item));
+    try {
+      const res = await base44.functions.invoke("learning-intelligence", {
+        action: "feedback",
+        feature: "assistant",
+        input_text: message.input || "",
+        response_text: message.text || "",
+        rating,
+        topic: "assistant-response-style",
+      });
+      if (res.data?.profile) {
+        setLearning((prev) => ({
+          ...prev,
+          enabled: res.data.profile.learning_enabled !== false,
+          profileVersion: res.data.profile.version || prev.profileVersion,
+          memoryCount: Math.max(prev.memoryCount, 1),
+        }));
+      }
+    } catch {
+      setLog((items) => items.map((item, i) => i === index ? { ...item, feedback: null } : item));
     }
   }
 
@@ -120,6 +158,10 @@ export default function LokinAI() {
         <LokinGlyph size={22} />
         <h1 className="text-xl font-bold font-heading metal-text">LOKIN AI</h1>
         <span className="text-[11px] text-accent/80 tracking-wide">voice assistant</span>
+        <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-1 text-[10px] text-accent/80">
+          <Brain className="h-3 w-3" />
+          Learning {learning.enabled ? "ON" : "OFF"} · v{learning.profileVersion}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 text-xs">
@@ -156,11 +198,22 @@ export default function LokinAI() {
         {log.map((m, i) => (
           <div key={i} className={`flex ${m.role === "you" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${m.role === "you" ? "bg-primary text-primary-foreground font-medium" : "border border-white/10 lokin-panel text-white/85"}`}>
-              {m.text}
+              <div>{m.text}</div>
               {m.role === "lokin" && (
-                <button onClick={() => speak(m.text)} className="ml-2 align-middle text-accent/70 hover:text-accent">
-                  <Volume2 className="h-3.5 w-3.5 inline" />
-                </button>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <button onClick={() => speak(m.text)} className="text-accent/70 hover:text-accent" title="Read aloud">
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => sendFeedback(i, 1)} disabled={!!m.feedback}
+                    className={`${m.feedback === 1 ? "text-accent" : "text-white/35 hover:text-accent"} disabled:opacity-80`} title="Helpful — teach LOKIN">
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => sendFeedback(i, -1)} disabled={!!m.feedback}
+                    className={`${m.feedback === -1 ? "text-red-400" : "text-white/35 hover:text-red-400"} disabled:opacity-80`} title="Not helpful — teach LOKIN">
+                    <ThumbsDown className="h-3.5 w-3.5" />
+                  </button>
+                  {m.feedback && <span className="text-[9px] text-white/35">learned</span>}
+                </div>
               )}
             </div>
           </div>
