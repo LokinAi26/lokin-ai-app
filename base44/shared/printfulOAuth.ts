@@ -91,6 +91,15 @@ async function refreshPrintfulToken(base44: any, conn: any, secrets: any): Promi
 //   - OAuth access_token (auto-refreshed within 5 min of expiry) if a connection exists
 //   - else the shared personal PRINTFUL_API_TOKEN
 // Returns { token, storeId, source, storeName }.
+function normalizePrintfulToken(value: any): string {
+  return String(value || "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^['\"]|['\"]$/g, "")
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+    .trim();
+}
+
 export async function getEffectiveToken(base44: any, user: { id: string }, secrets: any): Promise<{ token: string; storeId: string; source: string; storeName: string }> {
   const conn = await getPrintfulConnection(base44, user.id);
   if (conn && conn.access_token && conn.status !== "disconnected") {
@@ -98,12 +107,12 @@ export async function getEffectiveToken(base44: any, user: { id: string }, secre
     if (conn.expires_at && conn.expires_at - now < 300) {
       const refreshed = await refreshPrintfulToken(base44, conn, secrets);
       if (refreshed) {
-        return { token: refreshed.access_token, storeId: refreshed.store_id || "", source: "oauth", storeName: refreshed.store_name || "" };
+        return { token: normalizePrintfulToken(refreshed.access_token), storeId: refreshed.store_id || "", source: "oauth", storeName: refreshed.store_name || "" };
       }
       // refresh failed -> fall through to personal token
     } else {
-      return { token: conn.access_token, storeId: conn.store_id || "", source: "oauth", storeName: conn.store_name || "" };
+      return { token: normalizePrintfulToken(conn.access_token), storeId: conn.store_id || "", source: "oauth", storeName: conn.store_name || "" };
     }
   }
-  return { token: secrets.get("PRINTFUL_API_TOKEN") || "", storeId: "", source: "personal", storeName: "" };
+  return { token: normalizePrintfulToken(secrets.get("PRINTFUL_API_TOKEN")), storeId: "", source: "personal", storeName: "" };
 }
