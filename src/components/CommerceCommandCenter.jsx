@@ -20,17 +20,45 @@ export default function CommerceCommandCenter() {
   const [error, setError] = useState("");
   const [schemaAudit, setSchemaAudit] = useState(null);
   const [schemaBusy, setSchemaBusy] = useState(false);
+  const [accessNote, setAccessNote] = useState("");
+  const [serviceHealth, setServiceHealth] = useState(null);
 
   const load = useCallback(async (force = false) => {
     setLoading(true); setError("");
     try {
-      const [shopifyRes, printfulRes] = await Promise.allSettled([
-        guardedInvoke(base44, "shopify-catalog", { action: "orders", limit: 50, status: "any" }, { force, userInitiated: force }),
-        guardedInvoke(base44, "printful-catalog", { action: "orders", limit: 50 }, { force, userInitiated: force }),
+      const [me, healthRes] = await Promise.all([
+        base44.auth.me().catch(() => null),
+        guardedInvoke(base44, "commerce-health", {}, { force, userInitiated: force }).catch(() => null),
       ]);
-      if (shopifyRes.status === "fulfilled") setOrders(shopifyRes.value?.data?.orders || []);
-      if (printfulRes.status === "fulfilled") setPrintfulOrders(printfulRes.value?.data?.orders || []);
-      if (shopifyRes.status === "rejected" && printfulRes.status === "rejected") throw shopifyRes.reason || printfulRes.reason;
+      const health = healthRes?.data || healthRes || null;
+      setServiceHealth(health);
+      if (me?.role !== "admin") {
+        setOrders([]); setPrintfulOrders([]);
+        setAccessNote("Order telemetry is admin-protected. Store connection health remains visible above.");
+        return;
+      }
+      setAccessNote("");
+      const shopifyReady = Boolean(health?.services?.shopify?.connected);
+      const printfulReady = Boolean(health?.services?.printful?.connected);
+      const tasks = [];
+      const keys = [];
+      if (shopifyReady) { tasks.push(guardedInvoke(base44, "shopify-catalog", { action: "orders", limit: 50, status: "any" }, { force, userInitiated: force })); keys.push("shopify"); }
+      if (printfulReady) { tasks.push(guardedInvoke(base44, "printful-catalog", { action: "orders", limit: 50 }, { force, userInitiated: force })); keys.push("printful"); }
+      if (!tasks.length) {
+        setOrders([]); setPrintfulOrders([]);
+        setError("Connect Shopify or Printful to enable live order intelligence.");
+        return;
+      }
+      const settled = await Promise.allSettled(tasks);
+      const shopifyIndex = keys.indexOf("shopify");
+      const printfulIndex = keys.indexOf("printful");
+      const shopifyRes = shopifyIndex >= 0 ? settled[shopifyIndex] : null;
+      const printfulRes = printfulIndex >= 0 ? settled[printfulIndex] : null;
+      if (shopifyRes?.status === "fulfilled") setOrders(shopifyRes.value?.data?.orders || []);
+      else if (!shopifyReady) setOrders([]);
+      if (printfulRes?.status === "fulfilled") setPrintfulOrders(printfulRes.value?.data?.orders || []);
+      else if (!printfulReady) setPrintfulOrders([]);
+      if (shopifyRes?.status === "rejected" && printfulRes?.status === "rejected") throw shopifyRes.reason || printfulRes.reason;
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load orders";
       setError(String(msg));
@@ -105,9 +133,11 @@ export default function CommerceCommandCenter() {
         </button>
       </div>
 
+      {accessNote && <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-3 text-xs text-primary/80">{accessNote}</div>}
       {error && <div className="rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-white/55">{error === "Admin only" ? "Order intelligence is protected and appears for LOKIN administrators only." : error}</div>}
+      {serviceHealth && !serviceHealth?.all_connected && <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-[10px] text-white/45">Live commerce telemetry is capability-aware: disconnected providers are isolated instead of failing the entire command center.</div>}
 
-      {!error && <>
+      {!error && !accessNote && <>
         <div className="grid grid-cols-2 gap-2">
           <Metric icon={DollarSign} label="ORDER VALUE" value={money(stats.revenue, orders[0]?.currency || "USD")} />
           <Metric icon={PackageCheck} label="PAID" value={`${stats.paid}/${orders.length}`} />
