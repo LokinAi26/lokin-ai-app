@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "service": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "http_status": {
+      "type": "number"
+    },
+    "occurred_at": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "service",
+    "status",
+    "occurred_at"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "CommerceConnectionEvent"
+}
