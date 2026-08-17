@@ -72,7 +72,12 @@ export default async function (req) {
     // ----- Connection status (works without a token) -----
     if (action === "connection") {
       const conn = await getPrintfulConnection(base44, user.id);
-      const personalToken = secrets.get("PRINTFUL_API_TOKEN") || "";
+      const personalToken = String(secrets.get("PRINTFUL_API_TOKEN") || "")
+        .trim()
+        .replace(/^Bearer\s+/i, "")
+        .replace(/^['\"]|['\"]$/g, "")
+        .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+        .trim();
       const hasPersonal = !!personalToken;
       const oauthConnected = !!(conn && conn.status !== "disconnected" && conn.access_token);
 
