@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
+import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 
 async function safeJson(url, options = {}) {
   try {
@@ -121,47 +122,52 @@ export default async function (req) {
     result.printify = { connected: false, mode: "demo", error: "PRINTIFY_API_TOKEN missing — serving demo data" };
   }
 
-  const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
-  const shopifyToken = String(secrets.get("SHOPIFY_ACCESS_TOKEN") || "")
-    .trim()
-    .replace(/^Bearer\s+/i, "")
-    .replace(/^['\"]|['\"]$/g, "")
-    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
-    .trim();
-  const normalizedShopify = String(rawShopifyDomain || "")
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/^admin\.shopify\.com\/store\//i, "")
-    .split("/")[0]
-    .replace(/\/+$/, "");
-  const shopifyDomain = normalizedShopify && !normalizedShopify.includes(".")
-    ? `${normalizedShopify}.myshopify.com`
-    : normalizedShopify;
+  const shopifyAuth = await getShopifyAdminToken();
+  const shopifyDomain = shopifyAuth.domain;
+  const shopifyToken = shopifyAuth.token;
   if (shopifyDomain && shopifyToken) {
     const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json", Accept: "application/json" },
     });
     if (r.ok) {
       const s = r.data?.shop || {};
-      result.shopify = { connected: true, tested_domain: shopifyDomain, shop: { id: s.id, name: s.name, domain: s.domain, myshopify_domain: s.myshopify_domain, currency: s.currency } };
+      result.shopify = {
+        connected: true,
+        auth_source: shopifyAuth.source,
+        tested_domain: shopifyDomain,
+        scope: shopifyAuth.scope || null,
+        token_expires_at: shopifyAuth.expiresAt ? new Date(shopifyAuth.expiresAt).toISOString() : null,
+        shop: { id: s.id, name: s.name, domain: s.domain, myshopify_domain: s.myshopify_domain, currency: s.currency },
+      };
     } else {
       const apiError = r.data?.errors || r.data?.error || "Shopify check failed";
       result.shopify = {
         connected: false,
         status: r.status,
+        auth_source: shopifyAuth.source,
+        auth_exchange_status: shopifyAuth.status || null,
+        auth_exchange_error: shopifyAuth.error || null,
         tested_domain: shopifyDomain,
         domain_is_myshopify: shopifyDomain.endsWith(".myshopify.com"),
         error: r.status === 404
-          ? `Shopify store not found at ${shopifyDomain}. SHOPIFY_STORE_DOMAIN must be the permanent *.myshopify.com domain (or the admin.shopify.com/store/<handle> URL), not a custom storefront domain.`
+          ? `Shopify store not found at ${shopifyDomain}. SHOPIFY_STORE_DOMAIN must be the permanent *.myshopify.com domain.`
           : r.status === 401
-            ? "Shopify rejected the Admin API access token. Verify SHOPIFY_ACCESS_TOKEN is from a custom app installed on this exact store."
+            ? (shopifyAuth.source === "static"
+                ? "Shopify rejected the legacy static Admin API token. The client-credentials exchange is not active yet; release and install the LOKIN AI Commerce app on this store."
+                : "Shopify rejected the freshly exchanged Admin API access token. Verify the released app version and scopes.")
             : r.status === 403
-              ? "Shopify accepted the store/token but the app lacks permission to read shop data."
+              ? "Shopify authenticated the app but the released version lacks permission for this request."
               : apiError,
       };
     }
   } else {
-    result.shopify = { connected: false, mode: "demo", error: "SHOPIFY credentials missing — serving demo data" };
+    result.shopify = {
+      connected: false,
+      mode: "setup",
+      auth_source: shopifyAuth.source,
+      auth_exchange_status: shopifyAuth.status || null,
+      error: shopifyAuth.error || "Shopify credentials missing.",
+    };
   }
 
   try {
