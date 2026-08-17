@@ -57,10 +57,19 @@ export default async function (req) {
     result.printful = { connected: false, mode: "demo", error: "PRINTFUL_API_TOKEN missing — serving demo data" };
   }
 
-  const printifyToken = secrets.get("PRINTIFY_API_TOKEN");
+  const rawPrintifyToken = secrets.get("PRINTIFY_API_TOKEN");
+  const printifyToken = String(rawPrintifyToken || "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^['\"]|['\"]$/g, "")
+    .trim();
   if (printifyToken) {
     const r = await safeJson("https://api.printify.com/v1/shops.json", {
-      headers: { Authorization: `Bearer ${printifyToken}` },
+      headers: {
+        Authorization: `Bearer ${printifyToken}`,
+        Accept: "application/json",
+        "User-Agent": "LOKIN-AI-Base44/1.0",
+      },
     });
     if (r.ok) {
       const shops = Array.isArray(r.data) ? r.data : [];
@@ -76,8 +85,10 @@ export default async function (req) {
       result.printify = {
         connected: false,
         status: r.status,
+        token_received: true,
+        token_length: printifyToken.length,
         error: r.status === 401
-          ? "Printify rejected the saved token. Create a new Personal Access Token in Printify and replace PRINTIFY_API_TOKEN in Base44 Secrets."
+          ? "Printify rejected the token after normalization. Verify the new Personal Access Token was copied in full and saved to PRINTIFY_API_TOKEN."
           : raw,
       };
     }
