@@ -88,12 +88,15 @@ export default async function (req) {
 
   const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
   const shopifyToken = secrets.get("SHOPIFY_ACCESS_TOKEN");
-  const shopifyDomain = String(rawShopifyDomain || "")
+  const normalizedShopify = String(rawShopifyDomain || "")
     .trim()
     .replace(/^https?:\/\//i, "")
     .replace(/^admin\.shopify\.com\/store\//i, "")
     .split("/")[0]
     .replace(/\/+$/, "");
+  const shopifyDomain = normalizedShopify && !normalizedShopify.includes(".")
+    ? `${normalizedShopify}.myshopify.com`
+    : normalizedShopify;
   if (shopifyDomain && shopifyToken) {
     const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
