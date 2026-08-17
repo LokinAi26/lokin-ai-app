@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Gauge, Fuel as FuelIcon, MapPin, ChevronRight, Brain, Power, Truck, TrendingUp, Radar, SlidersHorizontal, ScanLine, BarChart3, Package, Activity, Flame } from "lucide-react";
+import { Brain, Truck, SlidersHorizontal, ScanLine, Package, Activity, Flame } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
-import LockInScore from "@/components/LockInScore";
 import WorkModeSheet from "@/components/WorkModeSheet";
-import UpcomingShifts from "@/components/UpcomingShifts";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
-import Ticker from "@/components/Ticker";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ClipboardList, MapPin, Clock, Camera, Send, Check, Star,
-  Utensils, ShoppingBag, FileText, Package, Sparkles, DollarSign,
+  Utensils, ShoppingBag, FileText, Package,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";

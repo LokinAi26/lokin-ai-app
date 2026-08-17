@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Sparkles, Loader2, Gauge, Target } from "lucide-react";
+import { Plus, Sparkles, Loader2, Gauge, Target } from "lucide-react";
 
 export default function CreditSection() {
   const [goal, setGoal] = useState(null);

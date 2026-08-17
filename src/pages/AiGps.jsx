@@ -1,4 +1,4 @@
-import { Radar, Move, Lock, Mic, Pause, Power, Navigation, Sparkles, Volume2 } from "lucide-react";
+import { Radar, Move, Lock, Mic, Pause, Power, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
 import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";

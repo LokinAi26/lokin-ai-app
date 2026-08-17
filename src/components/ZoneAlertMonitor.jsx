@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, BellRing, MapPin, Zap, X, Crosshair } from "lucide-react";
+import { Bell, BellRing, MapPin, Zap, X } from "lucide-react";
 
 // Foreground geofence monitor: watches the device position and fires a
 // notification + in-app alert when the user enters a high-earning heatmap zone.

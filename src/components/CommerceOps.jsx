@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, CheckCircle2, Clock3, PackageCheck, RefreshCw, ShoppingBag, Truck, ExternalLink, AlertTriangle } from "lucide-react";
+import { Activity, CheckCircle2, Clock3, PackageCheck, RefreshCw, ShoppingBag, Truck, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 function tone(status = "") {

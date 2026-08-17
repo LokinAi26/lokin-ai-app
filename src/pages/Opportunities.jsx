@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Radar, RefreshCw, ExternalLink, MapPin, BadgeDollarSign, Car, Briefcase, Filter } from "lucide-react";
+import { Radar, RefreshCw, ExternalLink, MapPin, Car, Briefcase, Filter } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const CATEGORIES = [

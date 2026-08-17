@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Signal, Zap, Activity, RadioTower, RefreshCw, ArrowUpRight, Wifi, Layers, Gauge as GaugeIcon, Sparkles } from "lucide-react";
 
