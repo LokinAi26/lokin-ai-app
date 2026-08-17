@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 import { shopifyDemo } from "../../shared/demoCatalog.ts";
+import { getShopifyAdminToken, normalizeShopifyDomain } from "../../shared/shopifyAuth.ts";
 
 /**
  * shopify-catalog — LOKIN Brand Store <-> Shopify Admin REST API integration.
@@ -32,31 +33,21 @@ import { shopifyDemo } from "../../shared/demoCatalog.ts";
 const API_VERSION = "2026-07";
 const VALID_ACTIONS = ["shop", "products", "product", "catalog", "storefront", "orders", "order", "createProduct"];
 
-function normalizeDomain(raw) {
-  const normalized = String(raw || "")
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/^admin\.shopify\.com\/store\//i, "")
-    .split("/")[0]
-    .replace(/\/+$/, "");
-  return normalized && !normalized.includes(".") ? `${normalized}.myshopify.com` : normalized;
-}
-
 function baseUrl(domain) {
-  return `https://${normalizeDomain(domain)}/admin/api/${API_VERSION}`;
+  return `https://${normalizeShopifyDomain(domain)}/admin/api/${API_VERSION}`;
 }
 
-async function shoGet(path) {
-  const r = await jsonRequest({ url: path, headers: { "X-Shopify-Access-Token": secrets.get("SHOPIFY_ACCESS_TOKEN") } });
+async function shoGet(path, token) {
+  const r = await jsonRequest({ url: path, headers: { "X-Shopify-Access-Token": token } });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   return { ok: true, data: r.data };
 }
 
-async function shoPost(path, body) {
+async function shoPost(path, body, token) {
   const r = await jsonRequest({
     url: path,
     method: "POST",
-    headers: { "X-Shopify-Access-Token": secrets.get("SHOPIFY_ACCESS_TOKEN") },
+    headers: { "X-Shopify-Access-Token": token },
     body,
   });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
@@ -92,20 +83,19 @@ export default async function (req) {
       return Response.json({ error: "Admin only" }, { status: 403 });
     }
 
-    const domain = normalizeDomain(secrets.get("SHOPIFY_STORE_DOMAIN"));
-    const token = secrets.get("SHOPIFY_ACCESS_TOKEN");
-    // Demo/sandbox fallback: when either secret is missing, serve clearly-flagged
-    // sample data so the storefront renders instead of erroring. Add the real
-    // SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN in Settings -> Secrets to go live.
+    const shopifyAuth = await getShopifyAdminToken();
+    const domain = shopifyAuth.domain;
+    const token = shopifyAuth.token;
+    // Demo/sandbox fallback only when no usable Shopify credential exists.
     if (!domain || !token) {
-      return Response.json(shopifyDemo(action, payload));
+      return Response.json({ ...shopifyDemo(action, payload), shopify_auth_error: shopifyAuth.error || null });
     }
 
     const base = baseUrl(domain);
 
     // ----- Shop info -----
     if (action === "shop") {
-      const r = await shoGet(`${base}/shop.json`);
+      const r = await shoGet(`${base}/shop.json`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const s = r.data?.shop || {};
       return Response.json({
@@ -124,8 +114,8 @@ export default async function (req) {
     if (action === "storefront") {
       const cap = Math.min(250, Math.max(1, Number(payload.limit) || 250));
       const [shopR, productsR] = await Promise.all([
-        shoGet(`${base}/shop.json`),
-        shoGet(`${base}/products.json?limit=${cap}`),
+        shoGet(`${base}/shop.json`, token),
+        shoGet(`${base}/products.json?limit=${cap}`, token),
       ]);
       if (!shopR.ok) return Response.json({ error: shopR.error }, { status: shopR.status });
       if (!productsR.ok) return Response.json({ error: productsR.error }, { status: productsR.status });
@@ -161,7 +151,7 @@ export default async function (req) {
     if (action === "products") {
       const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
       const pageInfo = payload.page_info ? `&page_info=${encodeURIComponent(payload.page_info)}` : "";
-      const r = await shoGet(`${base}/products.json?limit=${limit}${pageInfo}`);
+      const r = await shoGet(`${base}/products.json?limit=${limit}${pageInfo}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const products = (r.data?.products || []).map((p) => ({
         id: p.id,
@@ -181,7 +171,7 @@ export default async function (req) {
     if (action === "product") {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
-      const r = await shoGet(`${base}/products/${encodeURIComponent(id)}.json`);
+      const r = await shoGet(`${base}/products/${encodeURIComponent(id)}.json`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const p = r.data?.product || {};
       return Response.json({
@@ -202,7 +192,7 @@ export default async function (req) {
     // ----- Enriched catalog (all products + variants with price & image) -----
     if (action === "catalog") {
       const cap = Math.min(250, Math.max(1, Number(payload.limit) || 250));
-      const r = await shoGet(`${base}/products.json?limit=${cap}`);
+      const r = await shoGet(`${base}/products.json?limit=${cap}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const products = (r.data?.products || []).map((p) => {
         const variants = (p.variants || []).map(variantSummary);
@@ -226,7 +216,7 @@ export default async function (req) {
     if (action === "orders") {
       const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
       const status = payload.status ? `&status=${encodeURIComponent(payload.status)}` : "";
-      const r = await shoGet(`${base}/orders.json?limit=${limit}${status}`);
+      const r = await shoGet(`${base}/orders.json?limit=${limit}${status}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const orders = (r.data?.orders || []).map((o) => ({
         id: o.id,
@@ -246,7 +236,7 @@ export default async function (req) {
     if (action === "order") {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
-      const r = await shoGet(`${base}/orders/${encodeURIComponent(id)}.json`);
+      const r = await shoGet(`${base}/orders/${encodeURIComponent(id)}.json`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ order: r.data?.order });
     }
@@ -267,7 +257,7 @@ export default async function (req) {
           variants: Array.isArray(p.variants) ? p.variants : undefined,
         },
       };
-      const r = await shoPost(`${base}/products.json`, body);
+      const r = await shoPost(`${base}/products.json`, body, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ product: { id: r.data?.product?.id, title: r.data?.product?.title } });
     }
