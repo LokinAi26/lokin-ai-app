@@ -4,29 +4,11 @@ import { jsonRequest } from "../../shared/printRequest.ts";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 
-const TOKEN_BUDGET = {
-  assistant: 650,
-  text: 450,
-  motivation: 300,
-  support: 650,
-};
-
-async function recordTelemetry(base44, row) {
-  try {
-    await base44.asServiceRole.entities.LokinAIGatewayTelemetry.create({
-      ...row,
-      occurred_at: new Date().toISOString(),
-    });
-  } catch (e) {
-    console.warn("LOKIN AI telemetry write skipped", e?.message || e);
-  }
-}
-
 function compactContext(value) {
   if (!value || typeof value !== "object") return {};
   const out = {};
   for (const [k, v] of Object.entries(value)) {
-    if (["string", "number", "boolean"].includes(typeof v) && String(v).length <= 2000) out[k] = v;
+    if (["string", "number", "boolean"].includes(typeof v) && String(v).length <= 500) out[k] = v;
   }
   return out;
 }
@@ -36,7 +18,7 @@ function systemFor(mode) {
   if (mode === "text") return `${common} Improve the supplied text according to the requested writing mode and tone. Return only JSON.`;
   if (mode === "motivation") return `${common} Give an energetic but grounded pep talk, usually 2-4 sentences. Return only JSON.`;
   if (mode === "support") return `${common} Help troubleshoot the user's LOKIN issue. Prefer concrete steps and avoid inventing account state. Return only JSON.`;
-  return `${common} Answer the driver's command using the supplied context. If recentConversation is supplied, use it for natural multi-turn continuity and resolve pronouns or follow-up questions from that recent exchange. If learning context is supplied, personalize recommendations toward accepted/preferred patterns and away from dismissed patterns without treating weak signals as certainty. If fitness context is supplied, you may incorporate general fitness, hydration, activity, or recovery suggestions when relevant, but do not diagnose, treat, or make medical claims. Never invent facts that are not in context. Return only JSON.`;
+  return `${common} Answer the driver's command using the supplied context. Return only JSON.`;
 }
 
 function schemaFor(mode) {
@@ -55,7 +37,6 @@ function extractText(data) {
 }
 
 export default async function(req) {
-  const startedAt = Date.now();
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -64,9 +45,7 @@ export default async function(req) {
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
     const apiKey = secrets.get("OPENAI_API_KEY");
-    // OpenAI Responses API model. Override via OPENAI_MODEL secret.
-    // Valid defaults: gpt-5-mini, gpt-5, gpt-4o-mini, gpt-4o.
-    const model = secrets.get("OPENAI_MODEL") || "gpt-5-mini";
+    const model = secrets.get("OPENAI_MODEL") || "gpt-5.6";
 
     const safe = {
       command: String(body.command || "").slice(0, 4000),
@@ -79,7 +58,6 @@ export default async function(req) {
     };
 
     if (!apiKey) {
-      await recordTelemetry(base44, { mode, provider: "local-fallback", model, status: "missing_key", latency_ms: Date.now() - startedAt, configured: false });
       if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false });
       if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false });
       if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false });
@@ -98,39 +76,16 @@ export default async function(req) {
       method: "POST",
       timeoutMs: 20000,
       headers: { Authorization: `Bearer ${apiKey}` },
-      body: { model, input: prompt, store: false, max_output_tokens: TOKEN_BUDGET[mode] || 650 },
+      body: { model, input: prompt },
     });
-    if (!r.ok) {
-      console.error("external-ai-gateway provider error", { status: r.status, model, requestId: r.requestId, body: r.data });
-      await recordTelemetry(base44, { mode, provider: "openai", model, status: "provider_error", latency_ms: Date.now() - startedAt, provider_status: r.status, request_id: r.requestId || "", configured: true });
-      const gracefulReply = mode === "motivation"
-        ? { message: "Keep moving with the next best controllable step. LOKIN's live AI provider is temporarily unavailable, but your core tools are still online." }
-        : mode === "text"
-          ? { result: safe.text, suggestions: [] }
-          : { reply: "LOKIN's live AI provider is temporarily unavailable. Your core routing, commerce, earnings, and safety tools are still online; try again in a moment.", draftedMessage: "" };
-      return Response.json({ ...gracefulReply, provider: "graceful-fallback", configured: true, provider_status: r.status, request_id: r.requestId || "" });
-    }
+    if (!r.ok) return Response.json({ error: "External AI provider request failed", provider_status: r.status, request_id: r.requestId }, { status: 502 });
 
     const text = extractText(r.data).trim();
     let parsed;
     try { parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()); }
     catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : { reply: text, draftedMessage: "" }; }
 
-    const usage = r.data?.usage || {};
-    await recordTelemetry(base44, {
-      mode,
-      provider: "openai",
-      model,
-      status: "success",
-      latency_ms: Date.now() - startedAt,
-      provider_status: r.status || 200,
-      request_id: r.requestId || "",
-      configured: true,
-      input_tokens: Number(usage.input_tokens || 0),
-      output_tokens: Number(usage.output_tokens || 0),
-      total_tokens: Number(usage.total_tokens || 0),
-    });
-    return Response.json({ ...parsed, provider: "external", model, configured: true });
+    return Response.json({ ...parsed, provider: "external", model });
   } catch (e) {
     console.error("external-ai-gateway", e);
     return Response.json({ error: "External AI gateway unavailable" }, { status: 500 });

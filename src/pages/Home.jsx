@@ -142,14 +142,11 @@ export default function Home() {
         </button>
       )}
 
-      <div>
-        <div className="mb-2 flex items-center justify-between px-1"><span className="lokin-kicker">PERFORMANCE ECOSYSTEM</span><span className="text-[9px] text-white/30">ONE SYSTEM</span></div>
-        <div className="grid grid-cols-4 gap-2">
-          <QuickLink to="/categories" icon={Package} label="Earn" />
-          <QuickLink to="/fitness" icon={Activity} label="Train" />
-          <QuickLink to="/safety" icon={Radar} label="Protect" />
-          <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
-        </div>
+      <div className="grid grid-cols-4 gap-2">
+        <QuickLink to="/categories" icon={Package} label="Delivery" />
+        <QuickLink to="/locator" icon={ScanLine} label="Shop & Deliver" />
+        <QuickLink to="/route" icon={Truck} label="Rideshare" />
+        <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
       </div>
 
       <Link to="/lokin" className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[.045] p-3.5 active:scale-[.99] transition-transform">

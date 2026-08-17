@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { guardedInvoke } from "@/lib/creditGuardian";
 import { Plus, Trash2, Sparkles, Loader2, Gauge, Target } from "lucide-react";
 
 export default function CreditSection() {
@@ -39,7 +38,7 @@ export default function CreditSection() {
     setBusy(true);
     setError(null);
     try {
-      const res = await guardedInvoke(base44, "tax-advisor", { mode: "credit" }, { force: true, userInitiated: true });
+      const res = await base44.functions.invoke("tax-advisor", { mode: "credit" });
       setResult(res.data?.credit);
     } catch (e) {
       setError(e?.message || "Engine failed");

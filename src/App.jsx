@@ -8,7 +8,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/SplashScreen';
 import DeepLinkHandler from './components/DeepLinkHandler';
-import NativeVoiceBridge from './components/NativeVoiceBridge';
 // Add page imports here
 import Home from './pages/Home';
 import RoutePlanner from './pages/RoutePlanner';
@@ -50,9 +49,6 @@ import MerchantHub from './pages/MerchantHub';
 import ComplianceHandoff from './pages/ComplianceHandoff';
 import MerchantPortal from './pages/MerchantPortal';
 import DriverDispatch from './pages/DriverDispatch';
-import Fitness from './pages/Fitness';
-import FormGuide from './pages/FormGuide';
-import PerformanceCenter from './pages/PerformanceCenter';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from './pages/Login';
@@ -125,9 +121,6 @@ const AuthenticatedApp = () => {
           <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
           <Route path="/merchant-portal" element={<MerchantPortal />} />
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
-          <Route path="/fitness" element={<Fitness />} />
-          <Route path="/fitness/form-guide" element={<FormGuide />} />
-          <Route path="/performance" element={<PerformanceCenter />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
         </Route>
@@ -154,7 +147,6 @@ function App() {
           <ScrollToTop />
           <SplashScreen />
           <DeepLinkHandler />
-          <NativeVoiceBridge />
           <AuthenticatedApp />
         </Router>
         <Toaster />

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { guardedInvoke } from "@/lib/creditGuardian";
 import { Sparkles, Loader2, TrendingUp } from "lucide-react";
 
 export default function AdvisorSection() {
@@ -12,7 +11,7 @@ export default function AdvisorSection() {
     setLoading(true);
     setError(null);
     try {
-      const res = await guardedInvoke(base44, "tax-advisor", { mode: "tax" }, { force: true, userInitiated: true });
+      const res = await base44.functions.invoke("tax-advisor", { mode: "tax" });
       setResult(res.data);
     } catch (e) {
       setError(e?.message || "Advisor failed");

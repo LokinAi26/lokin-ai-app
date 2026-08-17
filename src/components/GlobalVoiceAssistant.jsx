@@ -7,8 +7,6 @@ import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
-import { buildLokinContext, routeLokinIntelligence } from "@/lib/lokinIntelligenceRouter";
-import { summarizeDriverLearning } from "@/lib/lokinLearningIntelligence";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -64,10 +62,8 @@ export default function GlobalVoiceAssistant() {
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [reply, setReply] = useState("");
-  const [nativeVoice, setNativeVoice] = useState({ available: false, state: "web-fallback" });
   const recRef = useRef(null);
   const wakeRef = useRef(null);
-  const conversationRef = useRef([]);
   const alwaysOnRef = useRef(alwaysOn);
   alwaysOnRef.current = alwaysOn;
 
@@ -87,7 +83,6 @@ export default function GlobalVoiceAssistant() {
     setReply("");
 
     const t = command.toLowerCase();
-    const intelligence = routeLokinIntelligence(command);
     try {
       const prefsList = await base44.entities.DriverPreference.filter({});
       const prefs = prefsList[0] || null;
@@ -133,31 +128,16 @@ export default function GlobalVoiceAssistant() {
     } catch (e) {
       // fall through to normal assistant handling if a session command fails
     }
-    if (intelligence.lane === "local-dashcam") {
-      window.dispatchEvent(new CustomEvent("lokin:dashcam", { detail: { action: intelligence.action, source: "voice" } }));
-      speak(intelligence.reply);
-      setReply(intelligence.reply);
-      setBusy(false);
-      return;
-    }
-    if (intelligence.lane === "local-performance") {
-      window.dispatchEvent(new CustomEvent("lokin:set-performance-profile", { detail: { mode: intelligence.mode } }));
-      speak(intelligence.reply);
-      setReply(intelligence.reply);
-      setBusy(false);
-      return;
-    }
-    const music = intelligence.lane === "local-music" ? intelligence : matchMusic(command);
+    const music = matchMusic(command);
     if (music) {
       window.dispatchEvent(new CustomEvent("lokin:music", { detail: { action: music.action } }));
-      const musicReply = music.label || music.reply;
-      speak(musicReply);
-      setReply(musicReply);
-      if (music.nav || music.to) setTimeout(() => navigate(music.nav || music.to), 400);
+      speak(music.label);
+      setReply(music.label);
+      if (music.nav) setTimeout(() => navigate(music.nav), 400);
       setBusy(false);
       return;
     }
-    const nav = intelligence.lane === "local-navigation" ? { to: intelligence.to, label: intelligence.reply } : matchCommand(command);
+    const nav = matchCommand(command);
     if (nav) {
       speak(nav.label);
       setReply(nav.label);
@@ -165,145 +145,51 @@ export default function GlobalVoiceAssistant() {
       setBusy(false);
       return;
     }
-    // Only the reasoning lane may spend an external AI call. All recognized
-    // deterministic lanes have already returned above.
-    if (intelligence.lane !== "external-ai") {
-      setReply("LOKIN couldn't safely route that command.");
-      setBusy(false);
-      return;
-    }
     try {
-      const me = await base44.auth.me().catch(() => null);
-      const userId = me?.id;
-      const [earnings, prefsList, offers, continuityRows, contextRows, shopRows, opportunities, recommendations, learningSignals, learningSignalsV2, fitnessProfiles, fitnessLogs] = await Promise.all([
+      const [earnings, prefsList] = await Promise.all([
         base44.entities.Earning.filter({}),
         base44.entities.DriverPreference.filter({}),
-        base44.entities.Offer.filter({}).catch(() => []),
-        userId ? base44.entities.DriverContinuity.filter({ user_id: userId }).catch(() => []) : [],
-        userId ? base44.entities.DriverContextState.filter({ user_id: userId }).catch(() => []) : [],
-        userId ? base44.entities.SmartShopList.filter({ user_id: userId, status: "active" }).catch(() => []) : [],
-        base44.entities.WorkOpportunity.filter({ status: "available" }).catch(() => []),
-        userId ? base44.entities.CopilotRecommendation.filter({ user_id: userId, status: "queued" }).catch(() => []) : [],
-        userId ? base44.entities.DriverLearningSignal.filter({ user_id: userId }).catch(() => []) : [],
-        userId ? base44.entities.DriverLearningSignalV2.filter({ user_id: userId }).catch(() => []) : [],
-        userId ? base44.entities.FitnessProfile.filter({ user_id: userId }).catch(() => []) : [],
-        userId ? base44.entities.FitnessDailyLog.filter({ user_id: userId, date: new Date().toISOString().slice(0,10) }).catch(() => []) : [],
       ]);
+      const today = new Date().toISOString().slice(0, 10);
+      const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
-      const rankedOpportunities = [...opportunities].sort((a, b) => Number(b?.estimated_pay || 0) - Number(a?.estimated_pay || 0));
-      const rankedRecommendations = [...recommendations].sort((a, b) => Number(b?.priority || 0) - Number(a?.priority || 0));
-      const learning = summarizeDriverLearning(learningSignals, learningSignalsV2);
-      const fp = fitnessProfiles[0] || null;
-      const fl = fitnessLogs[0] || null;
-      const fitness = fp ? {
-        enabled: fp.fitness_mode_enabled !== false,
-        primaryGoal: fp.primary_goal,
-        stepsToday: fl?.steps || 0,
-        stepGoal: fp.daily_steps_target || 0,
-        waterOz: fl?.water_oz || 0,
-        waterGoalOz: fp.daily_water_oz_target || 0,
-        activeMinutes: fl?.active_minutes || 0,
-        sleepHours: fl?.sleep_hours || 0,
-        recoveryScore: fl?.recovery_score || 0,
-      } : null;
-      const contextSnapshot = buildLokinContext({
-        earnings,
-        prefs: p,
-        offers,
-        continuity: continuityRows[0] || null,
-        driverContext: contextRows[0] || null,
-        smartShop: shopRows[0] || null,
-        opportunities: rankedOpportunities.slice(0, 5),
-        recommendation: rankedRecommendations[0] || null,
-        learning,
-        fitness,
-      });
-      const recentConversation = conversationRef.current.slice(-6);
       const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: intelligence.mode || "assistant",
+        mode: "assistant",
         command,
         context: {
-          ...contextSnapshot,
-          netPerHourTarget: p.min_per_hour || 22,
+          todayEarnings,
+          dailyGoal: p.daily_goal || 150,
+          netPerHour: p.min_per_hour || 22,
+          hoursWorked: 0,
           platform: "mixed",
-          recentConversation: JSON.stringify(recentConversation).slice(0, 1800),
         },
       });
-      const data = res?.data ?? res ?? {};
-      const answer = data.reply || "I didn't catch that.";
-      conversationRef.current = [...recentConversation, { role: "user", text: command }, { role: "assistant", text: answer }].slice(-8);
-      setReply(answer);
-      speak(answer);
+      const data = res.data;
+      setReply(data.reply || "I didn't catch that.");
+      speak(data.reply || "I didn't catch that.");
     } catch (e) {
-      const message = e?.response?.data?.error || e?.message || "Something went wrong.";
-      setReply(`LOKIN couldn't complete that request: ${message}`);
+      setReply("Sorry, something went wrong.");
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function transcribeRecordedCommand() {
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const preferred = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find((t) => window.MediaRecorder?.isTypeSupported?.(t));
-      const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
-      const chunks = [];
-      recorder.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
-      setListening(true);
-      setReply("Listening — speak your command now.");
-      recorder.start();
-      // Give natural commands a little more room while keeping latency low.
-      await new Promise((resolve) => setTimeout(resolve, 6000));
-      const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
-      recorder.stop();
-      await stopped;
-      setListening(false);
-      const blob = new Blob(chunks, { type: recorder.mimeType || preferred || "audio/webm" });
-      if (!blob.size) throw new Error("No microphone audio was captured.");
-      const audioBase64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      setReply("LOKIN heard you. Transcribing…");
-      const res = await base44.functions.invoke("voice-transcribe", { audioBase64, mimeType: blob.type });
-      const text = String(res?.data?.text || res?.text || "").trim();
-      if (!text) throw new Error("I couldn't make out the command.");
-      const cleaned = text.replace(/^hey\s+(?:lo+kin|lock\s*in)[,.!?\s-]*/i, "").trim();
-      await handleCommand(cleaned || "what should I do next");
-    } catch (e) {
-      setListening(false);
-      const denied = /permission|notallowed|not allowed/i.test(String(e?.name || "") + String(e?.message || ""));
-      setReply(denied ? "Microphone access is blocked. Allow microphone access for Base44 in Safari, then tap the talk button again." : `Voice capture failed: ${e?.message || "Please try again."}`);
-    } finally {
-      stream?.getTracks?.().forEach((t) => t.stop());
     }
   }
 
   function startOnce() {
-    // iOS Safari/Base44 previews can expose SpeechRecognition but never deliver
-    // a result. Use recorded-audio transcription there instead of showing a
-    // false “Listening…” state forever.
-    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (isiOS || !SR) { transcribeRecordedCommand(); return; }
+    if (!SR) { handleCommand("What should I do next?"); return; }
     setListening(true);
-    let gotResult = false;
     const rec = new SR();
     rec.lang = "en-US";
     rec.interimResults = false;
     rec.onstart = () => setListening(true);
-    rec.onend = () => { setListening(false); if (!gotResult) transcribeRecordedCommand(); };
+    rec.onend = () => setListening(false);
     rec.onresult = (e) => {
-      gotResult = true;
       const text = e.results[0][0].transcript;
-      handleCommand(text.replace(/^hey\s+lo+kin[,.!?\s-]*/i, "").trim() || "what should I do next");
+      handleCommand(text);
     };
-    rec.onerror = () => { setListening(false); if (!gotResult) transcribeRecordedCommand(); };
+    rec.onerror = () => setListening(false);
     recRef.current = rec;
-    try { rec.start(); } catch { transcribeRecordedCommand(); }
+    try { rec.start(); } catch {}
   }
 
   // One command ingress for UI controls, deep links, Siri/App Intents,
@@ -335,28 +221,8 @@ export default function GlobalVoiceAssistant() {
     return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
   }, []);
 
-  // Native shells report their voice capability through NativeVoiceBridge.
-  // The web preview remains a deliberate fallback; it must never pretend that
-  // iOS Safari can provide a true background wake word.
-  useEffect(() => {
-    const onNativeStatus = (e) => setNativeVoice({
-      available: Boolean(e?.detail?.available),
-      state: e?.detail?.state || "ready",
-    });
-    window.addEventListener("lokin:native-voice-status", onNativeStatus);
-    const available = Boolean(window.LOKINNativeVoice?.isAvailable?.());
-    setNativeVoice({ available, state: available ? "ready" : "web-fallback" });
-    return () => window.removeEventListener("lokin:native-voice-status", onNativeStatus);
-  }, []);
-
   // Always-on wake-word listener
   useEffect(() => {
-    if (nativeVoice.available) {
-      if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
-      if (alwaysOn) window.LOKINNativeVoice?.startWake?.();
-      else window.LOKINNativeVoice?.stopWake?.();
-      return () => window.LOKINNativeVoice?.stopWake?.();
-    }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || !alwaysOn) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
@@ -391,17 +257,13 @@ export default function GlobalVoiceAssistant() {
     wakeRef.current = wake;
     try { wake.start(); } catch {}
     return () => { try { wake.stop(); } catch {} wakeRef.current = null; };
-  }, [alwaysOn, nativeVoice.available]);
+  }, [alwaysOn]);
 
   function toggleAlwaysOn() {
     setAlwaysOn((v) => {
       const next = !v;
       localStorage.setItem("lokin_always_on", next ? "1" : "0");
-      if (next) {
-        speak(nativeVoice.available
-          ? "Hands free voice is on. Say Hey LOKIN."
-          : "Wake word preview is on. Keep LOKIN open, or tap the microphone on iPhone Safari.");
-      }
+      if (next) speak("Always listening. Say Hey LOKIN.");
       return next;
     });
   }
@@ -456,7 +318,7 @@ export default function GlobalVoiceAssistant() {
                   {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                 </button>
                 <div className="mt-2 text-xs text-white/55">
-                  {listening ? "Listening…" : busy ? "Thinking…" : nativeVoice.available ? "Tap or say Hey LOKIN" : "Tap to speak"}
+                  {listening ? "Listening…" : busy ? "Thinking…" : "Tap to speak"}
                 </div>
               </div>
 
@@ -484,14 +346,9 @@ export default function GlobalVoiceAssistant() {
                   Always Listening
                 </span>
                 <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                  {alwaysOn ? (nativeVoice.available ? "ON · native wake word" : "ON · foreground preview") : "OFF"}
+                  {alwaysOn ? "ON · say “Hey LOKIN”" : "OFF"}
                 </span>
               </button>
-              {!nativeVoice.available && alwaysOn && (
-                <div className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2 text-[10px] leading-relaxed text-amber-100/70">
-                  Browser mode: iPhone Safari cannot provide a reliable system-level “Hey LOKIN” wake word. Tap-to-speak works now; true hands-free wake activation switches on automatically in the native iOS app.
-                </div>
-              )}
 
               <div className="mt-3 grid grid-cols-4 gap-2">
                 <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/25 bg-primary/[0.06] p-2 text-center"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>

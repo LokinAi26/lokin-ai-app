@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ShieldAlert, Phone, Plus, Trash2, MapPin, Share2, Clock, UserPlus, MessageSquare, Camera, Circle, Save, Square } from "lucide-react";
+import { ShieldAlert, Phone, Plus, Trash2, MapPin, Share2, Clock, UserPlus, MessageSquare } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import SecuritySentinel from "@/components/security/SecuritySentinel";
 
@@ -108,25 +108,6 @@ export default function Safety() {
       <p className="text-sm text-white/45 -mt-2">Emergency tools to keep you safe on the road.</p>
 
       <SecuritySentinel />
-
-      {/* Voice-command dashcam */}
-      <div className="rounded-3xl border border-primary/30 bg-primary/[0.05] p-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0"><Camera className="h-5 w-5 text-primary" /></div>
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-white/90">LOKIN Voice Dashcam</div>
-            <p className="text-xs text-white/45 mt-1">Road-facing safety recording with local-device storage in browser mode and a native bridge prepared for the installed iPhone app.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          <button onClick={() => window.dispatchEvent(new CustomEvent("lokin:dashcam", { detail: { action: "start", source: "manual" } }))} className="rounded-xl border border-red-500/30 bg-red-500/[0.07] py-2.5 text-xs font-bold text-red-300 flex items-center justify-center gap-1.5"><Circle className="h-3.5 w-3.5 fill-current" /> Start</button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent("lokin:dashcam", { detail: { action: "incident", source: "manual" } }))} className="rounded-xl border border-primary/30 bg-primary/[0.08] py-2.5 text-xs font-bold text-primary flex items-center justify-center gap-1.5"><Save className="h-3.5 w-3.5" /> Incident</button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent("lokin:dashcam", { detail: { action: "stop", source: "manual" } }))} className="rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-xs font-bold text-white/65 flex items-center justify-center gap-1.5"><Square className="h-3.5 w-3.5" /> Stop</button>
-        </div>
-        <div className="mt-3 rounded-xl border border-white/8 bg-black/15 p-3 text-[10px] leading-relaxed text-white/45">
-          Voice: “Start dashcam” · “Save incident” · “Stop dashcam”. Browser recordings stay on this device by default. Use the feature only where recording is lawful and safe; do not interact with the screen while driving.
-        </div>
-      </div>
 
       {/* SOS */}
       <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-5 text-center">

@@ -1,28 +1,15 @@
-import { LokinGlyph, LokinApparelMark } from "@/components/Brand";
+import { LokinGlyph } from "@/components/Brand";
 
 const SWATCH = "#0b0f14";
 const NEON = "#AAFF00";
-const METAL = "#c8ced8";
-
-function ProductStage({ children }) {
-  return <>
-    <defs>
-      <radialGradient id="product-stage" cx="50%" cy="42%" r="58%"><stop offset="0" stopColor="#17200c" stopOpacity=".5"/><stop offset=".62" stopColor="#07090b" stopOpacity=".2"/><stop offset="1" stopColor="#020304" stopOpacity="0"/></radialGradient>
-      <linearGradient id="product-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#AAFF00" stopOpacity=".12"/><stop offset="1" stopColor="#AAFF00" stopOpacity="0"/></linearGradient>
-    </defs>
-    <ellipse cx="120" cy="208" rx="72" ry="12" fill="#000" opacity=".5"/>
-    <ellipse cx="120" cy="205" rx="58" ry="7" fill="url(#product-floor)"/>
-    {children}
-  </>;
-}
 
 function Tee({ glyphColor = NEON }) {
   return (
     <svg viewBox="0 0 240 240" className="h-full w-full">
       <path d="M70 64 L38 50 L26 92 L60 104 L60 212 L180 212 L180 104 L214 92 L202 50 L170 64 Q120 54 70 64 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
       <path d="M95 64 Q120 50 145 64" fill="none" stroke="hsl(0 0% 100% / 0.18)" strokeWidth="3" />
-      <g transform="translate(68 92)">
-        <LokinApparelMark size={60} />
+      <g transform="translate(120 110)">
+        <LokinGlyph size={70} />
       </g>
     </svg>
   );
@@ -36,8 +23,8 @@ function Hoodie({ glyphColor = NEON }) {
       <line x1="108" y1="74" x2="108" y2="150" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
       <line x1="132" y1="74" x2="132" y2="150" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
       <rect x="80" y="150" width="80" height="46" rx="8" fill="hsl(0 0% 0% / 0.4)" stroke="hsl(80 100% 50% / 0.2)" strokeWidth="1.5" />
-      <g transform="translate(72 102)">
-        <LokinApparelMark size={54} />
+      <g transform="translate(120 120)">
+        <LokinGlyph size={62} />
       </g>
     </svg>
   );
@@ -49,10 +36,9 @@ function Cap({ glyphColor = NEON }) {
       <path d="M34 132 Q34 64 120 58 Q206 64 206 132 Z" fill={SWATCH} stroke="hsl(80 100% 50% / 0.35)" strokeWidth="2" />
       <path d="M22 130 Q120 158 218 130 L218 142 Q120 166 22 142 Z" fill="#05080b" stroke="hsl(80 100% 50% / 0.3)" strokeWidth="2" />
       <rect x="92" y="66" width="56" height="44" rx="8" fill="#05080b" stroke="hsl(80 100% 50% / 0.25)" strokeWidth="1.5" />
-      <g transform="translate(101 72)">
-        <LokinGlyph size={42} />
+      <g transform="translate(95 72)">
+        <LokinGlyph size={48} />
       </g>
-      <text x="120" y="120" fill={NEON} fontFamily="var(--font-display)" fontWeight="900" fontSize="9" letterSpacing="1.5" textAnchor="middle">LOKIN AI</text>
     </svg>
   );
 }

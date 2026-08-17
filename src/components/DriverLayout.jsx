@@ -8,12 +8,10 @@ import { base44 } from "@/api/base44Client";
 import QuickJumpRail from "@/components/QuickJumpRail";
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
-import DashcamController from "@/components/DashcamController";
-import PerformanceEnergyManager from "@/components/PerformanceEnergyManager";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
-  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver", "/fitness", "/fitness/form-guide", "/performance",
+  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver",
 ];
 
 const TAB_ROOTS = {
@@ -138,8 +136,6 @@ export default function DriverLayout() {
       {!lockedGps && <QuickJumpRail />}
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <GlobalVoiceAssistant />
-      <DashcamController />
-      <PerformanceEnergyManager />
     </div>
   );
 }

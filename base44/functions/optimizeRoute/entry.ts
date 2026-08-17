@@ -80,17 +80,26 @@ export default async function(req) {
 
     const modeLabel = OPTIMIZATION_MODES.find((m) => m.value === mode)?.label || "Most Profit";
 
-    // Route math is deterministic and intentionally AI-free. This keeps home,
-    // active-delivery and background refreshes from spending an LLM/integration
-    // call. A rich strategy briefing is generated only when the user explicitly
-    // requests AI strategy/reasoning.
-    const next = sequenced[0];
-    const remaining = Math.max(0, (prefs.daily_goal || 150) - todayEarnings);
-    const briefing = next
-      ? `Next: ${next.merchant} · $${next._score.net.toFixed(2)} est. net · $${next._score.netPerHour.toFixed(2)}/hr. $${remaining.toFixed(2)} remains to today's goal.`
-      : remaining > 0
-        ? `No eligible offers right now. $${remaining.toFixed(2)} remains to today's goal.`
-        : `Daily goal reached. Stay selective and protect your net $/hr.`;
+    const briefing = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: [
+        `You are LOKIN AI, a gig-driver earnings optimizer. Be concise and direct.`,
+        `Optimization mode: ${modeLabel}. Origin: "${originAddress || "unknown"}".`,
+        `Vehicle MPG: ${prefs.vehicle_mpg}, gas: $${prefs.gas_price}/gal, mileage cost: $${prefs.mileage_cost}/mi.`,
+        `Driver target: at least $${prefs.min_per_hour}/hr net. Daily goal: $${prefs.daily_goal || 150}.`,
+        `Today earned: $${todayEarnings.toFixed(2)}. Lock In Score: ${score.overall}/100.`,
+        ``,
+        `Optimized route (${stats.stops} stops, ${stats.miles} mi, ~${stats.hours}h, $${stats.gross} gross, $${stats.fuel} fuel, $${stats.net} net, $${stats.perHour}/hr net, $${stats.efficiency}/mi efficiency):`,
+        sequenced.map((o, i) =>
+          `${i + 1}. ${o.merchant} -> ${o.dropoff_address} | $${o._score.gross} gross | $${o._score.net} net | ${o._score.netPerHour}/hr | ${o.miles}mi | ${o.category}`
+        ).join("\n"),
+        ``,
+        `Declined offers: ${declined.length}. Avoid places: ${avoidPlaces.length}. Blocked customers: ${blocked.length}.`,
+        ``,
+        `Write a tight strategy briefing for this ${modeLabel} plan: which offer to accept NEXT, why it wins under this mode,`,
+        `and a concrete estimate to close the remaining $${Math.max(0, (prefs.daily_goal || 150) - todayEarnings).toFixed(2)} to hit today's goal.`,
+        `3-4 short bullets, plain text, no markdown headings.`,
+      ].join("\n"),
+    });
 
     return Response.json({
       mode,

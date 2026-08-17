@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Wrench, Search, Phone, Plus, Check, Trash2, MapPin, AlertTriangle, Clock, Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { guardedInvoke } from "@/lib/creditGuardian";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CATEGORIES = [
@@ -82,7 +81,7 @@ export default function VehicleCare() {
     setSearching(true);
     setMechanicResults(null);
     try {
-      const res = await guardedInvoke(base44, "findMechanic", { location: mechanicQuery.trim() }, { userInitiated: true });
+      const res = await base44.functions.invoke("findMechanic", { location: mechanicQuery.trim() });
       setMechanicResults(res.data);
     } catch (e) {
       setMechanicResults({ error: e.message });

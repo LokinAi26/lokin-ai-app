@@ -10,7 +10,6 @@ import {
 import CommerceCredentials from "@/components/CommerceCredentials";
 import InventoryMonitor from "@/components/InventoryMonitor";
 import StockAlertSetup from "@/components/StockAlertSetup";
-import AIHealthGuardian from "@/components/AIHealthGuardian";
 
 export default function Settings() {
   const [prefs, setPrefs] = useState(null);
@@ -140,8 +139,6 @@ export default function Settings() {
       <InventoryMonitor />
 
       <StockAlertSetup prefs={prefs} onSaved={(p) => setPrefs(p)} />
-
-      <AIHealthGuardian />
 
       <div className="rounded-3xl border border-destructive/30 bg-destructive/[0.06] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-1">

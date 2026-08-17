@@ -36,19 +36,30 @@ export default async function (req) {
         result.printful = { connected: false, store_count: 0, error: "Printful token works, but no store is attached to it." };
       } else {
         const store = stores[0];
-        // A successful /stores response proves the credential is valid. Shopify-,
-        // WooCommerce-, and other platform-backed Printful stores may reject the
-        // legacy /store/products endpoint even though fulfillment is connected.
-        // Treat that as a capability difference, not a broken connection.
-        result.printful = {
-          connected: true,
-          store_count: stores.length,
-          catalog_readable: null,
-          store: { id: store.id, name: store.name, type: store.type },
-          note: String(store.type || "").toLowerCase().includes("api") || String(store.type || "").toLowerCase().includes("manual")
-            ? "Printful credential validated."
-            : "Printful credential validated; storefront catalog is expected to come from the connected commerce platform.",
-        };
+        const catalogProbe = await safeJson("https://api.printful.com/store/products?limit=1", {
+          headers: {
+            Authorization: `Bearer ${printfulToken}`,
+            "Content-Type": "application/json",
+            "X-PF-Store-Id": String(store.id),
+          },
+        });
+        if (catalogProbe.ok) {
+          result.printful = {
+            connected: true,
+            store_count: stores.length,
+            catalog_readable: true,
+            store: { id: store.id, name: store.name, type: store.type },
+          };
+        } else {
+          result.printful = {
+            connected: false,
+            store_count: stores.length,
+            catalog_readable: false,
+            status: catalogProbe.status,
+            store: { id: store.id, name: store.name, type: store.type },
+            error: catalogProbe.data?.error?.message || catalogProbe.data?.error?.reason || (typeof catalogProbe.data?.result === "string" ? catalogProbe.data.result : null) || catalogProbe.data?.message || "Printful token can list stores but cannot read sync products. Recreate the token with sync_products/read access.",
+          };
+        }
       }
     } else {
       result.printful = { connected: false, status: r.status, error: r.data?.error?.message || r.data?.error?.reason || (typeof r.data?.result === "string" ? r.data.result : null) || r.data?.error || "Printful check failed" };
@@ -73,14 +84,7 @@ export default async function (req) {
           }
         : { connected: false, shop_count: 0, error: "Printify token works, but no shop is attached to it." };
     } else {
-      const raw = r.data?.message || r.data?.error || "Printify check failed";
-      result.printify = {
-        connected: false,
-        status: r.status,
-        error: r.status === 401
-          ? "Printify rejected the saved token. Create a new Personal Access Token in Printify and replace PRINTIFY_API_TOKEN in Base44 Secrets."
-          : raw,
-      };
+      result.printify = { connected: false, status: r.status, error: r.data?.message || r.data?.error || "Printify check failed" };
     }
   } else {
     result.printify = { connected: false, mode: "demo", error: "PRINTIFY_API_TOKEN missing — serving demo data" };
@@ -88,15 +92,10 @@ export default async function (req) {
 
   const rawShopifyDomain = secrets.get("SHOPIFY_STORE_DOMAIN");
   const shopifyToken = secrets.get("SHOPIFY_ACCESS_TOKEN");
-  const normalizedShopify = String(rawShopifyDomain || "")
+  const shopifyDomain = String(rawShopifyDomain || "")
     .trim()
     .replace(/^https?:\/\//i, "")
-    .replace(/^admin\.shopify\.com\/store\//i, "")
-    .split("/")[0]
     .replace(/\/+$/, "");
-  const shopifyDomain = normalizedShopify && !normalizedShopify.includes(".")
-    ? `${normalizedShopify}.myshopify.com`
-    : normalizedShopify;
   if (shopifyDomain && shopifyToken) {
     const r = await safeJson(`https://${shopifyDomain}/admin/api/2026-07/shop.json`, {
       headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },

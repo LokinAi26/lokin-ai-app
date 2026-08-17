@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { MapPin, Navigation, Search, ExternalLink, Star, Truck, ParkingCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { guardedInvoke } from "@/lib/creditGuardian";
 import { useToast } from "@/components/ui/use-toast";
 
 const CATEGORIES = [
@@ -41,11 +40,11 @@ export default function OnTheRoad() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await guardedInvoke(base44, "findRoadStops", {
+      const res = await base44.functions.invoke("findRoadStops", {
         location: mode === "near" ? location : "",
         route: mode === "route" ? route : "",
         category,
-      }, { userInitiated: true });
+      });
       setResults(res.data?.results || []);
     } catch (e) {
       toast({ title: "Search failed", description: e.message, variant: "destructive" });
