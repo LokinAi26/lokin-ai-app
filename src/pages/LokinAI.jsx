@@ -160,7 +160,7 @@ export default function LokinAI() {
         <span className="text-[11px] text-accent/80 tracking-wide">voice assistant</span>
         <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-1 text-[10px] text-accent/80">
           <Brain className="h-3 w-3" />
-          Learning {learning.enabled ? "ON" : "OFF"} · v{learning.profileVersion}
+          Learning v2 {learning.enabled ? "ON" : "OFF"} · profile {learning.profileVersion}
         </span>
       </div>
 
