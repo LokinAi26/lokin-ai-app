@@ -1,0 +1,57 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "interaction",
+        "feedback",
+        "outcome",
+        "correction"
+      ]
+    },
+    "feature": {
+      "type": "string"
+    },
+    "input_text": {
+      "type": "string"
+    },
+    "response_text": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "integer",
+      "minimum": -1,
+      "maximum": 1
+    },
+    "metadata_json": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "event_type",
+    "feature"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "LokinLearningEvent"
+}

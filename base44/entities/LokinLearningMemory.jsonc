@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "memory_type": {
+      "type": "string",
+      "enum": [
+        "preference",
+        "pattern",
+        "strategy",
+        "correction",
+        "goal",
+        "context"
+      ]
+    },
+    "topic": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "positive_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "negative_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "last_evidence_at": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "interaction",
+        "feedback",
+        "outcome",
+        "explicit"
+      ]
+    },
+    "active": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "user_id",
+    "memory_type",
+    "topic",
+    "summary"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "LokinLearningMemory"
+}
