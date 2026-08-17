@@ -77,13 +77,18 @@ export default async function(req) {
     }
 
     if (action === "save-config") {
+      const warningPercent = Math.min(100, Math.max(1, num(body.warning_percent, 70)));
+      const preservationPercent = Math.min(100, Math.max(1, num(body.preservation_percent, 90)));
+      if (preservationPercent <= warningPercent) {
+        return Response.json({ error: "Preservation threshold must be higher than warning threshold." }, { status: 400 });
+      }
       const update = {
         monthly_budget_usd: Math.max(0, num(body.monthly_budget_usd)),
         starting_credit_usd: Math.max(0, num(body.starting_credit_usd)),
         input_rate_per_million: Math.max(0, num(body.input_rate_per_million)),
         output_rate_per_million: Math.max(0, num(body.output_rate_per_million)),
-        warning_percent: Math.min(100, Math.max(1, num(body.warning_percent, 70))),
-        preservation_percent: Math.min(100, Math.max(1, num(body.preservation_percent, 90))),
+        warning_percent: warningPercent,
+        preservation_percent: preservationPercent,
         block_when_over_budget: body.block_when_over_budget === true,
         enabled: body.enabled !== false,
       };
