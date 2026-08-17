@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "monthly_budget_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "starting_credit_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "input_rate_per_million": {
+      "type": "number",
+      "minimum": 0
+    },
+    "output_rate_per_million": {
+      "type": "number",
+      "minimum": 0
+    },
+    "warning_percent": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "preservation_percent": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "block_when_over_budget": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "OpenAIGuardianConfig"
+}
