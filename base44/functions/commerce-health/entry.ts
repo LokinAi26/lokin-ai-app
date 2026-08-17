@@ -25,7 +25,13 @@ export default async function (req) {
     gmail: { connected: false },
   };
 
-  const printfulToken = secrets.get("PRINTFUL_API_TOKEN");
+  const rawPrintfulToken = secrets.get("PRINTFUL_API_TOKEN");
+  const printfulToken = String(rawPrintfulToken || "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^['\"]|['\"]$/g, "")
+    .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
+    .trim();
   if (printfulToken) {
     const r = await safeJson("https://api.printful.com/stores", {
       headers: { Authorization: `Bearer ${printfulToken}`, "Content-Type": "application/json" },
