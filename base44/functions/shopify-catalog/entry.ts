@@ -1,5 +1,4 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 import { shopifyDemo } from "../../shared/demoCatalog.ts";
 import { getShopifyAdminToken, normalizeShopifyDomain } from "../../shared/shopifyAuth.ts";
