@@ -83,9 +83,12 @@ export default function ShopifyEmbed() {
     // Use Base44's function transport for public reads. For Shopify-sensitive
     // actions, prefer App Bridge authenticatedFetch so Shopify itself injects
     // the current short-lived session token on every request.
-    const response = requireSession && bridge.ready
-      ? await bridge.authenticatedFetch("/api/apps/6a7a1c830b6bae64604c3139/functions/shopify-embed", request)
-      : await base44.functions.fetch("/shopify-embed", request);
+    // Always use Base44's function transport. The verified Shopify JWT is
+    // carried in both Authorization and the JSON payload so it survives the
+    // Base44 gateway consistently on mobile Shopify Admin. Calling the raw
+    // /api/apps/... URL through authenticatedFetch can hit a different gateway
+    // path and lose the payload/session pairing.
+    const response = await base44.functions.fetch("/shopify-embed", request);
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error || `Shopify request failed (${response.status})`);
     return data;
