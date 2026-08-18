@@ -72,14 +72,20 @@ export default function ShopifyEmbed() {
       sessionToken = await bridge.getSessionToken();
       if (!sessionToken) throw new Error("Unable to establish a secure Shopify session. Reload LOKIN Commerce from Shopify Admin.");
     }
-    const response = await base44.functions.fetch("/shopify-embed", {
+    const request = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       },
       body: JSON.stringify({ action, ...extra, params }),
-    });
+    };
+    // Use Base44's function transport for public reads. For Shopify-sensitive
+    // actions, prefer App Bridge authenticatedFetch so Shopify itself injects
+    // the current short-lived session token on every request.
+    const response = requireSession && bridge.ready
+      ? await bridge.authenticatedFetch("/api/apps/6a7a1c830b6bae64604c3139/functions/shopify-embed", request)
+      : await base44.functions.fetch("/shopify-embed", request);
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error || `Shopify request failed (${response.status})`);
     return data;
