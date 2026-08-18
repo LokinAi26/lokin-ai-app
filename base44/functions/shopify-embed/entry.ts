@@ -40,6 +40,59 @@ async function shoPost(path: string, body: any, token: string) {
   return { ok: true as const, data };
 }
 
+async function shoPut(path: string, body: any, token: string) {
+  const r = await fetch(path, {
+    method: "PUT",
+    headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  let data: any = null;
+  try { data = await r.json(); } catch { data = null; }
+  if (!r.ok) return { ok: false as const, status: r.status, error: data?.error?.message || data?.errors || `Request failed (${r.status})` };
+  return { ok: true as const, data };
+}
+
+function safeDraftLineItems(items: any[]) {
+  return (Array.isArray(items) ? items : [])
+    .map((it: any) => ({
+      ...(it.id ? { id: Number(it.id) } : {}),
+      ...(it.variant_id ? { variant_id: Number(it.variant_id) } : {}),
+      ...(!it.variant_id && it.title ? { title: String(it.title).slice(0, 180) } : {}),
+      quantity: Math.max(1, Math.min(100, Number(it.quantity) || 1)),
+      ...(!it.variant_id && it.price != null ? { price: String(it.price) } : {}),
+    }))
+    .filter((it: any) => it.id || it.variant_id || it.title);
+}
+
+function draftForAI(d: any) {
+  return {
+    id: d?.id,
+    name: d?.name,
+    status: d?.status,
+    created_at: d?.created_at,
+    currency: d?.currency,
+    total_price: d?.total_price,
+    subtotal_price: d?.subtotal_price,
+    total_tax: d?.total_tax,
+    email: d?.email || d?.customer?.email || "",
+    customer: d?.customer ? {
+      first_name: d.customer.first_name || "",
+      last_name: d.customer.last_name || "",
+      email: d.customer.email || "",
+    } : null,
+    note: d?.note || "",
+    line_items: (d?.line_items || []).slice(0, 30).map((it: any) => ({
+      title: it.title,
+      variant_title: it.variant_title,
+      quantity: it.quantity,
+      price: it.price,
+      sku: it.sku,
+    })),
+    applied_discount: d?.applied_discount || null,
+    shipping_line: d?.shipping_line || null,
+  };
+}
+
 export default async function (req: Request): Promise<Response> {
   try {
     const payload = await req.json().catch(() => ({}));
