@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import useShopifyAppBridge from "@/hooks/useShopifyAppBridge";
+import ShopifyDraftOrders from "@/components/ShopifyDraftOrders";
 
 // LOKIN Commerce — Shopify embedded-app entry.
 // Public route (no Base44 auth gate) so it renders inside the Shopify Admin iframe.
@@ -299,6 +300,17 @@ export default function ShopifyEmbed() {
                 </>
               )}
             </section>
+
+            {/* Draft orders */}
+            {bridge.ready && (
+              <ShopifyDraftOrders
+                invokeShopify={invokeShopify}
+                products={products}
+                currency={shopInfo?.currency || "USD"}
+                bridge={bridge}
+                ready={bridge.ready}
+              />
+            )}
 
             {/* Catalog */}
             <section className="space-y-2">

@@ -83,3 +83,20 @@ export function mapOrders(ordersData: any) {
     items_count: (o.line_items || []).length,
   }));
 }
+
+export function mapDrafts(data: any) {
+  return (data?.draft_orders || []).map((d: any) => ({
+    id: d.id,
+    name: d.name,
+    status: d.status,
+    total_price: d.total_price,
+    currency: d.currency,
+    customer_email: d.customer?.email || d.email || "",
+    customer_name: d.customer
+      ? `${d.customer.first_name || ""} ${d.customer.last_name || ""}`.trim()
+      : "",
+    invoice_url: d.invoice_url,
+    created_at: d.created_at,
+    items_count: (d.line_items || []).length,
+  }));
+}

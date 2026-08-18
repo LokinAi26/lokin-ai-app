@@ -2,7 +2,7 @@ import { secrets } from "base44:runtime";
 import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 import { verifyShopifyHmac } from "../../shared/shopifyHmac.ts";
 import { verifyShopifySession } from "../../shared/shopifyJwt.ts";
-import { shopifyAdminBase, shoGet, mapStorefront, mapOrders } from "../../shared/shopifyReads.ts";
+import { shopifyAdminBase, shoGet, mapStorefront, mapOrders, mapDrafts } from "../../shared/shopifyReads.ts";
 
 /**
  * shopify-embed — Public, iframe-safe Shopify storefront for the LOKIN Commerce
@@ -26,13 +26,25 @@ import { shopifyAdminBase, shoGet, mapStorefront, mapOrders } from "../../shared
  * Frontend passes the raw Shopify URL params in payload.params so HMAC can be
  * verified server-side with SHOPIFY_CLIENT_SECRET.
  */
-const VALID_ACTIONS = ["health", "storefront", "orders", "order"];
+const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "sendInvoice"];
+
+async function shoPost(path: string, body: any, token: string) {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  let data: any = null;
+  try { data = await r.json(); } catch { data = null; }
+  if (!r.ok) return { ok: false as const, status: r.status, error: data?.error?.message || data?.errors || `Request failed (${r.status})` };
+  return { ok: true as const, data };
+}
 
 export default async function (req: Request): Promise<Response> {
   try {
     const payload = await req.json().catch(() => ({}));
     const action = String(payload.action || "storefront").toLowerCase();
-    if (!VALID_ACTIONS.includes(action)) {
+    if (!VALID_ACTIONS.some((a) => a.toLowerCase() === action)) {
       return Response.json(
         { error: `Invalid action. Use one of: ${VALID_ACTIONS.join(", ")}` },
         { status: 400 }
@@ -137,6 +149,69 @@ export default async function (req: Request): Promise<Response> {
       const r = await shoGet(`${base}/orders/${encodeURIComponent(id)}.json`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ order: r.data?.order });
+    }
+
+    // ----- draft orders list (session-gated) -----
+    if (action === "drafts") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required for draft orders." }, { status: 403 });
+      }
+      const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
+      const r = await shoGet(`${base}/draft_orders.json?limit=${limit}`, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({ drafts: mapDrafts(r.data) });
+    }
+
+    // ----- single draft (session-gated) -----
+    if (action === "draft") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required for draft details." }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      const r = await shoGet(`${base}/draft_orders/${encodeURIComponent(id)}.json`, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({ draft: r.data?.draft_order });
+    }
+
+    // ----- create draft order (session-gated) -----
+    if (action === "createdraft") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required to create drafts." }, { status: 403 });
+      }
+      const items = Array.isArray(payload.line_items) ? payload.line_items : [];
+      const line_items = items
+        .map((it: any) => ({
+          variant_id: it.variant_id ? Number(it.variant_id) : undefined,
+          title: it.variant_id ? undefined : String(it.title || "Custom item"),
+          quantity: Math.max(1, Math.min(100, Number(it.quantity) || 1)),
+          price: it.variant_id ? undefined : (it.price != null ? String(it.price) : undefined),
+        }))
+        .filter((it: any) => it.variant_id || it.title);
+      if (!line_items.length) {
+        return Response.json({ error: "At least one line item is required." }, { status: 400 });
+      }
+      const draft: any = { line_items };
+      if (payload.email) draft.customer = { email: String(payload.email) };
+      if (payload.note) draft.note = String(payload.note);
+      const r = await shoPost(`${base}/draft_orders.json`, { draft_order: draft }, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      const d = r.data?.draft_order || {};
+      return Response.json({
+        draft: { id: d.id, name: d.name, status: d.status, total_price: d.total_price, invoice_url: d.invoice_url },
+      });
+    }
+
+    // ----- send draft invoice (session-gated) -----
+    if (action === "sendinvoice") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required to send invoices." }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      const r = await shoPost(`${base}/draft_orders/${encodeURIComponent(id)}/send_invoice.json`, {}, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({ ok: true, sent: true, invoice_url: r.data?.draft_order_invoice?.url || null });
     }
 
     return Response.json({ error: "Unsupported action" }, { status: 400 });
