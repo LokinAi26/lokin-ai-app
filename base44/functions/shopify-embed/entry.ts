@@ -80,7 +80,13 @@ export default async function (req: Request): Promise<Response> {
     const session = sessionToken
       ? await verifyShopifySession(sessionToken, apiSecret, clientId)
       : { valid: false };
-    const authenticated = session.valid === true;
+    // Shopify may issue a session token whose `aud` is an array in some JWT
+    // implementations. verifyShopifySession handles both string and array audiences.
+    // Also bind the token to the configured shop so a valid token from another shop
+    // can never authorize this backend.
+    const sessionShop = String(session.shop || "").toLowerCase();
+    const configuredShop = String(auth.domain || "").toLowerCase();
+    const authenticated = session.valid === true && (!sessionShop || sessionShop === configuredShop);
 
     const base = shopifyAdminBase(auth.domain);
     const token = auth.token;
