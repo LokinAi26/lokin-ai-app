@@ -285,7 +285,7 @@ export default async function (req: Request): Promise<Response> {
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       const d = r.data?.draft_order || {};
       return Response.json({
-        draft: { id: d.id, name: d.name, status: d.status, total_price: d.total_price, invoice_url: d.invoice_url },
+        draft: { id: d.id, name: d.name, status: d.status, total_price: d.total_price, invoice_url: d.invoice_url, email: d.email || d.customer?.email || "" },
       });
     }
 
@@ -398,9 +398,19 @@ export default async function (req: Request): Promise<Response> {
       }
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+
+      // Re-read the draft before sending so invoice delivery never relies on stale UI state.
+      const dr = await shoGet(`${base}/draft_orders/${encodeURIComponent(id)}.json`, token);
+      if (!dr.ok) return Response.json({ error: dr.error }, { status: dr.status });
+      const draft = dr.data?.draft_order || {};
+      const email = String(draft.email || draft.customer?.email || "").trim();
+      if (!email) {
+        return Response.json({ error: "Add and save a customer email before sending this invoice." }, { status: 400 });
+      }
+
       const r = await shoPost(`${base}/draft_orders/${encodeURIComponent(id)}/send_invoice.json`, {}, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      return Response.json({ ok: true, sent: true, invoice_url: r.data?.draft_order_invoice?.url || null });
+      return Response.json({ ok: true, sent: true, email, invoice_url: r.data?.draft_order_invoice?.url || null });
     }
 
     return Response.json({ error: "Unsupported action" }, { status: 400 });
