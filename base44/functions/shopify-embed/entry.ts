@@ -58,12 +58,17 @@ export default async function (req: Request): Promise<Response> {
     if (params.hmac || params.signature) {
       if (apiSecret) hmacValid = await verifyShopifyHmac(params, apiSecret);
     }
-    // Verify the Shopify session JWT (id_token) — proves the specific merchant
-    // + admin user session with expiry. Stronger than HMAC for sensitive reads.
-    const session = params.id_token
-      ? await verifyShopifySession(String(params.id_token), apiSecret, clientId)
+    // Verify the Shopify session JWT. For live embedded requests, Shopify App Bridge
+    // supplies a short-lived token that the frontend sends as Authorization: Bearer.
+    // Keep id_token as a compatibility fallback for document/callback loads, but do
+    // not treat URL HMAC alone as sufficient authorization for sensitive order data.
+    const authHeader = String(req.headers.get("Authorization") || "");
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    const sessionToken = bearerToken || String(params.id_token || "");
+    const session = sessionToken
+      ? await verifyShopifySession(sessionToken, apiSecret, clientId)
       : { valid: false };
-    const authenticated = hmacValid === true || session.valid === true;
+    const authenticated = session.valid === true;
 
     const base = shopifyAdminBase(auth.domain);
     const token = auth.token;
