@@ -65,7 +65,7 @@ const AuthenticatedApp = () => {
   // These routes are intentionally handled before any Base44 auth/loading gate so the
   // Shopify Admin iframe can load them even when no Base44 user is signed in.
   const pathname = window.location.pathname;
-  if (pathname === '/shopify' || pathname === '/shopify/auth/callback') {
+  if (isShopifyEmbedRequest(pathname)) {
     return (
       <Routes>
         <Route path="/shopify" element={<ShopifyEmbed />} />
@@ -166,6 +166,21 @@ function ShopifyPublicApp() {
   );
 }
 
+// Detect a Shopify Admin embed / OAuth callback regardless of the exact App URL
+// path configured in the Shopify Partner Dashboard. Shopify appends embed params
+// (embedded=1, shop, hmac, host, timestamp) to the iframe URL and the OAuth
+// callback carries code+shop+hmac. Matching on those params — not just the
+// /shopify path — prevents a mismatched/trailing-slash App URL from falling
+// through to the authenticated driver shell and rendering blank inside the
+// Shopify iframe (where no Base44 session can exist).
+function isShopifyEmbedRequest(pathname) {
+  if (pathname === '/shopify' || pathname.startsWith('/shopify/')) return true;
+  const sp = new URLSearchParams(window.location.search);
+  if (sp.get('embedded') === '1' && sp.get('shop')) return true;
+  if (sp.get('code') && sp.get('shop') && sp.get('hmac')) return true;
+  return false;
+}
+
 function App() {
   // IMPORTANT: Shopify Admin loads this app in a third-party iframe where there
   // may be no Base44 browser session/cookies. Keep the embedded Shopify entry
@@ -173,7 +188,7 @@ function App() {
   // normal authenticated driver shell. This prevents auth/public-settings
   // requests or overlays from blocking the iframe before ShopifyEmbed renders.
   const pathname = window.location.pathname;
-  if (pathname === '/shopify' || pathname === '/shopify/auth/callback') {
+  if (isShopifyEmbedRequest(pathname)) {
     return <ShopifyPublicApp />;
   }
 
