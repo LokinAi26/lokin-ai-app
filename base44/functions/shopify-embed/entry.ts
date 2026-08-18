@@ -286,6 +286,108 @@ export default async function (req: Request): Promise<Response> {
       });
     }
 
+    // ----- update draft order (session-gated) -----
+    if (action === "updatedraft") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required to update drafts." }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      const draft_order: any = { id: Number(id) };
+      if (Array.isArray(payload.line_items)) {
+        const items = safeDraftLineItems(payload.line_items);
+        if (!items.length) return Response.json({ error: "Draft order must contain at least one line item." }, { status: 400 });
+        draft_order.line_items = items;
+      }
+      if (payload.email !== undefined) draft_order.email = String(payload.email || "").trim() || null;
+      if (payload.note !== undefined) draft_order.note = String(payload.note || "").slice(0, 5000);
+      if (payload.applied_discount !== undefined) {
+        const ad = payload.applied_discount || null;
+        draft_order.applied_discount = ad && Number(ad.value) > 0 ? {
+          description: String(ad.description || ad.title || "LOKIN discount").slice(0, 255),
+          title: String(ad.title || "LOKIN discount").slice(0, 255),
+          value_type: ad.value_type === "fixed_amount" ? "fixed_amount" : "percentage",
+          value: String(Math.max(0, Number(ad.value) || 0)),
+        } : null;
+      }
+      if (payload.shipping_line !== undefined) {
+        const sl = payload.shipping_line || null;
+        draft_order.shipping_line = sl && Number(sl.price) >= 0 && String(sl.title || "").trim() ? {
+          title: String(sl.title).slice(0, 255),
+          custom: true,
+          price: String(Math.max(0, Number(sl.price) || 0)),
+        } : null;
+      }
+      const r = await shoPut(`${base}/draft_orders/${encodeURIComponent(id)}.json`, { draft_order }, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({ draft: r.data?.draft_order || null });
+    }
+
+    // ----- complete draft into an order (session-gated) -----
+    if (action === "completedraft") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required to complete drafts." }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      const r = await shoPut(`${base}/draft_orders/${encodeURIComponent(id)}/complete.json`, {}, token);
+      if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
+      return Response.json({ ok: true, draft: r.data?.draft_order || null });
+    }
+
+    // ----- draft AI intelligence (session-gated) -----
+    if (action === "draftai") {
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required for draft intelligence." }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      const mode = ["summary", "discount", "followup"].includes(String(payload.mode || "")) ? String(payload.mode) : "summary";
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      const dr = await shoGet(`${base}/draft_orders/${encodeURIComponent(id)}.json`, token);
+      if (!dr.ok) return Response.json({ error: dr.error }, { status: dr.status });
+      const draft = draftForAI(dr.data?.draft_order || {});
+      const openaiKey = String(secrets.get("OPENAI_API_KEY") || "").trim();
+      const model = String(secrets.get("OPENAI_LOW_COST_MODEL") || secrets.get("OPENAI_MODEL") || "gpt-5.6-luna").trim();
+
+      const fallback = () => {
+        const total = Number(draft.total_price || 0);
+        const items = (draft.line_items || []).reduce((n: number, it: any) => n + Number(it.quantity || 0), 0);
+        if (mode === "discount") {
+          const pct = total >= 150 ? 10 : total >= 75 ? 7 : 5;
+          return { recommendation: `${pct}%`, reason: `A modest ${pct}% incentive balances conversion with margin protection for a ${draft.currency || "USD"} ${total.toFixed(2)} draft.`, percent: pct };
+        }
+        if (mode === "followup") {
+          const first = draft.customer?.first_name ? ` ${draft.customer.first_name}` : "";
+          return { message: `Hi${first}! Your ${draft.name || "LOKIN order"} is ready. I can send the secure invoice whenever you're ready to complete checkout. Let me know if you have any questions.` };
+        }
+        return { summary: `${draft.name || "Draft order"} is ${draft.status || "open"} with ${items} item${items === 1 ? "" : "s"} totaling ${draft.currency || "USD"} ${total.toFixed(2)}${draft.email ? ` for ${draft.email}` : " with no customer email attached"}.` };
+      };
+
+      if (!openaiKey) return Response.json({ ...fallback(), provider: "local-intelligence" });
+      const instruction = mode === "discount"
+        ? "Recommend one sensible discount percentage from 0 to 20 for this draft. Protect margin. Return strict JSON: {\"recommendation\":\"10%\",\"reason\":\"...\",\"percent\":10}."
+        : mode === "followup"
+          ? "Draft a concise friendly customer follow-up that encourages completion without pressure. Return strict JSON: {\"message\":\"...\"}."
+          : "Summarize this draft order for a merchant in 2 concise sentences and mention any obvious missing customer/contact detail. Return strict JSON: {\"summary\":\"...\"}.";
+      try {
+        const ai = await fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, input: `${instruction}\nDraft: ${JSON.stringify(draft)}` }),
+        });
+        const data: any = await ai.json().catch(() => ({}));
+        if (!ai.ok) return Response.json({ ...fallback(), provider: "local-intelligence", ai_error: `OpenAI request failed (${ai.status})` });
+        let text = String(data?.output_text || "").trim();
+        if (!text) {
+          for (const item of data?.output || []) for (const c of item?.content || []) if (typeof c?.text === "string") text += c.text;
+        }
+        const parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim());
+        return Response.json({ ...parsed, provider: "openai" });
+      } catch {
+        return Response.json({ ...fallback(), provider: "local-intelligence" });
+      }
+    }
+
     // ----- send draft invoice (session-gated) -----
     if (action === "sendinvoice") {
       if (!authenticated) {
