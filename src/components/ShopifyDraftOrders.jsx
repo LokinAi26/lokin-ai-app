@@ -188,8 +188,12 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
     }
     setBusy(true);
     try {
-      await invokeShopify("sendInvoice", { id }, true);
-      bridge?.toast?.("Invoice sent to customer");
+      // Save the email currently entered in the editor before asking Shopify to send.
+      // This fixes drafts created without a customer (for example older #D1–#D5 drafts).
+      const normalizedEmail = String(email || "").trim();
+      await invokeShopify("updateDraft", { id, email: normalizedEmail }, true);
+      const sent = await invokeShopify("sendInvoice", { id }, true);
+      bridge?.toast?.(`Invoice sent to ${sent?.email || normalizedEmail}`);
       await loadDrafts();
       if (openId === id) await refreshDetail();
     } catch (e) {
