@@ -65,6 +65,25 @@ export default function ShopifyEmbed() {
     enabled: !hasCode,
   });
 
+  async function invokeShopify(action, extra = {}, requireSession = false) {
+    let sessionToken = "";
+    if (requireSession) {
+      sessionToken = await bridge.getSessionToken();
+      if (!sessionToken) throw new Error("Unable to establish a secure Shopify session. Reload LOKIN Commerce from Shopify Admin.");
+    }
+    const response = await base44.functions.fetch("/shopify-embed", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      },
+      body: JSON.stringify({ action, ...extra, params }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || `Shopify request failed (${response.status})`);
+    return data;
+  }
+
   // OAuth callback: exchange the code, then redirect into Shopify Admin.
   useEffect(() => {
     if (!hasCode) return;
@@ -104,39 +123,33 @@ export default function ShopifyEmbed() {
     setError("");
     if (bridge.ready) bridge.setLoading(true);
     try {
-      const [storeRes, healthRes] = await Promise.all([
-        base44.functions.invoke("shopify-embed", { action: "storefront", limit: 250, params }),
-        base44.functions.invoke("shopify-embed", { action: "health", params }),
+      const [sd, hd] = await Promise.all([
+        invokeShopify("storefront", { limit: 250 }),
+        invokeShopify("health"),
       ]);
-      const sd = storeRes?.data || storeRes;
-      const hd = healthRes?.data || healthRes;
       if (sd?.error) setError(String(sd.error));
       setShopInfo(sd?.shop || null);
       setProducts(sd?.products || []);
       setHealth(hd);
       setClientId(hd?.client_id || "");
       if (bridge.ready) bridge.setTitleBar("LOKIN Commerce");
-      // Orders are HMAC-gated; surface a friendly notice when unavailable.
-      try {
-        const or = await base44.functions.invoke("shopify-embed", {
-          action: "orders",
-          limit: 50,
-          status: "any",
-          params,
-        });
-        const od = or?.data || or;
-        if (od?.error) {
-          setOrdersError(String(od.error));
-          setOrders([]);
-        } else {
+      // Sensitive order reads require a fresh App Bridge session token.
+      // The first public bootstrap obtains client_id so App Bridge can initialize;
+      // once ready, a second load performs the authenticated order request.
+      if (bridge.ready) {
+        try {
+          const od = await invokeShopify("orders", { limit: 50, status: "any" }, true);
           setOrders(od.orders || []);
           setOrdersError("");
+        } catch (e) {
+          const msg = e?.message || "Orders unavailable";
+          setOrdersError(msg);
+          setOrders([]);
+          bridge.toast(msg, true);
         }
-      } catch (e) {
-        const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Orders unavailable";
-        setOrdersError(msg);
+      } else {
         setOrders([]);
-        if (bridge.ready) bridge.toast(msg, true);
+        setOrdersError("");
       }
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load store";
@@ -153,8 +166,12 @@ export default function ShopifyEmbed() {
     if (!hasCode) load();
   }, [hasCode]);
   useEffect(() => {
-    if (bridge.ready) bridge.setTitleBar("LOKIN Commerce");
-  }, [bridge.ready]);
+    if (!bridge.ready || hasCode) return;
+    bridge.setTitleBar("LOKIN Commerce");
+    // Re-run after App Bridge initializes so authenticated requests carry a
+    // fresh Shopify session token rather than relying on URL HMAC parameters.
+    load();
+  }, [bridge.ready, hasCode]);
 
   // While the OAuth code exchange is in flight.
   if (hasCode) {
