@@ -15,6 +15,7 @@ import {
   DollarSign,
   ShieldCheck,
 } from "lucide-react";
+import useShopifyAppBridge from "@/hooks/useShopifyAppBridge";
 
 // LOKIN Commerce — Shopify embedded-app entry.
 // Public route (no Base44 auth gate) so it renders inside the Shopify Admin iframe.
@@ -55,6 +56,14 @@ export default function ShopifyEmbed() {
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState("");
   const [oauthMsg, setOauthMsg] = useState("");
+  const [clientId, setClientId] = useState("");
+  const bridge = useShopifyAppBridge({
+    apiKey: clientId,
+    shop,
+    host: params.host || "",
+    embedded,
+    enabled: !hasCode,
+  });
 
   // OAuth callback: exchange the code, then redirect into Shopify Admin.
   useEffect(() => {
@@ -93,6 +102,7 @@ export default function ShopifyEmbed() {
   async function load() {
     setLoading(true);
     setError("");
+    if (bridge.ready) bridge.setLoading(true);
     try {
       const [storeRes, healthRes] = await Promise.all([
         base44.functions.invoke("shopify-embed", { action: "storefront", limit: 250, params }),
@@ -104,6 +114,8 @@ export default function ShopifyEmbed() {
       setShopInfo(sd?.shop || null);
       setProducts(sd?.products || []);
       setHealth(hd);
+      setClientId(hd?.client_id || "");
+      if (bridge.ready) bridge.setTitleBar("LOKIN Commerce");
       // Orders are HMAC-gated; surface a friendly notice when unavailable.
       try {
         const or = await base44.functions.invoke("shopify-embed", {
@@ -121,13 +133,18 @@ export default function ShopifyEmbed() {
           setOrdersError("");
         }
       } catch (e) {
-        setOrdersError(e?.response?.data?.error || e?.data?.error || e?.message || "Orders unavailable");
+        const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Orders unavailable";
+        setOrdersError(msg);
         setOrders([]);
+        if (bridge.ready) bridge.toast(msg, true);
       }
     } catch (e) {
-      setError(e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load store");
+      const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load store";
+      setError(msg);
+      if (bridge.ready) bridge.toast(msg, true);
     } finally {
       setLoading(false);
+      if (bridge.ready) bridge.setLoading(false);
     }
   }
 
@@ -135,6 +152,9 @@ export default function ShopifyEmbed() {
   useEffect(() => {
     if (!hasCode) load();
   }, [hasCode]);
+  useEffect(() => {
+    if (bridge.ready) bridge.setTitleBar("LOKIN Commerce");
+  }, [bridge.ready]);
 
   // While the OAuth code exchange is in flight.
   if (hasCode) {

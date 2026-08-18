@@ -1,6 +1,7 @@
 import { secrets } from "base44:runtime";
 import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 import { verifyShopifyHmac } from "../../shared/shopifyHmac.ts";
+import { verifyShopifySession } from "../../shared/shopifyJwt.ts";
 import { shopifyAdminBase, shoGet, mapStorefront, mapOrders } from "../../shared/shopifyReads.ts";
 
 /**
@@ -52,10 +53,17 @@ export default async function (req: Request): Promise<Response> {
     // Shopify-origin authenticity (HMAC over embed/callback URL params).
     const params = payload.params && typeof payload.params === "object" ? payload.params : {};
     let hmacValid = false;
+    const apiSecret = String(secrets.get("SHOPIFY_CLIENT_SECRET") || "").trim();
+    const clientId = String(secrets.get("SHOPIFY_CLIENT_ID") || "").trim();
     if (params.hmac || params.signature) {
-      const secret = String(secrets.get("SHOPIFY_CLIENT_SECRET") || "").trim();
-      if (secret) hmacValid = await verifyShopifyHmac(params, secret);
+      if (apiSecret) hmacValid = await verifyShopifyHmac(params, apiSecret);
     }
+    // Verify the Shopify session JWT (id_token) — proves the specific merchant
+    // + admin user session with expiry. Stronger than HMAC for sensitive reads.
+    const session = params.id_token
+      ? await verifyShopifySession(String(params.id_token), apiSecret, clientId)
+      : { valid: false };
+    const authenticated = hmacValid === true || session.valid === true;
 
     const base = shopifyAdminBase(auth.domain);
     const token = auth.token;
@@ -69,7 +77,9 @@ export default async function (req: Request): Promise<Response> {
           token_source: auth.source,
           scope: auth.scope || null,
         },
+        client_id: clientId || null,
         hmac_valid: hmacValid,
+        session,
         embedded: Boolean(params.embedded || params.host),
       });
     }
@@ -93,14 +103,15 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({
         ...mapStorefront(shopR.data?.shop || {}, productsR.data),
         hmac_valid: hmacValid,
+        session,
       });
     }
 
     // ----- orders (HMAC-gated) -----
     if (action === "orders") {
-      if (!hmacValid) {
+      if (!authenticated) {
         return Response.json(
-          { error: "HMAC verification required for orders. Open LOKIN Commerce from your Shopify Admin." },
+          { error: "Authenticated Shopify session required for orders. Open LOKIN Commerce from your Shopify Admin." },
           { status: 403 }
         );
       }
@@ -113,8 +124,8 @@ export default async function (req: Request): Promise<Response> {
 
     // ----- single order (HMAC-gated) -----
     if (action === "order") {
-      if (!hmacValid) {
-        return Response.json({ error: "HMAC verification required for order details." }, { status: 403 });
+      if (!authenticated) {
+        return Response.json({ error: "Authenticated Shopify session required for order details." }, { status: 403 });
       }
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });

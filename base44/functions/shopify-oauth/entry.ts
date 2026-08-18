@@ -31,6 +31,10 @@ export default async function (req: Request): Promise<Response> {
     const clientSecret = clean(secrets.get("SHOPIFY_CLIENT_SECRET"));
 
     if (!shop) return Response.json({ error: "Missing shop parameter." }, { status: 400 });
+    // Reject malformed / spoofed shop domains before any network call.
+    if (!shop.includes(".") || shop.includes("/") || shop.length < 4) {
+      return Response.json({ error: "Invalid shop domain." }, { status: 400 });
+    }
     if (!code) return Response.json({ error: "Missing authorization code." }, { status: 400 });
     if (!clientId || !clientSecret) {
       return Response.json({ error: "SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET not configured." }, { status: 500 });
@@ -60,7 +64,11 @@ export default async function (req: Request): Promise<Response> {
     }
 
     // Redirect back into the Shopify Admin so Shopify re-embeds the app.
-    const redirectUrl = `https://${shop}/admin/apps/${clientId}`;
+    // Preserve the host param when present for correct re-embedding.
+    const host = clean(params.host);
+    const redirectUrl = host
+      ? `https://${shop}/admin/apps/${clientId}?host=${encodeURIComponent(host)}`
+      : `https://${shop}/admin/apps/${clientId}`;
     return Response.json({ ok: true, shop, scope: data.scope || "", redirect_url: redirectUrl });
   } catch (error) {
     console.error("shopify-oauth error:", error);
