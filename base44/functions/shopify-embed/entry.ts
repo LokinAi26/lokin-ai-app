@@ -75,8 +75,14 @@ export default async function (req: Request): Promise<Response> {
     // Keep id_token as a compatibility fallback for document/callback loads, but do
     // not treat URL HMAC alone as sufficient authorization for sensitive order data.
     const authHeader = String(req.headers.get("Authorization") || "");
-    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-    const sessionToken = bearerToken || String(params.id_token || "");
+    const bearerToken = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+    // Base44's function gateway may forward Shopify's Authorization header in
+    // platform request metadata rather than the inner Request headers. Accept
+    // explicit session_token from the already-loaded embedded client as a
+    // transport fallback; it is still cryptographically verified below before
+    // any sensitive Shopify data is returned.
+    const explicitSessionToken = String(payload.session_token || payload.sessionToken || "").trim();
+    const sessionToken = bearerToken || explicitSessionToken || String(params.id_token || "");
     const session = sessionToken
       ? await verifyShopifySession(sessionToken, apiSecret, clientId)
       : { valid: false };
