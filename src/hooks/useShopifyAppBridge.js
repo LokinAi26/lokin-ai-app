@@ -64,6 +64,17 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
     }
   }
 
+  async function getSessionToken() {
+    if (!appBridge || !ready) return "";
+    try {
+      const utilities = await import("@shopify/app-bridge/utilities");
+      return await utilities.getSessionToken(appBridge);
+    } catch (e) {
+      console.warn("Shopify session token request failed:", e?.message || e);
+      return "";
+    }
+  }
+
   function redirectRemote(url) {
     if (!appBridge || !actionsRef.current) {
       window.open(url, "_blank", "noopener");
@@ -78,5 +89,5 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
     }
   }
 
-  return { ready, setTitleBar, setLoading, toast, redirectRemote };
+  return { ready, setTitleBar, setLoading, toast, redirectRemote, getSessionToken };
 }
