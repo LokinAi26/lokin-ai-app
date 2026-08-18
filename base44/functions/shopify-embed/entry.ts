@@ -26,7 +26,7 @@ import { shopifyAdminBase, shoGet, mapStorefront, mapOrders, mapDrafts } from ".
  * Frontend passes the raw Shopify URL params in payload.params so HMAC can be
  * verified server-side with SHOPIFY_CLIENT_SECRET.
  */
-const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "sendInvoice"];
+const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "updateDraft", "sendInvoice", "completeDraft", "draftAI"];
 
 async function shoPost(path: string, body: any, token: string) {
   const r = await fetch(path, {
