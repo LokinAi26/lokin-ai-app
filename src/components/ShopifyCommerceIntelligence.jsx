@@ -78,7 +78,7 @@ export default function ShopifyCommerceIntelligence({ invokeShopify, products, c
       <OrderCharts orders={orders} currency={currency} />
       <AIPredictions predictions={intel?.predictions} currency={currency} />
       <OrderExplorer orders={orders} currency={currency} />
-      <FulfillmentPanel orders={orders} currency={currency} />
+      <FulfillmentPanel orders={orders} currency={currency} invokeShopify={invokeShopify} onRefresh={load} bridge={bridge} />
       <CustomerView orders={orders} currency={currency} />
       <InventoryHealth products={products} currency={currency} />
     </div>

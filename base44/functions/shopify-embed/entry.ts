@@ -26,7 +26,7 @@ import { shopifyAdminBase, shoGet, mapStorefront, mapOrdersRich, mapDrafts } fro
  * Frontend passes the raw Shopify URL params in payload.params so HMAC can be
  * verified server-side with SHOPIFY_CLIENT_SECRET.
  */
-const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "updateDraft", "sendInvoice", "completeDraft", "draftAI", "intelligence"];
+const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "updateDraft", "sendInvoice", "completeDraft", "draftAI", "intelligence", "fulfillOrder"];
 
 async function shoPost(path: string, body: any, token: string) {
   const r = await fetch(path, {
@@ -567,6 +567,71 @@ export default async function (req: Request): Promise<Response> {
       } catch (e: any) {
         return Response.json({ confirmed: agg, predictions: { ...localIntelligence(agg), ai_error: String(e?.message || e) } });
       }
+    }
+
+    // ----- mark order fulfilled (session-gated Shopify write) -----
+    if (action === "fulfillorder") {
+      if (!authenticated) {
+        return Response.json({ error: `Shopify session rejected for fulfillment: ${sessionRejectReason}` }, { status: 403 });
+      }
+      const id = String(payload.id || "");
+      if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+
+      // 1. Resolve the order's fulfillment orders (modern Shopify fulfillment API).
+      const foRes = await shoGet(`${base}/orders/${encodeURIComponent(id)}/fulfillment_orders.json`, token);
+      if (!foRes.ok) return Response.json({ error: foRes.error || "Unable to load fulfillment orders." }, { status: foRes.status });
+      const fulfillmentOrders = Array.isArray(foRes.data?.fulfillment_orders) ? foRes.data.fulfillment_orders : [];
+      if (!fulfillmentOrders.length) {
+        return Response.json({ error: "This order has no fulfillment orders (it may already be fulfilled or was imported as fulfilled)." }, { status: 400 });
+      }
+      const fulfillable = fulfillmentOrders.find(
+        (fo: any) => fo.status === "open" && Array.isArray(fo.supported_actions) && fo.supported_actions.includes("create_fulfillment")
+      );
+      if (!fulfillable) {
+        return Response.json({ error: "No fulfillable line items remain for this order." }, { status: 400 });
+      }
+
+      // 2. Resolve the assigned location; fall back to the first active location.
+      let locationId: number | null = fulfillable.assigned_location_id || null;
+      if (!locationId) {
+        const locRes = await shoGet(`${base}/locations.json`, token);
+        if (locRes.ok) {
+          const locs = Array.isArray(locRes.data?.locations) ? locRes.data.locations : [];
+          const active = locs.find((l: any) => l.active);
+          locationId = active?.id || locs[0]?.id || null;
+        }
+      }
+
+      // 3. Build fulfillable line items from the fulfillment order.
+      const lineItems = (fulfillable.fulfillment_order_line_items || [])
+        .filter((li: any) => (li.fulfillable_quantity ?? li.quantity ?? 0) > 0)
+        .map((li: any) => ({ id: li.id, quantity: li.fulfillable_quantity > 0 ? li.fulfillable_quantity : li.quantity }));
+      if (!lineItems.length) {
+        return Response.json({ error: "No fulfillable line items remain for this order." }, { status: 400 });
+      }
+
+      const body: any = {
+        fulfillment: {
+          line_items_by_fulfillment_order: [
+            { fulfillment_order_id: fulfillable.id, fulfillment_order_line_items: lineItems },
+          ],
+        },
+      };
+      if (locationId) body.fulfillment.location_id = locationId;
+
+      // 4. Create the fulfillment. This is the authoritative Shopify write — no local simulation.
+      const fRes = await shoPost(`${base}/fulfillments.json`, body, token);
+      if (!fRes.ok) {
+        return Response.json({ error: fRes.error || "Shopify rejected the fulfillment write." }, { status: fRes.status });
+      }
+
+      // 5. Re-read the confirmed order so the UI reflects Shopify's authoritative state.
+      const orderRes = await shoGet(`${base}/orders/${encodeURIComponent(id)}.json`, token);
+      if (!orderRes.ok) {
+        return Response.json({ error: "Fulfillment created, but the order could not be re-read. Refresh to sync." }, { status: orderRes.status });
+      }
+      const mapped = mapOrdersRich({ orders: [orderRes.data?.order] })[0] || null;
+      return Response.json({ ok: true, fulfillment: fRes.data?.fulfillment || null, order: mapped });
     }
 
     return Response.json({ error: "Unsupported action" }, { status: 400 });
