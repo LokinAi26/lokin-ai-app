@@ -13,7 +13,7 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
   const loadingRef = useRef(null);
 
   useEffect(() => {
-    if (!enabled || !embedded || !apiKey || !shop || ready) return;
+    if (!enabled || !embedded || !apiKey || (!host && !shop) || ready) return;
     let cancelled = false;
     (async () => {
       try {
@@ -22,7 +22,10 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
         if (cancelled) return;
         const createApp = mod.createApp || mod.default?.createApp || mod.default;
         if (typeof createApp !== "function") throw new Error("Shopify App Bridge createApp export is unavailable");
-        appBridge = createApp({ apiKey, shop, host: host || undefined, forceRedirect: false });
+        // Shopify's mobile Admin app can omit `shop` while still providing the
+        // signed `host`. App Bridge only needs apiKey + host for embedded auth;
+        // don't block initialization on a redundant shop query parameter.
+        appBridge = createApp({ apiKey, ...(shop ? { shop } : {}), host: host || undefined, forceRedirect: false });
         actionsRef.current = actions;
         setReady(true);
       } catch (e) {
