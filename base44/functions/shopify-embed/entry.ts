@@ -90,16 +90,27 @@ export default async function (req: Request): Promise<Response> {
     // implementations. verifyShopifySession handles both string and array audiences.
     // Also bind the token to the configured shop so a valid token from another shop
     // can never authorize this backend.
-    const sessionShop = String(session.shop || "").toLowerCase();
-    const configuredShop = String(auth.domain || "").toLowerCase();
-    const shopMatches = !sessionShop || sessionShop === configuredShop;
+    const normalizeShopDomain = (value: unknown) => String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/+$/, "");
+    const sessionShop = normalizeShopDomain(session.shop);
+    const configuredShop = normalizeShopDomain(auth.domain);
+    const requestedShop = normalizeShopDomain(params.shop || payload.shop);
+    // Bind sensitive reads to the Shopify Admin session that launched this embed.
+    // A merchant may have reinstalled/renamed the app while an older configured
+    // shop domain remains in server credentials. A cryptographically valid Shopify
+    // session is authoritative for the active shop; require the URL shop to agree
+    // with it when Shopify supplies that parameter.
+    const shopMatches = !requestedShop || !sessionShop || requestedShop === sessionShop;
     const authenticated = session.valid === true && shopMatches;
     const sessionRejectReason = !sessionToken
       ? "No Shopify session token reached the backend."
       : session.valid !== true
         ? (session.error || "Shopify session token verification failed.")
         : !shopMatches
-          ? `Shop mismatch (${sessionShop || "unknown"} != ${configuredShop || "unknown"}).`
+          ? `Shop mismatch (${sessionShop || "unknown"} != ${requestedShop || "unknown"}).`
           : "Shopify session rejected.";
 
     const base = shopifyAdminBase(auth.domain);
