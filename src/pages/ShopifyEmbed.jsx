@@ -5,18 +5,12 @@ import {
   Loader2,
   RefreshCw,
   Store,
-  ShoppingBag,
-  Package,
-  Activity,
   AlertTriangle,
   ExternalLink,
-  CheckCircle2,
-  Truck,
-  DollarSign,
-  ShieldCheck,
 } from "lucide-react";
 import useShopifyAppBridge from "@/hooks/useShopifyAppBridge";
 import ShopifyDraftOrders from "@/components/ShopifyDraftOrders";
+import ShopifyCommerceIntelligence from "@/components/ShopifyCommerceIntelligence";
 
 // LOKIN Commerce — Shopify embedded-app entry.
 // Public route (no Base44 auth gate) so it renders inside the Shopify Admin iframe.
@@ -54,8 +48,6 @@ export default function ShopifyEmbed() {
   const [error, setError] = useState("");
   const [shopInfo, setShopInfo] = useState(null);
   const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [ordersError, setOrdersError] = useState("");
   const [oauthMsg, setOauthMsg] = useState("");
   const [clientId, setClientId] = useState("");
   const bridge = useShopifyAppBridge({
@@ -143,24 +135,6 @@ export default function ShopifyEmbed() {
       setHealth(hd);
       setClientId(hd?.client_id || "");
       if (bridge.ready) bridge.setTitleBar("LOKIN Commerce");
-      // Sensitive order reads require a fresh App Bridge session token.
-      // The first public bootstrap obtains client_id so App Bridge can initialize;
-      // once ready, a second load performs the authenticated order request.
-      if (bridge.ready) {
-        try {
-          const od = await invokeShopify("orders", { limit: 50, status: "any" }, true);
-          setOrders(od.orders || []);
-          setOrdersError("");
-        } catch (e) {
-          const msg = e?.message || "Orders unavailable";
-          setOrdersError(msg);
-          setOrders([]);
-          bridge.toast(msg, true);
-        }
-      } else {
-        setOrders([]);
-        setOrdersError("");
-      }
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e?.message || "Unable to load store";
       setError(msg);
@@ -196,10 +170,6 @@ export default function ShopifyEmbed() {
       </div>
     );
   }
-
-  const revenue = orders.reduce((s, o) => s + Number(o.total_price || 0), 0);
-  const paid = orders.filter((o) => ["paid", "partially_refunded"].includes(o.financial_status)).length;
-  const moving = orders.filter((o) => ["fulfilled", "partial"].includes(o.fulfillment_status)).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -260,55 +230,13 @@ export default function ShopifyEmbed() {
           </div>
         ) : (
           <>
-            {/* Order intelligence */}
-            <section className="rounded-3xl border border-accent/20 lokin-panel p-4 space-y-3">
-              <div className="flex items-center gap-2 text-[11px] tracking-[0.24em] text-accent/80 font-display">
-                <Activity className="h-3.5 w-3.5" /> ORDER INTELLIGENCE
-              </div>
-              {ordersError ? (
-                <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/55 flex items-start gap-2">
-                  <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {ordersError}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Metric icon={DollarSign} label="ORDER VALUE" value={money(revenue, shopInfo?.currency || "USD")} />
-                    <Metric icon={CheckCircle2} label="PAID" value={`${paid}/${orders.length}`} />
-                    <Metric icon={Truck} label="FULFILLED" value={String(moving)} />
-                  </div>
-                  <div className="space-y-2">
-                    {orders.slice(0, 8).map((o) => (
-                      <div key={o.id} className="rounded-2xl border border-white/10 bg-black/35 p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-bold text-white">{o.name || `Order ${o.id}`}</div>
-                            <div className="text-[10px] text-white/35">
-                              {o.created_at ? new Date(o.created_at).toLocaleString() : ""} · {o.items_count || 0} item
-                              {o.items_count === 1 ? "" : "s"}
-                            </div>
-                          </div>
-                          <div className="text-sm font-black text-primary">{money(o.total_price, o.currency)}</div>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">
-                            {badge(o.financial_status)}
-                          </span>
-                          <span className="rounded-full border border-accent/25 bg-accent/10 px-2 py-0.5 text-[9px] font-bold text-accent">
-                            {badge(o.fulfillment_status)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    {orders.length === 0 && (
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-5 text-center text-xs text-white/40">
-                        No orders yet.
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </section>
+            <ShopifyCommerceIntelligence
+              invokeShopify={invokeShopify}
+              products={products}
+              currency={shopInfo?.currency || "USD"}
+              bridge={bridge}
+              ready={bridge.ready}
+            />
 
             {/* Draft orders */}
             {bridge.ready && (
@@ -321,41 +249,6 @@ export default function ShopifyEmbed() {
               />
             )}
 
-            {/* Catalog */}
-            <section className="space-y-2">
-              <div className="flex items-center gap-2 text-[11px] tracking-[0.22em] text-white/45 font-display">
-                <ShoppingBag className="h-3.5 w-3.5" /> CATALOG · {products.length} PRODUCTS
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {products.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-white/10 lokin-panel overflow-hidden">
-                    {p.thumbnail_url ? (
-                      <img src={p.thumbnail_url} alt={p.title} className="h-32 w-full object-cover bg-black/40" />
-                    ) : (
-                      <div className="h-32 w-full flex items-center justify-center bg-black/40">
-                        <Package className="h-8 w-8 text-white/20" />
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <div className="text-sm font-semibold text-white line-clamp-2">{p.title}</div>
-                      <div className="text-[10px] text-white/40 mt-0.5">
-                        {p.vendor || ""} · {p.status}
-                      </div>
-                      <div className="mt-1 text-sm font-bold text-primary">
-                        {p.min_price
-                          ? `${money(p.min_price, p.currency)} – ${money(p.max_price, p.currency)}`
-                          : "—"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {products.length === 0 && (
-                  <div className="col-span-2 rounded-2xl border border-white/10 bg-black/30 p-5 text-center text-xs text-white/40">
-                    No products published.
-                  </div>
-                )}
-              </div>
-            </section>
           </>
         )}
 
@@ -363,16 +256,6 @@ export default function ShopifyEmbed() {
           LOKIN COMMERCE · LOCK IN. LEVEL UP.
         </div>
       </div>
-    </div>
-  );
-}
-
-function Metric({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
-      <Icon className="h-4 w-4 text-accent" />
-      <div className="mt-2 text-[9px] tracking-[.14em] text-white/30">{label}</div>
-      <div className="mt-0.5 text-sm font-black text-white">{value}</div>
     </div>
   );
 }

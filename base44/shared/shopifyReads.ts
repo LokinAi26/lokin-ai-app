@@ -100,3 +100,47 @@ export function mapDrafts(data: any) {
     items_count: (d.line_items || []).length,
   }));
 }
+
+export function mapOrdersRich(ordersData: any) {
+  return (ordersData?.orders || []).map((o: any) => {
+    const fulfillments = (o.fulfillments || []).map((f: any) => ({
+      id: f.id,
+      status: f.status,
+      tracking_number: f.tracking_number,
+      tracking_url: f.tracking_url,
+      carrier: f.tracking_company || f.tracking_carrier || "",
+      created_at: f.created_at,
+    }));
+    return {
+      id: o.id,
+      name: o.name,
+      financial_status: o.financial_status,
+      fulfillment_status: o.fulfillment_status,
+      total_price: o.total_price,
+      subtotal_price: o.subtotal_price,
+      total_tax: o.total_tax,
+      currency: o.currency,
+      created_at: o.created_at,
+      refunds: (o.refunds || []).length,
+      customer: o.customer
+        ? {
+            id: o.customer.id,
+            email: o.customer.email,
+            name: `${o.customer.first_name || ""} ${o.customer.last_name || ""}`.trim(),
+          }
+        : null,
+      line_items: (o.line_items || []).map((it: any) => ({
+        title: it.title,
+        sku: it.sku,
+        quantity: it.quantity,
+        price: it.price,
+        product_id: it.product_id,
+        variant_id: it.variant_id,
+      })),
+      fulfillments,
+      tracking_number: fulfillments[0]?.tracking_number || null,
+      tracking_url: fulfillments[0]?.tracking_url || null,
+      items_count: (o.line_items || []).length,
+    };
+  });
+}

@@ -2,7 +2,7 @@ import { secrets } from "base44:runtime";
 import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 import { verifyShopifyHmac } from "../../shared/shopifyHmac.ts";
 import { verifyShopifySession } from "../../shared/shopifyJwt.ts";
-import { shopifyAdminBase, shoGet, mapStorefront, mapOrders, mapDrafts } from "../../shared/shopifyReads.ts";
+import { shopifyAdminBase, shoGet, mapStorefront, mapOrdersRich, mapDrafts } from "../../shared/shopifyReads.ts";
 
 /**
  * shopify-embed — Public, iframe-safe Shopify storefront for the LOKIN Commerce
@@ -26,7 +26,7 @@ import { shopifyAdminBase, shoGet, mapStorefront, mapOrders, mapDrafts } from ".
  * Frontend passes the raw Shopify URL params in payload.params so HMAC can be
  * verified server-side with SHOPIFY_CLIENT_SECRET.
  */
-const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "updateDraft", "sendInvoice", "completeDraft", "draftAI"];
+const VALID_ACTIONS = ["health", "storefront", "orders", "order", "drafts", "draft", "createDraft", "updateDraft", "sendInvoice", "completeDraft", "draftAI", "intelligence"];
 
 async function shoPost(path: string, body: any, token: string) {
   const r = await fetch(path, {
@@ -90,6 +90,107 @@ function draftForAI(d: any) {
     })),
     applied_discount: d?.applied_discount || null,
     shipping_line: d?.shipping_line || null,
+  };
+}
+
+function buildOrderAggregate(orders: any[], products: any[]) {
+  const order_count = orders.length;
+  const total_revenue = orders.reduce((s: number, o: any) => s + Number(o.total_price || 0), 0);
+  const aov = order_count ? total_revenue / order_count : 0;
+  const paid = orders.filter((o: any) => ["paid", "partially_refunded"].includes(o.financial_status)).length;
+  const unfulfilled = orders.filter((o: any) => !o.fulfillment_status || o.fulfillment_status === "null").length;
+  const fulfilled = orders.filter((o: any) => o.fulfillment_status === "fulfilled").length;
+  const partial = orders.filter((o: any) => o.fulfillment_status === "partial").length;
+  const refunded = orders.filter((o: any) => ["refunded", "voided"].includes(o.financial_status)).length;
+  const byDay: Record<string, number> = {};
+  orders.forEach((o: any) => {
+    const d = String(o.created_at || "").slice(0, 10);
+    if (!d) return;
+    byDay[d] = (byDay[d] || 0) + Number(o.total_price || 0);
+  });
+  const daily_revenue: { date: string; revenue: number }[] = [];
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const dt = new Date(today.getTime() - i * 86400000);
+    const key = dt.toISOString().slice(0, 10);
+    daily_revenue.push({ date: key, revenue: Number((byDay[key] || 0).toFixed(2)) });
+  }
+  const prodMap: Record<string, any> = {};
+  orders.forEach((o: any) => {
+    (o.line_items || []).forEach((it: any) => {
+      const key = String(it.product_id || it.title);
+      if (!prodMap[key]) prodMap[key] = { title: it.title, units: 0, revenue: 0 };
+      prodMap[key].units += Number(it.quantity || 0);
+      prodMap[key].revenue += Number(it.quantity || 0) * Number(it.price || 0);
+    });
+  });
+  const top_products = Object.values(prodMap).sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 10);
+  const custMap: Record<string, any> = {};
+  orders.forEach((o: any) => {
+    const c = o.customer;
+    if (!c) return;
+    const key = String(c.email || c.id || "");
+    if (!key) return;
+    if (!custMap[key]) custMap[key] = { name: c.name || key, email: c.email || "", orders: 0, spend: 0 };
+    custMap[key].orders += 1;
+    custMap[key].spend += Number(o.total_price || 0);
+  });
+  const customers = Object.values(custMap);
+  const top_customers = customers.sort((a: any, b: any) => b.spend - a.spend).slice(0, 10);
+  const repeat_customers = customers.filter((c: any) => c.orders > 1).length;
+  const variants: any[] = [];
+  products.forEach((p: any) => (p.variants || []).forEach((v: any) => variants.push({ ...v, product_title: p.title, status: p.status })));
+  const low_stock = variants.filter((v: any) => v.available != null && v.available > 0 && v.available <= 5).slice(0, 10);
+  const out_of_stock = variants.filter((v: any) => v.available === 0).slice(0, 10);
+  return {
+    order_count,
+    total_revenue: Number(total_revenue.toFixed(2)),
+    aov: Number(aov.toFixed(2)),
+    paid, unfulfilled, fulfilled, partial, refunded,
+    customer_count: customers.length,
+    repeat_customers,
+    daily_revenue,
+    top_products,
+    top_customers,
+    low_stock: low_stock.map((v) => ({ title: v.product_title, available: v.available, sku: v.sku })),
+    out_of_stock: out_of_stock.map((v) => ({ title: v.product_title, sku: v.sku })),
+    best_sellers: top_products.slice(0, 5),
+  };
+}
+
+function localIntelligence(agg: any) {
+  const avgDaily = agg.daily_revenue.reduce((s: number, d: any) => s + d.revenue, 0) / Math.max(1, agg.daily_revenue.length);
+  const repeat_rate = agg.customer_count ? agg.repeat_customers / agg.customer_count : 0;
+  const avgOrders = agg.customer_count ? agg.order_count / agg.customer_count : 0;
+  const revenue_health = Math.min(100, Math.round(agg.total_revenue / 50));
+  const fulfillment_health = agg.order_count ? Math.round((agg.fulfilled / agg.order_count) * 100) : 0;
+  const customer_health = Math.min(100, Math.round(repeat_rate * 200));
+  const inventory_health = Math.max(0, 100 - Math.min(100, (agg.out_of_stock.length + agg.low_stock.length) * 8));
+  const risk = Math.min(100, agg.refunded * 10 + agg.unfulfilled * 3);
+  const score = Math.max(0, Math.min(100, Math.round(revenue_health * 0.3 + fulfillment_health * 0.25 + customer_health * 0.2 + inventory_health * 0.15 + (100 - risk) * 0.1)));
+  const grade = score >= 85 ? "A" : score >= 70 ? "B" : score >= 55 ? "C" : score >= 40 ? "D" : "F";
+  return {
+    commerce_intelligence_score: { score, grade, breakdown: { revenue_health, fulfillment_health, customer_health, inventory_health, risk: 100 - risk } },
+    insights: [
+      { type: "revenue", title: `${agg.order_count} orders confirmed`, detail: `Total ${agg.total_revenue} across ${agg.customer_count} customers; AOV ${agg.aov}.`, severity: "low" },
+      ...(agg.unfulfilled > 0 ? [{ type: "fulfillment", title: `${agg.unfulfilled} unfulfilled orders`, detail: "Fulfill pending orders to protect customer experience.", severity: "medium" }] : []),
+      ...(agg.out_of_stock.length ? [{ type: "inventory", title: `${agg.out_of_stock.length} out-of-stock`, detail: "Restock or mark unavailable to avoid overselling.", severity: "high" }] : []),
+    ],
+    revenue_forecast: { next_7_days: Number((avgDaily * 7).toFixed(2)), next_30_days: Number((avgDaily * 30).toFixed(2)), confidence: "low", trend: avgDaily > 0 ? "flat" : "down" },
+    demand_forecast: agg.best_sellers.map((p: any) => ({ product: p.title, predicted_units: Math.max(1, Math.round(p.units / 14)), trend: "flat" })),
+    customer_lifetime_value: { average_ltv: Number((agg.aov * avgOrders).toFixed(2)), repeat_rate: Number(repeat_rate.toFixed(2)), top_customer_ltv: agg.top_customers[0]?.spend || 0 },
+    repeat_purchase_insights: `${agg.repeat_customers} of ${agg.customer_count} customers have ordered more than once (repeat rate ${Math.round(repeat_rate * 100)}%).`,
+    order_risk_anomalies: [],
+    inventory_demand_predictions: [
+      ...agg.out_of_stock.map((v: any) => ({ product: v.title, status: "out_of_stock", recommendation: "Restock or disable." })),
+      ...agg.low_stock.map((v: any) => ({ product: v.title, status: "low_stock", recommendation: `Only ${v.available} left — reorder soon.` })),
+    ],
+    recommended_actions: [
+      ...(agg.unfulfilled > 0 ? [{ action: `Fulfill ${agg.unfulfilled} pending orders`, priority: "high", expected_impact: "Improves delivery satisfaction." }] : []),
+      ...(agg.out_of_stock.length ? [{ action: `Restock ${agg.out_of_stock.length} out-of-stock items`, priority: "high", expected_impact: "Recovers lost sales." }] : []),
+      { action: "Email repeat customers a loyalty offer", priority: "medium", expected_impact: "Lifts repeat rate." },
+    ],
+    provider: "local-intelligence",
   };
 }
 
@@ -220,7 +321,7 @@ export default async function (req: Request): Promise<Response> {
       const status = payload.status ? `&status=${encodeURIComponent(payload.status)}` : "";
       const r = await shoGet(`${base}/orders.json?limit=${limit}${status}`, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
-      return Response.json({ orders: mapOrders(r.data) });
+      return Response.json({ orders: mapOrdersRich(r.data) });
     }
 
     // ----- single order (HMAC-gated) -----
@@ -411,6 +512,61 @@ export default async function (req: Request): Promise<Response> {
       const r = await shoPost(`${base}/draft_orders/${encodeURIComponent(id)}/send_invoice.json`, {}, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ ok: true, sent: true, email, invoice_url: r.data?.draft_order_invoice?.url || null });
+    }
+
+    // ----- commerce intelligence (session-gated) -----
+    if (action === "intelligence") {
+      if (!authenticated) {
+        return Response.json({ error: `Shopify session rejected for intelligence: ${sessionRejectReason}` }, { status: 403 });
+      }
+      const limit = Math.min(250, Math.max(1, Number(payload.limit) || 250));
+      const [ordersR, productsR] = await Promise.all([
+        shoGet(`${base}/orders.json?limit=${limit}&status=any`, token),
+        shoGet(`${base}/products.json?limit=250`, token),
+      ]);
+      if (!ordersR.ok) return Response.json({ error: ordersR.error }, { status: ordersR.status });
+      if (!productsR.ok) return Response.json({ error: productsR.error }, { status: productsR.status });
+      const orders = mapOrdersRich(ordersR.data);
+      const products = (productsR.data?.products || []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        thumbnail_url: p.image?.src,
+        status: p.status,
+        variants: (p.variants || []).map((v: any) => ({ id: v.id, sku: v.sku, price: v.price, available: v.inventory_quantity ?? null })),
+      }));
+      const agg = buildOrderAggregate(orders, products);
+      const openaiKey = String(secrets.get("OPENAI_API_KEY") || "").trim();
+      const model = String(secrets.get("OPENAI_LOW_COST_MODEL") || secrets.get("OPENAI_MODEL") || "gpt-5.6-luna").trim();
+      if (!openaiKey) {
+        return Response.json({ confirmed: agg, predictions: localIntelligence(agg) });
+      }
+      try {
+        const compact = {
+          order_count: agg.order_count, total_revenue: agg.total_revenue, aov: agg.aov,
+          paid: agg.paid, unfulfilled: agg.unfulfilled, fulfilled: agg.fulfilled, partial: agg.partial, refunded: agg.refunded,
+          customer_count: agg.customer_count, repeat_customers: agg.repeat_customers,
+          daily_revenue: agg.daily_revenue.map((d: any) => d.revenue),
+          top_products: agg.top_products.map((p: any) => ({ title: p.title, units: p.units, revenue: p.revenue })),
+          top_customers: agg.top_customers.map((c: any) => ({ name: c.name, orders: c.orders, spend: c.spend })),
+          low_stock: agg.low_stock, out_of_stock: agg.out_of_stock,
+        };
+        const instruction = "You are LOKIN Commerce Intelligence. Analyze this Shopify store aggregate (confirmed data) and return STRICT JSON only with these exact keys: commerce_intelligence_score {score(0-100), grade(A-F), breakdown{revenue_health,fulfillment_health,customer_health,inventory_health,risk all 0-100}}; insights array of {type,title,detail,severity(low|medium|high)}; revenue_forecast {next_7_days,next_30_days,confidence(low|medium|high),trend(up|down|flat)}; demand_forecast array of {product,predicted_units,trend}; customer_lifetime_value {average_ltv,repeat_rate(0-1),top_customer_ltv}; repeat_purchase_insights string; order_risk_anomalies array of {order,risk_type,detail}; inventory_demand_predictions array of {product,status,recommendation}; recommended_actions array of {action,priority(low|medium|high),expected_impact}. Return ONLY JSON, no prose.";
+        const ai = await fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, input: `${instruction}\nAggregate: ${JSON.stringify(compact)}` }),
+        });
+        const data: any = await ai.json().catch(() => ({}));
+        if (!ai.ok) return Response.json({ confirmed: agg, predictions: { ...localIntelligence(agg), ai_error: `OpenAI request failed (${ai.status})` } });
+        let text = String(data?.output_text || "").trim();
+        if (!text) {
+          for (const item of data?.output || []) for (const c of item?.content || []) if (typeof c?.text === "string") text += c.text;
+        }
+        const parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim());
+        return Response.json({ confirmed: agg, predictions: { ...parsed, provider: "openai" } });
+      } catch (e: any) {
+        return Response.json({ confirmed: agg, predictions: { ...localIntelligence(agg), ai_error: String(e?.message || e) } });
+      }
     }
 
     return Response.json({ error: "Unsupported action" }, { status: 400 });
