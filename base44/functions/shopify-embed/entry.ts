@@ -92,7 +92,15 @@ export default async function (req: Request): Promise<Response> {
     // can never authorize this backend.
     const sessionShop = String(session.shop || "").toLowerCase();
     const configuredShop = String(auth.domain || "").toLowerCase();
-    const authenticated = session.valid === true && (!sessionShop || sessionShop === configuredShop);
+    const shopMatches = !sessionShop || sessionShop === configuredShop;
+    const authenticated = session.valid === true && shopMatches;
+    const sessionRejectReason = !sessionToken
+      ? "No Shopify session token reached the backend."
+      : session.valid !== true
+        ? (session.error || "Shopify session token verification failed.")
+        : !shopMatches
+          ? `Shop mismatch (${sessionShop || "unknown"} != ${configuredShop || "unknown"}).`
+          : "Shopify session rejected.";
 
     const base = shopifyAdminBase(auth.domain);
     const token = auth.token;
@@ -140,7 +148,7 @@ export default async function (req: Request): Promise<Response> {
     if (action === "orders") {
       if (!authenticated) {
         return Response.json(
-          { error: `Shopify session rejected for orders${session?.error ? `: ${session.error}` : "."}` },
+          { error: `Shopify session rejected for orders: ${sessionRejectReason}` },
           { status: 403 }
         );
       }
@@ -166,7 +174,7 @@ export default async function (req: Request): Promise<Response> {
     // ----- draft orders list (session-gated) -----
     if (action === "drafts") {
       if (!authenticated) {
-        return Response.json({ error: `Shopify session rejected for draft orders${session?.error ? `: ${session.error}` : "."}` }, { status: 403 });
+        return Response.json({ error: `Shopify session rejected for draft orders: ${sessionRejectReason}` }, { status: 403 });
       }
       const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
       const r = await shoGet(`${base}/draft_orders.json?limit=${limit}`, token);
