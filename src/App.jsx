@@ -152,7 +152,30 @@ const AuthenticatedApp = () => {
 };
 
 
+function ShopifyPublicApp() {
+  return (
+    <QueryClientProvider client={queryClientInstance}>
+      <Router>
+        <Routes>
+          <Route path="/shopify" element={<ShopifyEmbed />} />
+          <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
+          <Route path="*" element={<ShopifyEmbed />} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
+  );
+}
+
 function App() {
+  // IMPORTANT: Shopify Admin loads this app in a third-party iframe where there
+  // may be no Base44 browser session/cookies. Keep the embedded Shopify entry
+  // completely outside AuthProvider, SplashScreen, deep-link handlers, and the
+  // normal authenticated driver shell. This prevents auth/public-settings
+  // requests or overlays from blocking the iframe before ShopifyEmbed renders.
+  const pathname = window.location.pathname;
+  if (pathname === '/shopify' || pathname === '/shopify/auth/callback') {
+    return <ShopifyPublicApp />;
+  }
 
   return (
     <AuthProvider>
