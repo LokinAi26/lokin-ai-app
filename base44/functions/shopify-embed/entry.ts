@@ -276,7 +276,10 @@ export default async function (req: Request): Promise<Response> {
         return Response.json({ error: "At least one line item is required." }, { status: 400 });
       }
       const draft: any = { line_items };
-      if (payload.email) draft.customer = { email: String(payload.email) };
+      // Shopify Draft Orders accept a notification email directly on draft_order.email.
+      // Do not send an email-only `customer` object: Shopify expects an existing customer
+      // identity there and can silently create the draft without attaching the address.
+      if (payload.email) draft.email = String(payload.email).trim();
       if (payload.note) draft.note = String(payload.note);
       const r = await shoPost(`${base}/draft_orders.json`, { draft_order: draft }, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
