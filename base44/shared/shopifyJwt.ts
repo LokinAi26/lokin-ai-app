@@ -67,8 +67,12 @@ export async function verifyShopifySession(
     if (payload.exp && now >= Number(payload.exp)) return { valid: false, error: "id_token expired." };
     if (payload.nbf && now < Number(payload.nbf)) return { valid: false, error: "id_token not yet valid." };
 
-    if (expectedClientId && String(payload.aud || "") !== String(expectedClientId)) {
-      return { valid: false, error: "id_token audience mismatch." };
+    if (expectedClientId) {
+      const aud = payload.aud;
+      const audienceValid = Array.isArray(aud)
+        ? aud.map(String).includes(String(expectedClientId))
+        : String(aud || "") === String(expectedClientId);
+      if (!audienceValid) return { valid: false, error: "id_token audience mismatch." };
     }
 
     const shop = String(payload.dest || "").replace(/^https?:\/\//, "").replace(/\/+$/, "") || undefined;
