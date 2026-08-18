@@ -66,7 +66,15 @@ export default function ShopifyEmbed() {
         const res = await base44.functions.invoke("shopify-oauth", { params });
         const data = res?.data || res;
         if (data?.redirect_url) {
-          window.top.location.href = data.redirect_url;
+          // Shopify may sandbox embedded frames. Prefer a top-level redirect
+          // when allowed, but always fall back to the current frame so the
+          // callback can complete instead of leaving a blank iframe.
+          try {
+            if (window.top && window.top !== window.self) window.top.location.assign(data.redirect_url);
+            else window.location.assign(data.redirect_url);
+          } catch {
+            window.location.assign(data.redirect_url);
+          }
           return;
         }
         if (!cancelled) setOauthMsg(data?.error || "OAuth completed but no redirect URL returned.");
