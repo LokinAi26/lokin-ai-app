@@ -69,12 +69,34 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
   async function getSessionToken() {
     if (!appBridge || !ready) return "";
     try {
+      // App Bridge v3 exposes authenticatedFetch as the supported way to attach
+      // Shopify session tokens. Keep getSessionToken as the primary path, but
+      // normalize the result because some builds return a token-like object.
       const utilities = await import("@shopify/app-bridge/utilities");
-      return await utilities.getSessionToken(appBridge);
+      const raw = await utilities.getSessionToken(appBridge);
+      if (typeof raw === "string") return raw;
+      return raw?.token || raw?.id_token || raw?.accessToken || "";
     } catch (e) {
       console.warn("Shopify session token request failed:", e?.message || e);
       return "";
     }
+  }
+
+  async function authenticatedFetch(url, init = {}) {
+    if (!appBridge || !ready) return fetch(url, init);
+    try {
+      const utilities = await import("@shopify/app-bridge/utilities");
+      if (typeof utilities.authenticatedFetch === "function") {
+        return utilities.authenticatedFetch(appBridge)(url, init);
+      }
+    } catch (e) {
+      console.warn("Shopify authenticatedFetch unavailable:", e?.message || e);
+    }
+    const token = await getSessionToken();
+    return fetch(url, {
+      ...init,
+      headers: { ...(init.headers || {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
   }
 
   function redirectRemote(url) {
@@ -91,5 +113,5 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
     }
   }
 
-  return { ready, setTitleBar, setLoading, toast, redirectRemote, getSessionToken };
+  return { ready, setTitleBar, setLoading, toast, redirectRemote, getSessionToken, authenticatedFetch };
 }
