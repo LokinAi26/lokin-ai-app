@@ -78,7 +78,7 @@ export default function ShopifyEmbed() {
         "Content-Type": "application/json",
         ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       },
-      body: JSON.stringify({ action, ...extra, params }),
+      body: JSON.stringify({ action, ...extra, params, ...(sessionToken ? { session_token: sessionToken } : {}) }),
     };
     // Use Base44's function transport for public reads. For Shopify-sensitive
     // actions, prefer App Bridge authenticatedFetch so Shopify itself injects
