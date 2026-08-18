@@ -140,7 +140,7 @@ export default async function (req: Request): Promise<Response> {
     if (action === "orders") {
       if (!authenticated) {
         return Response.json(
-          { error: "Authenticated Shopify session required for orders. Open LOKIN Commerce from your Shopify Admin." },
+          { error: `Shopify session rejected for orders${session?.error ? `: ${session.error}` : "."}` },
           { status: 403 }
         );
       }
@@ -166,7 +166,7 @@ export default async function (req: Request): Promise<Response> {
     // ----- draft orders list (session-gated) -----
     if (action === "drafts") {
       if (!authenticated) {
-        return Response.json({ error: "Authenticated Shopify session required for draft orders." }, { status: 403 });
+        return Response.json({ error: `Shopify session rejected for draft orders${session?.error ? `: ${session.error}` : "."}` }, { status: 403 });
       }
       const limit = Math.min(250, Math.max(1, Number(payload.limit) || 50));
       const r = await shoGet(`${base}/draft_orders.json?limit=${limit}`, token);
