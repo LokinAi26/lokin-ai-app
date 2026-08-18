@@ -20,9 +20,7 @@ export default function useShopifyAppBridge({ apiKey, shop, host, embedded, enab
         const mod = await import("@shopify/app-bridge");
         const actions = await import("@shopify/app-bridge/actions");
         if (cancelled) return;
-        const createApp = mod.createApp || mod.default?.createApp || mod.default;
-        if (typeof createApp !== "function") throw new Error("Shopify App Bridge createApp export is unavailable");
-        appBridge = createApp({ apiKey, shop, host: host || undefined, forceRedirect: false });
+        appBridge = mod.default({ apiKey, shop, host: host || undefined, forceRedirect: false });
         actionsRef.current = actions;
         setReady(true);
       } catch (e) {
