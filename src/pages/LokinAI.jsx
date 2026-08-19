@@ -166,7 +166,7 @@ export default function LokinAI() {
 
       <div className="flex items-center gap-2 text-xs">
         <Volume2 className="h-3.5 w-3.5 shrink-0 text-accent/70" />
-        <span className="text-white/45 shrink-0">Voice</span>
+        <span className="text-white/60 shrink-0">Voice</span>
         <Select value={voiceURI || "default"} onValueChange={(v) => pickVoice(v === "default" ? "" : v)}>
           <SelectTrigger className="flex-1 min-w-0 rounded-lg border-white/10 bg-white/[0.03] text-white/80 h-8 text-xs">
             <SelectValue />
@@ -192,7 +192,7 @@ export default function LokinAI() {
             </div>
             <VoiceWaveform active={listening} className="mb-3" />
             <div className="text-sm text-white/60">Say <span className="text-accent font-semibold">“Hey LOKIN…”</span></div>
-            <div className="text-xs text-white/40 mt-1">or tap a quick command below.</div>
+            <div className="text-xs text-white/55 mt-1">or tap a quick command below.</div>
           </div>
         )}
         {log.map((m, i) => (
@@ -205,14 +205,14 @@ export default function LokinAI() {
                     <Volume2 className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => sendFeedback(i, 1)} disabled={!!m.feedback}
-                    className={`${m.feedback === 1 ? "text-accent" : "text-white/35 hover:text-accent"} disabled:opacity-80`} title="Helpful — teach LOKIN">
+                    className={`${m.feedback === 1 ? "text-accent" : "text-white/50 hover:text-accent"} disabled:opacity-80`} title="Helpful — teach LOKIN">
                     <ThumbsUp className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => sendFeedback(i, -1)} disabled={!!m.feedback}
-                    className={`${m.feedback === -1 ? "text-red-400" : "text-white/35 hover:text-red-400"} disabled:opacity-80`} title="Not helpful — teach LOKIN">
+                    className={`${m.feedback === -1 ? "text-red-400" : "text-white/50 hover:text-red-400"} disabled:opacity-80`} title="Not helpful — teach LOKIN">
                     <ThumbsDown className="h-3.5 w-3.5" />
                   </button>
-                  {m.feedback && <span className="text-[9px] text-white/35">learned</span>}
+                  {m.feedback && <span className="text-[9px] text-white/50">learned</span>}
                 </div>
               )}
             </div>
@@ -232,7 +232,7 @@ export default function LokinAI() {
               </button>
               <button onClick={() => setDraft(null)} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/60">Discard</button>
             </div>
-            <div className="text-[10px] text-white/35 mt-1.5">Confirm before sending. Auto-send coming soon.</div>
+            <div className="text-[10px] text-white/50 mt-1.5">Confirm before sending. Auto-send coming soon.</div>
           </div>
         )}
       </div>

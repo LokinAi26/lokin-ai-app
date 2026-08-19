@@ -64,7 +64,7 @@ export default function Categories() {
         <SlidersHorizontal className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Work Filters</h1>
       </div>
-      <p className="text-sm text-white/45 -mt-4">
+      <p className="text-sm text-white/60 -mt-4">
         Tap the delivery types you accept. Offers you don&apos;t want are filtered out automatically.
       </p>
 
@@ -81,7 +81,7 @@ export default function Categories() {
               }`}
             >
               <span className="text-sm font-medium text-white">{c.label}</span>
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "bg-white/8 text-white/40"}`}>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "bg-white/8 text-white/55"}`}>
                 {on ? <Check className="h-4 w-4" /> : <X className="h-3.5 w-3.5" />}
               </span>
             </button>
@@ -114,14 +114,14 @@ export default function Categories() {
         </div>
 
         {blocked.length === 0 ? (
-          <div className="text-xs text-white/45 text-center py-4">No blocked customers.</div>
+          <div className="text-xs text-white/60 text-center py-4">No blocked customers.</div>
         ) : (
           <div className="space-y-2">
             {blocked.map((b) => (
               <div key={b.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel p-3">
                 <div>
                   <div className="text-sm font-medium text-white">{b.name}</div>
-                  {b.reason && <div className="text-xs text-white/45">{b.reason}</div>}
+                  {b.reason && <div className="text-xs text-white/60">{b.reason}</div>}
                 </div>
                 <button onClick={() => removeBlocked(b.id)} className="text-destructive text-xs font-medium">Unblock</button>
               </div>

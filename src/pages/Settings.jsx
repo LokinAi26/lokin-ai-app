@@ -78,7 +78,7 @@ export default function Settings() {
     setPrefs(res); setSaved(true);
   }
 
-  if (!form) return <div className="p-6 text-sm text-white/45">Loading…</div>;
+  if (!form) return <div className="p-6 text-sm text-white/60">Loading…</div>;
 
   return (
     <div className="p-4 space-y-5">
@@ -88,7 +88,7 @@ export default function Settings() {
         <div className="flex flex-wrap gap-2">
           {USER_TYPES.map((t) => (
             <button key={t.value} onClick={() => set("user_type", t.value)}
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.user_type === t.value ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.user_type === t.value ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/60"}`}>
               <span>{t.emoji}</span> {t.label}
             </button>
           ))}
@@ -105,11 +105,11 @@ export default function Settings() {
         <Field label="Min hourly rate $/hr"><Num value={form.min_per_hour} onChange={(v) => set("min_per_hour", v)} /></Field>
         <Field label="Daily hours goal"><Num value={form.daily_hours_goal} onChange={(v) => set("daily_hours_goal", v)} /></Field>
         <div>
-          <div className="text-xs text-white/45 mb-1">Daily goal</div>
+          <div className="text-xs text-white/60 mb-1">Daily goal</div>
           <div className="flex flex-wrap gap-2">
             {DAILY_GOAL_PRESETS.map((g) => (
               <button key={g} onClick={() => set("daily_goal", g)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.daily_goal === g ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
+                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.daily_goal === g ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/60"}`}>
                 ${g}
               </button>
             ))}
@@ -126,7 +126,7 @@ export default function Settings() {
         <div className="flex flex-wrap gap-2">
           {OPTIMIZATION_MODES.map((m) => (
             <button key={m.value} onClick={() => set("optimization_mode", m.value)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.optimization_mode === m.value ? "border-accent bg-accent/15 text-accent" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
+              className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${form.optimization_mode === m.value ? "border-accent bg-accent/15 text-accent" : "border-white/10 bg-white/[0.03] text-white/60"}`}>
               {m.label}
             </button>
           ))}
@@ -149,7 +149,7 @@ export default function Settings() {
         <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-1">
           <Trash2 className="h-4 w-4" /> Delete Account
         </div>
-        <p className="text-xs text-white/50 mb-3">
+        <p className="text-xs text-white/60 mb-3">
           Permanently remove your account and all LOKIN AI data. This cannot be undone.
         </p>
         <button onClick={() => setDeleteOpen(true)} className="w-full rounded-xl border border-destructive/40 bg-destructive/10 text-destructive font-bold py-2.5 text-sm flex items-center justify-center gap-2 select-none">
@@ -188,7 +188,7 @@ function Section({ title, children }) {
 function Field({ label, children }) {
   return (
     <div>
-      <div className="text-xs text-white/45 mb-1">{label}</div>
+      <div className="text-xs text-white/60 mb-1">{label}</div>
       {children}
     </div>
   );

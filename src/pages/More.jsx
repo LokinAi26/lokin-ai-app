@@ -92,9 +92,9 @@ function Section({ section, defaultOpen }) {
         </div>
         <div className="flex-1 text-left">
           <div className="text-sm font-semibold text-white">{section.label}</div>
-          <div className="text-[11px] text-white/40">{section.items.length} features</div>
+          <div className="text-[11px] text-white/55">{section.items.length} features</div>
         </div>
-        <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-4 w-4 text-white/55 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -104,13 +104,13 @@ function Section({ section, defaultOpen }) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="px-2 pb-2 divide-y divide-white/5">
+            <div className="px-2 pb-2 divide-y divide-white/10">
               {section.items.map((l) => (
                 <Link key={l.to} to={l.to} className="flex items-center gap-3 px-2 py-2.5 active:bg-white/[0.03] rounded-xl transition-colors">
                   <l.icon className="h-4 w-4 text-white/55 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium text-white truncate">{l.title}</div>
-                    <div className="text-[11px] text-white/40 truncate">{l.desc}</div>
+                    <div className="text-[11px] text-white/55 truncate">{l.desc}</div>
                   </div>
                 </Link>
               ))}
@@ -140,7 +140,7 @@ export default function More() {
         <LogOut className="h-4 w-4" /> Sign out
       </button>
 
-      <div className="text-center text-[11px] tracking-[0.18em] text-white/30 pt-1">
+      <div className="text-center text-[11px] tracking-[0.18em] text-white/45 pt-1">
         LOKIN AI · LOCK IN. LEVEL UP.<br />DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>
     </div>
