@@ -54,7 +54,7 @@ export default function OpportunityCompare({ open, onClose, opps, prefs, autoRec
           <TrendingUp className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-bold font-heading metal-text">{autoRecommend ? "AI Recommendation" : "Compare Opportunities"}</h2>
         </div>
-        <button onClick={onClose} aria-label="Close" className="text-white/50 active:scale-90 transition-transform"><X className="h-5 w-5" /></button>
+        <button onClick={onClose} aria-label="Close" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/50 active:scale-90 transition-transform"><X className="h-5 w-5" /></button>
       </div>
 
       <div className="overflow-y-auto px-4 py-3 space-y-3">
