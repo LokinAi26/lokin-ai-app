@@ -9,7 +9,6 @@ import {
   Percent,
   Plus,
   Save,
-  Send,
   Sparkles,
   Trash2,
   Truck,
