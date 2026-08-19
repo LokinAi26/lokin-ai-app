@@ -299,7 +299,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                   <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="text-[10px] font-bold tracking-wide text-primary/80 border border-primary/25 rounded-lg px-2 py-1 active:scale-90">
                     FULL AI →
                   </button>
-                  <button onClick={() => setOpen(false)} className="text-white/50 active:scale-90">
+                  <button onClick={() => setOpen(false)} aria-label="Close LOKIN Voice" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/50 active:scale-90">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
