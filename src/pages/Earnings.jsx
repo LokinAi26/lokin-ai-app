@@ -19,12 +19,13 @@ export default function Earnings() {
   const [prefs, setPrefs] = useState(null);
   const [range, setRange] = useState("today");
   const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       base44.entities.Earning.filter({}, "date"),
       base44.entities.DriverPreference.filter({}),
-    ]).then(([e, p]) => { setRecords(e); setPrefs(p[0] || null); });
+    ]).then(([e, p]) => { setRecords(e); setPrefs(p[0] || null); }).finally(() => setLoading(false));
   }, []);
 
   // lightweight Lock In Score for the earnings view
@@ -139,7 +140,11 @@ export default function Earnings() {
 
       <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
         <div className="text-[11px] uppercase tracking-[0.18em] text-primary/80">EARNINGS</div>
-        <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${gross.toFixed(2)}</div>
+        {loading ? (
+          <div className="mt-2 h-10 w-40 rounded-lg bg-white/10 animate-pulse" />
+        ) : (
+          <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${gross.toFixed(2)}</div>
+        )}
         <div className="text-xs text-white/45 mt-2">Gross {RANGES.find((r) => r.value === range)?.label.toLowerCase()} · {trips} trips · {miles.toFixed(0)} mi</div>
       </div>
 

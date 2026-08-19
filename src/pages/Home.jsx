@@ -122,7 +122,12 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-4 gap-2">
-        {[["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", working ? "ON" : "OFF"], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
+        {(loading && !data) ? ["NET/HR","ACTIVE","ORDERS","MILES"].map((k) => (
+          <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center">
+            <div className="text-[9px] text-white/45">{k}</div>
+            <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
+          </div>
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", working ? "ON" : "OFF"], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
@@ -154,7 +159,7 @@ export default function Home() {
 
       <div className="rounded-2xl border border-white/8 bg-white/[.02] p-3 flex items-center justify-between gap-3">
         <div className="text-[11px] text-white/45">AI recommendation</div>
-        <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.briefing || "Ready when you are.")}</div>
+        <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.error ? "Couldn't load — pull down to refresh." : (data?.briefing || "Ready when you are."))}</div>
       </div>
 
       <AwarenessBanner />
@@ -171,32 +176,11 @@ export default function Home() {
   );
 }
 
-function StatTile({ icon: Icon, label, value, accent }) {
-  return (
-    <div className="rounded-2xl border border-white/10 lokin-panel p-3.5">
-      <div className="flex items-center gap-1.5 text-[11px] text-white/45">
-        <Icon className="h-3.5 w-3.5 text-primary" /> {label}
-      </div>
-      <div className={`text-xl font-bold mt-1 font-display ${accent ? "text-primary text-glow" : "text-white"}`}>{value}</div>
-    </div>
-  );
-}
-
 function QuickLink({ to, icon: Icon, label }) {
   return (
     <Link to={to} className="rounded-2xl border border-white/10 lokin-panel p-3 text-center active:scale-[0.97] transition-transform">
       <Icon className="h-5 w-5 mx-auto text-primary mb-1" />
       <div className="text-xs font-medium text-white/80">{label}</div>
-    </Link>
-  );
-}
-
-function CommandCard({ to, icon: Icon, title, desc }) {
-  return (
-    <Link to={to} className="rounded-2xl border border-white/10 bg-black/25 p-3 active:scale-[0.98] active:border-primary/40 transition-all">
-      <Icon className="h-4 w-4 text-primary mb-2" />
-      <div className="text-xs font-bold text-white leading-tight">{title}</div>
-      <div className="text-[10px] text-white/40 mt-1 leading-tight">{desc}</div>
     </Link>
   );
 }
