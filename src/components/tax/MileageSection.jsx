@@ -55,7 +55,7 @@ export default function MileageSection() {
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
           <input type="number" step="0.1" placeholder="Miles" value={form.miles} onChange={(e) => setForm({ ...form, miles: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
+        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full min-h-11 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
           {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <input type="text" placeholder="Purpose (e.g. pickup → dropoff)" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
