@@ -102,7 +102,7 @@ export default function OpportunityAlerts({ prefs, onPrefsChange }) {
             <select
               value={vehicle}
               onChange={(e) => setVehicle(e.target.value)}
-              className="w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 text-sm text-white outline-none"
+              className="w-full min-h-11 rounded-xl border border-white/12 bg-black/40 px-3 py-2 text-sm text-white outline-none"
             >
               {VEHICLES.map((v) => <option key={v.value} value={v.value} className="bg-black">{v.label}</option>)}
             </select>
