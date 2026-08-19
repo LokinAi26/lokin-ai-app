@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car, ChevronRight, ChevronLeft, Package, Truck, HeartPulse, Wrench } from "lucide-react";
+import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car, ChevronRight, ChevronLeft, Package, HeartPulse, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
