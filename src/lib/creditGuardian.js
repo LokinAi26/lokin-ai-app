@@ -1,4 +1,5 @@
 import { guardianPolicyFor } from "./creditGuardianManifest";
+import { hasAiConsent } from "./aiConsent";
 
 const CACHE_PREFIX = "lokin:guardian:";
 
@@ -42,6 +43,12 @@ export function guardianDecision({ essential = false, userInitiated = false, cac
 
 export async function guardedInvoke(base44, name, payload = {}, { force = false, userInitiated = false } = {}) {
   const policy = guardianPolicyFor(name);
+  const externalAi = new Set(["external-ai-gateway", "lokinAssistant", "lokinSupport", "aiTextAssist", "learning-intelligence", "tax-advisor", "opportunity-recommend"]);
+  if (externalAi.has(name) && !hasAiConsent()) {
+    const err = new Error("AI processing permission is required. Enable it in LOKIN before using this AI feature.");
+    err.code = "LOKIN_AI_CONSENT_REQUIRED";
+    throw err;
+  }
   if (policy.tier === "MISSION_CRITICAL") return base44.functions.invoke(name, payload);
   if (policy.tier === "EXTERNALIZE" && !userInitiated && CREDIT_GUARDIAN.mode === "preservation") {
     const err = new Error(`${name} deferred by LOKIN Credit Guardian preservation mode`);

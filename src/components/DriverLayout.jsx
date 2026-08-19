@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck } from "lucide-react";
+import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
-import QuickJumpRail from "@/components/QuickJumpRail";
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
+import { getAiConsent, setAiConsent, AI_CONSENT_VERSION } from "@/lib/aiConsent";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
@@ -46,6 +46,7 @@ export default function DriverLayout() {
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [aiConsent, setAiConsentState] = useState(() => getAiConsent());
   const isNested = NESTED_PATHS.includes(loc.pathname);
   const isShopFlow = loc.pathname === "/locator" || loc.pathname === "/shop-deliver";
   const currentTab = pathToTab(loc.pathname);
@@ -61,6 +62,15 @@ export default function DriverLayout() {
       setLastPaths((prev) => ({ ...prev, [currentTab]: loc.pathname }));
     }
   }, [loc.pathname, currentTab]);
+
+  async function chooseAiConsent(value) {
+    setAiConsent(value);
+    setAiConsentState(value);
+    try {
+      const user = await base44.auth.me();
+      if (user?.id) await base44.entities.AiConsentRecord.create({ user_id: user.id, granted: value === "granted", version: AI_CONSENT_VERSION, recorded_at: new Date().toISOString() });
+    } catch (_) {}
+  }
 
   function handleTabClick(tabKey) {
     if (tabKey === currentTab) {
@@ -135,9 +145,17 @@ export default function DriverLayout() {
         </div>
       </nav>}
 
-      {!lockedGps && <QuickJumpRail />}
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} />
+      {aiConsent == null && (
+        <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-primary/25 bg-card p-5 shadow-2xl">
+            <div className="flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center"><ShieldCheck className="h-5 w-5 text-primary" /></div><div><div className="font-bold">AI processing permission</div><div className="text-xs text-white/45">Your choice can be changed later.</div></div></div>
+            <p className="mt-4 text-sm text-white/65 leading-relaxed">When you use LOKIN AI features, your prompt and the minimum context needed to answer may be sent to LOKIN's configured AI service provider. LOKIN does not need this permission for core non-AI features.</p>
+            <div className="mt-5 grid grid-cols-2 gap-2"><button onClick={() => chooseAiConsent("declined")} className="rounded-xl border border-white/15 py-2.5 text-sm font-semibold">Not now</button><button onClick={() => chooseAiConsent("granted")} className="rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold">Allow AI</button></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
