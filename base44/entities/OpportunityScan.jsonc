@@ -17,6 +17,10 @@
     "company": {
       "type": "string"
     },
+    "platform": {
+      "type": "string",
+      "description": "Official platform or employer name, e.g. DoorDash, Uber Eats, FedEx Ground."
+    },
     "category": {
       "type": "string",
       "enum": [
@@ -27,6 +31,7 @@
         "package_courier",
         "cannabis_delivery",
         "alcohol_delivery",
+        "warehouse",
         "other"
       ],
       "default": "other"
@@ -49,9 +54,53 @@
       "type": "number",
       "description": "Normalized hourly/daily dollar figure for sorting (best estimate)."
     },
+    "pay_source": {
+      "type": "string",
+      "enum": [
+        "advertised",
+        "estimated",
+        "user_reported"
+      ],
+      "default": "advertised",
+      "description": "How the pay figure was sourced \u2014 never a guarantee."
+    },
+    "pay_basis": {
+      "type": "string",
+      "enum": [
+        "hourly",
+        "per_delivery",
+        "per_trip",
+        "per_mile",
+        "daily",
+        "weekly",
+        "salary"
+      ],
+      "default": "hourly"
+    },
     "employment_type": {
       "type": "string",
       "description": "W-2, 1099, gig, contract, etc."
+    },
+    "schedule": {
+      "type": "string",
+      "enum": [
+        "flexible",
+        "fixed_shifts",
+        "on_demand",
+        "part_time",
+        "full_time"
+      ],
+      "default": "flexible"
+    },
+    "est_weekly_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated hours/week a typical driver works this role."
+    },
+    "est_weekly_miles": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated miles/week driven for this role."
     },
     "vehicle_requirements": {
       "type": "string"
@@ -67,6 +116,11 @@
     },
     "source": {
       "type": "string"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the listing details were last verified."
     },
     "notes": {
       "type": "string"
