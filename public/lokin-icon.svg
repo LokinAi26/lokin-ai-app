@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LOKIN AI">
+  <rect width="512" height="512" rx="112" fill="#070a08"/>
+  <path d="M150 114h72v212h142v72H150V114Z" fill="#64ff7a"/>
+  <circle cx="350" cy="162" r="38" fill="#64ff7a" opacity=".88"/>
+</svg>
