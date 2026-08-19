@@ -3,21 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
 
 export default function SplashScreen() {
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(() => {
+    try {
+      const alreadyShown = sessionStorage.getItem('lokin_splash_seen') === '1';
+      if (!alreadyShown) sessionStorage.setItem('lokin_splash_seen', '1');
+      return alreadyShown;
+    } catch {
+      return false;
+    }
+  });
   const [leaving, setLeaving] = useState(false);
   const [reveal, setReveal] = useState(false);
   const playedRef = useRef(false);
 
   useEffect(() => {
     playChime();
+    const startedAt = Date.now();
     const timers = [
       setTimeout(() => setReveal(true), 250),
       setTimeout(() => setLeaving(true), 2200),
       setTimeout(() => setDone(true), 2750),
     ];
+    const watchdog = setInterval(() => {
+      if (Date.now() - startedAt >= 4000) setDone(true);
+    }, 500);
     const onGesture = () => { if (!playedRef.current) playChime(); };
     window.addEventListener("pointerdown", onGesture, { once: true });
-    return () => { timers.forEach(clearTimeout); window.removeEventListener("pointerdown", onGesture); };
+    return () => { timers.forEach(clearTimeout); clearInterval(watchdog); window.removeEventListener("pointerdown", onGesture); };
   }, []);
 
   function dismiss() {
