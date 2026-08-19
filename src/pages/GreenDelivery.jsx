@@ -13,6 +13,15 @@ export default function GreenDelivery() {
 
   useEffect(() => { load(); }, []);
 
+  // Live refresh: the moment a new cannabis dispatch order is created, the board reloads so the
+  // driver sees it without pulling-to-refresh.
+  useEffect(() => {
+    const unsub = base44.entities.MerchantOrder.subscribe((event) => {
+      if (event.type === "create") load();
+    });
+    return unsub;
+  }, []);
+
   async function load() {
     setLoading(true);
     try {

@@ -192,6 +192,25 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
             requested_at: new Date().toISOString(),
             notes: co.discreet ? "Discreet packaging requested" : (co.notes || ""),
           });
+          // Notify every cannabis-certified driver that a new order is in their queue.
+          // Runs only on first creation (guarded above), so a duplicate ORDER_APPROVED can't double-send.
+          try {
+            const certs = await db.entities.DriverCertification.filter({ program: "cannabis_training", status: "passed", eligible_for_regulated_offers: true });
+            const driverIds = [...new Set((certs || []).map((c) => c.user_id).filter(Boolean))].slice(0, 50);
+            for (const uid of driverIds) {
+              try {
+                const uRows = await db.entities.User.filter({ id: uid });
+                const u = uRows?.[0];
+                if (u?.email) {
+                  await base44.asServiceRole.integrations.Core.SendEmail({
+                    to: u.email,
+                    subject: "New LOKIN Green order available",
+                    body: `A new cannabis delivery order just dropped into your queue.\n\nPickup: ${co.dispensary || "dispensary"}\nDrop-off: ${co.delivery_address || "pending"}\n\nOpen LOKIN → Green Delivery to accept it before another driver does.`,
+                  });
+                }
+              } catch (e) { console.error("payments-webhook: driver notify failed", e); }
+            }
+          } catch (e) { console.error("payments-webhook: certified-driver lookup failed", e); }
         }
       } else {
         console.warn("payments-webhook: cannabis order not found for checkout id", { checkoutId: purchase.checkoutSessionId });
