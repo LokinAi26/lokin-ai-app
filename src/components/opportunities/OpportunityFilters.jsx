@@ -1,4 +1,5 @@
 import { Search, SlidersHorizontal } from "lucide-react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CATS = [
   { value: "all", label: "All" },
@@ -34,8 +35,8 @@ const SORTS = [
   { value: "newest", label: "Newest" },
 ];
 
-function selectCls() {
-  return "min-h-11 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/80 outline-none";
+function triggerCls() {
+  return "min-h-11 h-11 rounded-full border border-white/10 bg-black/30 px-3 text-xs text-white/80 gap-2 hover:border-white/20";
 }
 
 export default function OpportunityFilters({ filters, setFilters }) {
@@ -70,16 +71,25 @@ export default function OpportunityFilters({ filters, setFilters }) {
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap">
-        <SlidersHorizontal className="h-3.5 w-3.5 text-white/35" />
-        <select value={filters.vehicle} onChange={(e) => set("vehicle", e.target.value)} className={selectCls()}>
-          {VEHICLES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-        </select>
-        <select value={filters.schedule} onChange={(e) => set("schedule", e.target.value)} className={selectCls()}>
-          {SCHEDULES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        <select value={filters.sort} onChange={(e) => set("sort", e.target.value)} className={selectCls()}>
-          {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
+        <SlidersHorizontal className="h-3.5 w-3.5 text-white/35 shrink-0" />
+        <Select value={filters.vehicle} onValueChange={(v) => set("vehicle", v)}>
+          <SelectTrigger className={`${triggerCls()} w-auto`}><SelectValue /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            {VEHICLES.map((v) => <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filters.schedule} onValueChange={(v) => set("schedule", v)}>
+          <SelectTrigger className={`${triggerCls()} w-auto`}><SelectValue /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            {SCHEDULES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filters.sort} onValueChange={(v) => set("sort", v)}>
+          <SelectTrigger className={`${triggerCls()} w-auto`}><SelectValue /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            {SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

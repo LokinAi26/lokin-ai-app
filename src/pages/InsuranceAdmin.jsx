@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const STATUS = ["submitted", "under_review", "approved", "active", "declined", "renewed"];
 
@@ -140,9 +141,12 @@ export default function InsuranceAdmin() {
             <Row label="Liability limit"><input type="number" className={inp()} value={editing.liability_limit || ""} onChange={(e) => setEditing({ ...editing, liability_limit: e.target.value })} placeholder="1000000" /></Row>
           </div>
           <Row label="Status">
-            <select className={inp()} value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
-              {STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
-            </select>
+            <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
+              <SelectTrigger className={inp() + " min-h-11 h-11 justify-between"}><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {STATUS.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </Row>
           <Row label="Notes"><textarea className={inp() + " min-h-16"} value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} placeholder="Underwriter notes" /></Row>
           <div className="flex gap-2">
