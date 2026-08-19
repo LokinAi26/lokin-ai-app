@@ -5,6 +5,7 @@ import { estimateNet } from "@/lib/opportunityEstimates";
 import OpportunityFilters from "@/components/opportunities/OpportunityFilters";
 import OpportunityCard from "@/components/opportunities/OpportunityCard";
 import OpportunityCompare from "@/components/opportunities/OpportunityCompare";
+import OpportunityAlerts from "@/components/opportunities/OpportunityAlerts";
 
 const FILTER_KEY = "lokin_opp_filters";
 
@@ -118,6 +119,8 @@ export default function Opportunities() {
       {lastScan && (
         <div className="text-[11px] text-white/40 -mt-2">Last scan: <span className="text-primary font-semibold">{lastScan}</span> · {items.length} listings</div>
       )}
+
+      <OpportunityAlerts prefs={prefs} onPrefsChange={setPrefs} />
 
       <OpportunityFilters filters={filters} setFilters={setFilters} />
 

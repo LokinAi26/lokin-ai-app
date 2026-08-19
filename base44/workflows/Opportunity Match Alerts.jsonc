@@ -1,0 +1,40 @@
+{
+  "name": "Opportunity Match Alerts",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "opportunity_match_alerts",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "match_and_notify": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "match-opportunity-drivers",
+            "args": {
+              "opportunity_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Match & notify drivers",
+            "description": "Match this opportunity to drivers by location + vehicle, then alert them"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "OpportunityScan"
+    }
+  },
+  "description": "When a new opportunity is added to the Driver Opportunity Hub, match it against opted-in drivers by location and vehicle type, then email and create an in-app alert for each match."
+}

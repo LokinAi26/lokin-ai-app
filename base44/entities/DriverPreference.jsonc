@@ -108,6 +108,28 @@
     },
     "stock_alert_email": {
       "type": "string"
+    },
+    "vehicle_type": {
+      "type": "string",
+      "enum": [
+        "personal_car",
+        "cargo_van",
+        "box_truck",
+        "other"
+      ],
+      "default": "personal_car",
+      "description": "Driver's vehicle class, used to match against opportunity role_type."
+    },
+    "region": {
+      "type": "string",
+      "default": "",
+      "description": "Driver's working region (e.g. Hampton Roads), used to match against opportunity region."
+    },
+    "alert_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt-in to automatic alerts when a new opportunity matches this driver's location and vehicle."
     }
-  }
+  },
+  "required": []
 }
