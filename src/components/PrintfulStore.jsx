@@ -353,7 +353,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
           >
             <div className="sticky top-0 flex items-center justify-between px-4 py-3 glass border-b border-white/8">
               <div className="text-sm font-bold text-white truncate pr-2">{selected.name}</div>
-              <button onClick={() => setSelected(null)} aria-label="Close" className="rounded-lg p-1 text-white/60 active:scale-90 transition-transform">
+              <button onClick={() => setSelected(null)} aria-label="Close" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/60 active:scale-90 transition-transform">
                 <X className="h-5 w-5" />
               </button>
             </div>
