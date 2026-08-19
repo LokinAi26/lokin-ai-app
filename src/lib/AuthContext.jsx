@@ -14,6 +14,13 @@ const withTimeout = (promise, ms, label) => Promise.race([
   })
 ]);
 
+// Hard ceiling for the entire startup sequence. No matter what hangs — a
+// stalled network request, an SDK call that never settles, or an unhandled
+// edge case that forgets to clear a loading flag — the app is forced out of
+// loading after this many milliseconds so the user always lands on Login or
+// Home instead of a frozen spinner.
+const STARTUP_WATCHDOG_MS = 12000;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,6 +32,20 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAppState();
+  }, []);
+
+  // Hard startup watchdog: guarantees the loading state always exits within
+  // STARTUP_WATCHDOG_MS, even if an API call hangs past its own timeout or an
+  // unexpected code path forgets to clear a loading flag. Without this, any
+  // missed terminal path leaves isLoadingAuth/isLoadingPublicSettings true
+  // and AuthenticatedApp renders its spinner forever.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+    }, STARTUP_WATCHDOG_MS);
+    return () => clearTimeout(id);
   }, []);
 
   const checkAppState = async () => {
@@ -101,8 +122,11 @@ export const AuthProvider = ({ children }) => {
             message: appError.message || 'Failed to load app'
           });
         }
+        // MUST set authChecked or ProtectedRoute shows its fallback spinner
+        // indefinitely (it gates on `!authChecked`).
         setIsLoadingPublicSettings(false);
         setIsLoadingAuth(false);
+        setAuthChecked(true);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -112,6 +136,7 @@ export const AuthProvider = ({ children }) => {
       });
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
+      setAuthChecked(true);
     }
   };
 
