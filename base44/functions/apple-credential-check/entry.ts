@@ -27,15 +27,20 @@ function b64urlBuf(buf) {
 function normalizePemBody(raw) {
   let k = (raw || '').trim();
   k = k.replace(/\\n/g, '\n').replace(/\\r/g, '');
-  const body = k
+  k = k
     .replace(/-----BEGIN [A-Z ]+-----/g, '')
-    .replace(/-----END [A-Z ]+-----/g, '')
-    .replace(/\s+/g, '');
+    .replace(/-----END [A-Z ]+-----/g, '');
+  // Strip everything that isn't a valid base64 character (handles stray
+  // whitespace, newlines, BOMs, or any other invisible chars the paste may
+  // have introduced). Apple .p8 bodies are pure base64.
+  const body = k.replace(/[^A-Za-z0-9+/=]/g, '');
   return body;
 }
 
 function pemBodyToDer(body) {
-  const bin = atob(body);
+  // Pad to a multiple of 4 in case trailing '=' was stripped during paste.
+  const padded = body + '='.repeat((4 - (body.length % 4)) % 4);
+  const bin = atob(padded);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
@@ -102,7 +107,17 @@ export default async function(req) {
       );
       jwt = `${signingInput}.${b64urlBuf(sig)}`;
     } catch (e) {
-      return Response.json({ ok: false, component: 'JWT_GENERATION', message: 'Key import or signing failed: ' + e.message });
+      // Structural-only diagnostics: DER header bytes and length. Never the key value.
+      const der = pemBodyToDer(pemBody);
+      const headerHex = Array.from(der.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+      return Response.json({
+        ok: false,
+        component: 'JWT_GENERATION',
+        message: 'Key import or signing failed: ' + e.message,
+        derLength: der.length,
+        derHeaderHex: headerHex,
+        bodyLength: pemBody.length
+      });
     }
 
     // 4. Authenticate against App Store Connect API
