@@ -10,7 +10,7 @@
   loads in its WebView. The LOKIN React app reads ?via=assistant and
   surfaces a brief acknowledgment.
 
-  Replace https://lokin-app.web.app with your published app domain
+  Published production domain: https://lokin-ai-app-604c3139.base44.app
   (the same one exposed at /api/mcp).
 -->
 <actions>
@@ -20,7 +20,7 @@
         <parameter name="lokin.feature">
             <entity-set-reference entitySetId="lokinFeatureEntitySet" />
         </parameter>
-        <fulfillment urlTemplate="https://lokin-app.web.app/route?action=route&amp;via=assistant">
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/route?action=route&amp;via=assistant">
             <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
         </fulfillment>
     </action>
@@ -31,7 +31,7 @@
         <parameter name="lokin.feature">
             <entity-set-reference entitySetId="lokinFeatureEntitySet" />
         </parameter>
-        <fulfillment urlTemplate="https://lokin-app.web.app/lokin?action=lokin&amp;via=assistant">
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/lokin?action=lokin&amp;via=assistant">
             <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
         </fulfillment>
     </action>
@@ -42,7 +42,7 @@
         <parameter name="lokin.feature">
             <entity-set-reference entitySetId="lokinFeatureEntitySet" />
         </parameter>
-        <fulfillment urlTemplate="https://lokin-app.web.app/earnings?action=earnings&amp;via=assistant">
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/earnings?action=earnings&amp;via=assistant">
             <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
         </fulfillment>
     </action>
