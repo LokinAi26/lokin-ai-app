@@ -89,6 +89,7 @@ export default function OrderExplorer({ orders, currency }) {
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">{badge(o.financial_status)}</span>
+                {o.test && <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[9px] font-bold text-amber-300">TEST · excluded from production metrics</span>}
                 <span className="rounded-full border border-accent/25 bg-accent/10 px-2 py-0.5 text-[9px] font-bold text-accent">{badge(o.fulfillment_status)}</span>
                 {o.refunds > 0 && (
                   <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[9px] font-bold text-red-300">{o.refunds} refund{o.refunds > 1 ? "s" : ""}</span>
