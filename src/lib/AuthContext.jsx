@@ -5,6 +5,15 @@ import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
 
+const withTimeout = (promise, ms, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => {
+    const error = new Error(`${label} timed out`);
+    error.code = 'LOKIN_TIMEOUT';
+    setTimeout(() => reject(error), ms);
+  })
+]);
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,7 +44,11 @@ export const AuthProvider = ({ children }) => {
       });
       
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        const publicSettings = await withTimeout(
+          appClient.get(`/prod/public-settings/by-id/${appParams.appId}`),
+          8000,
+          'Public settings request'
+        );
         setAppPublicSettings(publicSettings);
         
         // If we got the app public settings successfully, check if user is authenticated
@@ -49,6 +62,19 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
       } catch (appError) {
         console.error('App state check failed:', appError);
+
+        // Never leave the app trapped behind startup loading. If Base44 public
+        // settings are temporarily unreachable, fail safely to the unauthenticated
+        // shell so the login screen can render instead of appearing frozen.
+        if (appError?.code === 'LOKIN_TIMEOUT') {
+          setAppPublicSettings(null);
+          setIsAuthenticated(false);
+          setAuthChecked(true);
+          setAuthError(null);
+          setIsLoadingPublicSettings(false);
+          setIsLoadingAuth(false);
+          return;
+        }
         
         // Handle app-level errors
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
@@ -93,7 +119,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const currentUser = await withTimeout(base44.auth.me(), 7000, 'User auth request');
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
@@ -103,6 +129,11 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
+
+      if (error?.code === 'LOKIN_TIMEOUT') {
+        setAuthError(null);
+        return;
+      }
       
       // If user auth fails, it might be an expired token
       if (error.status === 401 || error.status === 403) {
