@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck } from "lucide-react";
+import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Mic } from "lucide-react";
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
@@ -45,6 +45,7 @@ export default function DriverLayout() {
   const [working, setWorking] = useState(false);
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const isNested = NESTED_PATHS.includes(loc.pathname);
   const isShopFlow = loc.pathname === "/locator" || loc.pathname === "/shop-deliver";
   const currentTab = pathToTab(loc.pathname);
@@ -114,10 +115,13 @@ export default function DriverLayout() {
             const active = currentTab === key;
             if (center) {
               return (
-                <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
+                <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10 glow-primary" : "border-white/10 bg-card"}`}>
+                  <div className={`relative flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
                     <Icon size={24} />
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border border-primary/50 bg-background">
+                      <Mic className="h-2.5 w-2.5 text-primary" />
+                    </span>
                   </div>
                   <span className={active ? "text-primary" : "text-white/45"}>LOKIN</span>
                 </button>
@@ -136,7 +140,7 @@ export default function DriverLayout() {
 
       {!lockedGps && <QuickJumpRail />}
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
-      <GlobalVoiceAssistant />
+      <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} />
     </div>
   );
 }

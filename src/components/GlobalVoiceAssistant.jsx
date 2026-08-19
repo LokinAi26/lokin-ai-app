@@ -54,9 +54,11 @@ function matchCommand(text) {
 
 // Siri/Gemini-style hands-free voice assistant overlay, available app-wide.
 // Tap the orb to talk, or enable "Always Listening" for wake-word ("Hey LOKIN") activation.
-export default function GlobalVoiceAssistant() {
+export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChange }) {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
+  const setOpen = onOpenChange || setUncontrolledOpen;
   const [listening, setListening] = useState(false);
   const [alwaysOn, setAlwaysOn] = useState(() => localStorage.getItem("lokin_always_on") === "1");
   const [busy, setBusy] = useState(false);
@@ -270,16 +272,6 @@ export default function GlobalVoiceAssistant() {
 
   return (
     <>
-      {/* Floating orb */}
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="LOKIN voice assistant"
-        className={`fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 active:scale-95 transition-all ${alwaysOn ? "border-accent bg-accent/15 glow-cyan" : "border-primary/50 bg-card glow-primary"}`}
-        style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}
-      >
-        {alwaysOn ? <Ear className="h-6 w-6 text-accent" /> : <Mic className="h-6 w-6 text-primary" />}
-      </button>
-
       <AnimatePresence>
         {open && (
           <motion.div
@@ -303,9 +295,14 @@ export default function GlobalVoiceAssistant() {
                   <LokinGlyph size={24} />
                   <span className="font-display font-bold tracking-wider metal-text">LOKIN VOICE</span>
                 </div>
-                <button onClick={() => setOpen(false)} className="text-white/50 active:scale-90">
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="text-[10px] font-bold tracking-wide text-primary/80 border border-primary/25 rounded-lg px-2 py-1 active:scale-90">
+                    FULL AI →
+                  </button>
+                  <button onClick={() => setOpen(false)} className="text-white/50 active:scale-90">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Listening orb */}
