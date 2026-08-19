@@ -3,6 +3,7 @@ import { Check, Sparkles, Crown, Zap, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { useToast } from "@/components/ui/use-toast";
+import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
 const TIERS = [
   {
@@ -72,6 +73,10 @@ export default function Pricing() {
   }, []);
 
   async function subscribe(productId) {
+    if (!RELEASE_FLAGS.externalDigitalSubscriptions) {
+      toast({ title: "Paid plans are not enabled in this launch build", description: "LOKIN Core remains available. Pro and Elite will return after native App Store billing is integrated." });
+      return;
+    }
     setLoading(productId);
     try {
       const res = await base44.functions.invoke("create-checkout", { productId });
@@ -155,10 +160,10 @@ export default function Pricing() {
                     : "border border-primary/40 bg-primary/10 text-primary"
                 }`}
               >
-                {loading === t.id ? "Redirecting…" : isPaidActive ? "Your current plan" : t.cta}
+                {!RELEASE_FLAGS.externalDigitalSubscriptions && t.id !== "free" ? "Coming after App Store billing" : loading === t.id ? "Redirecting…" : isPaidActive ? "Your current plan" : t.cta}
               </button>
 
-              {t.annualId && !isPaidActive && (
+              {RELEASE_FLAGS.externalDigitalSubscriptions && t.annualId && !isPaidActive && (
                 <button
                   onClick={() => subscribe(t.annualId)}
                   disabled={loading !== null}
@@ -172,7 +177,7 @@ export default function Pricing() {
         })}
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 flex-wrap pt-2">
+      {RELEASE_FLAGS.externalDigitalSubscriptions && <div className="flex items-center justify-center gap-1.5 flex-wrap pt-2">
         {["Apple Pay", "Google Pay", "Visa", "Mastercard", "Amex"].map((m) => (
           <span
             key={m}
@@ -181,10 +186,8 @@ export default function Pricing() {
             {m}
           </span>
         ))}
-      </div>
-      <div className="text-center text-[10px] tracking-[0.2em] text-white/30">
-        TAP TO PAY · SECURE CHECKOUT · CANCEL ANYTIME
-      </div>
+      </div>}
+      {RELEASE_FLAGS.externalDigitalSubscriptions ? <div className="text-center text-[10px] tracking-[0.2em] text-white/30">TAP TO PAY · SECURE CHECKOUT · CANCEL ANYTIME</div> : <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3 text-center text-xs text-white/55">App Store 1.0 launches with the free core experience. Paid digital plans are intentionally disabled until native App Store billing is integrated.</div>}
     </div>
   );
 }

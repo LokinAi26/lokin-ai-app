@@ -4,6 +4,7 @@ import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settin
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
+import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
 const SECTIONS = [
   {
@@ -40,9 +41,9 @@ const SECTIONS = [
     icon: Store,
     color: "text-primary",
     items: [
-      { to: "/stash", icon: Leaf, title: "LOKIN Green", desc: "Discreet cannabis ordering" },
-      { to: "/green-delivery", icon: Truck, title: "Green Delivery", desc: "Certified cannabis orders" },
-      { to: "/insurance", icon: ShieldCheck, title: "LOKIN Cover", desc: "Gig & commercial insurance" },
+      { to: "/stash", icon: Leaf, title: "LOKIN Green", desc: "Discreet cannabis ordering", requires: "cannabis" },
+      { to: "/green-delivery", icon: Truck, title: "Green Delivery", desc: "Certified cannabis orders", requires: "cannabis" },
+      { to: "/insurance", icon: ShieldCheck, title: "LOKIN Cover", desc: "Gig & commercial insurance", requires: "insurance" },
     ],
   },
   {
@@ -123,6 +124,7 @@ function Section({ section, defaultOpen }) {
 }
 
 export default function More() {
+  const visibleSections = SECTIONS.map((section) => ({ ...section, items: section.items.filter((item) => item.requires === "cannabis" ? RELEASE_FLAGS.regulatedCannabis : item.requires === "insurance" ? RELEASE_FLAGS.insuranceTransactions : true) })).filter((section) => section.items.length > 0);
   async function logout() {
     await base44.auth.logout("/login");
   }
@@ -130,7 +132,7 @@ export default function More() {
     <div className="p-4 space-y-3 pb-8">
       <h1 className="text-2xl font-bold font-heading metal-text">More</h1>
 
-      {SECTIONS.map((s, i) => (
+      {visibleSections.map((s, i) => (
         <Section key={s.id} section={s} defaultOpen={i === 0} />
       ))}
 

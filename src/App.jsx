@@ -65,6 +65,9 @@ import InsuranceAdmin from './pages/InsuranceAdmin';
 import DriverOnboarding from './pages/DriverOnboarding';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import SupportInfo from './pages/SupportInfo';
+import ReleaseGate from './components/ReleaseGate';
+import { RELEASE_FLAGS } from './lib/releaseFlags';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -145,12 +148,12 @@ const AuthenticatedApp = () => {
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
-          <Route path="/stash" element={<Stash />} />
-          <Route path="/stash/cart" element={<StashCart />} />
-          <Route path="/green-delivery" element={<GreenDelivery />} />
-          <Route path="/insurance" element={<Insurance />} />
-          <Route path="/insurance-admin" element={<InsuranceAdmin />} />
-          <Route path="/onboarding" element={<DriverOnboarding />} />
+          <Route path="/stash" element={RELEASE_FLAGS.regulatedCannabis ? <Stash /> : <ReleaseGate title="LOKIN Green — partner activation required" body="LOKIN Green is preserved but disabled for the App Store 1.0 launch until a licensed cannabis-market partner, legal-entity submission, and jurisdictional geo-restriction are active." />} />
+          <Route path="/stash/cart" element={RELEASE_FLAGS.regulatedCannabis ? <StashCart /> : <ReleaseGate title="Regulated checkout unavailable" body="Cannabis checkout is disabled in the App Store 1.0 launch candidate." />} />
+          <Route path="/green-delivery" element={RELEASE_FLAGS.regulatedCannabis ? <GreenDelivery /> : <ReleaseGate title="Green Delivery — partner activation required" body="Regulated delivery remains disabled until licensed-market and jurisdiction controls are active." />} />
+          <Route path="/insurance" element={RELEASE_FLAGS.insuranceTransactions ? <Insurance /> : <ReleaseGate title="LOKIN Cover — partner activation required" body="Insurance application and binding workflows are preserved but disabled in the App Store 1.0 launch until an authorized carrier/agency relationship and required legal-entity submission are in place." />} />
+          <Route path="/insurance-admin" element={RELEASE_FLAGS.insuranceTransactions ? <InsuranceAdmin /> : <ReleaseGate title="LOKIN Cover Admin unavailable" body="Carrier administration is not enabled in the App Store 1.0 launch candidate." />} />
+          <Route path="/onboarding" element={RELEASE_FLAGS.regulatedCannabis ? <DriverOnboarding /> : <ReleaseGate title="Regulated onboarding unavailable" body="Green Delivery onboarding is disabled for the App Store 1.0 launch candidate." />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />
@@ -158,6 +161,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/support-info" element={<SupportInfo />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />

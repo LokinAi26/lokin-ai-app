@@ -51,7 +51,13 @@ export default function Settings() {
     } catch (e) {
       console.error("deleteAccount: purge failed", e);
     }
-    try { await base44.auth.logout("/login"); } catch {}
+    try {
+      await base44.functions.invoke("delete-account", {});
+      await base44.auth.logout("/login");
+    } catch (e) {
+      console.error("deleteAccount: account record deletion failed", e);
+      setDeleting(false);
+    }
   }
 
   useEffect(() => {
