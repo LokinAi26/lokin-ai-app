@@ -24,6 +24,7 @@ const TIERS = [
   {
     id: "pro_monthly",
     name: "Pro",
+    tier: "pro",
     price: "$9.99",
     period: "/mo",
     icon: Sparkles,
@@ -42,6 +43,7 @@ const TIERS = [
   {
     id: "elite_monthly",
     name: "Elite",
+    tier: "elite",
     price: "$19.99",
     period: "/mo",
     icon: Crown,
