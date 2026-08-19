@@ -1,0 +1,101 @@
+{
+  "name": "InsurancePolicy",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "quote_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "policy_number": {
+      "type": "string"
+    },
+    "coverage_type": {
+      "type": "string",
+      "enum": [
+        "commercial_gig",
+        "auto_personal",
+        "cargo",
+        "health_gap",
+        "roadside"
+      ]
+    },
+    "monthly_premium": {
+      "type": "number",
+      "default": 0
+    },
+    "deductible": {
+      "type": "number",
+      "default": 0
+    },
+    "liability_limit": {
+      "type": "number",
+      "default": 1000000
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_activation",
+        "active",
+        "canceled",
+        "expired"
+      ],
+      "default": "pending_activation"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "bound_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "coverage_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

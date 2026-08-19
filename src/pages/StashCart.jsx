@@ -14,8 +14,10 @@ export default function StashCart() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [state, setState] = useState("");
   const [apt, setApt] = useState("");
   const [discreet, setDiscreet] = useState(true);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => setItems(readCart()), []);
@@ -34,6 +36,8 @@ export default function StashCart() {
   async function placeOrder() {
     if (!items.length) return;
     if (!address.trim()) { toast({ title: "Delivery address required", variant: "destructive" }); return; }
+    if (!state.trim()) { toast({ title: "Delivery state required", description: "Enter the 2-letter state code for market eligibility checks.", variant: "destructive" }); return; }
+    if (!ageConfirmed) { toast({ title: "Age confirmation required", description: "You must confirm you are 21+ before regulated checkout.", variant: "destructive" }); return; }
     setPlacing(true);
     try {
       let user = null;
@@ -45,11 +49,12 @@ export default function StashCart() {
         total: Number(total.toFixed(2)),
         dispensary,
         delivery_address: address.trim(),
+        delivery_state: state.trim().toUpperCase(),
         apt: apt.trim(),
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         discreet,
-        age_verified: true,
+        age_verified: ageConfirmed,
         status: "placed",
         payment_status: "pending",
       });
@@ -99,7 +104,14 @@ export default function StashCart() {
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional, for discretion)" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
-            <input value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt / unit (optional)" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
+            <div className="grid grid-cols-[1fr_110px] gap-2">
+              <input value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt / unit (optional)" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
+              <input value={state} onChange={(e) => setState(e.target.value.slice(0, 2).toUpperCase())} placeholder="State" maxLength={2} autoCapitalize="characters" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
+            </div>
+            <button onClick={() => setAgeConfirmed((v) => !v)} className={`w-full flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm ${ageConfirmed ? "border-primary/30 bg-primary/10 text-primary" : "border-white/10 bg-white/5 text-white/60"}`}>
+              <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> I confirm I am 21+</span>
+              <span className="text-xs font-bold">{ageConfirmed ? "YES" : "REQUIRED"}</span>
+            </button>
             <button onClick={() => setDiscreet((d) => !d)} className={`w-full flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm ${discreet ? "border-primary/30 bg-primary/10 text-primary" : "border-white/10 bg-white/5 text-white/60"}`}>
               <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Discreet packaging</span>
               <span className="text-xs font-bold">{discreet ? "ON" : "OFF"}</span>
@@ -113,7 +125,7 @@ export default function StashCart() {
           <button onClick={placeOrder} disabled={placing} className="w-full rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-50">
             {placing ? "Starting checkout…" : "Pay & place order"}
           </button>
-          <p className="text-[10px] text-white/30 text-center">21+ only · ID checked on delivery · Licensed markets</p>
+          <p className="text-[10px] text-white/30 text-center">21+ only · ID checked on delivery · Checkout activates only in enabled licensed markets</p>
         </>
       )}
     </div>

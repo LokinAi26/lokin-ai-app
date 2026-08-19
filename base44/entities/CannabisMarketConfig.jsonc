@@ -1,0 +1,58 @@
+{
+  "name": "CannabisMarketConfig",
+  "type": "object",
+  "properties": {
+    "market_key": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "licensed_sales_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "delivery_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "payments_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "minimum_age": {
+      "type": "number",
+      "default": 21
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "market_key",
+    "state",
+    "enabled"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

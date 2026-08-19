@@ -1,0 +1,89 @@
+{
+  "name": "InsuranceQuote",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "monthly_premium": {
+      "type": "number",
+      "default": 0
+    },
+    "deductible": {
+      "type": "number",
+      "default": 0
+    },
+    "liability_limit": {
+      "type": "number",
+      "default": 1000000
+    },
+    "coverage_type": {
+      "type": "string",
+      "enum": [
+        "commercial_gig",
+        "auto_personal",
+        "cargo",
+        "health_gap",
+        "roadside"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "quoted",
+        "selected",
+        "expired",
+        "declined"
+      ],
+      "default": "quoted"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "application_id",
+    "coverage_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
