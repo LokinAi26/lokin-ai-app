@@ -1,0 +1,111 @@
+{
+  "name": "CannabisOrder",
+  "type": "object",
+  "properties": {
+    "buyer_user_id": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "total": {
+      "type": "number",
+      "default": 0
+    },
+    "dispensary": {
+      "type": "string"
+    },
+    "delivery_address": {
+      "type": "string"
+    },
+    "apt": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_phone": {
+      "type": "string"
+    },
+    "discreet": {
+      "type": "boolean",
+      "default": true
+    },
+    "age_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "placed",
+        "accepted",
+        "picked_up",
+        "in_transit",
+        "delivered",
+        "canceled"
+      ],
+      "default": "placed"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "delivery_address",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.buyer_user_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.buyer_user_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.buyer_user_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

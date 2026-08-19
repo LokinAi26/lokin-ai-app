@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2 } from "lucide-react";
+import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
 
@@ -24,6 +24,14 @@ const GROUPS = [
       { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts, cashback & costs", color: "text-accent" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan, beep, find the shelf", color: "text-primary" },
       { to: "/shop-deliver", icon: ShoppingBag, title: "Shop & Deliver", desc: "Map and manage shopping runs", color: "text-primary" },
+    ],
+  },
+  {
+    label: "Marketplace & Coverage",
+    items: [
+      { to: "/stash", icon: Leaf, title: "LOKIN Green", desc: "Discreet cannabis ordering & delivery", color: "text-primary" },
+      { to: "/green-delivery", icon: Truck, title: "Green Delivery", desc: "Accept certified cannabis orders", color: "text-primary" },
+      { to: "/insurance", icon: ShieldCheck, title: "LOKIN Cover", desc: "Apply for gig & commercial insurance", color: "text-accent" },
     ],
   },
   {

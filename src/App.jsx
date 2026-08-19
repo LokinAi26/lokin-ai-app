@@ -57,6 +57,10 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OAuthConsent from './pages/OAuthConsent';
 import ShopifyEmbed from './pages/ShopifyEmbed';
+import Stash from './pages/Stash';
+import StashCart from './pages/StashCart';
+import GreenDelivery from './pages/GreenDelivery';
+import Insurance from './pages/Insurance';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -137,6 +141,10 @@ const AuthenticatedApp = () => {
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
+          <Route path="/stash" element={<Stash />} />
+          <Route path="/stash/cart" element={<StashCart />} />
+          <Route path="/green-delivery" element={<GreenDelivery />} />
+          <Route path="/insurance" element={<Insurance />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />

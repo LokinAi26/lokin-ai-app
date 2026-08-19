@@ -1,0 +1,93 @@
+{
+  "name": "CannabisProduct",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "strain_type": {
+      "type": "string",
+      "enum": [
+        "sativa",
+        "indica",
+        "hybrid",
+        "cbd",
+        "none"
+      ],
+      "default": "hybrid"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "flower",
+        "preroll",
+        "edible",
+        "concentrate",
+        "vape",
+        "topical",
+        "tincture",
+        "accessory"
+      ],
+      "default": "flower"
+    },
+    "thc_pct": {
+      "type": "number",
+      "default": 0
+    },
+    "cbd_pct": {
+      "type": "number",
+      "default": 0
+    },
+    "price": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string",
+      "default": "each"
+    },
+    "dispensary": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "effects": {
+      "type": "string"
+    },
+    "stock": {
+      "type": "number",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "price",
+    "dispensary"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
