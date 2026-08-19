@@ -73,8 +73,8 @@ not a placeholder.
    <meta-data android:name="com.google.actions"
               android:resource="@xml/actions" />
    ```
-4. Replace `https://lokin-app.web.app` in `actions.xml` with your published
-   app domain.
+4. Confirm `actions.xml` uses the published production domain:
+   `https://lokin-ai-app-604c3139.base44.app`.
 5. Ensure your WebView Activity handles the fulfillment URL (it loads the
    deep link, which the React router resolves to the right screen).
 6. Test with the Google Assistant plugin in Android Studio, then on a
