@@ -127,6 +127,9 @@ export default function Login() {
           )}
         </Button>
       </form>
+      <p className="mt-5 text-center text-xs text-muted-foreground">
+        By continuing, you agree to the <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link> and acknowledge the <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+      </p>
     </AuthLayout>
   );
 }
