@@ -35,7 +35,7 @@ const SORTS = [
 ];
 
 function selectCls() {
-  return "rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/80 outline-none";
+  return "min-h-11 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/80 outline-none";
 }
 
 export default function OpportunityFilters({ filters, setFilters }) {
