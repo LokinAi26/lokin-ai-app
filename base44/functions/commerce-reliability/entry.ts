@@ -64,14 +64,32 @@ function skuLooksPrintful(sku: unknown): boolean {
   return Boolean(sku) && /^\d+[_-]\d+$/.test(String(sku));
 }
 
+// Read-only product-classification baseline from the verified Shopify investigation.
+// These four products were explicitly confirmed as intentional NON_PRINTFUL listings.
+// New unmapped products are never auto-classified as non-Printful; they remain NEEDS_REVIEW.
+const VERIFIED_NON_PRINTFUL_PRODUCT_IDS = new Set([
+  "7632162390087",
+  "7632162422855",
+  "7632162455623",
+  "7632162488391",
+]);
+
+type FulfillmentClassification = "PRINTFUL" | "NON_PRINTFUL" | "NEEDS_REVIEW";
+function classifyProductFulfillment(product: any): FulfillmentClassification {
+  const variants: any[] = product?.variants || [];
+  if (variants.some((v) => skuLooksPrintful(v?.sku))) return "PRINTFUL";
+  if (VERIFIED_NON_PRINTFUL_PRODUCT_IDS.has(String(product?.id || ""))) return "NON_PRINTFUL";
+  return "NEEDS_REVIEW";
+}
+
 const REMEDIATION: Record<string, string> = {
   shopify_auth: "Reconnect LOKIN Commerce from Shopify Admin → Apps, or refresh SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (and SHOPIFY_STORE_DOMAIN) in Base44 Secrets.",
   shopify_token_renewal: "Configure SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET for automatic client-credentials renewal. A legacy static token will eventually expire with no warning.",
   printful_auth: "Set a valid PRINTFUL_API_TOKEN in Base44 Secrets, or reconnect Printful via OAuth. Do NOT migrate the store to Manual Order/API.",
   shopify_printful_connection: "Ensure the Printful store is platform-linked to Shopify (Printful dashboard → Stores → connect Shopify). Keep the native sync architecture.",
   product_sync: "Verify Shopify Admin API access and that products exist in the Shopify store. Confirm SHOPIFY_STORE_DOMAIN is correct.",
-  product_monitoring: "Review flagged products: publish unpublished products, restock out-of-stock variants, and resolve SKU anomalies. For unsynced products, push them to Printful so Shopify assigns Printful-format SKUs, or mark them as non-Printful.",
-  sku_variant_mapping: "Push unsynced products to Printful so Shopify assigns Printful-format SKUs, or mark them as intentional non-Printful listings.",
+  product_monitoring: "Review flagged products: publish unpublished products, restock out-of-stock variants, resolve confirmed Printful SKU/linkage problems, and manually classify NEEDS_REVIEW products. Intentional NON_PRINTFUL listings do not require Printful SKUs.",
+  sku_variant_mapping: "Repair only confirmed PRINTFUL products with missing/invalid Printful SKU linkage. Intentional NON_PRINTFUL listings are valid without Printful SKUs; ambiguous products stay NEEDS_REVIEW until explicitly classified.",
   fulfillment_readiness: "Grant the missing Shopify scopes (write_merchant_managed_fulfillment_orders, write_orders, read_locations) and reinstall the app if needed. The native Printful fulfillment workflow is unchanged.",
   inventory_availability: "Restock out-of-stock variants or mark them as sold out in Shopify. Printful availability is managed via the native Shopify integration for Shopify-platform stores.",
   printful_store_api_compatibility: "If a Shopify-platform Printful store returns an unexpected (non-400) error, verify the Printful token is valid and the store is healthy. A 400 'Manual Order/API platform' response is EXPECTED.",
@@ -223,41 +241,88 @@ export default async function (req: Request): Promise<Response> {
   if (products.length) {
     const flagged: any[] = [];
     let variantsTotal = 0;
-    let mapped = 0;
+    let printfulProducts = 0;
+    let nonPrintfulProducts = 0;
+    let needsReviewProducts = 0;
+    let printfulVariants = 0;
+    let printfulMapped = 0;
+    let printfulMissingLinkage = 0;
+
     for (const p of products) {
       const issues: string[] = [];
+      const classification = classifyProductFulfillment(p);
+      if (classification === "PRINTFUL") printfulProducts++;
+      else if (classification === "NON_PRINTFUL") nonPrintfulProducts++;
+      else needsReviewProducts++;
+
       if (p.status !== "active") issues.push("unpublished");
       const vars: any[] = p.variants || [];
-      let productMapped = 0;
       for (const v of vars) {
         variantsTotal++;
-        if (skuLooksPrintful(v.sku)) { mapped++; productMapped++; }
-        else issues.push("sku_anomaly");
+        const mapped = skuLooksPrintful(v.sku);
+
+        // Printful SKU/linkage requirements apply ONLY to positively classified PRINTFUL products.
+        if (classification === "PRINTFUL") {
+          printfulVariants++;
+          if (mapped) printfulMapped++;
+          else {
+            printfulMissingLinkage++;
+            issues.push("sku_anomaly", "unsynced");
+          }
+        }
+
         if (v.inventory_management != null && v.inventory_quantity === 0) issues.push("out_of_stock");
         if (v.inventory_quantity != null && v.inventory_quantity > 0 && v.inventory_quantity <= 5) issues.push("low_stock");
       }
-      // Requirement 5: detect unsynced / lost Printful linkage — a product with
-      // variants but zero Printful-format SKUs is treated as unsynced.
-      if (vars.length && productMapped === 0) issues.push("unsynced");
-      if (issues.length) flagged.push({ id: p.id, title: p.title, status: p.status, issues: [...new Set(issues)] });
+
+      // Never auto-connect or auto-classify an ambiguous product.
+      if (classification === "NEEDS_REVIEW") issues.push("needs_review");
+
+      if (issues.length) {
+        flagged.push({
+          id: p.id,
+          title: p.title,
+          status: p.status,
+          fulfillment_classification: classification,
+          issues: [...new Set(issues)],
+        });
+      }
     }
+
+    const monitoringStatus = flagged.length ? "WARNING" : "HEALTHY";
     checks.push({
       key: "product_monitoring",
       label: "Product & variant monitoring",
-      status: flagged.length ? "WARNING" : "HEALTHY",
+      status: monitoringStatus,
       detail: flagged.length
-        ? `${flagged.length} product(s) need attention (${[...new Set(flagged.flatMap((f) => f.issues))].join(" / ")}).`
-        : "All published products and variants look healthy and Printful-linked.",
+        ? `${flagged.length} product(s) need attention (${[...new Set(flagged.flatMap((f) => f.issues))].join(" / ")}). Intentional NON_PRINTFUL products are excluded from Printful-SKU warnings.`
+        : "All products are healthy for their explicit fulfillment classification.",
       flagged_count: flagged.length,
+      classification_counts: {
+        printful: printfulProducts,
+        non_printful: nonPrintfulProducts,
+        needs_review: needsReviewProducts,
+      },
       flagged: flagged.slice(0, 20),
     });
+
+    const mappingStatus = printfulMissingLinkage > 0
+      ? "ACTION_REQUIRED"
+      : needsReviewProducts > 0
+        ? "WARNING"
+        : "HEALTHY";
     checks.push({
       key: "sku_variant_mapping",
       label: "SKU / variant mapping",
-      status: variantsTotal ? (mapped === 0 ? "ACTION_REQUIRED" : mapped === variantsTotal ? "HEALTHY" : "WARNING") : "WARNING",
-      detail: `${mapped}/${variantsTotal} variant(s) carry Printful-format SKUs. Unmapped variants may be non-Printful products — review if they should be Printful-linked.`,
-      variants: variantsTotal,
-      mapped,
+      status: mappingStatus,
+      detail: `PRINTFUL: ${printfulProducts} product(s), ${printfulMapped}/${printfulVariants} variant(s) linked; NON_PRINTFUL intentional: ${nonPrintfulProducts}; NEEDS_REVIEW: ${needsReviewProducts}. Intentional NON_PRINTFUL listings are valid without Printful SKUs.`,
+      variants_total: variantsTotal,
+      printful_products: printfulProducts,
+      non_printful_products: nonPrintfulProducts,
+      needs_review_products: needsReviewProducts,
+      printful_variants: printfulVariants,
+      printful_mapped: printfulMapped,
+      printful_missing_linkage: printfulMissingLinkage,
     });
   }
 
