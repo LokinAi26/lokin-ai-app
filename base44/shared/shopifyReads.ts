@@ -116,6 +116,7 @@ export function mapOrdersRich(ordersData: any) {
       name: o.name,
       financial_status: o.financial_status,
       fulfillment_status: o.fulfillment_status,
+      test: o.test === true,
       total_price: o.total_price,
       subtotal_price: o.subtotal_price,
       total_tax: o.total_tax,
