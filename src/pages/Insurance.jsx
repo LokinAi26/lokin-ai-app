@@ -92,7 +92,7 @@ export default function Insurance() {
         status: "submitted",
         submitted_at: new Date().toISOString(),
       });
-      toast({ title: "Application submitted", description: "We'll review and confirm your coverage." });
+      toast({ title: "Application submitted", description: "Your application is ready for review. This submission does not create insurance coverage." });
       load();
     } catch (e) {
       toast({ title: "Submission failed", description: e.message, variant: "destructive" });
@@ -110,7 +110,7 @@ export default function Insurance() {
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">LOKIN Cover</h1>
       </div>
-      <p className="text-sm text-white/50">Get correctly covered for the work you actually do — apply in minutes, right from the road.</p>
+      <p className="text-sm text-white/50">Apply for driver-focused coverage and track carrier review in one place. Coverage starts only after an authorized carrier confirms the policy is active.</p>
 
       {app && (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 space-y-3">
@@ -135,7 +135,7 @@ export default function Insurance() {
                 </div>
                 {app.notes && <div className="text-[11px] text-white/50 border-l border-white/10 pl-2">{app.notes}</div>}
                 {!["active", "approved"].includes(app.status) && (
-                  <div className="text-[11px] text-white/40 text-center pt-1">Under review — we'll activate your coverage shortly.</div>
+                  <div className="text-[11px] text-white/40 text-center pt-1">Under review — no coverage is active until a carrier-confirmed policy appears here.</div>
                 )}
                 {app.status === "active" && app.effective_date && (
                   <div className="text-[11px] text-primary text-center pt-1">You're covered. Keep this page for your records.</div>
