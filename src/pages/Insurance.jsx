@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car } from "lucide-react";
+import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car, ChevronRight, ChevronLeft, Package, Truck, HeartPulse, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
 const COVERAGE = [
-  { id: "commercial_gig", label: "Commercial / Gig", desc: "On-demand delivery & 1099 use", icon: Car },
-  { id: "auto_personal", label: "Auto (Personal)", desc: "Personal vehicle protection", icon: Car },
-  { id: "cargo", label: "Cargo", desc: "Goods in transit coverage", icon: FileText },
-  { id: "health_gap", label: "Health Gap", desc: "Out-of-pocket gap coverage", icon: ShieldCheck },
-  { id: "roadside", label: "Roadside", desc: "Tow, jump, lockout", icon: ShieldCheck },
+  { id: "commercial_gig", label: "Commercial / Gig", desc: "On-demand delivery & 1099 work", icon: Car, perks: ["Liability while on deliveries", "Uninsured motorist", "Medical payments"] },
+  { id: "auto_personal", label: "Auto (Personal)", desc: "Everyday personal vehicle protection", icon: Car, perks: ["Collision & comprehensive", "Property damage", "Rideshare endorsement"] },
+  { id: "cargo", label: "Cargo", desc: "Goods in transit coverage", icon: Package, perks: ["Theft & loss of cargo", "Loading/unloading", "Reefer breakdown"] },
+  { id: "health_gap", label: "Health Gap", desc: "Out-of-pocket gap coverage", icon: HeartPulse, perks: ["ER & urgent care gap", "Accident medical", "Income protection"] },
+  { id: "roadside", label: "Roadside", desc: "Tow, jump, lockout, fuel", icon: Wrench, perks: ["24/7 towing", "Flat tire & battery", "Lockout service"] },
 ];
 
 const STATUS_META = {
@@ -19,6 +19,8 @@ const STATUS_META = {
   declined: { label: "Declined", color: "text-destructive", icon: FileText },
 };
 
+const STEPS = ["Coverage", "Vehicle", "Identity", "Review"];
+
 function Field({ label, value }) {
   return (
     <div className="rounded-xl border border-white/8 bg-black/20 p-2">
@@ -28,12 +30,21 @@ function Field({ label, value }) {
   );
 }
 
+function inputCls() {
+  return "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-sm text-white outline-none placeholder:text-white/30";
+}
+
 export default function Insurance() {
   const { toast } = useToast();
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ coverage_type: "commercial_gig", vehicle_year: "", vehicle_make: "", vehicle_model: "", vehicle_type: "personal_car", license_number: "", state: "", dob: "" });
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    coverage_type: "commercial_gig",
+    vehicle_year: "", vehicle_make: "", vehicle_model: "", vehicle_type: "personal_car",
+    license_number: "", state: "", dob: "",
+  });
 
   useEffect(() => { load(); }, []);
 
@@ -48,11 +59,14 @@ export default function Insurance() {
 
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
 
+  function canAdvance() {
+    if (step === 0) return Boolean(form.coverage_type);
+    if (step === 1) return Boolean(form.vehicle_make.trim() && form.vehicle_model.trim() && form.vehicle_year);
+    if (step === 2) return Boolean(form.license_number.trim() && form.state.trim() && form.dob);
+    return true;
+  }
+
   async function submit() {
-    if (!form.license_number.trim() || !form.state.trim() || !form.dob) {
-      toast({ title: "Please complete license, state & DOB", variant: "destructive" });
-      return;
-    }
     setSubmitting(true);
     try {
       let user = null;
@@ -79,13 +93,15 @@ export default function Insurance() {
 
   if (loading) return <div className="p-6 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
 
+  const activeCoverage = COVERAGE.find((c) => c.id === form.coverage_type);
+
   return (
     <div className="p-4 space-y-4 pb-8">
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">LOKIN Cover</h1>
       </div>
-      <p className="text-sm text-white/50">Get correctly covered for the work you actually do — gig, commercial, cargo & more.</p>
+      <p className="text-sm text-white/50">Get correctly covered for the work you actually do — apply in minutes, right from the road.</p>
 
       {app && (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 space-y-3">
@@ -109,7 +125,12 @@ export default function Insurance() {
                   <Field label="Expires" value={app.expires_at || "—"} />
                 </div>
                 {app.notes && <div className="text-[11px] text-white/50 border-l border-white/10 pl-2">{app.notes}</div>}
-                {!["active", "approved"].includes(app.status) && <div className="text-[11px] text-white/40 text-center">Under review — we'll activate your coverage shortly.</div>}
+                {!["active", "approved"].includes(app.status) && (
+                  <div className="text-[11px] text-white/40 text-center pt-1">Under review — we'll activate your coverage shortly.</div>
+                )}
+                {app.status === "active" && app.effective_date && (
+                  <div className="text-[11px] text-primary text-center pt-1">You're covered. Keep this page for your records.</div>
+                )}
               </>
             );
           })()}
@@ -118,48 +139,110 @@ export default function Insurance() {
 
       {!app && (
         <div className="space-y-4">
-          <div>
-            <div className="text-[11px] tracking-[0.2em] text-white/40 font-display mb-2">COVERAGE TYPE</div>
-            <div className="grid grid-cols-1 gap-2">
+          {/* progress */}
+          <div className="flex items-center gap-1.5">
+            {STEPS.map((s, i) => (
+              <div key={s} className="flex-1">
+                <div className={`h-1 rounded-full ${i <= step ? "bg-primary" : "bg-white/10"}`} />
+                <div className={`mt-1 text-[9px] tracking-wide ${i === step ? "text-primary font-bold" : "text-white/35"}`}>{i + 1}. {s}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* step 1 — coverage */}
+          {step === 0 && (
+            <div className="space-y-2">
               {COVERAGE.map((c) => (
-                <button key={c.id} onClick={() => set("coverage_type", c.id)} className={`flex items-center gap-3 rounded-2xl border p-3 text-left ${form.coverage_type === c.id ? "border-primary/40 bg-primary/10" : "border-white/10 bg-white/[0.03]"}`}>
-                  <c.icon className={`h-5 w-5 ${form.coverage_type === c.id ? "text-primary" : "text-white/50"}`} />
-                  <div>
+                <button key={c.id} onClick={() => set("coverage_type", c.id)} className={`w-full flex items-center gap-3 rounded-2xl border p-3 text-left transition ${form.coverage_type === c.id ? "border-primary/50 bg-primary/10 glow-primary" : "border-white/10 bg-white/[0.03]"}`}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${form.coverage_type === c.id ? "bg-primary/15 text-primary" : "bg-white/5 text-white/50"}`}>
+                    <c.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-white">{c.label}</div>
                     <div className="text-[11px] text-white/45">{c.desc}</div>
                   </div>
+                  {form.coverage_type === c.id && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
                 </button>
               ))}
+              {activeCoverage && (
+                <div className="rounded-2xl border border-white/10 lokin-panel p-3">
+                  <div className="text-[10px] tracking-[0.18em] text-white/40 font-display mb-2">WHAT'S INCLUDED</div>
+                  <ul className="space-y-1.5">
+                    {activeCoverage.perks.map((p) => (
+                      <li key={p} className="flex items-center gap-2 text-xs text-white/70"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" /> {p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          <div className="rounded-2xl border border-white/10 lokin-panel p-3 space-y-3">
-            <div className="text-[11px] tracking-[0.2em] text-white/40 font-display">VEHICLE</div>
-            <div className="grid grid-cols-3 gap-2">
-              <input value={form.vehicle_year} onChange={(e) => set("vehicle_year", e.target.value)} placeholder="Year" className="rounded-xl border border-white/10 bg-black/30 px-2 py-2 text-sm text-white outline-none placeholder:text-white/30" />
-              <input value={form.vehicle_make} onChange={(e) => set("vehicle_make", e.target.value)} placeholder="Make" className="rounded-xl border border-white/10 bg-black/30 px-2 py-2 text-sm text-white outline-none placeholder:text-white/30" />
-              <input value={form.vehicle_model} onChange={(e) => set("vehicle_model", e.target.value)} placeholder="Model" className="rounded-xl border border-white/10 bg-black/30 px-2 py-2 text-sm text-white outline-none placeholder:text-white/30" />
+          {/* step 2 — vehicle */}
+          {step === 1 && (
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-white/10 lokin-panel p-3 space-y-3">
+                <div className="text-[11px] tracking-[0.2em] text-white/40 font-display">VEHICLE</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input value={form.vehicle_year} onChange={(e) => set("vehicle_year", e.target.value)} inputMode="numeric" placeholder="Year" className={inputCls()} />
+                  <input value={form.vehicle_make} onChange={(e) => set("vehicle_make", e.target.value)} placeholder="Make" className={inputCls()} />
+                  <input value={form.vehicle_model} onChange={(e) => set("vehicle_model", e.target.value)} placeholder="Model" className={inputCls()} />
+                </div>
+                <select value={form.vehicle_type} onChange={(e) => set("vehicle_type", e.target.value)} className={inputCls()}>
+                  <option value="personal_car">Personal car</option>
+                  <option value="cargo_van">Cargo van</option>
+                  <option value="box_truck">Box truck</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
-            <select value={form.vehicle_type} onChange={(e) => set("vehicle_type", e.target.value)} className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none">
-              <option value="personal_car">Personal car</option>
-              <option value="cargo_van">Cargo van</option>
-              <option value="box_truck">Box truck</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+          )}
 
-          <div className="rounded-2xl border border-white/10 lokin-panel p-3 space-y-3">
-            <div className="text-[11px] tracking-[0.2em] text-white/40 font-display">LICENSE & IDENTITY</div>
-            <input value={form.license_number} onChange={(e) => set("license_number", e.target.value)} placeholder="Driver license number" className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
-            <div className="grid grid-cols-2 gap-2">
-              <input value={form.state} onChange={(e) => set("state", e.target.value)} placeholder="State (e.g. VA)" className="rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30" />
-              <input type="date" value={form.dob} onChange={(e) => set("dob", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none" />
+          {/* step 3 — identity */}
+          {step === 2 && (
+            <div className="rounded-2xl border border-white/10 lokin-panel p-3 space-y-3">
+              <div className="text-[11px] tracking-[0.2em] text-white/40 font-display">LICENSE & IDENTITY</div>
+              <input value={form.license_number} onChange={(e) => set("license_number", e.target.value)} placeholder="Driver license number" className={inputCls()} />
+              <div className="grid grid-cols-2 gap-2">
+                <input value={form.state} onChange={(e) => set("state", e.target.value)} placeholder="State (e.g. VA)" className={inputCls()} />
+                <input type="date" value={form.dob} onChange={(e) => set("dob", e.target.value)} className={inputCls()} />
+              </div>
+              <div className="text-[10px] text-white/35">Your details are stored securely and reviewed to bind your policy.</div>
             </div>
-          </div>
+          )}
 
-          <button onClick={submit} disabled={submitting} className="w-full rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-50">
-            {submitting ? "Submitting…" : "Apply for coverage"}
-          </button>
+          {/* step 4 — review */}
+          {step === 3 && (
+            <div className="rounded-2xl border border-white/10 lokin-panel p-3 space-y-2">
+              <div className="text-[11px] tracking-[0.2em] text-white/40 font-display mb-1">REVIEW & SUBMIT</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <Field label="Coverage" value={activeCoverage?.label || form.coverage_type.replace(/_/g, " ")} />
+                <Field label="Vehicle type" value={form.vehicle_type.replace(/_/g, " ")} />
+                <Field label="Vehicle" value={[form.vehicle_year, form.vehicle_make, form.vehicle_model].filter(Boolean).join(" ") || "—"} />
+                <Field label="License state" value={form.state || "—"} />
+                <Field label="DOB" value={form.dob || "—"} />
+                <Field label="License #" value={form.license_number ? "••••" + form.license_number.slice(-3) : "—"} />
+              </div>
+              <p className="text-[10px] text-white/35 pt-1">By submitting you authorize LOKIN Cover to verify your details and quote your policy. No charge until you approve the quote.</p>
+            </div>
+          )}
+
+          {/* nav buttons */}
+          <div className="flex gap-2 pt-1">
+            {step > 0 && (
+              <button onClick={() => setStep((s) => s - 1)} className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/70 active:scale-95 transition-transform">
+                <ChevronLeft className="h-4 w-4" /> Back
+              </button>
+            )}
+            {step < STEPS.length - 1 ? (
+              <button onClick={() => canAdvance() && setStep((s) => s + 1)} disabled={!canAdvance()} className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-primary text-primary-foreground py-3 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-40 transition-transform">
+                Continue <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button onClick={submit} disabled={submitting} className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-50 transition-transform">
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : <><ShieldCheck className="h-4 w-4" /> Submit application</>}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
