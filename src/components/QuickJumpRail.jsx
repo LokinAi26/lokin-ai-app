@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Navigation, Fuel, ShoppingBag, Wifi, Search, Briefcase, LifeBuoy, LayoutGrid, X } from "lucide-react";
+import { Navigation, Fuel, ShoppingBag, Wifi, Search, Briefcase, LifeBuoy, LayoutGrid, X, Leaf, ShieldCheck } from "lucide-react";
 
 // Compact neon-green quick-jump hub — pinned to the top-right so you can hop
 // to Route, Fuel, the Commerce Hub, Connectivity, Locator, Gigs and Support
@@ -15,6 +15,8 @@ const ITEMS = [
   { to: "/locator", label: "Locator", icon: Search, match: (p) => p.startsWith("/locator") },
   { to: "/gigs", label: "Gigs", icon: Briefcase, match: (p) => p.startsWith("/gigs") },
   { to: "/support", label: "Support", icon: LifeBuoy, match: (p) => p.startsWith("/support") },
+  { to: "/stash", label: "Green", icon: Leaf, match: (p) => p.startsWith("/stash") || p.startsWith("/green-delivery") },
+  { to: "/insurance", label: "Cover", icon: ShieldCheck, match: (p) => p.startsWith("/insurance") },
 ];
 
 export default function QuickJumpRail() {
