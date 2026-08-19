@@ -275,7 +275,7 @@ export default function GlobalVoiceAssistant() {
         onClick={() => setOpen(true)}
         aria-label="LOKIN voice assistant"
         className={`fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 active:scale-95 transition-all ${alwaysOn ? "border-accent bg-accent/15 glow-cyan" : "border-primary/50 bg-card glow-primary"}`}
-        style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+        style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}
       >
         {alwaysOn ? <Ear className="h-6 w-6 text-accent" /> : <Mic className="h-6 w-6 text-primary" />}
       </button>
