@@ -389,9 +389,24 @@ export default async function (req: Request): Promise<Response> {
     });
   }
 
-  // ---- Tracking synchronization readiness (no customer PII returned) ----
+  // ---- Test-order isolation + tracking synchronization readiness (no customer PII returned) ----
   if (auth.token) {
     const base = shopifyAdminBase(auth.domain);
+    const testR = await shoGet(`${base}/orders.json?limit=250&status=any&fields=id,test`, auth.token);
+    const testOrders = testR.ok && Array.isArray(testR.data?.orders)
+      ? testR.data.orders.filter((o: any) => o?.test === true)
+      : [];
+    checks.push({
+      key: "test_order_isolation",
+      label: "Test-order isolation",
+      status: testR.ok ? "HEALTHY" : "WARNING",
+      detail: testR.ok
+        ? `${testOrders.length} Shopify test order(s) detected and excluded from production commerce intelligence, revenue, customer, fulfillment-risk, and demand metrics.`
+        : `Could not verify Shopify test-order isolation (HTTP ${testR.status}).`,
+      test_order_count: testOrders.length,
+      excluded_from_production_metrics: true,
+    });
+
     const r = await shoGet(`${base}/orders.json?limit=1&fields=id,name,fulfillment_status,total_price,created_at`, auth.token);
     checks.push({
       key: "tracking_sync_readiness",
