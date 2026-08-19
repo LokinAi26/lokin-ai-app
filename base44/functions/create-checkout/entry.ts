@@ -92,6 +92,20 @@ Deno.serve(async (req: Request) => {
       const co = coRows?.[0];
       if (!co) return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
       if (co.payment_status === "paid") return new Response(JSON.stringify({ error: "Order already paid" }), { status: 409 });
+      if (!co.age_verified) return new Response(JSON.stringify({ error: "Age confirmation required" }), { status: 403 });
+
+      // Regulated-commerce fail-closed gate. Cannabis checkout is disabled unless an admin has
+      // explicitly enabled licensed sales, delivery, and payments for the order's delivery state.
+      // This keeps the storefront usable as a demo/marketplace shell without accidentally turning
+      // on regulated sales in an unapproved market or with an ineligible payment provider.
+      const deliveryState = String(co.delivery_state || "").trim().toUpperCase();
+      if (!deliveryState) return new Response(JSON.stringify({ error: "Delivery state required" }), { status: 400 });
+      const marketRows = await base44.asServiceRole.entities.CannabisMarketConfig.filter({ state: deliveryState, enabled: true });
+      const market = marketRows?.find((m: any) => m.licensed_sales_enabled && m.delivery_enabled && m.payments_enabled);
+      if (!market) {
+        return new Response(JSON.stringify({ error: "LOKIN Green checkout is not enabled for this market yet" }), { status: 403 });
+      }
+
       const items: any[] = Array.isArray(co.items) ? co.items : [];
       if (!items.length) return new Response(JSON.stringify({ error: "Empty order" }), { status: 400 });
       cartItems = items.map((it: any) => ({
