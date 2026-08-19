@@ -43,7 +43,7 @@ export default function DeductionsSection() {
           <input type="number" step="0.01" placeholder="Amount $" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="min-h-11 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <input type="text" placeholder="Vendor" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
