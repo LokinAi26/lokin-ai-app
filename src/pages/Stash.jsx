@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Leaf, ShoppingCart, ShieldCheck, Plus, Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import GreenOrderTracker from "@/components/GreenOrderTracker";
 
 const CATEGORIES = [
   { id: "all", label: "All" },
@@ -98,6 +99,8 @@ export default function Stash() {
           <button key={c.id} onClick={() => setCat(c.id)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${cat === c.id ? "bg-primary text-primary-foreground" : "border border-white/10 bg-white/5 text-white/60"}`}>{c.label}</button>
         ))}
       </div>
+
+      <GreenOrderTracker />
 
       {loading ? (
         <div className="py-10 text-center text-sm text-white/40">Loading menu…</div>

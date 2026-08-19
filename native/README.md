@@ -20,9 +20,19 @@ Once ported, a driver can say:
 
 | Voice | Phrase | Opens |
 |-------|--------|-------|
+| Siri | "Level up / Lock in with LOKIN" | `/command?command=lock_in` |
+| Siri | "Pause LOKIN" | `/command?command=pause` |
+| Siri | "Resume LOKIN" | `/command?command=resume` |
+| Siri | "Tap out with LOKIN" | `/command?command=tap_out` (explicit) |
+| Siri | "Find item with LOKIN" | `/command?command=find_item` |
 | Siri | "Optimize my LOKIN route" | `/route` |
 | Siri | "Ask LOKIN" | `/lokin` |
 | Siri | "Show my LOKIN earnings" | `/earnings` |
+| Google Assistant | "Hey Google, lock in on LOKIN" | `/command?command=lock_in` |
+| Google Assistant | "Hey Google, pause LOKIN" | `/command?command=pause` |
+| Google Assistant | "Hey Google, resume LOKIN" | `/command?command=resume` |
+| Google Assistant | "Hey Google, tap out of LOKIN" | `/command?command=tap_out` |
+| Google Assistant | "Hey Google, find an item with LOKIN" | `/command?command=find_item` |
 | Google Assistant | "Hey Google, optimize my LOKIN route" | `/route` |
 | Google Assistant | "Hey Google, ask LOKIN" | `/lokin` |
 | Google Assistant | "Hey Google, show my LOKIN earnings" | `/earnings` |

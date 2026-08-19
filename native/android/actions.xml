@@ -46,4 +46,59 @@
             <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
         </fulfillment>
     </action>
+
+    <!--
+      Hands-free shift control — each routes through /command so the React
+      CommandIngress + lokinCommandPolicy can validate and confirm the action
+      (mirrors the iOS App Intents). Tap Out stays explicit, not silent.
+    -->
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_lockin_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/command?command=lock_in&amp;source=assistant&amp;v=1">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_pause_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/command?command=pause&amp;source=assistant&amp;v=1">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_resume_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/command?command=resume&amp;source=assistant&amp;v=1">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_tapout_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/command?command=tap_out&amp;source=assistant&amp;v=1">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
+
+    <action intentName="actions.intent.OPEN_APP_FEATURE"
+            queryPatterns="@array/lokin_finditem_queries">
+        <parameter name="lokin.feature">
+            <entity-set-reference entitySetId="lokinFeatureEntitySet" />
+        </parameter>
+        <fulfillment urlTemplate="https://lokin-ai-app-604c3139.base44.app/command?command=find_item&amp;source=assistant&amp;v=1">
+            <parameter-mapping urlParameter="lokin.feature" intentParameter="lokin.feature" />
+        </fulfillment>
+    </action>
 </actions>

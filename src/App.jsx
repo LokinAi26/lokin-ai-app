@@ -62,6 +62,7 @@ import StashCart from './pages/StashCart';
 import GreenDelivery from './pages/GreenDelivery';
 import Insurance from './pages/Insurance';
 import InsuranceAdmin from './pages/InsuranceAdmin';
+import DriverOnboarding from './pages/DriverOnboarding';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 
@@ -149,6 +150,7 @@ const AuthenticatedApp = () => {
           <Route path="/green-delivery" element={<GreenDelivery />} />
           <Route path="/insurance" element={<Insurance />} />
           <Route path="/insurance-admin" element={<InsuranceAdmin />} />
+          <Route path="/onboarding" element={<DriverOnboarding />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />

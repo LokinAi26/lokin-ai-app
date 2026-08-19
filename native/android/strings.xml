@@ -25,4 +25,31 @@
         <item>what did I earn on LOKIN</item>
         <item>LOKIN earnings</item>
     </string-array>
+
+    <!-- Hands-free shift control — mirrors the iOS App Intents (LockIn / Pause / Resume / Tap Out). -->
+    <string-array name="lokin_lockin_queries">
+        <item>lock in on LOKIN</item>
+        <item>level up LOKIN</item>
+        <item>start my LOKIN shift</item>
+    </string-array>
+
+    <string-array name="lokin_pause_queries">
+        <item>pause LOKIN</item>
+        <item>pause my LOKIN shift</item>
+    </string-array>
+
+    <string-array name="lokin_resume_queries">
+        <item>resume LOKIN</item>
+        <item>resume my LOKIN shift</item>
+    </string-array>
+
+    <string-array name="lokin_tapout_queries">
+        <item>tap out of LOKIN</item>
+        <item>end my LOKIN shift</item>
+    </string-array>
+
+    <string-array name="lokin_finditem_queries">
+        <item>find an item with LOKIN</item>
+        <item>use LOKIN to find an item</item>
+    </string-array>
 </resources>

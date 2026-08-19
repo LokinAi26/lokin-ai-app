@@ -66,7 +66,10 @@ export default function GreenDelivery() {
           <Lock className="h-6 w-6 text-amber-300 mx-auto mb-2" />
           <div className="text-sm font-bold text-amber-200">Cannabis certification required</div>
           <p className="text-xs text-white/55 mt-1">Complete LOKIN's cannabis delivery training to accept regulated orders.</p>
-          <Link to="/certified" className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-xs font-bold"><GraduationCap className="h-4 w-4" /> Get certified</Link>
+          <div className="mt-3 flex flex-col gap-2">
+            <Link to="/onboarding" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-xs font-bold glow-primary active:scale-95 transition-transform"><GraduationCap className="h-4 w-4" /> Start onboarding</Link>
+            <Link to="/certified" className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-white/5 px-4 py-2 text-xs font-bold text-primary/80">Just the training</Link>
+          </div>
         </div>
       ) : (
         <>

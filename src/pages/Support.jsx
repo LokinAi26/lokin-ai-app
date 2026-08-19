@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Headphones, Send, LifeBuoy, Sparkles } from "lucide-react";
+import { Headphones, Send, LifeBuoy, Sparkles, ThumbsUp, ThumbsDown, UserRound } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { useToast } from "@/components/ui/use-toast";
 
 const QUICK = [
   "How do I start a shift?",
@@ -26,6 +27,7 @@ function Bubble({ role, text }) {
 }
 
 export default function Support() {
+  const { toast } = useToast();
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Hey, I'm LOKIN Support. How can I help you today?" },
   ]);
@@ -45,12 +47,57 @@ export default function Support() {
     setBusy(true);
     try {
       const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "support", message: msg, context: { history_count: history.length } });
-      setMessages([...next, { role: "assistant", text: res.data.reply }]);
+      setMessages([...next, { role: "assistant", text: res.data.reply, rated: false, escalated: false }]);
     } catch (e) {
-      setMessages([...next, { role: "assistant", text: "Something went wrong on my end. Try again in a moment." }]);
+      setMessages([...next, { role: "assistant", text: "Something went wrong on my end. Try again in a moment.", rated: false, escalated: false }]);
     } finally {
       setBusy(false);
     }
+  }
+
+  // Feedback loop: capture 👍/👎 on each AI reply so the support AI learns which
+  // responses actually resolve a person's issue. A 👎 surfaces a "Talk to a human"
+  // option — only real, confirmed escalations are persisted for human follow-up,
+  // so the AI keeps handling the rest and humans see only the genuine exceptions.
+  async function rate(idx, rating) {
+    const m = messages[idx];
+    if (!m || m.rated) return;
+    setMessages((prev) => prev.map((x, i) => (i === idx ? { ...x, rated: true, rating } : x)));
+    try {
+      let user = null;
+      try { user = await base44.auth.me(); } catch {}
+      const prevUser = messages[idx - 1]?.text || "";
+      await base44.entities.SupportFeedback.create({
+        user_id: user?.id || null,
+        user_message: prevUser,
+        ai_reply: m.text,
+        rating,
+        escalated: false,
+        resolved_by_ai: rating === "positive",
+        occurred_at: new Date().toISOString(),
+      });
+    } catch (e) { /* feedback is best-effort */ }
+  }
+
+  async function escalate(idx) {
+    const m = messages[idx];
+    if (!m || m.escalated) return;
+    setMessages((prev) => prev.map((x, i) => (i === idx ? { ...x, escalated: true } : x)));
+    try {
+      let user = null;
+      try { user = await base44.auth.me(); } catch {}
+      const prevUser = messages[idx - 1]?.text || "";
+      await base44.entities.SupportFeedback.create({
+        user_id: user?.id || null,
+        user_message: prevUser,
+        ai_reply: m.text,
+        rating: m.rating || "negative",
+        escalated: true,
+        resolved_by_ai: false,
+        occurred_at: new Date().toISOString(),
+      });
+      toast({ title: "A human rep will follow up", description: "Your message is queued for our team. We'll reach out via email." });
+    } catch (e) { /* best-effort */ }
   }
 
   return (
@@ -70,7 +117,21 @@ export default function Support() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-3">
-        {messages.map((m, i) => <Bubble key={i} role={m.role} text={m.text} />)}
+        {messages.map((m, i) => (
+          <div key={i}>
+            <Bubble role={m.role} text={m.text} />
+            {m.role === "assistant" && i > 0 && !busy && (
+              <div className="mt-1.5 flex items-center gap-2">
+                <button onClick={() => rate(i, "positive")} disabled={m.rated} className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold transition ${m.rated && m.rating === "positive" ? "border-primary/40 bg-primary/15 text-primary" : "border-white/10 text-white/45"}`}><ThumbsUp className="h-3 w-3" /></button>
+                <button onClick={() => rate(i, "negative")} disabled={m.rated} className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold transition ${m.rated && m.rating === "negative" ? "border-destructive/40 bg-destructive/15 text-destructive" : "border-white/10 text-white/45"}`}><ThumbsDown className="h-3 w-3" /></button>
+                {m.rated && m.rating === "negative" && !m.escalated && (
+                  <button onClick={() => escalate(i)} className="flex items-center gap-1 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1 text-[10px] font-bold text-accent active:scale-95 transition-transform"><UserRound className="h-3 w-3" /> Talk to a human</button>
+                )}
+                {m.escalated && <span className="text-[10px] text-accent/70 font-semibold">Escalated to our team</span>}
+              </div>
+            )}
+          </div>
+        ))}
         {busy && (
           <div className="flex justify-start">
             <div className="lokin-panel border border-white/10 rounded-2xl rounded-bl-md px-3.5 py-3 flex items-center gap-1.5">

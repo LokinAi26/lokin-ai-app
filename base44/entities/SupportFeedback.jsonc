@@ -1,0 +1,77 @@
+{
+  "name": "SupportFeedback",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_message": {
+      "type": "string",
+      "description": "The user's support message that triggered the AI reply."
+    },
+    "ai_reply": {
+      "type": "string",
+      "description": "The AI-generated support reply being rated."
+    },
+    "rating": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "negative"
+      ],
+      "description": "Thumbs-up (positive) or thumbs-down (negative) satisfaction signal."
+    },
+    "escalated": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the user requested a human follow-up for this exchange."
+    },
+    "escalation_reason": {
+      "type": "string",
+      "description": "Optional reason the user gave when escalating."
+    },
+    "emotion": {
+      "type": "string",
+      "description": "Detected emotional state at the time of the exchange (frustrated, anxious, calm, etc.) if known."
+    },
+    "resolved_by_ai": {
+      "type": "boolean",
+      "default": true,
+      "description": "False once escalated \u2014 only real exceptions should reach a human."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "rating"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
