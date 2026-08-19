@@ -3,62 +3,97 @@ import { Headphones, Send, LifeBuoy, Sparkles, ThumbsUp, ThumbsDown, UserRound }
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { useToast } from "@/components/ui/use-toast";
+import SupportMessageBubble from "@/components/support/SupportMessageBubble";
 
+const AGENT = "lokin-support";
+const GREETING = "Hey, I'm LOKIN Support. How can I help you today?";
 const QUICK = [
   "How do I start a shift?",
   "How do I optimize my route?",
-  "What's included in Pro?",
+  "Where's my Green order?",
   "The app feels slow, help",
 ];
 
-function Bubble({ role, text }) {
-  const me = role === "user";
-  return (
-    <div className={`flex ${me ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-        me
-          ? "bg-primary/15 border border-primary/30 text-white rounded-br-md"
-          : "lokin-panel border border-white/10 text-white/90 rounded-bl-md"
-      }`}>
-        {text}
-      </div>
-    </div>
-  );
+// Normalize an agent message (role + content) into the shape the feedback UI uses.
+function toUi(m) {
+  if (!m) return null;
+  return { role: m.role, text: m.content || "", tool_calls: m.tool_calls };
 }
 
 export default function Support() {
   const { toast } = useToast();
-  const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hey, I'm LOKIN Support. How can I help you today?" },
-  ]);
+  const [mode, setMode] = useState("agent");
+  const [conversationId, setConversationId] = useState(null);
+  const [messages, setMessages] = useState([{ role: "assistant", text: GREETING, rated: false, escalated: false }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
 
+  useEffect(() => {
+    let conv = null;
+    try {
+      conv = base44.agents.createConversation({ agent_name: AGENT, metadata: { name: "LOKIN Support" } });
+      setConversationId(conv.id);
+      const init = (conv.messages && conv.messages.length) ? conv.messages.map(toUi) : [{ role: "assistant", text: GREETING, rated: false, escalated: false }];
+      setMessages(init);
+      setMode("agent");
+    } catch (e) {
+      // Agent not available — fall back to the external-ai-gateway support mode.
+      console.warn("lokin-support agent unavailable, using gateway fallback", e?.message || e);
+      setMode("fallback");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!conversationId) return;
+    const unsubscribe = base44.agents.subscribeToConversation(conversationId, (data) => {
+      const incoming = (data.messages || []).map(toUi);
+      // preserve any local feedback flags on matching assistant turns by index
+      setMessages((prev) => incoming.map((m, i) => ({ ...m, rated: prev[i]?.rated, escalated: prev[i]?.escalated })));
+      const last = incoming[incoming.length - 1];
+      if (last && last.role === "assistant" && last.text) setBusy(false);
+    });
+    return () => unsubscribe();
+  }, [conversationId]);
+
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, busy]);
 
-  async function send(text) {
-    const msg = (text ?? input).trim();
-    if (!msg || busy) return;
-    setInput("");
-    const history = messages.map((m) => ({ role: m.role, content: m.text }));
-    const next = [...messages, { role: "user", text: msg }];
-    setMessages(next);
+  async function sendAgent(text) {
+    if (!conversationId) return;
     setBusy(true);
     try {
-      const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "support", message: msg, context: { history_count: history.length } });
-      setMessages([...next, { role: "assistant", text: res.data.reply, rated: false, escalated: false }]);
+      const conv = base44.agents.getConversation(conversationId);
+      base44.agents.addMessage(conv, { role: "user", content: text });
+      // optimistic local echo so the user sees their message immediately
+      setMessages((prev) => [...prev, { role: "user", text, rated: false, escalated: false }]);
     } catch (e) {
-      setMessages([...next, { role: "assistant", text: "Something went wrong on my end. Try again in a moment.", rated: false, escalated: false }]);
+      setBusy(false);
+      setMessages((prev) => [...prev, { role: "assistant", text: "I hit a snag sending that. Try again in a moment.", rated: false, escalated: false }]);
+    }
+  }
+
+  async function sendFallback(text) {
+    const history = messages.map((m) => ({ role: m.role, content: m.text }));
+    setBusy(true);
+    try {
+      const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "support", message: text, context: { history_count: history.length } });
+      setMessages((prev) => [...prev, { role: "assistant", text: res.data.reply, rated: false, escalated: false }]);
+    } catch (e) {
+      setMessages((prev) => [...prev, { role: "assistant", text: "Something went wrong on my end. Try again in a moment.", rated: false, escalated: false }]);
     } finally {
       setBusy(false);
     }
   }
 
-  // Feedback loop: capture 👍/👎 on each AI reply so the support AI learns which
-  // responses actually resolve a person's issue. A 👎 surfaces a "Talk to a human"
-  // option — only real, confirmed escalations are persisted for human follow-up,
-  // so the AI keeps handling the rest and humans see only the genuine exceptions.
+  function send(text) {
+    const msg = (text ?? input).trim();
+    if (!msg || busy) return;
+    setInput("");
+    if (mode === "agent") sendAgent(msg);
+    else sendFallback(msg);
+  }
+
+  // Feedback loop (unchanged): 👍/👎 on each AI reply; 👎 surfaces human handoff.
   async function rate(idx, rating) {
     const m = messages[idx];
     if (!m || m.rated) return;
@@ -76,7 +111,7 @@ export default function Support() {
         resolved_by_ai: rating === "positive",
         occurred_at: new Date().toISOString(),
       });
-    } catch (e) { /* feedback is best-effort */ }
+    } catch (e) { /* best-effort */ }
   }
 
   async function escalate(idx) {
@@ -110,7 +145,7 @@ export default function Support() {
           <div>
             <h1 className="text-xl font-bold font-heading metal-text leading-none">LOKIN Support</h1>
             <div className="flex items-center gap-1 text-[11px] text-accent/80 mt-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> AI rep · online
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Adaptive AI · online
             </div>
           </div>
         </div>
@@ -119,7 +154,7 @@ export default function Support() {
       <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-3">
         {messages.map((m, i) => (
           <div key={i}>
-            <Bubble role={m.role} text={m.text} />
+            <SupportMessageBubble message={{ role: m.role, content: m.text, tool_calls: m.tool_calls }} />
             {m.role === "assistant" && i > 0 && !busy && (
               <div className="mt-1.5 flex items-center gap-2">
                 <button onClick={() => rate(i, "positive")} disabled={m.rated} className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold transition ${m.rated && m.rating === "positive" ? "border-primary/40 bg-primary/15 text-primary" : "border-white/10 text-white/45"}`}><ThumbsUp className="h-3 w-3" /></button>
@@ -162,11 +197,11 @@ export default function Support() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Ask about features, billing, or report a bug…"
+            placeholder="Tell me what's going on…"
             className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none"
           />
           <button onClick={() => send()} disabled={busy || !input.trim()}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-black disabled:opacity-40 active:scale-90 transition-transform">
+            className="h-8 w-8 flex items-center justify-center rounded-xl bg-primary text-black disabled:opacity-40 active:scale-90 transition-transform">
             <Send className="h-4 w-4" />
           </button>
         </div>
