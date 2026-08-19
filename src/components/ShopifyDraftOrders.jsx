@@ -55,6 +55,7 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
   const [edit, setEdit] = useState(null);
   const [aiBusy, setAiBusy] = useState("");
   const [aiResult, setAiResult] = useState(null);
+  const [draftKey, setDraftKey] = useState("");
 
   async function loadDrafts() {
     setLoading(true);
@@ -81,6 +82,8 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
       return;
     }
     setBusy(true);
+    const key = draftKey || (crypto.randomUUID ? crypto.randomUUID() : `dk-${Date.now()}`);
+    setDraftKey(key);
     try {
       await invokeShopify(
         "createDraft",
@@ -88,10 +91,12 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
           line_items: [{ variant_id: Number(form.variantId), quantity: Math.max(1, Number(form.quantity) || 1) }],
           email: form.email || undefined,
           note: form.note || undefined,
+          idempotency_key: key,
         },
         true
       );
       bridge?.toast?.("Draft order created");
+      setDraftKey("");
       setForm({ variantId: "", quantity: 1, email: "", note: "" });
       setShowForm(false);
       await loadDrafts();

@@ -3,6 +3,8 @@ import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
 import { verifyShopifyHmac } from "../../shared/shopifyHmac.ts";
 import { verifyShopifySession } from "../../shared/shopifyJwt.ts";
 import { shopifyAdminBase, shoGet, mapStorefront, mapOrdersRich, mapDrafts } from "../../shared/shopifyReads.ts";
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { guardedIdempotentWrite } from "../../shared/commerceIdempotency.ts";
 
 /**
  * shopify-embed — Public, iframe-safe Shopify storefront for the LOKIN Commerce
@@ -197,6 +199,8 @@ function localIntelligence(agg: any) {
 export default async function (req: Request): Promise<Response> {
   try {
     const payload = await req.json().catch(() => ({}));
+    let base44Client: any = null;
+    try { base44Client = createClientFromRequest(req); } catch { /* no base44 user context; idempotency guard will no-op */ }
     const action = String(payload.action || "storefront").toLowerCase();
     if (!VALID_ACTIONS.some((a) => a.toLowerCase() === action)) {
       return Response.json(
@@ -364,6 +368,7 @@ export default async function (req: Request): Promise<Response> {
       if (!authenticated) {
         return Response.json({ error: "Authenticated Shopify session required to create drafts." }, { status: 403 });
       }
+      return guardedIdempotentWrite(base44Client, "shopify.createDraft", String(payload.idempotency_key || ""), async () => {
       const items = Array.isArray(payload.line_items) ? payload.line_items : [];
       const line_items = items
         .map((it: any) => ({
@@ -387,6 +392,7 @@ export default async function (req: Request): Promise<Response> {
       const d = r.data?.draft_order || {};
       return Response.json({
         draft: { id: d.id, name: d.name, status: d.status, total_price: d.total_price, invoice_url: d.invoice_url, email: d.email || d.customer?.email || "" },
+      });
       });
     }
 
@@ -434,9 +440,11 @@ export default async function (req: Request): Promise<Response> {
       }
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+      return guardedIdempotentWrite(base44Client, "shopify.completeDraft", `shopify:completeDraft:${id}`, async () => {
       const r = await shoPut(`${base}/draft_orders/${encodeURIComponent(id)}/complete.json`, {}, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ ok: true, draft: r.data?.draft_order || null });
+      });
     }
 
     // ----- draft AI intelligence (session-gated) -----
@@ -500,6 +508,7 @@ export default async function (req: Request): Promise<Response> {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
 
+      return guardedIdempotentWrite(base44Client, "shopify.sendInvoice", `shopify:sendInvoice:${id}`, async () => {
       // Re-read the draft before sending so invoice delivery never relies on stale UI state.
       const dr = await shoGet(`${base}/draft_orders/${encodeURIComponent(id)}.json`, token);
       if (!dr.ok) return Response.json({ error: dr.error }, { status: dr.status });
@@ -512,6 +521,7 @@ export default async function (req: Request): Promise<Response> {
       const r = await shoPost(`${base}/draft_orders/${encodeURIComponent(id)}/send_invoice.json`, {}, token);
       if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
       return Response.json({ ok: true, sent: true, email, invoice_url: r.data?.draft_order_invoice?.url || null });
+      });
     }
 
     // ----- commerce intelligence (session-gated) -----
@@ -577,6 +587,7 @@ export default async function (req: Request): Promise<Response> {
       const id = String(payload.id || "");
       if (!id) return Response.json({ error: "id is required" }, { status: 400 });
 
+      return guardedIdempotentWrite(base44Client, "shopify.fulfillOrder", `shopify:fulfillOrder:${id}`, async () => {
       // 1. Resolve the order's fulfillment orders (modern Shopify fulfillment API).
       const foRes = await shoGet(`${base}/orders/${encodeURIComponent(id)}/fulfillment_orders.json`, token);
       if (!foRes.ok) return Response.json({ error: foRes.error || "Unable to load fulfillment orders." }, { status: foRes.status });
@@ -632,6 +643,7 @@ export default async function (req: Request): Promise<Response> {
       }
       const mapped = mapOrdersRich({ orders: [orderRes.data?.order] })[0] || null;
       return Response.json({ ok: true, fulfillment: fRes.data?.fulfillment || null, order: mapped });
+      });
     }
 
     return Response.json({ error: "Unsupported action" }, { status: 400 });

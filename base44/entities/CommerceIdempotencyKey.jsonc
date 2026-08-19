@@ -1,0 +1,56 @@
+{
+  "name": "CommerceIdempotencyKey",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Client-generated or server-derived idempotency key for a commerce write."
+    },
+    "operation": {
+      "type": "string",
+      "description": "Operation name, e.g. shopify.createDraft, shopify.fulfillOrder, shopify.sendInvoice, shopify.completeDraft."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed",
+        "failed"
+      ],
+      "default": "in_progress"
+    },
+    "result": {
+      "type": "object",
+      "description": "Stored confirmed result (http_status + body) for replay on duplicate submission."
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "operation"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

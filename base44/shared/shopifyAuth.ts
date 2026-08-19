@@ -3,6 +3,7 @@ import { secrets } from "base44:runtime";
 let cachedToken = "";
 let cachedTokenExpiresAt = 0;
 let cachedTokenDomain = "";
+let cachedTokenScope = "";
 
 export function normalizeShopifyDomain(raw: unknown): string {
   const normalized = String(raw || "")
@@ -50,7 +51,7 @@ export async function getShopifyAdminToken(): Promise<ShopifyTokenResult> {
   if (clientId && clientSecret) {
     const now = Date.now();
     if (cachedToken && cachedTokenDomain === domain && now < cachedTokenExpiresAt - 5 * 60_000) {
-      return { token: cachedToken, source: "client_credentials", domain, expiresAt: cachedTokenExpiresAt };
+      return { token: cachedToken, source: "client_credentials", domain, expiresAt: cachedTokenExpiresAt, scope: cachedTokenScope };
     }
 
     try {
@@ -73,12 +74,13 @@ export async function getShopifyAdminToken(): Promise<ShopifyTokenResult> {
         cachedToken = cleanSecret(data.access_token);
         cachedTokenDomain = domain;
         cachedTokenExpiresAt = Date.now() + expiresIn * 1000;
+        cachedTokenScope = String(data.scope || "");
         return {
           token: cachedToken,
           source: "client_credentials",
           domain,
           expiresAt: cachedTokenExpiresAt,
-          scope: String(data.scope || ""),
+          scope: cachedTokenScope,
         };
       }
 
@@ -111,4 +113,39 @@ export async function getShopifyAdminToken(): Promise<ShopifyTokenResult> {
   const fallback = cleanSecret(secrets.get("SHOPIFY_ACCESS_TOKEN"));
   if (fallback) return { token: fallback, source: "static", domain };
   return { token: "", source: "none", domain, error: "SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET are missing and no static SHOPIFY_ACCESS_TOKEN is available." };
+}
+
+/**
+ * Token renewal diagnostics. Returns ONLY safe metadata — never the token,
+ * never authorization headers, never secrets. Used by the Commerce Reliability
+ * Layer to surface HEALTHY / WARNING / ACTION_REQUIRED and an early warning
+ * when the credential cannot be auto-renewed.
+ */
+export async function getShopifyTokenDiagnostics(): Promise<{
+  source: string;
+  domain: string;
+  scope?: string;
+  expiresAt?: number;
+  renewable: boolean;
+  renewalWarning: boolean;
+  exchangeError?: string;
+  status?: number;
+}> {
+  const auth = await getShopifyAdminToken();
+  const renewable = auth.source === "client_credentials";
+  let renewalWarning = false;
+  if (auth.expiresAt) {
+    const hoursLeft = (auth.expiresAt - Date.now()) / 3_600_000;
+    renewalWarning = hoursLeft < 12;
+  }
+  return {
+    source: auth.source,
+    domain: auth.domain,
+    scope: auth.scope,
+    expiresAt: auth.expiresAt,
+    renewable,
+    renewalWarning,
+    exchangeError: auth.error,
+    status: auth.status,
+  };
 }

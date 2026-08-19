@@ -11,6 +11,7 @@ import {
 import useShopifyAppBridge from "@/hooks/useShopifyAppBridge";
 import ShopifyDraftOrders from "@/components/ShopifyDraftOrders";
 import ShopifyCommerceIntelligence from "@/components/ShopifyCommerceIntelligence";
+import CommerceReliabilityDashboard from "@/components/commerce/CommerceReliabilityDashboard";
 
 // LOKIN Commerce — Shopify embedded-app entry.
 // Public route (no Base44 auth gate) so it renders inside the Shopify Admin iframe.
@@ -230,6 +231,7 @@ export default function ShopifyEmbed() {
           </div>
         ) : (
           <>
+            <CommerceReliabilityDashboard />
             <ShopifyCommerceIntelligence
               invokeShopify={invokeShopify}
               products={products}
