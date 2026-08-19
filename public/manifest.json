@@ -1,0 +1,17 @@
+{
+  "name": "LOKIN AI",
+  "short_name": "LOKIN",
+  "description": "LOKIN AI driver intelligence and productivity platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a08",
+  "theme_color": "#0a0a0c",
+  "icons": [
+    {
+      "src": "/lokin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
