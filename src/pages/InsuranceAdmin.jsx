@@ -37,19 +37,73 @@ export default function InsuranceAdmin() {
     if (!editing) return;
     setSaving(true);
     try {
+      const premium = editing.monthly_premium ? Number(editing.monthly_premium) : 0;
+      const deductible = editing.deductible ? Number(editing.deductible) : 0;
+      const liability = editing.liability_limit ? Number(editing.liability_limit) : 1000000;
       await base44.entities.InsuranceApplication.update(editing.id, {
         provider: editing.provider || null,
-        monthly_premium: editing.monthly_premium ? Number(editing.monthly_premium) : null,
+        monthly_premium: premium || null,
         policy_number: editing.policy_number || null,
         effective_date: editing.effective_date || null,
         expires_at: editing.expires_at || null,
-        deductible: editing.deductible ? Number(editing.deductible) : null,
-        liability_limit: editing.liability_limit ? Number(editing.liability_limit) : null,
+        deductible: deductible || null,
+        liability_limit: liability,
         notes: editing.notes || null,
         status: editing.status,
         approved_at: ["active", "approved"].includes(editing.status) ? new Date().toISOString() : null,
       });
-      toast({ title: "Application updated" });
+
+      // Persist a real quote record whenever pricing reaches approved/active status.
+      // Admin-only RLS prevents drivers from manufacturing their own quote or policy.
+      let quote = null;
+      if (["approved", "active"].includes(editing.status)) {
+        const existingQuotes = await base44.entities.InsuranceQuote.filter({ application_id: editing.id });
+        quote = existingQuotes?.[0] || null;
+        const quotePayload = {
+          user_id: editing.user_id || null,
+          application_id: editing.id,
+          provider: editing.provider || "Pending carrier",
+          monthly_premium: premium,
+          deductible,
+          liability_limit: liability,
+          coverage_type: editing.coverage_type,
+          status: "quoted",
+          valid_until: new Date(Date.now() + 30 * 86400000).toISOString(),
+          notes: editing.notes || null,
+        };
+        if (quote) {
+          await base44.entities.InsuranceQuote.update(quote.id, quotePayload);
+        } else {
+          quote = await base44.entities.InsuranceQuote.create(quotePayload);
+        }
+      }
+
+      // "active" means the policy has actually been bound, so mirror it into a dedicated policy record.
+      if (editing.status === "active") {
+        const existingPolicies = await base44.entities.InsurancePolicy.filter({ application_id: editing.id });
+        const policyPayload = {
+          user_id: editing.user_id || null,
+          application_id: editing.id,
+          quote_id: quote?.id || existingPolicies?.[0]?.quote_id || null,
+          provider: editing.provider || "Pending carrier",
+          policy_number: editing.policy_number || `LOKIN-${String(editing.id).slice(-8).toUpperCase()}`,
+          coverage_type: editing.coverage_type,
+          monthly_premium: premium,
+          deductible,
+          liability_limit: liability,
+          status: "active",
+          effective_date: editing.effective_date || new Date().toISOString().slice(0, 10),
+          expires_at: editing.expires_at || null,
+          bound_at: new Date().toISOString(),
+          notes: editing.notes || null,
+        };
+        if (existingPolicies?.[0]) {
+          await base44.entities.InsurancePolicy.update(existingPolicies[0].id, policyPayload);
+        } else {
+          await base44.entities.InsurancePolicy.create(policyPayload);
+        }
+      }
+      toast({ title: editing.status === "active" ? "Policy bound" : "Application updated" });
       setEditing(null);
       load();
     } catch (e) { toast({ title: "Save failed", description: e.message, variant: "destructive" }); }
@@ -90,7 +144,7 @@ export default function InsuranceAdmin() {
           <Row label="Notes"><textarea className={inp() + " min-h-16"} value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} placeholder="Underwriter notes" /></Row>
           <div className="flex gap-2">
             <button onClick={() => setEditing(null)} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/70">Cancel</button>
-            <button onClick={save} disabled={saving} className="flex-1 rounded-2xl bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-50">{saving ? "Saving…" : "Save & bind"}</button>
+            <button onClick={save} disabled={saving} className="flex-1 rounded-2xl bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-50">{saving ? "Saving…" : editing.status === "active" ? "Bind active policy" : editing.status === "approved" ? "Save quote" : "Save review"}</button>
           </div>
         </div>
       ) : (
