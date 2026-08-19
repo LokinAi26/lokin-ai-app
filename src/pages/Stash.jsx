@@ -103,7 +103,21 @@ export default function Stash() {
       <GreenOrderTracker />
 
       {loading ? (
-        <div className="py-10 text-center text-sm text-white/40">Loading menu…</div>
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 lokin-panel overflow-hidden">
+              <div className="aspect-square bg-white/5 animate-pulse" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+                <div className="h-2.5 w-1/2 rounded bg-white/8 animate-pulse" />
+                <div className="flex justify-between items-center pt-1">
+                  <div className="h-4 w-12 rounded bg-white/10 animate-pulse" />
+                  <div className="h-7 w-7 rounded-lg bg-white/10 animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
         <div className="py-10 text-center text-sm text-white/40">No products yet. Check back soon.</div>
       ) : (
