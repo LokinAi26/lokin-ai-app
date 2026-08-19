@@ -125,6 +125,15 @@ export default function DrivingMode() {
           ))}
         </svg>
 
+        {stopPts.length === 0 && !loading && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <div className="text-[11px] tracking-[0.2em] text-white/40 font-display">NO ACTIVE ROUTE</div>
+              <div className="text-[10px] text-white/30 mt-1">Recompute to scan offers</div>
+            </div>
+          </div>
+        )}
+
         {/* HUD overlays */}
         <div className="absolute top-3 left-3 text-[10px] tracking-[0.2em] text-accent/70 font-display">ROUTING</div>
         <div className="absolute top-3 right-3 text-right">

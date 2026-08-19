@@ -82,6 +82,22 @@ export default function RoutePlanner() {
 
       {error && <div className="text-sm text-destructive">{error}</div>}
 
+      {loading && (
+        <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-3">
+          <div className="grid grid-cols-4 gap-2">
+            {[0,1,2,3].map((i) => <div key={i} className="h-12 rounded-xl bg-white/8 animate-pulse" />)}
+          </div>
+          <div className="h-24 rounded-2xl bg-white/[0.06] animate-pulse" />
+        </div>
+      )}
+
+      {!data && !loading && !error && (
+        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
+          <RouteIcon className="h-6 w-6 text-primary mx-auto mb-2" />
+          <div className="text-sm text-white/70">Pick a mode and tap <span className="text-primary font-bold">Optimize</span> to sequence your offers into one efficient route.</div>
+        </div>
+      )}
+
       {data?.stats && (
         <div className="rounded-3xl border border-white/10 lokin-panel p-4">
           <div className="grid grid-cols-4 gap-2 text-center">
