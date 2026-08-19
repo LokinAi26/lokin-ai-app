@@ -62,6 +62,8 @@ import StashCart from './pages/StashCart';
 import GreenDelivery from './pages/GreenDelivery';
 import Insurance from './pages/Insurance';
 import InsuranceAdmin from './pages/InsuranceAdmin';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -152,6 +154,8 @@ const AuthenticatedApp = () => {
       <Route path="/command" element={<CommandIngress />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
