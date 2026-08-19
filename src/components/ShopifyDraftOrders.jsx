@@ -284,9 +284,9 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
         <form onSubmit={createDraft} className="rounded-2xl border border-white/10 bg-black/40 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="text-[10px] tracking-widest text-white/40">NEW DRAFT ORDER</div>
-            <button type="button" onClick={() => setShowForm(false)} className="text-white/40 hover:text-white"><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setShowForm(false)} aria-label="Close new draft order form" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/40 hover:text-white"><X className="h-4 w-4" /></button>
           </div>
-          <select value={form.variantId} onChange={(e) => setForm((f) => ({ ...f, variantId: e.target.value }))} className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white">
+          <select value={form.variantId} onChange={(e) => setForm((f) => ({ ...f, variantId: e.target.value }))} className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white">
             <option value="">Select product…</option>
             {variantOptions.map((o) => <option key={o.id} value={o.id}>{o.title} — {o.variant} ({money(o.price, currency)})</option>)}
           </select>
@@ -365,7 +365,7 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
                           </div>
                         ))}
                         <div className="flex gap-2">
-                          <select value={edit.addVariantId} onChange={(e) => setEdit((f) => ({ ...f, addVariantId: e.target.value }))} className="min-w-0 flex-1 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-[10px] text-white">
+                          <select value={edit.addVariantId} onChange={(e) => setEdit((f) => ({ ...f, addVariantId: e.target.value }))} className="min-w-0 flex-1 min-h-11 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-[10px] text-white">
                             <option value="">Add product…</option>
                             {variantOptions.map((o) => <option key={o.id} value={o.id}>{o.title} — {o.variant}</option>)}
                           </select>
@@ -376,7 +376,7 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-xl border border-white/10 bg-black/30 p-2 space-y-1.5">
                           <div className="flex items-center gap-1 text-[9px] tracking-widest text-white/35"><Percent className="h-3 w-3" /> DISCOUNT</div>
-                          <select value={edit.discountType} onChange={(e) => setEdit((f) => ({ ...f, discountType: e.target.value }))} className="w-full rounded-lg bg-black/50 border border-white/10 px-2 py-1.5 text-[10px]">
+                          <select value={edit.discountType} onChange={(e) => setEdit((f) => ({ ...f, discountType: e.target.value }))} className="w-full min-h-11 rounded-lg bg-black/50 border border-white/10 px-2 py-1.5 text-[10px]">
                             <option value="percentage">Percentage</option><option value="fixed_amount">Fixed amount</option>
                           </select>
                           <input type="number" min="0" step="0.01" value={edit.discountValue} onChange={(e) => setEdit((f) => ({ ...f, discountValue: e.target.value }))} placeholder="0" className="w-full rounded-lg bg-black/50 border border-white/10 px-2 py-1.5 text-[10px]" />
