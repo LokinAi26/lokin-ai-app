@@ -51,9 +51,9 @@ export default function DriverDispatch() {
         <div className="rounded-2xl border border-white/10 lokin-panel p-3"><ShieldCheck className="h-5 w-5 text-accent mb-2"/><div className="text-sm font-bold mt-1">{data.certified ? "Training on file" : "Academy available"}</div><div className="text-[11px] text-white/40 mt-1">Regulated eligibility remains separately gated.</div></div>
       </div>
 
-      <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-3 flex gap-2">
-        <Lock className="h-4 w-4 text-amber-300 shrink-0 mt-0.5"/>
-        <div className="text-xs text-white/55">Pilot dispatch currently surfaces non-controlled merchandise only. Regulated cannabis delivery remains disabled until legally authorized and licensed.</div>
+      <div className={`rounded-2xl border p-3 flex gap-2 ${data.cannabis_certified ? "border-primary/25 bg-primary/[0.05]" : "border-amber-400/20 bg-amber-400/[0.05]"}`}>
+        <Lock className={`h-4 w-4 shrink-0 mt-0.5 ${data.cannabis_certified ? "text-primary" : "text-amber-300"}`}/>
+        <div className="text-xs text-white/55">{data.cannabis_certified ? "You're cannabis-certified — regulated cannabis pickup orders are available to accept." : "Non-controlled merchandise only. Complete cannabis training in LOKIN Certified to unlock regulated deliveries."}</div>
       </div>
 
       <button onClick={load} className="w-full rounded-2xl border border-white/10 lokin-panel py-3 text-sm font-semibold text-white/70 flex justify-center items-center gap-2"><RefreshCw className={`h-4 w-4 ${busy ? "animate-spin" : ""}`}/>Refresh offers</button>
@@ -70,8 +70,8 @@ export default function DriverDispatch() {
       <section>
         <div className="text-xs tracking-[0.18em] text-accent/75 font-display mb-2">MY ACTIVE PICKUPS</div>
         <div className="space-y-2">
-          {(data.mine || []).filter(o => !["delivered","returned","canceled"].includes(o.status)).map((o) => (
-            <OrderCard key={o.id} order={o} actionLabel={o.status === "driver_assigned" ? "CONFIRM PICKUP & NAVIGATE" : "OPEN LOCKED GPS"} onAction={() => o.status === "driver_assigned" ? pickup(o) : navigate(`/ai-gps?focus=locked&order=${encodeURIComponent(o.id)}&pickup=${encodeURIComponent(o.pickup_address || "")}&dropoff=${encodeURIComponent(o.dropoff_address || "")}`)} busy={busy}/>
+          {(data.mine || []).filter(o => !["delivered","returned","canceled","refused"].includes(o.status)).map((o) => (
+            <OrderCard key={o.id} order={o} actionLabel={o.status === "driver_assigned" ? "CONFIRM PICKUP & NAVIGATE" : o.status === "picked_up" ? "VERIFY HANDOFF" : "OPEN LOCKED GPS"} onAction={() => o.status === "driver_assigned" ? pickup(o) : o.status === "picked_up" ? navigate(`/compliance-handoff?order=${encodeURIComponent(o.id)}`) : navigate(`/ai-gps?focus=locked&order=${encodeURIComponent(o.id)}&pickup=${encodeURIComponent(o.pickup_address || "")}&dropoff=${encodeURIComponent(o.dropoff_address || "")}`)} busy={busy}/>
           ))}
         </div>
       </section>

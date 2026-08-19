@@ -24,6 +24,7 @@ export default function ComplianceHandoff(){
   await log(category,step===2&&!order?.id_check_required?"not_applicable":"pass");
   if(step<4){setStep(step+1);return;}
   if(orderId){try{await base44.entities.MerchantOrder.update(orderId,{status:"delivered",completed_at:new Date().toISOString()});}catch{}}
+  if(order?.category==="cannabis_future"&&order?.customer_reference){try{await base44.entities.CannabisOrder.update(order.customer_reference,{status:"delivered",completed_at:new Date().toISOString()});}catch{}}
   setStatus("complete");
  }
  async function refuse(){

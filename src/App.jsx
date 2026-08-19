@@ -61,6 +61,7 @@ import Stash from './pages/Stash';
 import StashCart from './pages/StashCart';
 import GreenDelivery from './pages/GreenDelivery';
 import Insurance from './pages/Insurance';
+import InsuranceAdmin from './pages/InsuranceAdmin';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -145,6 +146,7 @@ const AuthenticatedApp = () => {
           <Route path="/stash/cart" element={<StashCart />} />
           <Route path="/green-delivery" element={<GreenDelivery />} />
           <Route path="/insurance" element={<Insurance />} />
+          <Route path="/insurance-admin" element={<InsuranceAdmin />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />

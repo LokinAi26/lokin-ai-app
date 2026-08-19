@@ -166,24 +166,58 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
   //   - Gate paid access on a WRITABLE field you set here (e.g. plan / has_paid on the user or an
   //     Entitlement row) — NEVER on is_verified: it is platform-protected and cannot be set here,
   //     even as service role, so gating access on it locks the paying buyer out.
-  // ===== APP-SPECIFIC: unlock the tier the buyer paid for =====
-  // `plan` is a custom field on User (enum free/pro/elite). `update` is idempotent, so a duplicate
-  // ORDER_APPROVED is safe. purchase.productId is the plan key; map to the tier name.
-  const TIER_BY_PRODUCT: Record<string, string> = {
-    pro_monthly: "pro",
-    elite_monthly: "elite",
-    elite_annual: "elite",
-  };
-  const tier = TIER_BY_PRODUCT[purchase.productId] ?? "free";
-  if (purchase.appUserId) {
-    await db.entities.User.update(purchase.appUserId, { plan: tier });
-  } else if (buyerEmail) {
-    // Anonymous buyer: match an existing User by email so the grant survives when they sign in.
+  // ===== APP-SPECIFIC =====
+  if (purchase.productId === "cannabis_order") {
+    // Cannabis order: mark the linked CannabisOrder paid and spawn a dispatch MerchantOrder so it
+    // enters the existing driver-dispatch + compliance-handoff flow. Idempotent — keyed on
+    // CannabisOrder.id / MerchantOrder.customer_reference so a duplicate ORDER_APPROVED can't double-grant.
     try {
-      const matches = await db.entities.User.filter({ email: buyerEmail });
-      if (matches?.[0]) await db.entities.User.update(matches[0].id, { plan: tier });
+      const coRows = await db.entities.CannabisOrder.filter({ checkout_session_id: purchase.checkoutSessionId });
+      const co = coRows?.[0];
+      if (co) {
+        if (co.payment_status !== "paid") {
+          await db.entities.CannabisOrder.update(co.id, { payment_status: "paid" });
+        }
+        const existing = await db.entities.MerchantOrder.filter({ customer_reference: co.id });
+        if (!existing?.length) {
+          await db.entities.MerchantOrder.create({
+            merchant_id: co.dispensary || "lokin_green",
+            category: "cannabis_future",
+            status: "driver_requested",
+            pickup_address: co.dispensary || "",
+            dropoff_address: co.delivery_address || "",
+            sealed_order_required: true,
+            id_check_required: true,
+            customer_reference: co.id,
+            requested_at: new Date().toISOString(),
+            notes: co.discreet ? "Discreet packaging requested" : (co.notes || ""),
+          });
+        }
+      } else {
+        console.warn("payments-webhook: cannabis order not found for checkout id", { checkoutId: purchase.checkoutSessionId });
+      }
     } catch (e) {
-      console.error("payments-webhook: grant by email failed", e);
+      console.error("payments-webhook: cannabis grant failed", e);
+    }
+  } else {
+    // Subscription plan: `plan` is a custom field on User (enum free/pro/elite). `update` is
+    // idempotent, so a duplicate ORDER_APPROVED is safe. purchase.productId maps to the tier name.
+    const TIER_BY_PRODUCT: Record<string, string> = {
+      pro_monthly: "pro",
+      elite_monthly: "elite",
+      elite_annual: "elite",
+    };
+    const tier = TIER_BY_PRODUCT[purchase.productId] ?? "free";
+    if (purchase.appUserId) {
+      await db.entities.User.update(purchase.appUserId, { plan: tier });
+    } else if (buyerEmail) {
+      // Anonymous buyer: match an existing User by email so the grant survives when they sign in.
+      try {
+        const matches = await db.entities.User.filter({ email: buyerEmail });
+        if (matches?.[0]) await db.entities.User.update(matches[0].id, { plan: tier });
+      } catch (e) {
+        console.error("payments-webhook: grant by email failed", e);
+      }
     }
   }
   // ===== END APP-SPECIFIC =====

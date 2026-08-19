@@ -30,6 +30,14 @@ function Field({ label, value }) {
   );
 }
 
+function estimateQuote(form) {
+  const base = { commercial_gig: 89, auto_personal: 72, cargo: 120, health_gap: 45, roadside: 19 }[form.coverage_type] || 80;
+  const vehicleAdj = { personal_car: 1, cargo_van: 1.35, box_truck: 1.6, other: 1.2 }[form.vehicle_type] || 1;
+  const yearAdj = form.vehicle_year && Number(form.vehicle_year) < 2015 ? 1.1 : 1;
+  const mid = Math.round(base * vehicleAdj * yearAdj);
+  return { low: Math.round(mid * 0.85), high: Math.round(mid * 1.2) };
+}
+
 function inputCls() {
   return "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-sm text-white outline-none placeholder:text-white/30";
 }
@@ -94,6 +102,7 @@ export default function Insurance() {
   if (loading) return <div className="p-6 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
 
   const activeCoverage = COVERAGE.find((c) => c.id === form.coverage_type);
+  const est = estimateQuote(form);
 
   return (
     <div className="p-4 space-y-4 pb-8">
@@ -221,6 +230,11 @@ export default function Insurance() {
                 <Field label="License state" value={form.state || "—"} />
                 <Field label="DOB" value={form.dob || "—"} />
                 <Field label="License #" value={form.license_number ? "••••" + form.license_number.slice(-3) : "—"} />
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5 text-center">
+                <div className="text-[9px] uppercase tracking-wide text-white/40">Estimated monthly premium</div>
+                <div className="text-lg font-display font-bold text-primary">${est.low}–${est.high}</div>
+                <div className="text-[9px] text-white/35">Final rate set after underwriter review</div>
               </div>
               <p className="text-[10px] text-white/35 pt-1">By submitting you authorize LOKIN Cover to verify your details and quote your policy. No charge until you approve the quote.</p>
             </div>

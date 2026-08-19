@@ -39,7 +39,7 @@ export default function StashCart() {
       let user = null;
       try { user = await base44.auth.me(); } catch {}
       const dispensary = [...new Set(items.map((i) => i.dispensary).filter(Boolean))][0] || "LOKIN Green";
-      await base44.entities.CannabisOrder.create({
+      const order = await base44.entities.CannabisOrder.create({
         buyer_user_id: user?.id || null,
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, unit: i.unit, qty: i.qty })),
         total: Number(total.toFixed(2)),
@@ -51,12 +51,16 @@ export default function StashCart() {
         discreet,
         age_verified: true,
         status: "placed",
+        payment_status: "pending",
       });
+      // Start Base44 Payments checkout — the order only dispatches after payment is approved.
+      const res = await base44.functions.invoke("create-checkout", { cannabisOrderId: order.id });
+      const redirectUrl = res?.data?.redirectUrl || res?.redirectUrl;
+      if (!redirectUrl) throw new Error("Checkout could not be started");
       saveCart([]);
-      toast({ title: "Order placed", description: "Discreet delivery on the way." });
-      navigate("/stash");
+      window.location.href = redirectUrl;
     } catch (e) {
-      toast({ title: "Order failed", description: e.message, variant: "destructive" });
+      toast({ title: "Checkout failed", description: e.message, variant: "destructive" });
     } finally { setPlacing(false); }
   }
 
@@ -107,7 +111,7 @@ export default function StashCart() {
             <span className="text-2xl font-display font-bold text-primary">${total.toFixed(2)}</span>
           </div>
           <button onClick={placeOrder} disabled={placing} className="w-full rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-50">
-            {placing ? "Placing order…" : "Place discreet order"}
+            {placing ? "Starting checkout…" : "Pay & place order"}
           </button>
           <p className="text-[10px] text-white/30 text-center">21+ only · ID checked on delivery · Licensed markets</p>
         </>

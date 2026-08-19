@@ -51,6 +51,19 @@
       ],
       "default": "placed"
     },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "awaiting_payment",
+        "paid",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "checkout_session_id": {
+      "type": "string"
+    },
     "driver_user_id": {
       "type": "string"
     },

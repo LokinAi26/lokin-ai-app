@@ -70,54 +70,82 @@ Deno.serve(async (req: Request) => {
 
     // ===== APP-SPECIFIC =====
     // Resolve what is being bought AND its price SERVER-SIDE. NEVER trust a price sent by the
-    // client — a buyer can tamper the request body and pay any amount. The client sends only a
-    // product identifier; look up the authoritative price here (a Product entity, a config map,
-    // etc.). For a subscription, set `subscriptionInfo` (frequency/interval/billingCycles).
-    const productId = String(body.productId ?? "");
-    // Quantity is buyer-controlled, so VALIDATE it server-side. Check the RAW value is a positive
-    // integer BEFORE using it — do NOT Math.trunc first, or a fractional POST (e.g. 1.9) silently
-    // passes as 1 and charges a quantity the UI never allowed. For a plan / fixed-entitlement product,
-    // hard-code `1` and ignore the body; for a genuine multi-unit product, also enforce YOUR own max.
-    const quantity = 1; // subscriptions are fixed-entitlement — ignore any client-sent quantity
-    // ===== APP-SPECIFIC: subscription product catalog (server-side authoritative prices) =====
-    // The client sends only a productId; price/tier/recurring terms are resolved here so a buyer
-    // can never tamper the charge. Tiers unlock features (granted in payments-webhook by productId).
-    const PRODUCTS: Record<string, { name: string; price: string; tier: string; subscriptionInfo: any }> = {
-      pro_monthly: {
-        name: "LOKIN Pro — Monthly",
-        price: "9.99",
-        tier: "pro",
-        subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Pro Monthly", description: "Advanced routing & deeper AI analytics" },
-      },
-      elite_monthly: {
-        name: "LOKIN Elite — Monthly",
-        price: "19.99",
-        tier: "elite",
-        subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Elite Monthly", description: "All Pro features + priority AI & elite routing" },
-      },
-      elite_annual: {
-        name: "LOKIN Elite — Annual",
-        price: "149.99",
-        tier: "elite",
-        subscriptionInfo: { subscriptionSettings: { frequency: "YEAR", freeTrialPeriod: { frequency: "DAY", interval: 14 } }, title: "LOKIN Elite Annual", description: "Yearly billing with a 14-day free trial" },
-      },
-    };
-    const product = PRODUCTS[productId];
-    if (!product) {
-      return new Response(JSON.stringify({ error: "Unknown plan" }), { status: 400 });
+    // client — a buyer can tamper the request body and pay any amount. Two paths:
+    //   1) Subscription plan: client sends only a productId; price resolved from the catalog below.
+    //   2) Cannabis order: client sends a cannabisOrderId; we recompute the total from the stored
+    //      CannabisOrder line items (asServiceRole, authoritative) and build a Wix cart from them.
+    const cannabisOrderId = String(body.cannabisOrderId ?? "");
+    let productId: string;
+    let productName: string;
+    let price: string;            // per-unit price (subscription path)
+    let currency: string;
+    let subscriptionInfo: any;
+    let quantity: number;
+    let thankYouPath: string;
+    let postFlowPath: string;
+    let cartItems: Array<{ name: string; quantity: number; price: string; subscriptionInfo?: any }>;
+
+    if (cannabisOrderId) {
+      // Cannabis order — authoritative price from the stored order. asServiceRole bypasses RLS so
+      // an anonymous buyer's order can still be resolved and charged.
+      const coRows = await base44.asServiceRole.entities.CannabisOrder.filter({ id: cannabisOrderId });
+      const co = coRows?.[0];
+      if (!co) return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+      if (co.payment_status === "paid") return new Response(JSON.stringify({ error: "Order already paid" }), { status: 409 });
+      const items: any[] = Array.isArray(co.items) ? co.items : [];
+      if (!items.length) return new Response(JSON.stringify({ error: "Empty order" }), { status: 400 });
+      cartItems = items.map((it: any) => ({
+        name: String(it.name || "LOKIN Green item").slice(0, 255),
+        quantity: Math.max(1, Math.min(100, Number(it.qty) || 1)),
+        price: Number(it.price).toFixed(2),
+      }));
+      productId = "cannabis_order";
+      productName = "LOKIN Green Order";
+      price = "0";              // not used for cannabis; total derived from cartItems
+      currency = "USD";
+      subscriptionInfo = undefined;
+      quantity = 1;
+      thankYouPath = "/ThankYou";
+      postFlowPath = "/stash";
+    } else {
+      // Subscription plan — client sends only a productId; price/tier resolved here.
+      productId = String(body.productId ?? "");
+      quantity = 1; // subscriptions are fixed-entitlement — ignore any client-sent quantity
+      const PRODUCTS: Record<string, { name: string; price: string; tier: string; subscriptionInfo: any }> = {
+        pro_monthly: {
+          name: "LOKIN Pro — Monthly",
+          price: "9.99",
+          tier: "pro",
+          subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Pro Monthly", description: "Advanced routing & deeper AI analytics" },
+        },
+        elite_monthly: {
+          name: "LOKIN Elite — Monthly",
+          price: "19.99",
+          tier: "elite",
+          subscriptionInfo: { subscriptionSettings: { frequency: "MONTH" }, title: "LOKIN Elite Monthly", description: "All Pro features + priority AI & elite routing" },
+        },
+        elite_annual: {
+          name: "LOKIN Elite — Annual",
+          price: "149.99",
+          tier: "elite",
+          subscriptionInfo: { subscriptionSettings: { frequency: "YEAR", freeTrialPeriod: { frequency: "DAY", interval: 14 } }, title: "LOKIN Elite Annual", description: "Yearly billing with a 14-day free trial" },
+        },
+      };
+      const product = PRODUCTS[productId];
+      if (!product) return new Response(JSON.stringify({ error: "Unknown plan" }), { status: 400 });
+      productName = product.name;
+      price = product.price;
+      currency = "USD";
+      subscriptionInfo = product.subscriptionInfo;
+      thankYouPath = "/ThankYou";
+      postFlowPath = "/pricing";
+      cartItems = [{ name: productName, quantity, price, ...(subscriptionInfo ? { subscriptionInfo } : {}) }];
     }
-    const productName = product.name;
-    const price = product.price;            // authoritative per-unit price (major units), resolved server-side
-    const currency = "USD";
-    const subscriptionInfo = product.subscriptionInfo; // recurring subscription
-    // Where Wix returns the buyer. Both MUST be real, PUBLICLY reachable routes in this app: the
-    // returning buyer is often anonymous, so a missing or login-gated route strands a paid customer.
-    // Match your router exactly — `/ThankYou`, not `/thank-you`.
-    const thankYouPath = "/ThankYou";
-    const postFlowPath = "/pricing";
     // ===== END APP-SPECIFIC =====
 
-    const total = parseFloat(price) * quantity;
+    const total = cannabisOrderId
+      ? cartItems.reduce((s, it) => s + Number(it.price) * it.quantity, 0)
+      : parseFloat(price) * quantity;
     if (!(total >= 0.5)) {
       // Wix rejects charges under 0.50 in the charged currency (major units, not cents).
       return new Response(JSON.stringify({ error: "Amount must be at least 0.50" }), { status: 400 });
@@ -125,7 +153,7 @@ Deno.serve(async (req: Request) => {
 
     const constructBody = {
       cart: {
-        items: [{ name: productName, quantity, price, ...(subscriptionInfo ? { subscriptionInfo } : {}) }],
+        items: cartItems,
         // Prefill the signed-in buyer's email if we have one; anonymous buyers enter it on Wix.
         ...(appUser?.email ? { customerInfo: { email: appUser.email } } : {}),
       },
@@ -180,6 +208,21 @@ Deno.serve(async (req: Request) => {
       amount: total.toFixed(2),
       currency,
     });
+
+    // ===== APP-SPECIFIC: link a cannabis order to this checkout session =====
+    // The webhook resolves the CannabisOrder by checkout_session_id to mark it paid and spawn the
+    // dispatch MerchantOrder. asServiceRole so an anonymous buyer's order can be linked.
+    if (cannabisOrderId) {
+      try {
+        await base44.asServiceRole.entities.CannabisOrder.update(cannabisOrderId, {
+          checkout_session_id: checkoutSessionId,
+          payment_status: "awaiting_payment",
+        });
+      } catch (e) {
+        console.error("create-checkout: cannabis order link failed", e);
+      }
+    }
+    // ===== END APP-SPECIFIC =====
 
     return new Response(JSON.stringify({ redirectUrl }), {
       status: 200,
