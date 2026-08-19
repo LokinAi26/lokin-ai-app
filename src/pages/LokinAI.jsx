@@ -232,7 +232,7 @@ export default function LokinAI() {
               </button>
               <button onClick={() => setDraft(null)} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/60">Discard</button>
             </div>
-            <div className="text-[10px] text-white/50 mt-1.5">Confirm before sending. Auto-send coming soon.</div>
+            <div className="text-[10px] text-white/50 mt-1.5">You stay in control — review and confirm before sending.</div>
           </div>
         )}
       </div>
