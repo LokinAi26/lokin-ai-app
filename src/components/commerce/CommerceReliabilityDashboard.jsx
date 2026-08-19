@@ -93,6 +93,13 @@ export default function CommerceReliabilityDashboard() {
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-white">{c.label}</div>
                   <div className="text-[10px] text-white/50">{c.detail}</div>
+                  {c.key === "sku_variant_mapping" && (
+                    <div className="mt-1.5 flex flex-wrap gap-1 text-[9px]">
+                      <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-primary">PRINTFUL {c.printful_products ?? 0}</span>
+                      <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-white/55">NON_PRINTFUL {c.non_printful_products ?? 0}</span>
+                      <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-amber-300">NEEDS_REVIEW {c.needs_review_products ?? 0}</span>
+                    </div>
+                  )}
                 </div>
                 <span className={`text-[9px] font-bold ${s.color} shrink-0`}>{pretty(c.status)}</span>
               </div>
