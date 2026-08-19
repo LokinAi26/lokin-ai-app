@@ -37,6 +37,9 @@ export default function InsuranceAdmin() {
     if (!editing) return;
     setSaving(true);
     try {
+      if (editing.status === "active" && (!editing.provider?.trim() || !editing.policy_number?.trim() || !editing.effective_date || !editing.expires_at)) {
+        throw new Error("Carrier, confirmed policy number, effective date, and expiration date are required before marking coverage active.");
+      }
       const premium = editing.monthly_premium ? Number(editing.monthly_premium) : 0;
       const deductible = editing.deductible ? Number(editing.deductible) : 0;
       const liability = editing.liability_limit ? Number(editing.liability_limit) : 1000000;
@@ -86,7 +89,7 @@ export default function InsuranceAdmin() {
           application_id: editing.id,
           quote_id: quote?.id || existingPolicies?.[0]?.quote_id || null,
           provider: editing.provider || "Pending carrier",
-          policy_number: editing.policy_number || `LOKIN-${String(editing.id).slice(-8).toUpperCase()}`,
+          policy_number: editing.policy_number.trim(),
           coverage_type: editing.coverage_type,
           monthly_premium: premium,
           deductible,
@@ -121,7 +124,7 @@ export default function InsuranceAdmin() {
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">LOKIN Cover — Admin</h1>
       </div>
-      <p className="text-sm text-white/50">Review submitted applications, set pricing, and bind active policies.</p>
+      <p className="text-sm text-white/50">Review applications and record carrier-confirmed quotes/policies. Mark active only after coverage is actually bound by an authorized carrier.</p>
 
       {editing ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-4 space-y-3">
