@@ -102,7 +102,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route element={<ProtectedRoute unauthenticatedElement={null} />}>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Login />} />}>
         <Route element={<DriverLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/route" element={<RoutePlanner />} />
