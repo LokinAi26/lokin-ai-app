@@ -96,6 +96,9 @@ function draftForAI(d: any) {
 }
 
 function buildOrderAggregate(orders: any[], products: any[]) {
+  // Explicit Shopify test orders stay visible for diagnostics but never influence production metrics or AI decisions.
+  const testOrders = orders.filter((o: any) => o?.test === true);
+  orders = orders.filter((o: any) => o?.test !== true);
   const order_count = orders.length;
   const total_revenue = orders.reduce((s: number, o: any) => s + Number(o.total_price || 0), 0);
   const aov = order_count ? total_revenue / order_count : 0;
@@ -146,6 +149,8 @@ function buildOrderAggregate(orders: any[], products: any[]) {
   const out_of_stock = variants.filter((v: any) => v.available === 0).slice(0, 10);
   return {
     order_count,
+    test_order_count: testOrders.length,
+    test_orders_excluded: true,
     total_revenue: Number(total_revenue.toFixed(2)),
     aov: Number(aov.toFixed(2)),
     paid, unfulfilled, fulfilled, partial, refunded,
@@ -552,7 +557,7 @@ export default async function (req: Request): Promise<Response> {
       }
       try {
         const compact = {
-          order_count: agg.order_count, total_revenue: agg.total_revenue, aov: agg.aov,
+          order_count: agg.order_count, test_order_count: agg.test_order_count, test_orders_excluded: true, total_revenue: agg.total_revenue, aov: agg.aov,
           paid: agg.paid, unfulfilled: agg.unfulfilled, fulfilled: agg.fulfilled, partial: agg.partial, refunded: agg.refunded,
           customer_count: agg.customer_count, repeat_customers: agg.repeat_customers,
           daily_revenue: agg.daily_revenue.map((d: any) => d.revenue),
