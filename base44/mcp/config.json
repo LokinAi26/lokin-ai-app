@@ -6,9 +6,8 @@
         "name": "lokin_command_status",
         "title": "LOKIN Command Server status",
         "description": "Checks the shared LOKIN AI and ChatGPT command layer, including Credit Guardian posture, learning counts, open plans, security protections, and connection surfaces. Read-only.",
-        "input_schema": { "type": "object", "properties": {}, "required": [] },
+        "input_schema": { "type": "object", "properties": { "action": { "type": "string", "const": "status", "default": "status" } }, "required": ["action"] },
         "handler": "lokin-command-server",
-        "handler_input": { "action": "status" },
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       },
       {
@@ -18,21 +17,20 @@
         "input_schema": {
           "type": "object",
           "properties": {
+            "action": { "type": "string", "const": "skills", "default": "skills" },
             "area": { "type": "string", "enum": ["base44", "openai", "business", "combined"], "description": "Optional skill area filter." }
           },
-          "required": []
+          "required": ["action"]
         },
         "handler": "lokin-command-server",
-        "handler_input": { "action": "skills" },
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       },
       {
         "name": "lokin_daily_brief",
         "title": "Create LOKIN daily command brief",
         "description": "Returns a concise cross-system briefing with credit posture, open priorities, active project memory, and the next planned action. Read-only.",
-        "input_schema": { "type": "object", "properties": {}, "required": [] },
+        "input_schema": { "type": "object", "properties": { "action": { "type": "string", "const": "brief", "default": "brief" } }, "required": ["action"] },
         "handler": "lokin-command-server",
-        "handler_input": { "action": "brief" },
         "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
       },
       {
@@ -42,15 +40,15 @@
         "input_schema": {
           "type": "object",
           "properties": {
+            "action": { "type": "string", "const": "plan", "default": "plan" },
             "goal": { "type": "string", "description": "The outcome to plan." },
             "area": { "type": "string", "enum": ["base44", "openai", "business", "combined"], "default": "combined" },
             "priority": { "type": "string", "enum": ["low", "normal", "high", "urgent"], "default": "normal" },
             "source": { "type": "string", "enum": ["lokin", "chatgpt", "mcp"], "default": "mcp" }
           },
-          "required": ["goal"]
+          "required": ["action", "goal"]
         },
         "handler": "lokin-command-server",
-        "handler_input": { "action": "plan" },
         "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
       },
       {
@@ -60,14 +58,14 @@
         "input_schema": {
           "type": "object",
           "properties": {
+            "action": { "type": "string", "const": "remember", "default": "remember" },
             "topic": { "type": "string", "description": "Short stable memory topic." },
             "summary": { "type": "string", "description": "The exact useful fact or preference to remember." },
             "memory_type": { "type": "string", "enum": ["preference", "goal", "context", "strategy", "correction", "pattern"], "default": "context" }
           },
-          "required": ["topic", "summary"]
+          "required": ["action", "topic", "summary"]
         },
         "handler": "lokin-command-server",
-        "handler_input": { "action": "remember" },
         "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
       },
       {
