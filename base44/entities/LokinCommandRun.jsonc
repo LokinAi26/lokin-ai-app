@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "request": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "base44",
+        "openai",
+        "business",
+        "combined"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "awaiting_approval",
+        "in_progress",
+        "completed",
+        "blocked",
+        "cancelled"
+      ]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "read_only",
+        "low",
+        "sensitive",
+        "destructive"
+      ]
+    },
+    "requires_approval": {
+      "type": "boolean"
+    },
+    "plan_json": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "lokin",
+        "chatgpt",
+        "mcp"
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "request",
+    "area",
+    "status",
+    "risk_level",
+    "requires_approval",
+    "plan_json",
+    "source"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  },
+  "name": "LokinCommandRun"
+}
