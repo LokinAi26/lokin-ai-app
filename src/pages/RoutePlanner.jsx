@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Radar } from "lucide-react";
+import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Radar, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
@@ -47,6 +47,33 @@ export default function RoutePlanner() {
   }
 
   const stops = data?.sequenced || [];
+
+  // Parse a store-hours string like "7AM-11PM" or "07:00-23:00" into an
+  // {open, close} pair of decimal hours (0-24). Returns null if unparseable.
+  function parseHours(raw) {
+    if (!raw) return null;
+    const m = raw.toUpperCase().replace(/\s+/g, "").match(/(\d{1,2})(?::(\d{2}))?(AM|PM)?[-–TO]+(\d{1,2})(?::(\d{2}))?(AM|PM)?/);
+    if (!m) return null;
+    const toDec = (h, mm, ap) => {
+      let v = Number(h) + (Number(mm || 0) / 60);
+      if (ap === "AM" && v === 12) v = 0;
+      if (ap === "PM" && v < 12) v += 12;
+      return v;
+    };
+    const open = toDec(m[1], m[2], m[3]);
+    let close = toDec(m[4], m[5], m[6] || m[3]);
+    if (close < open) close += 24; // closes after midnight
+    return { open, close };
+  }
+
+  function hoursStatus(raw) {
+    const h = parseHours(raw);
+    if (!h) return { label: raw || "Hours n/a", open: null };
+    const now = new Date();
+    const cur = now.getHours() + now.getMinutes() / 60;
+    const isOpen = cur >= h.open && cur < h.close;
+    return { label: raw, open: isOpen };
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -171,6 +198,20 @@ export default function RoutePlanner() {
                     <span>net ${o.rate.net}</span><span>fuel ${o.rate.fuel}</span><span>exp ${o.rate.expenses}</span>
                   </div>
                   <div className="mt-1 text-xs truncate text-white/45"><span className="text-primary">→ </span>{o.dropoff_address}</div>
+                  {o.store_hours && (() => {
+                    const st = hoursStatus(o.store_hours);
+                    return (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                        <Store className="h-3 w-3 text-accent" />
+                        <span className="text-white/55">{st.label}</span>
+                        {st.open !== null && (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${st.open ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
+                            {st.open ? "Open now" : "Closed"}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <ChevronRight className="h-4 w-4 text-white/30 mt-1" />
               </div>

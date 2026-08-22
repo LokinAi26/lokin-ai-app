@@ -113,6 +113,7 @@ export default async function(req) {
         est_minutes: o.est_minutes,
         pickup_address: o.pickup_address,
         dropoff_address: o.dropoff_address,
+        store_hours: o.store_hours || "",
         sequence: o.sequence,
         rate: o._score,
       })),

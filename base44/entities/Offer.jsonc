@@ -39,6 +39,10 @@
     "dropoff_address": {
       "type": "string"
     },
+    "store_hours": {
+      "type": "string",
+      "description": "Merchant pickup location operating hours, e.g. '7AM-11PM' or '07:00-23:00'. Shown on route stops so drivers know closing/opening times."
+    },
     "items_count": {
       "type": "number",
       "default": 1
