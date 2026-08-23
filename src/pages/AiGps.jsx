@@ -309,6 +309,7 @@ export default function AiGps() {
 }
 
 function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses }) {
+  const [freeRoam, setFreeRoam] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -320,7 +321,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           snappedPosition={nav.snappedPosition}
           maneuver={nav.maneuver}
           remainingDurationS={nav.remainingDurationS}
-          followDriver
+          followDriver={!freeRoam}
           perspective={mapView === "4d"}
           fullscreen
         />
@@ -346,10 +347,21 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       </div>
 
       {nav.route && (
-        <div className="absolute left-1/2 top-[calc(3.25rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-white/10 bg-black/85 p-1 shadow-xl backdrop-blur">
-          <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "real" ? "bg-primary text-black" : "text-white/60"}`}>MAP</button>
-          <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/60"}`}>4D</button>
-        </div>
+        <>
+          <div className="absolute left-1/2 top-[calc(3.25rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-white/10 bg-black/85 p-1 shadow-xl backdrop-blur">
+            <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "real" ? "bg-primary text-black" : "text-white/60"}`}>MAP</button>
+            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/60"}`}>4D</button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setFreeRoam((v) => !v)}
+            aria-pressed={freeRoam}
+            className={`absolute left-2 top-1/2 z-50 -translate-y-1/2 rounded-full border px-2.5 py-2 text-[9px] font-extrabold tracking-[0.08em] shadow-lg backdrop-blur active:scale-95 ${freeRoam ? "border-accent/50 bg-accent/90 text-black" : "border-white/15 bg-black/75 text-white/70"}`}
+          >
+            {freeRoam ? "FOLLOW" : "FREE ROAM"}
+          </button>
+        </>
       )}
 
       {error && !nav.route && (
