@@ -214,6 +214,17 @@ export default async function navigationEngine(req: Request) {
       }, 503);
     }
 
+    if (action === "provider_probe") {
+      const result = await geocodeAddress("Washington, DC", accessToken, null);
+      return json({
+        ok: true,
+        provider: "mapbox",
+        configured: true,
+        verified: Boolean(result?.longitude && result?.latitude),
+        capabilities: ["geocoding", "driving_traffic", "road_geometry", "turn_by_turn"],
+      });
+    }
+
     if (action === "geocode") {
       const proximity = validCoord(body?.proximity);
       return json({ ok: true, result: await geocodeAddress(body?.address, accessToken, proximity) });
