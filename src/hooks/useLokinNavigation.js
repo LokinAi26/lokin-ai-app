@@ -70,15 +70,17 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       const input = normalizedDestinations?.[i] || g?.input || "";
       return !addressHasGeographicContext(input) && Number(g?.proximity_miles) > 55;
     });
-    if (!invalid) return;
+    const singleIncomplete = normalizedDestinations.length === 1 && !addressHasGeographicContext(normalizedDestinations[0]);
+    const implausibleSingleRoute = singleIncomplete && Number(route?.distance_m || 0) > 80 * 1609.344;
+    if (!invalid && !implausibleSingleRoute) return;
     routeRef.current = null;
     cumulativeRef.current = [];
     setRoute(null);
     setSnapped(null);
     setManeuver(null);
     setStatus("error");
-    setError(`LOKIN blocked a far-away match for “${invalid.input || normalizedDestinations?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
-  }, [geocodedDestinations, destinationsKey]);
+    setError(`LOKIN blocked an implausible far-away match for “${invalid?.input || normalizedDestinations?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
+  }, [geocodedDestinations, destinationsKey, route?.distance_m]);
 
   const requestRoute = useCallback(async (originCoord, addresses, reason = "initial") => {
     if (!originCoord || !addresses?.length) return null;
@@ -109,8 +111,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         const input = addresses?.[i] || g?.input || "";
         return !addressHasGeographicContext(input) && Number(g?.proximity_miles) > 55;
       });
-      if (invalidLocalMatch) {
-        throw new Error(`LOKIN blocked a far-away match for “${invalidLocalMatch.input || addresses?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
+      const singleIncomplete = addresses.length === 1 && !addressHasGeographicContext(addresses[0]);
+      const implausibleSingleRoute = singleIncomplete && Number(nextRoute?.distance_m || 0) > 80 * 1609.344;
+      if (invalidLocalMatch || implausibleSingleRoute) {
+        throw new Error(`LOKIN blocked an implausible far-away match for “${invalidLocalMatch?.input || addresses?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
       }
       if (!nextRoute?.geometry?.coordinates?.length) throw new Error("Routing provider returned no road geometry");
       const prepared = { ...nextRoute, maneuvers: prepareManeuvers(nextRoute) };
