@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import DriveMusicPlayer from "@/components/DriveMusicPlayer";
-import AiGps4D from "@/components/AiGps4D";
+import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 function routePoints(n, W = 360, H = 360) {
@@ -209,7 +209,7 @@ export default function DrivingMode() {
         </div>
       )}
 
-      <AiGps4D stops={stops} compact />
+      <SatelliteRoutePreview stops={stops} destinationAddress={current?.dropoff_address || ""} compact />
 
       <DriveMusicPlayer />
     </div>
