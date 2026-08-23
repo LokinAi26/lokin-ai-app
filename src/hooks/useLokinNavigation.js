@@ -29,6 +29,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [error, setError] = useState("");
   const [rerouteCount, setRerouteCount] = useState(0);
   const [providerConfigured, setProviderConfigured] = useState(null);
+  const [providerVerified, setProviderVerified] = useState(null);
+  const [providerProbeError, setProviderProbeError] = useState("");
   const routeRef = useRef(null);
   const geocodedRef = useRef([]);
   const destinationsRef = useRef(normalizedDestinations);
@@ -80,11 +82,30 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   }, []);
 
   useEffect(() => {
-    if (!enabled) { setStatus("idle"); return; }
+    if (!enabled) setStatus("idle");
     base44.functions.invoke("navigation-engine", { action: "status" })
       .then((r) => setProviderConfigured(Boolean(r.data?.configured)))
       .catch(() => setProviderConfigured(false));
   }, [enabled]);
+
+  const probeProvider = useCallback(async () => {
+    setProviderProbeError("");
+    setProviderVerified(null);
+    try {
+      const response = await base44.functions.invoke("navigation-engine", { action: "provider_probe" });
+      const verified = Boolean(response.data?.verified);
+      setProviderConfigured(Boolean(response.data?.configured));
+      setProviderVerified(verified);
+      if (!verified) setProviderProbeError("Mapbox responded, but the provider check was not verified.");
+      return verified;
+    } catch (e) {
+      const detail = e?.response?.data;
+      if (detail?.code === "NAV_PROVIDER_NOT_CONFIGURED") setProviderConfigured(false);
+      setProviderVerified(false);
+      setProviderProbeError(detail?.error || e?.message || "Mapbox provider check failed");
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     if (!enabled || !normalizedDestinations.length) return;
@@ -197,6 +218,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     retry,
     rerouteCount,
     providerConfigured,
+    providerVerified,
+    providerProbeError,
+    probeProvider,
     remainingDistanceM,
     remainingDurationS,
     voiceSupported: voiceSupported(),
