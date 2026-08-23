@@ -40,8 +40,8 @@ export const COMMAND_GROUPS = [
     label: "Road & Shopping",
     commands: [
       { id: "on-the-road", title: "Road Hub", subtitle: "Stops & road tools", icon: Truck, keywords: ["truck", "rest", "travel"], run: (n) => n("/on-the-road") },
-      { id: "fuel", title: "Fuel", subtitle: "Discounts & cashback", icon: Fuel, keywords: ["gas", "discount", "price"], run: (n) => n("/fuel") },
-      { id: "locator", title: "Shopping AI", subtitle: "Scan, beep, find the shelf", icon: ScanLine, keywords: ["find", "aisle", "barcode"], run: (n) => n("/locator") },
+      { id: "fuel", title: "Fuel", subtitle: "Fill-up tracking & saved deals", icon: Fuel, keywords: ["gas", "discount", "price", "fill up"], run: (n) => n("/fuel") },
+      { id: "locator", title: "Shopping AI", subtitle: "Search, map aisle, check inventory", icon: ScanLine, keywords: ["find", "aisle", "barcode", "inventory"], run: (n) => n("/locator") },
       { id: "shop-deliver", title: "Shop & Deliver", subtitle: "Map shopping runs", icon: ShoppingBag, keywords: ["shop", "deliver", "run"], run: (n) => n("/shop-deliver") },
       { id: "vehicle-care", title: "Vehicle Care", subtitle: "Maintenance logs", icon: Wrench, keywords: ["oil", "tire", "service"], run: (n) => n("/vehicle-care") },
     ],
