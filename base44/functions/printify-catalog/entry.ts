@@ -1,7 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
-import { printifyDemo } from "../../shared/demoCatalog.ts";
 
 /**
  * printify-catalog — LOKIN Brand Store <-> Printify integration.
@@ -75,11 +74,14 @@ export default async function (req) {
       .replace(/^['\"]|['\"]$/g, "")
       .replace(/[\s\u200B-\u200D\uFEFF]+/g, "")
       .trim();
-    // Demo/sandbox fallback: when no real token is set, serve clearly-flagged
-    // sample data so the storefront renders instead of erroring. Add the real
-    // PRINTIFY_API_TOKEN in Settings -> Secrets to switch to live data.
+    // Fail closed: never substitute sample products for a missing commerce connection.
     if (!token) {
-      return Response.json(printifyDemo(action, payload));
+      return Response.json({
+        error: "Printify is not configured for live catalog access.",
+        code: "COMMERCE_NOT_CONFIGURED",
+        provider: "printify",
+        required_secret: "PRINTIFY_API_TOKEN",
+      }, { status: 503 });
     }
 
     // ----- Shops list (auto-resolve shop id; id itself is not sensitive) -----
