@@ -87,6 +87,21 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       routeRef.current = prepared;
       cumulativeRef.current = routeCumulativeDistances(prepared.geometry.coordinates);
       setRoute(prepared);
+
+      // Snap the same GPS origin that requested the route immediately. iOS may
+      // delay the next watchPosition callback, and the follow camera should not
+      // be left without a driver target while a valid road route is already live.
+      const initialSnap = snapToRoute(originCoord, prepared.geometry.coordinates, cumulativeRef.current);
+      if (initialSnap) {
+        const enrichedInitialSnap = {
+          ...initialSnap,
+          raw_coordinate: originCoord,
+          timestamp: Date.now(),
+        };
+        setSnapped(enrichedInitialSnap);
+        setManeuver(nextManeuverForSnap(prepared.maneuvers || [], initialSnap, prepared.geometry.coordinates));
+      }
+
       const geocoded = response.data?.geocoded_destinations || [];
       geocodedRef.current = geocoded;
       setGeocodedDestinations(geocoded);
