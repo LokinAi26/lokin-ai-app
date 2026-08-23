@@ -32,6 +32,11 @@
         "cannabis_delivery",
         "alcohol_delivery",
         "warehouse",
+        "mystery_shop",
+        "food_review",
+        "product_test",
+        "paid_research",
+        "survey",
         "other"
       ],
       "default": "other"
@@ -73,7 +78,8 @@
         "per_mile",
         "daily",
         "weekly",
-        "salary"
+        "salary",
+        "per_task"
       ],
       "default": "hourly"
     },
@@ -119,8 +125,35 @@
     },
     "verified_at": {
       "type": "string",
-      "format": "date",
-      "description": "Date the listing details were last verified."
+      "format": "date-time",
+      "description": "Exact time the public listing/application URLs were last verified reachable."
+    },
+    "retrieved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Exact time LOKIN retrieved this opportunity in a live scan."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Freshness cutoff after which the listing must be reverified before display."
+    },
+    "posted_at": {
+      "type": "string",
+      "description": "Public posting date/time when provided by the source."
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Reachable public page where the opportunity was found."
+    },
+    "live_status": {
+      "type": "string",
+      "enum": [
+        "live",
+        "expired",
+        "unverified"
+      ],
+      "default": "unverified"
     },
     "notes": {
       "type": "string"
