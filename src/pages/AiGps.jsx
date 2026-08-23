@@ -201,17 +201,39 @@ export default function AiGps() {
         </div>
       )}
 
-      <div className={locked ? "rounded-[2rem] border border-primary/25 bg-black/70 p-1 shadow-[0_0_40px_-18px_hsl(80_100%_50%)]" : ""}>
-        <AiGps4D
-          stops={stops}
-          routeGeometry={nav.route?.geometry || null}
-          snappedPosition={nav.snappedPosition}
-          maneuver={nav.maneuver}
-          navigationStatus={nav.status}
-          remainingDurationS={nav.remainingDurationS}
-          followDriver={locked}
-        />
-      </div>
+      {nav.route ? (
+        <div className="space-y-2">
+          <div className="mx-auto flex w-fit gap-1 rounded-full border border-white/10 bg-black/80 p-1">
+            <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
+            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
+          </div>
+          {mapView === "real" ? (
+            <RoadMatchedMap
+              routeGeometry={nav.route.geometry}
+              snappedPosition={nav.snappedPosition}
+              maneuver={nav.maneuver}
+              remainingDurationS={nav.remainingDurationS}
+              followDriver={locked}
+            />
+          ) : (
+            <div className={locked ? "rounded-[2rem] border border-primary/25 bg-black/70 p-1 shadow-[0_0_40px_-18px_hsl(80_100%_50%)]" : ""}>
+              <AiGps4D
+                stops={stops}
+                routeGeometry={nav.route.geometry}
+                snappedPosition={nav.snappedPosition}
+                maneuver={nav.maneuver}
+                navigationStatus={nav.status}
+                remainingDurationS={nav.remainingDurationS}
+                followDriver={locked}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={locked ? "rounded-[2rem] border border-primary/25 bg-black/70 p-1 shadow-[0_0_40px_-18px_hsl(80_100%_50%)]" : ""}>
+          <AiGps4D stops={stops} navigationStatus={nav.status} followDriver={false} />
+        </div>
+      )}
 
       {!nav.route && !loadingStops && destinationAddresses.length === 0 && (
         <div className="rounded-3xl border border-dashed border-white/15 p-6 text-center">
