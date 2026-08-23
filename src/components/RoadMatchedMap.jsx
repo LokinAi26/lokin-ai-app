@@ -49,7 +49,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + dx, y: height / 2 + (point[1] - center[1]) };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null }) {
+export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, etaLiveTraffic = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   const defaultStyle = perspective ? "satellite-streets-v12" : "dark-v11";
   const [style, setStyle] = useState(defaultStyle);
@@ -210,36 +210,41 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           )}
         </div>
 
-        <div className={`absolute left-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
-          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
-            <Map className="h-3.5 w-3.5" /> {perspective ? "REAL 4D MAP · ROAD MATCHED" : "REAL MAP · ROAD MATCHED"}
-          </div>
-        </div>
+        {!fullscreen && (
+          <>
+            <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur">
+              <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
+                <Map className="h-3.5 w-3.5" /> {perspective ? "REAL 4D MAP · ROAD MATCHED" : "REAL MAP · ROAD MATCHED"}
+              </div>
+            </div>
+            <div className="absolute right-3 top-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur">
+              {perspective ? (
+                <div className="rounded-full bg-primary px-2.5 py-1 text-[9px] font-extrabold text-black"><Satellite className="inline h-3 w-3 mr-1" />SATELLITE HD</div>
+              ) : (
+                <>
+                  <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
+                  <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />SAT</button>
+                </>
+              )}
+            </div>
+            {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">58° PITCH · HEADING UP</div>}
+            <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
+              <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">PINCH TO ZOOM</div>
+              <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); onResetFollow?.(); }} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+            </div>
+          </>
+        )}
 
-        <div className={`absolute right-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
-          {perspective ? (
-            <div className="rounded-full bg-primary px-2.5 py-1 text-[9px] font-extrabold text-black"><Satellite className="inline h-3 w-3 mr-1" />SATELLITE HD</div>
-          ) : (
-            <>
-              <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
-              <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />SAT</button>
-            </>
-          )}
-        </div>
-
-        {perspective && <div className={`absolute left-3 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : "top-12"}`}>58° PITCH · HEADING UP</div>}
-
-        <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
-          <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">PINCH TO ZOOM</div>
-          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); onResetFollow?.(); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
-        </div>
+        {fullscreen && Math.abs(zoomOffset) > 0.03 && (
+          <button type="button" aria-label="Reset zoom and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); onResetFollow?.(); }} className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-black/70 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+        )}
 
         <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
           <div className="text-[9px] tracking-[0.16em] text-primary/75">NEXT MANEUVER</div>
           <div className="mt-0.5 line-clamp-2 text-sm font-extrabold text-white">{maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
         </div>
         <div className={`absolute right-3 rounded-2xl border border-accent/20 bg-black/80 px-3 py-2 text-right backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
-          <div className="text-[9px] tracking-wider text-white/40">ETA</div>
+          <div className="text-[9px] tracking-wider text-white/45">{etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
           <div className="font-display text-lg font-black text-accent">{formatDuration(remainingDurationS)}</div>
         </div>
 
@@ -252,7 +257,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             )}
           </div>
         )}
-        {image && loading && (
+        {!fullscreen && image && loading && (
           <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent/20 bg-black/75 px-3 py-1.5 text-[9px] font-bold tracking-[0.1em] text-accent backdrop-blur"><Layers3 className="mr-1 inline h-3 w-3 animate-pulse" />REFINING SATELLITE</div>
         )}
         {image && error && <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-red-400/20 bg-black/80 px-3 py-1.5 text-[9px] text-red-300 backdrop-blur">{error}</div>}
