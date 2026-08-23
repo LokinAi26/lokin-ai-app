@@ -88,6 +88,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
 
+  useEffect(() => {
+    if (drivingMode) setWakeBlocked(false);
+  }, [drivingMode]);
+
   function speak(text) {
     try {
       const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ""));
