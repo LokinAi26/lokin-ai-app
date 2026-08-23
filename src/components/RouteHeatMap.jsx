@@ -50,7 +50,7 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-black/40">
         <div className="flex items-center gap-1.5">
           <Flame className="h-4 w-4 text-primary" />
-          <span className="text-[11px] font-display tracking-[0.22em] text-primary">EARNINGS HEAT MAP</span>
+          <span className="text-[11px] font-display tracking-[0.22em] text-primary">HOTSPOT MODEL · DEMO DATA</span>
         </div>
         <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black/40 p-0.5">
           {METRICS.map((m) => {
@@ -110,7 +110,7 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
           <span className="text-[9px] tracking-widest text-white/50 font-display">HIGH</span>
         </div>
         <div className="absolute top-2 right-2 rounded-full glass border border-primary/30 px-2.5 py-1 text-[9px] font-bold tracking-widest text-primary">
-          HOTSPOT VIEW
+          MODEL PREVIEW
         </div>
       </div>
 
@@ -124,7 +124,7 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
             <TrendingUp className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] tracking-widest text-white/40 font-display">BEST VOLUME NOW</div>
+            <div className="text-[10px] tracking-widest text-white/40 font-display">HIGHEST SAMPLE VOLUME</div>
             <div className="flex items-center gap-1.5 text-sm font-semibold text-white truncate">
               <MapPin className="h-3 w-3 text-primary" /> {best.name}
             </div>
