@@ -195,7 +195,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     }
   }
 
-  function startOnce() {
+  function startOnce(wakeGranted = false) {
     const SR = speechRecognitionCtor();
     if (!SR) {
       setOpen(true);
@@ -221,7 +221,18 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     };
     rec.onresult = (e) => {
       const text = e.results?.[0]?.[0]?.transcript || "";
-      if (text.trim()) handleCommand(text);
+      if (!text.trim()) return;
+      if (drivingMode && !wakeGranted) {
+        const wakeCommand = extractWakeCommand(text);
+        if (!wakeCommand.matched) return;
+        if (wakeCommand.command) handleCommand(wakeCommand.command);
+        else {
+          speak("I'm listening.");
+          setTimeout(() => startOnce(true), 250);
+        }
+        return;
+      }
+      handleCommand(text);
     };
     rec.onerror = (e) => {
       setListening(false);
