@@ -233,6 +233,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
   return {
     route,
+    geocodedDestinations,
     rawPosition,
     snappedPosition: snapped,
     maneuver,
