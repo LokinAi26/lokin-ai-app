@@ -186,7 +186,7 @@ export default function DriverLayout() {
       )}
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
-      <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation} />
+      <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation || (working && appFreeRoam)} />
     </div>
   );
 }
