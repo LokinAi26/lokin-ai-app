@@ -36,10 +36,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [providerConfigured, setProviderConfigured] = useState(null);
   const [providerVerified, setProviderVerified] = useState(null);
   const [providerProbeError, setProviderProbeError] = useState("");
+  const [trafficEta, setTrafficEta] = useState(null);
   const routeRef = useRef(null);
   const geocodedRef = useRef([]);
   const destinationsRef = useRef(normalizedDestinations);
   const cumulativeRef = useRef([]);
+  const snappedRef = useRef(null);
+  const etaRequestRef = useRef(0);
   const routeRequestRef = useRef(0);
   const offRouteSamplesRef = useRef(0);
   const lastRerouteAtRef = useRef(0);
@@ -59,9 +62,11 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setSnapped(null);
     setManeuver(null);
     setRerouteCount(0);
+    setTrafficEta(null);
   }, [destinationsKey]);
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
+  useEffect(() => { snappedRef.current = snapped; }, [snapped]);
 
   // Defensive client-side guard for hot-reload/stale responses. An incomplete
   // local address must never survive on-screen as a hundreds-of-miles route.
@@ -121,6 +126,12 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       routeRef.current = prepared;
       cumulativeRef.current = routeCumulativeDistances(prepared.geometry.coordinates);
       setRoute(prepared);
+      setTrafficEta({
+        duration_s: Number(prepared.duration_s || 0),
+        distance_m: Number(prepared.distance_m || 0),
+        generated_at: prepared.generated_at || new Date().toISOString(),
+        live_traffic: prepared.live_traffic === true,
+      });
 
       // Snap the same GPS origin that requested the route immediately. iOS may
       // delay the next watchPosition callback, and the follow camera should not
@@ -151,6 +162,42 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       return null;
     }
   }, []);
+
+  const refreshTrafficEta = useCallback(async () => {
+    const activeRoute = routeRef.current;
+    const snap = snappedRef.current;
+    const geometry = activeRoute?.geometry?.coordinates || [];
+    if (!activeRoute || !snap?.coordinate || geometry.length < 2 || !geocodedRef.current.length) return null;
+
+    const currentIndex = Number(snap.segment_index || 0);
+    const remaining = geocodedRef.current.filter((g) => {
+      const idx = nearestGeometryIndex([g.longitude, g.latitude], geometry);
+      return idx >= currentIndex - 2;
+    });
+    const destinations = remaining.length ? remaining : geocodedRef.current.slice(-1);
+    const coordinates = [
+      { longitude: snap.coordinate[0], latitude: snap.coordinate[1] },
+      ...destinations.map((g) => ({ longitude: g.longitude, latitude: g.latitude })),
+    ];
+    const requestId = ++etaRequestRef.current;
+    try {
+      const response = await base44.functions.invoke("navigation-engine", { action: "traffic_eta", coordinates });
+      if (requestId !== etaRequestRef.current) return null;
+      const eta = response.data?.eta;
+      if (!eta || !Number.isFinite(Number(eta.duration_s))) return null;
+      setTrafficEta(eta);
+      return eta;
+    } catch {
+      // Keep the last valid traffic ETA rather than replacing it with a fabricated estimate.
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !route) return;
+    const timer = window.setInterval(refreshTrafficEta, 30000);
+    return () => window.clearInterval(timer);
+  }, [enabled, route?.generated_at, refreshTrafficEta]);
 
   useEffect(() => {
     if (!enabled) setStatus("idle");
@@ -276,8 +323,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     requestRoute(coord, destinationsRef.current, "initial");
   }, [rawPosition, requestRoute]);
 
-  const remainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
-  const remainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);
+  const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
+  const fallbackRemainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);
+  const remainingDistanceM = Number.isFinite(Number(trafficEta?.distance_m)) ? Number(trafficEta.distance_m) : fallbackRemainingDistanceM;
+  const remainingDurationS = Number.isFinite(Number(trafficEta?.duration_s)) ? Number(trafficEta.duration_s) : fallbackRemainingDurationS;
 
   return {
     route,
@@ -295,6 +344,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     probeProvider,
     remainingDistanceM,
     remainingDurationS,
+    etaUpdatedAt: trafficEta?.generated_at || route?.generated_at || null,
+    etaLiveTraffic: trafficEta?.live_traffic === true || route?.live_traffic === true,
+    refreshTrafficEta,
     voiceSupported: voiceSupported(),
   };
 }
