@@ -176,7 +176,7 @@ export default function ActiveDelivery() {
 
               {/* delivered + navigate */}
               <div className="grid grid-cols-2 gap-2.5">
-                <Link to={`/ai-gps?focus=locked&destination=${encodeURIComponent(current.dropoff_address || "")}`} className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold">
+                <Link to={`/ai-gps?focus=locked&nav=1&view=real&destination=${encodeURIComponent(current.dropoff_address || "")}`} className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold">
                   <Navigation className="h-4 w-4" /> LOKIN GPS
                 </Link>
                 <button onClick={markDelivered} disabled={statusIdx < 0}
