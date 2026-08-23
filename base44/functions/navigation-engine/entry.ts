@@ -172,7 +172,12 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
     .sort((a: any, b: any) => Number(a?.proximity_miles ?? 0) - Number(b?.proximity_miles ?? 0));
 
   const selected: any = candidates[0];
-  if (!selected) throw new Error(`Could not geocode: ${q}`);
+  if (!selected) {
+    if (proximity && !hasContext) {
+      throw new Error(`Could not find this address near your current location. Add city, state, or ZIP to: ${q}`);
+    }
+    throw new Error(`Could not geocode: ${q}`);
+  }
 
   if (proximity && !hasContext && Number(selected.proximity_miles) > 55) {
     throw new Error(`Address is ambiguous and the nearest local match is ${Math.round(selected.proximity_miles)} miles away. Add city, state, or ZIP to: ${q}`);
