@@ -21,6 +21,21 @@ function validCoord(value: any) {
   return { longitude, latitude };
 }
 
+function milesBetween(a: { longitude: number; latitude: number }, b: { longitude: number; latitude: number }) {
+  const rad = Math.PI / 180;
+  const dLat = (b.latitude - a.latitude) * rad;
+  const dLon = (b.longitude - a.longitude) * rad;
+  const lat1 = a.latitude * rad;
+  const lat2 = b.latitude * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 3958.7613 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function addressHasGeographicContext(address: string) {
+  const q = String(address || "").trim();
+  return /\b\d{5}(?:-\d{4})?\b/.test(q) || /,\s*[A-Za-z .'-]{2,}(?:,|$)/.test(q) || /\b(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b/i.test(q);
+}
+
 async function fetchJson(url: string, init?: RequestInit) {
   const response = await fetch(url, init);
   const data = await response.json().catch(() => ({}));
@@ -38,7 +53,7 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   const params = new URLSearchParams({
     q,
     access_token: accessToken,
-    limit: "1",
+    limit: proximity ? "5" : "1",
     autocomplete: "false",
     country: "us",
     permanent: "false",
@@ -46,20 +61,40 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   if (proximity) params.set("proximity", `${proximity.longitude},${proximity.latitude}`);
 
   const data = await fetchJson(`${MAPBOX_GEOCODE}/forward?${params.toString()}`);
-  const feature = data?.features?.[0];
-  const coords = feature?.geometry?.coordinates;
-  if (!feature || !Array.isArray(coords) || coords.length < 2) {
-    throw new Error(`Could not geocode: ${q}`);
+  const candidates = (data?.features || [])
+    .map((feature: any) => {
+      const coords = feature?.geometry?.coordinates;
+      if (!Array.isArray(coords) || coords.length < 2) return null;
+      const result = {
+        feature,
+        longitude: Number(coords[0]),
+        latitude: Number(coords[1]),
+      };
+      return {
+        ...result,
+        proximity_miles: proximity ? milesBetween(proximity, result) : null,
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => Number(a?.proximity_miles ?? 0) - Number(b?.proximity_miles ?? 0));
+
+  const selected: any = candidates[0];
+  if (!selected) throw new Error(`Could not geocode: ${q}`);
+
+  if (proximity && !addressHasGeographicContext(q) && Number(selected.proximity_miles) > 80) {
+    throw new Error(`Address is ambiguous and the nearest match is ${Math.round(selected.proximity_miles)} miles away. Add city, state, or ZIP to: ${q}`);
   }
 
+  const feature = selected.feature;
   return {
     input: q,
-    longitude: Number(coords[0]),
-    latitude: Number(coords[1]),
+    longitude: selected.longitude,
+    latitude: selected.latitude,
     name: feature?.properties?.name || feature?.text || "",
     full_address: feature?.properties?.full_address || feature?.place_name || q,
     feature_type: feature?.properties?.feature_type || feature?.type || "",
     accuracy: feature?.properties?.coordinates?.accuracy || null,
+    proximity_miles: selected.proximity_miles,
   };
 }
 
