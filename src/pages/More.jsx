@@ -26,7 +26,7 @@ const SECTIONS = [
     icon: Road,
     color: "text-accent",
     items: [
-      { to: "/5g", icon: Signal, title: "5G Signal Boost", desc: "Enhanced connectivity" },
+      { to: "/5g", icon: Signal, title: "Connection Diagnostics", desc: "Device-reported network metrics" },
       { to: "/active-delivery", icon: Package, title: "Active Delivery", desc: "Live order status" },
       { to: "/driver-dispatch", icon: Truck, title: "Merchant Pickups", desc: "Accept pickup offers" },
       { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops & road tools" },
