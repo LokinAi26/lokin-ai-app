@@ -6,4 +6,5 @@ export const RELEASE_FLAGS = Object.freeze({
   insuranceTransactions: false,
   externalDigitalSubscriptions: false,
   moneyMovement: false,
+  partnerPromotions: false,
 });
