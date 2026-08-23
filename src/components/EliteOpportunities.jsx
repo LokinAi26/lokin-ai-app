@@ -64,8 +64,8 @@ const OPPORTUNITIES = [
 
 export default function EliteOpportunities({ plan }) {
   const navigate = useNavigate();
-  if (!RELEASE_FLAGS.partnerPromotions) return null;
   const [locked, setLocked] = useState({});
+  if (!RELEASE_FLAGS.partnerPromotions) return null;
   const isElite = plan === "elite";
 
   function lockIn(opp) {
