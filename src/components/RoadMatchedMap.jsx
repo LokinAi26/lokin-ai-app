@@ -65,6 +65,14 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const nextPoint = snappedPosition?.segment_index != null && coords.length
     ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
     : null;
+
+  const activeCoords = useMemo(() => {
+    if (!followDriver || !snappedPosition?.coordinate || !coords.length) return coords;
+    const segmentIndex = Math.max(0, Math.min(coords.length - 2, Number(snappedPosition.segment_index || 0)));
+    return [snappedPosition.coordinate, ...coords.slice(segmentIndex + 1)];
+  }, [routeGeometry, followDriver, snappedPosition?.segment_index, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+
+  const activeRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: activeCoords }), [activeCoords]);
   const heading = Number.isFinite(snappedPosition?.heading)
     ? snappedPosition.heading
     : snappedPosition?.coordinate && nextPoint
@@ -81,8 +89,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     const snap = snappedPosition?.coordinate;
     if (followDriver && snap) {
       return {
-        longitude: bucketCoord(snap[0], perspective ? 0.0012 : 0.0025),
-        latitude: bucketCoord(snap[1], perspective ? 0.0012 : 0.0025),
+        longitude: bucketCoord(snap[0], perspective ? 0.00015 : 0.00035),
+        latitude: bucketCoord(snap[1], perspective ? 0.00015 : 0.00035),
         zoom: Math.max(13.5, Math.min(18.5, (perspective ? 17.8 : 16.6) + zoomOffset)),
         bearing: perspective ? Math.round(heading / 5) * 5 : 0,
         pitch: perspective ? 58 : 0,
@@ -107,7 +115,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         height: fullscreen ? renderH : perspective ? 700 : MAP_H,
         style,
         retina: true,
-        route_geometry: perspective ? routeGeometry : null,
+        route_geometry: perspective ? activeRouteGeometry : null,
       },
     }).then((response) => {
       if (!alive) return;
@@ -119,19 +127,22 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
     }).finally(() => alive && setLoading(false));
     return () => { alive = false; };
-  }, [viewportKey, perspective, routeGeometry]);
+  }, [viewportKey, perspective, activeRouteGeometry]);
 
   const routePoints = useMemo(() => {
-    if (!viewport || !Array.isArray(coords)) return "";
-    return coords
+    if (!viewport || !Array.isArray(activeCoords)) return "";
+    return activeCoords
       .map((coord) => project(coord, viewport, renderW, renderH))
       .filter(Boolean)
       .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
       .join(" ");
-  }, [routeGeometry, viewportKey]);
+  }, [activeRouteGeometry, viewportKey]);
 
+  // The static Mapbox camera is centered on the snapped GPS coordinate. In the
+  // pitched view the driver marker must use that same center projection instead
+  // of an invented lower-screen position, otherwise it visibly drifts off-road.
   const driverPoint = perspective
-    ? { x: renderW / 2, y: renderH * 0.72 }
+    ? { x: renderW / 2, y: renderH / 2 }
     : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
 
   function touchDistance(touches) {
