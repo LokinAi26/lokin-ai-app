@@ -287,7 +287,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   useEffect(() => {
     const SR = speechRecognitionCtor();
     if (wakeRestartRef.current) { clearTimeout(wakeRestartRef.current); wakeRestartRef.current = null; }
-    if (!SR || !alwaysOn) {
+    if (!SR || !wakeEnabled) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
       return;
     }
@@ -305,13 +305,15 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         wakeTriggerAtRef.current = now;
         try { wake.stop(); } catch {}
         if (wakeCommand.command) {
-          setOpen(true);
+          if (!drivingMode) setOpen(true);
           handleCommand(wakeCommand.command);
         } else {
-          speak("I'm here.");
-          setOpen(true);
-          setReply("I'm listening.");
-          setTimeout(() => startOnce(), 350);
+          speak("I'm listening.");
+          if (!drivingMode) {
+            setOpen(true);
+            setReply("I'm listening.");
+          }
+          setTimeout(() => startOnce(true), 300);
         }
         break;
       }
@@ -328,16 +330,22 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const code = e?.error || "voice_error";
       if (["not-allowed", "service-not-allowed", "audio-capture"].includes(code)) {
         alwaysOnRef.current = false;
-        setAlwaysOn(false);
-        localStorage.setItem("lokin_always_on", "0");
-        setOpen(true);
-        setReply("Always Listening was turned off because microphone or speech access is unavailable. Enable access in iPhone Settings and try again.");
+        setWakeBlocked(true);
+        if (!drivingMode) {
+          setAlwaysOn(false);
+          localStorage.setItem("lokin_always_on", "0");
+          setOpen(true);
+          setReply("Always Listening was turned off because microphone or speech access is unavailable. Enable access in iPhone Settings and try again.");
+        }
       }
     };
     wakeRef.current = wake;
     try { wake.start(); } catch {
-      setAlwaysOn(false);
-      localStorage.setItem("lokin_always_on", "0");
+      setWakeBlocked(true);
+      if (!drivingMode) {
+        setAlwaysOn(false);
+        localStorage.setItem("lokin_always_on", "0");
+      }
     }
     return () => {
       if (wakeRestartRef.current) clearTimeout(wakeRestartRef.current);
@@ -345,7 +353,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       try { wake.stop(); } catch {}
       if (wakeRef.current === wake) wakeRef.current = null;
     };
-  }, [alwaysOn]);
+  }, [wakeEnabled, drivingMode]);
 
   function toggleAlwaysOn() {
     if (!voiceSupported) {
@@ -353,6 +361,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       setReply("Always Listening is unavailable in this app environment. Use the microphone button or Siri shortcuts.");
       return;
     }
+    setWakeBlocked(false);
     setAlwaysOn((v) => {
       const next = !v;
       localStorage.setItem("lokin_always_on", next ? "1" : "0");
