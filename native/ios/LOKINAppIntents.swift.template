@@ -1,61 +1,10 @@
-// LOKIN iOS native bridge template — copy into the generated Xcode target.
-// Requires AppIntents and the app's verified universal-link domain.
-import AppIntents
-
-private enum LokinCommand: String {
-    case lockIn = "lock_in", pause, resume, tapOut = "tap_out"
-    case findItem = "find_item", smartShop = "smart_shop", openRoute = "open_route", safety
-}
-
-private func lokinURL(_ command: LokinCommand) -> URL {
-    // Replace with the production HTTPS LOKIN associated domain.
-    var c = URLComponents(string: "https://lokin-ai-app-604c3139.base44.app/command")!
-    c.queryItems = [
-        URLQueryItem(name: "command", value: command.rawValue),
-        URLQueryItem(name: "source", value: "siri"),
-        URLQueryItem(name: "v", value: "1")
-    ]
-    return c.url!
-}
-
-struct LockInIntent: AppIntent {
-    static var title: LocalizedStringResource = "Lock In"
-    static var description = IntentDescription("Start working with LOKIN and open focused AI GPS.")
-    static var openAppWhenRun = true
-    func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(lokinURL(.lockIn)))
-    }
-}
-
-struct PauseLokinIntent: AppIntent {
-    static var title: LocalizedStringResource = "Pause LOKIN"
-    func perform() async throws -> some IntentResult & OpensIntent { .result(opensIntent: OpenURLIntent(lokinURL(.pause))) }
-}
-
-struct ResumeLokinIntent: AppIntent {
-    static var title: LocalizedStringResource = "Resume LOKIN"
-    func perform() async throws -> some IntentResult & OpensIntent { .result(opensIntent: OpenURLIntent(lokinURL(.resume))) }
-}
-
-struct FindItemIntent: AppIntent {
-    static var title: LocalizedStringResource = "Find Item with LOKIN"
-    static var openAppWhenRun = true
-    func perform() async throws -> some IntentResult & OpensIntent { .result(opensIntent: OpenURLIntent(lokinURL(.findItem))) }
-}
-
-// Tap Out intentionally opens LOKIN for explicit confirmation; the deep-link policy will not silently end a session.
-struct TapOutIntent: AppIntent {
-    static var title: LocalizedStringResource = "Tap Out with LOKIN"
-    static var openAppWhenRun = true
-    func perform() async throws -> some IntentResult & OpensIntent { .result(opensIntent: OpenURLIntent(lokinURL(.tapOut))) }
-}
-
-struct LokinShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
-        AppShortcut(intent: LockInIntent(), phrases: ["Level up with \(.applicationName)", "Lock in with \(.applicationName)"], shortTitle: "Lock In", systemImageName: "lock.fill")
-        AppShortcut(intent: PauseLokinIntent(), phrases: ["Pause \(.applicationName)"], shortTitle: "Pause", systemImageName: "pause.fill")
-        AppShortcut(intent: ResumeLokinIntent(), phrases: ["Resume \(.applicationName)"], shortTitle: "Resume", systemImageName: "play.fill")
-        AppShortcut(intent: FindItemIntent(), phrases: ["Find item with \(.applicationName)"], shortTitle: "Find Item", systemImageName: "barcode.viewfinder")
-        AppShortcut(intent: TapOutIntent(), phrases: ["Tap out with \(.applicationName)"], shortTitle: "Tap Out", systemImageName: "power")
-    }
-}
+// SUPERSEDED — DO NOT ADD THIS TEMPLATE TO THE XCODE TARGET.
+//
+// The canonical production App Intents implementation is now:
+//   - LokinIntents.swift
+//   - LokinShortcuts.swift
+//   - LokinWebViewDeepLinkBridge.swift (optional custom-scheme fallback)
+//
+// This file is intentionally retained only so older build notes do not point to
+// a missing path. Adding both this template and LokinIntents.swift would create
+// duplicate/obsolete intent definitions.
