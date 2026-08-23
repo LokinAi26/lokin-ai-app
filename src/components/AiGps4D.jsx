@@ -21,6 +21,26 @@ function stopPositions(n, perturb = 0) {
   return pts;
 }
 
+class PolylineCurve3 extends THREE.Curve {
+  constructor(points) {
+    super();
+    this.points = points;
+    this.lengths = [0];
+    for (let i = 1; i < points.length; i++) this.lengths.push(this.lengths[i - 1] + points[i - 1].distanceTo(points[i]));
+    this.totalLength = this.lengths[this.lengths.length - 1] || 1;
+  }
+  getPoint(t, target = new THREE.Vector3()) {
+    if (!this.points.length) return target.set(0, 0, 0);
+    if (this.points.length === 1) return target.copy(this.points[0]);
+    const distance = Math.max(0, Math.min(1, t)) * this.totalLength;
+    let i = 0;
+    while (i < this.lengths.length - 2 && this.lengths[i + 1] < distance) i++;
+    const a = this.points[i], b = this.points[Math.min(i + 1, this.points.length - 1)];
+    const span = Math.max(0.000001, this.lengths[Math.min(i + 1, this.lengths.length - 1)] - this.lengths[i]);
+    return target.copy(a).lerp(b, (distance - this.lengths[i]) / span);
+  }
+}
+
 function roadRibbonGeometry(curve, width = 2.2, segments = 96, y = 0.02) {
   const vertices = [];
   const indices = [];
@@ -173,7 +193,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       let pos;
       let pinPositions;
       if (navCoords.length >= 2) {
-        const mapped = geometryToScenePoints(navCoords, 180, 18);
+        const mapped = geometryToScenePoints(navCoords, 600, 18);
         pos = mapped.points.map((p) => new THREE.Vector3(p.x, 0, p.z));
         stateRef.current.projectGeo = mapped.project;
         pinPositions = [pos[0], pos[pos.length - 1]].filter(Boolean);
@@ -197,21 +217,23 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         ring.rotation.x = -Math.PI / 2; ring.position.set(v.x, 0.02, v.z); scene.add(ring); pinMeshes.push(ring);
       });
       if (pos.length >= 2) {
-        const roadCurve = new THREE.CatmullRomCurve3(pos.map((p) => new THREE.Vector3(p.x, 0, p.z)));
+        const roadPoints = pos.map((p) => new THREE.Vector3(p.x, 0, p.z));
+        const roadCurve = new PolylineCurve3(roadPoints);
+        const routeSegments = Math.min(1200, Math.max(120, roadPoints.length * 2));
         const shoulder = new THREE.Mesh(
-          roadRibbonGeometry(roadCurve, 3.05, 100, 0.008),
+          roadRibbonGeometry(roadCurve, 3.05, routeSegments, 0.008),
           new THREE.MeshStandardMaterial({ color: 0x7a786e, roughness: 0.95 })
         );
         const asphalt = new THREE.Mesh(
-          roadRibbonGeometry(roadCurve, 2.45, 100, 0.025),
+          roadRibbonGeometry(roadCurve, 2.45, routeSegments, 0.025),
           new THREE.MeshStandardMaterial({ color: 0x25292d, roughness: 0.9, metalness: 0.05 })
         );
         scene.add(shoulder, asphalt);
         roadMeshes.push(shoulder, asphalt);
 
-        const routeCurve = new THREE.CatmullRomCurve3(pos.map((p) => new THREE.Vector3(p.x, 0.12, p.z)));
+        const routeCurve = new PolylineCurve3(pos.map((p) => new THREE.Vector3(p.x, 0.12, p.z)));
         const tube = new THREE.Mesh(
-          new THREE.TubeGeometry(routeCurve, 100, 0.105, 8, false),
+          new THREE.TubeGeometry(routeCurve, routeSegments, 0.105, 8, false),
           new THREE.MeshBasicMaterial({ color: 0xa8ff00, transparent: true, opacity: 0.94 })
         );
         scene.add(tube); routeLine = tube;
