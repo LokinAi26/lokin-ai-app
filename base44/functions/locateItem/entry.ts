@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// AI item locator: given a barcode or item code (or a name), find the best matching
-// locator item + return a confidence + a "distance" 0-100 used by the UI to drive
-// the beep intensity. Uses InvokeLLM for fuzzy matching when exact match misses.
+// AI item locator: given a barcode, item code, or product name, find the best
+// matching verified locator record. This function never fabricates physical
+// proximity; indoor distance requires a real beacon/UWB/store-position feed.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -14,7 +14,10 @@ export default async function(req) {
     const store = body.store ? String(body.store) : null;
     if (!query) return Response.json({ error: "query required" }, { status: 400 });
 
-    const items = await base44.entities.LocatorItem.filter({});
+    const allItems = await base44.entities.LocatorItem.filter({});
+    const items = store
+      ? allItems.filter((i) => !i.store || String(i.store).toLowerCase() === String(store).toLowerCase())
+      : allItems;
 
     // 1) exact barcode / item_code / name match
     let match = items.find(
@@ -54,12 +57,6 @@ export default async function(req) {
       return Response.json({ found: false, query, message: "No matching item found in locator database." });
     }
 
-    // Simulated proximity: a stable pseudo-distance derived from aisle/shelf so the
-    // UI beep can intensify as the driver "approaches". Distance 0 = right there.
-    const aisleScore = (parseInt(String(match.aisle).replace(/\D/g, "")) || 0) % 20;
-    const shelfScore = (parseInt(String(match.shelf).replace(/\D/g, "")) || 0) % 10;
-    const distance = Math.min(100, aisleScore * 5 + shelfScore * 3 + (store && match.store && match.store !== store ? 15 : 0));
-
     return Response.json({
       found: true,
       query,
@@ -81,7 +78,8 @@ export default async function(req) {
         map_y: match.map_y,
         map_zone: match.map_zone,
       },
-      distance, // 0..100, lower = closer
+      proximity_available: false,
+      proximity_source: null,
       confidence: fuzzy ? fuzzy.confidence : 1,
       fuzzy,
     });
