@@ -21,7 +21,7 @@ export default function AiGps() {
   const [routeLoadError, setRouteLoadError] = useState("");
   const [loadingStops, setLoadingStops] = useState(true);
   const [voiceGuidance, setVoiceGuidance] = useState(true);
-  const [mapView, setMapView] = useState("real");
+  const [mapView, setMapView] = useState(() => params.get("view") === "4d" ? "4d" : "real");
   const [destinationInput, setDestinationInput] = useState(explicitDestination);
   const [probingProvider, setProbingProvider] = useState(false);
 
