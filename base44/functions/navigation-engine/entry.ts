@@ -348,7 +348,7 @@ export default async function navigationEngine(req: Request) {
     }
 
     if (action === "provider_probe") {
-      const result = await geocodeAddress("Washington, DC", accessToken, null);
+      const result = await geocodeAddress("1600 Pennsylvania Avenue NW, Washington, DC 20500", accessToken, null);
       return json({
         ok: true,
         provider: "mapbox",
