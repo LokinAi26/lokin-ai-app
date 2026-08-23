@@ -2,7 +2,7 @@ import { Radar, Sparkles, TrendingUp, Filter, Fuel, LineChart, Apple, Play } fro
 import { LokinWordmark } from "@/components/Brand";
 
 const FUTURISTIC = [
-  { icon: Radar, title: "Predictive Hotspots", desc: "Find stronger earning zones before they spike." },
+  { icon: Radar, title: "Hotspot Model Preview", desc: "Explore simulated earning-zone scenarios before live data integrations are enabled." },
   { icon: Sparkles, title: "Smart Route Builder", desc: "Optimize every stop for max profit." },
   { icon: TrendingUp, title: "Earnings Predictor", desc: "See pace and projected hourly rate." },
   { icon: Filter, title: "Auto Decline Filter", desc: "Low-pay warnings so you never waste a mile." },
