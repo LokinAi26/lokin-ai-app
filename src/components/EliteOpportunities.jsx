@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Crown, Flame, TrendingUp, Zap, Gift, Check } from "lucide-react";
+import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
 // Curated high-value promotional opportunities locked in for Elite members.
 // Modeled after partner-app promos like DashLink boosts, priority blocks, and surge windows.
@@ -63,6 +64,7 @@ const OPPORTUNITIES = [
 
 export default function EliteOpportunities({ plan }) {
   const navigate = useNavigate();
+  if (!RELEASE_FLAGS.partnerPromotions) return null;
   const [locked, setLocked] = useState({});
   const isElite = plan === "elite";
 
