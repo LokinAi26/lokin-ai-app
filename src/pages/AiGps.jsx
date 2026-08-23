@@ -246,9 +246,9 @@ export default function AiGps() {
             <div className="mt-2 text-center text-[10px] text-white/35">Enable “Hey LOKIN · App Open” in Voice for wake-word control · Siri shortcuts can launch LOKIN system-wide</div>
           </div>
 
-          <div className="sticky bottom-3 z-20 flex justify-center gap-2">
-            {orderId && <Link to={`/compliance-handoff?order=${encodeURIComponent(orderId)}`} className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/15 backdrop-blur px-4 py-2 text-xs font-bold text-primary shadow-lg">Arrived · Verify handoff</Link>}
-            <button type="button" onClick={() => setFocusMode("free")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/90 backdrop-blur px-4 py-2 text-xs font-semibold text-white/65 shadow-lg active:scale-95">
+          <div className="flex justify-center gap-2 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+            {orderId && <Link to={`/compliance-handoff?order=${encodeURIComponent(orderId)}`} className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/15 px-4 py-2 text-xs font-bold text-primary shadow-lg">Arrived · Verify handoff</Link>}
+            <button type="button" onClick={() => setFocusMode("free")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/90 px-4 py-2 text-xs font-semibold text-white/65 shadow-lg active:scale-95">
               <Move className="h-3.5 w-3.5" /> Free roam
             </button>
           </div>
