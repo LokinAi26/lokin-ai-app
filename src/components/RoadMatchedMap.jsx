@@ -18,7 +18,7 @@ function mercator(coord, zoom) {
   ];
 }
 
-function fitViewport(coords = []) {
+function fitViewport(coords = [], width = MAP_W, height = MAP_H) {
   if (!coords.length) return null;
   const lons = coords.map((c) => Number(c[0]));
   const lats = coords.map((c) => Number(c[1]));
@@ -28,8 +28,8 @@ function fitViewport(coords = []) {
   const p1 = mercator([Math.max(...lons), Math.min(...lats)], 0);
   const dx = Math.max(1e-9, Math.abs(p1[0] - p0[0]));
   const dy = Math.max(1e-9, Math.abs(p1[1] - p0[1]));
-  const zx = Math.log2((MAP_W - padding * 2) / dx / TILE_SIZE);
-  const zy = Math.log2((MAP_H - padding * 2) / dy / TILE_SIZE);
+  const zx = Math.log2((width - padding * 2) / dx / TILE_SIZE);
+  const zy = Math.log2((height - padding * 2) / dy / TILE_SIZE);
   const zoom = Math.max(2, Math.min(17.2, Math.min(zx, zy)));
   return { longitude: center[0], latitude: center[1], zoom };
 }
@@ -38,7 +38,7 @@ function bucketCoord(value, step = 0.0025) {
   return Math.round(Number(value || 0) / step) * step;
 }
 
-function project(coord, viewport) {
+function project(coord, viewport, width = MAP_W, height = MAP_H) {
   if (!coord || !viewport) return null;
   const center = mercator([viewport.longitude, viewport.latitude], viewport.zoom);
   const point = mercator(coord, viewport.zoom);
@@ -46,7 +46,7 @@ function project(coord, viewport) {
   let dx = point[0] - center[0];
   if (dx > world / 2) dx -= world;
   if (dx < -world / 2) dx += world;
-  return { x: MAP_W / 2 + dx, y: MAP_H / 2 + (point[1] - center[1]) };
+  return { x: width / 2 + dx, y: height / 2 + (point[1] - center[1]) };
 }
 
 export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false }) {
@@ -55,6 +55,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const renderW = fullscreen ? 360 : MAP_W;
+  const renderH = fullscreen ? 700 : MAP_H;
 
   const nextPoint = snappedPosition?.segment_index != null && coords.length
     ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
@@ -81,7 +83,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         pitch: perspective ? 58 : 0,
       };
     }
-    const fitted = fitViewport(coords);
+    const fitted = fitViewport(coords, renderW, renderH);
     return fitted ? { ...fitted, bearing: perspective ? heading : 0, pitch: perspective ? 50 : 0 } : null;
   }, [routeGeometry, followDriver, perspective, heading, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
@@ -96,8 +98,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       action: "static_map",
       viewport: {
         ...viewport,
-        width: MAP_W,
-        height: perspective ? 620 : MAP_H,
+        width: renderW,
+        height: fullscreen ? renderH : perspective ? 620 : MAP_H,
         style,
         route_geometry: perspective ? routeGeometry : null,
       },
@@ -116,15 +118,15 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const routePoints = useMemo(() => {
     if (!viewport || !Array.isArray(coords)) return "";
     return coords
-      .map((coord) => project(coord, viewport))
+      .map((coord) => project(coord, viewport, renderW, renderH))
       .filter(Boolean)
       .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
       .join(" ");
   }, [routeGeometry, viewportKey]);
 
   const driverPoint = perspective
-    ? { x: MAP_W / 2, y: MAP_H * 0.72 }
-    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport) : null;
+    ? { x: renderW / 2, y: renderH * 0.72 }
+    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
 
   if (!viewport) return null;
 
@@ -135,7 +137,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
         {image && (
-          <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
+          <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
             {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
             {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
             {driverPoint && (
