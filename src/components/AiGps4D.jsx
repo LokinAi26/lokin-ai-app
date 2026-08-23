@@ -173,6 +173,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
     scene.add(ground);
 
     const landscape = new THREE.Group();
+    const structures = new THREE.Group();
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3b24, roughness: 1 });
     const leafMats = [0x315d2e, 0x274d28, 0x3d6d35].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1 }));
     const treeSpots = [
@@ -193,9 +194,9 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       b.position.set(x, h / 2, z);
       const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.15, 0.18, w * 0.72 + 0.15), roofMat);
       roof.position.set(x, h + 0.08, z);
-      landscape.add(b, roof);
+      structures.add(b, roof);
     });
-    scene.add(landscape);
+    scene.add(landscape, structures);
 
     let pinMeshes = [], routeLine = null, vehicle = null, roadMeshes = [];
 
@@ -238,12 +239,12 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         const roadCurve = new PolylineCurve3(roadPoints);
         const routeSegments = Math.min(1200, Math.max(120, roadPoints.length * 2));
         const shoulder = new THREE.Mesh(
-          roadRibbonGeometry(roadCurve, 3.05, routeSegments, 0.008),
-          new THREE.MeshStandardMaterial({ color: 0x7a786e, roughness: 0.95 })
+          roadRibbonGeometry(roadCurve, 1.85, routeSegments, 0.008),
+          new THREE.MeshStandardMaterial({ color: 0x6f706a, roughness: 0.98 })
         );
         const asphalt = new THREE.Mesh(
-          roadRibbonGeometry(roadCurve, 2.45, routeSegments, 0.025),
-          new THREE.MeshStandardMaterial({ color: 0x25292d, roughness: 0.9, metalness: 0.05 })
+          roadRibbonGeometry(roadCurve, 1.42, routeSegments, 0.025),
+          new THREE.MeshStandardMaterial({ color: 0x25292d, roughness: 0.92, metalness: 0.03 })
         );
         scene.add(shoulder, asphalt);
         roadMeshes.push(shoulder, asphalt);
@@ -257,10 +258,10 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       }
       if (!vehicle) {
         vehicle = new THREE.Mesh(
-          new THREE.SphereGeometry(0.4, 18, 18),
-          new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xa8ff00, emissiveIntensity: 1.1 })
+          new THREE.SphereGeometry(0.22, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xa8ff00, emissiveIntensity: 0.95 })
         );
-        const glow = new THREE.Mesh(new THREE.SphereGeometry(0.75, 18, 18), new THREE.MeshBasicMaterial({ color: 0xa8ff00, transparent: true, opacity: 0.22 }));
+        const glow = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 16), new THREE.MeshBasicMaterial({ color: 0xa8ff00, transparent: true, opacity: 0.16 }));
         vehicle.add(glow);
         scene.add(vehicle);
       }
@@ -275,8 +276,10 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       raf = requestAnimationFrame(animate);
       const live = stateRef.current.liveScene;
       const navCoords = stateRef.current.routeGeometry || [];
-      const following = Boolean(stateRef.current.followDriver && live && navCoords.length >= 2 && stateRef.current.projectGeo);
-      controls.enabled = !following;
+      const followRequested = Boolean(stateRef.current.followDriver && navCoords.length >= 2 && stateRef.current.projectGeo);
+      const following = Boolean(followRequested && live);
+      controls.enabled = !followRequested;
+      structures.visible = !followRequested;
 
       if (following) {
         const segmentIndex = Math.max(0, Math.min(navCoords.length - 2, stateRef.current.liveSegmentIndex || 0));
@@ -293,6 +296,13 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         const currentTarget = new THREE.Vector3();
         camera.getWorldDirection(currentTarget);
         camera.lookAt(desiredTarget);
+      } else if (followRequested) {
+        // Route is valid but the live snap is briefly unavailable. Hold a clean
+        // route overview instead of leaving the previous camera inside scenery.
+        desiredCamera.set(0, 10.5, 13.5);
+        desiredTarget.set(0, 0, 0);
+        camera.position.lerp(desiredCamera, 0.08);
+        camera.lookAt(desiredTarget);
       } else if (stateRef.current.routeGeometry.length < 2) {
         camAngle += 0.0014;
         const r = 15.5;
@@ -308,12 +318,16 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       }
       const pos = stateRef.current.pos;
       if (vehicle && stateRef.current.liveScene) {
-        vehicle.position.set(stateRef.current.liveScene.x, 0.5, stateRef.current.liveScene.z);
+        vehicle.visible = true;
+        vehicle.position.set(stateRef.current.liveScene.x, 0.34, stateRef.current.liveScene.z);
+      } else if (vehicle && stateRef.current.routeGeometry.length >= 2) {
+        vehicle.visible = false;
       } else if (vehicle && pos.length) {
+        vehicle.visible = true;
         const tt = stateRef.current.time * (pos.length - 1);
         const i = Math.floor(tt), f = tt - i;
         const a = pos[Math.min(i, pos.length - 1)], b = pos[Math.min(i + 1, pos.length - 1)];
-        vehicle.position.set(a.x + (b.x - a.x) * f, 0.5, a.z + (b.z - a.z) * f);
+        vehicle.position.set(a.x + (b.x - a.x) * f, 0.34, a.z + (b.z - a.z) * f);
       }
       renderer.render(scene, camera);
     }
@@ -336,6 +350,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       if (vehicle) { vehicle.geometry.dispose(); vehicle.material.dispose(); }
       ground.geometry.dispose(); ground.material.dispose();
       landscape.traverse((obj) => { if (obj.isMesh) { obj.geometry?.dispose(); obj.material?.dispose(); } });
+      structures.traverse((obj) => { if (obj.isMesh) { obj.geometry?.dispose(); obj.material?.dispose(); } });
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
       rebuildRef.current = null;
