@@ -415,7 +415,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         </div>
         {hasRoadGeometry && (
           <div className="absolute bottom-3 left-3 rounded-full border border-black/30 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-white/70 pointer-events-none">
-            {followDriver ? "DRIVER FOLLOW" : "TOUCH · DRAG · PINCH"}
+            {followDriver ? (snappedPosition ? "DRIVER FOLLOW" : "GPS REACQUIRING") : "TOUCH · DRAG · PINCH"}
           </div>
         )}
         {(rerouting || navigationStatus === "rerouting") && (
@@ -435,7 +435,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[10px] tracking-[0.2em] text-primary/75 font-display">ROAD-MATCHED · LIVE GPS</div>
-              <div className="mt-1 text-sm font-bold text-white">{maneuver?.maneuver?.instruction || (navigationStatus === "routing" ? "Building road route…" : "Following production road geometry")}</div>
+              <div className="mt-1 text-sm font-bold text-white">{maneuver?.maneuver?.instruction || (navigationStatus === "routing" ? "Building road route…" : !snappedPosition ? "Acquiring precise GPS position…" : "Following production road geometry")}</div>
             </div>
             <div className="text-right shrink-0">
               <div className="text-[9px] text-white/35">SNAP ERROR</div>
