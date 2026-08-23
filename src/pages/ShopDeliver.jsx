@@ -55,15 +55,6 @@ export default function ShopDeliver() {
   const pts = routePoints(orders.length);
   const pathD = pts.length ? pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ") : "";
 
-  function openInMaps() {
-    if (orders.length === 0) return;
-    const origin = orders[0].pickup_address || orders[0].merchant || "";
-    const dest = orders[orders.length - 1].dropoff_address || orders[orders.length - 1].merchant || "";
-    const waypoints = orders.slice(1, -1).map((o) => encodeURIComponent(o.dropoff_address || o.merchant)).join("|");
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}${origin ? `&origin=${encodeURIComponent(origin)}` : ""}${waypoints ? `&waypoints=${waypoints}` : ""}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <PullToRefresh onRefresh={load}>
       <div className="p-4 space-y-4">
@@ -104,9 +95,9 @@ export default function ShopDeliver() {
                 Stop {active + 1}/{orders.length}
               </div>
             </div>
-            <button onClick={openInMaps} className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform">
-              <Navigation className="h-4 w-4" /> Open in Maps
-            </button>
+            <Link to="/ai-gps?focus=locked" className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform">
+              <Navigation className="h-4 w-4" /> Start LOKIN Navigation
+            </Link>
           </div>
         ) : (
           <div className="rounded-3xl border border-white/10 lokin-panel p-8 text-center">
