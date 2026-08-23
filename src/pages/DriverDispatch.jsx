@@ -25,7 +25,7 @@ export default function DriverDispatch() {
     try {
       await base44.functions.invoke("driver-dispatch", { action: "accept", id: order.id });
       await load();
-      navigate(`/ai-gps?focus=locked&order=${encodeURIComponent(order.id)}&destination=${encodeURIComponent(order.pickup_address || "")}`);
+      navigate(`/ai-gps?focus=locked&nav=1&view=real&order=${encodeURIComponent(order.id)}&destination=${encodeURIComponent(order.pickup_address || "")}`);
     } catch (e) { setError(e.message); setBusy(false); }
   }
 
@@ -34,7 +34,7 @@ export default function DriverDispatch() {
     try {
       await base44.functions.invoke("driver-dispatch", { action: "pickup", id: order.id });
       await load();
-      navigate(`/ai-gps?focus=locked&order=${encodeURIComponent(order.id)}&destination=${encodeURIComponent(order.dropoff_address || "")}`);
+      navigate(`/ai-gps?focus=locked&nav=1&view=real&order=${encodeURIComponent(order.id)}&destination=${encodeURIComponent(order.dropoff_address || "")}`);
     } catch (e) { setError(e.message); setBusy(false); }
   }
 
@@ -71,7 +71,7 @@ export default function DriverDispatch() {
         <div className="text-xs tracking-[0.18em] text-accent/75 font-display mb-2">MY ACTIVE PICKUPS</div>
         <div className="space-y-2">
           {(data.mine || []).filter(o => !["delivered","returned","canceled","refused"].includes(o.status)).map((o) => (
-            <OrderCard key={o.id} order={o} actionLabel={o.status === "driver_assigned" ? "CONFIRM PICKUP & NAVIGATE" : o.status === "picked_up" ? "VERIFY HANDOFF" : "OPEN LOCKED GPS"} onAction={() => o.status === "driver_assigned" ? pickup(o) : o.status === "picked_up" ? navigate(`/compliance-handoff?order=${encodeURIComponent(o.id)}`) : navigate(`/ai-gps?focus=locked&order=${encodeURIComponent(o.id)}&destination=${encodeURIComponent(o.status === "driver_assigned" ? (o.pickup_address || "") : (o.dropoff_address || o.pickup_address || ""))}`)} busy={busy}/>
+            <OrderCard key={o.id} order={o} actionLabel={o.status === "driver_assigned" ? "CONFIRM PICKUP & NAVIGATE" : o.status === "picked_up" ? "VERIFY HANDOFF" : "OPEN LOCKED GPS"} onAction={() => o.status === "driver_assigned" ? pickup(o) : o.status === "picked_up" ? navigate(`/compliance-handoff?order=${encodeURIComponent(o.id)}`) : navigate(`/ai-gps?focus=locked&nav=1&view=real&order=${encodeURIComponent(o.id)}&destination=${encodeURIComponent(o.status === "driver_assigned" ? (o.pickup_address || "") : (o.dropoff_address || o.pickup_address || ""))}`)} busy={busy}/>
           ))}
         </div>
       </section>
