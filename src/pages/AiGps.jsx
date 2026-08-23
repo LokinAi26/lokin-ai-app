@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
+import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
 import { base44 } from "@/api/base44Client";
@@ -9,7 +9,7 @@ import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 
 export default function AiGps() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const locked = params.get("focus") === "locked";
   const orderId = params.get("order") || "";
   const explicitDestination = params.get("destination") || "";
@@ -17,6 +17,10 @@ export default function AiGps() {
   const [routeLoadError, setRouteLoadError] = useState("");
   const [loadingStops, setLoadingStops] = useState(true);
   const [voiceGuidance, setVoiceGuidance] = useState(true);
+  const [destinationInput, setDestinationInput] = useState(explicitDestination);
+  const [probingProvider, setProbingProvider] = useState(false);
+
+  useEffect(() => { setDestinationInput(explicitDestination); }, [explicitDestination]);
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +49,28 @@ export default function AiGps() {
 
   const gpsAccuracy = nav.rawPosition?.accuracy_m;
   const providerReady = nav.providerConfigured !== false;
+
+  function startDirectNavigation(e) {
+    e?.preventDefault?.();
+    const destination = destinationInput.trim();
+    if (!destination) return;
+    const next = new URLSearchParams(params);
+    next.set("focus", "locked");
+    next.set("destination", destination);
+    setParams(next);
+  }
+
+  function useDeliveryRoute() {
+    const next = new URLSearchParams(params);
+    next.delete("destination");
+    setParams(next);
+  }
+
+  async function verifyProvider() {
+    setProbingProvider(true);
+    try { await nav.probeProvider(); }
+    finally { setProbingProvider(false); }
+  }
 
   return (
     <div className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} space-y-4 pb-6`}>
