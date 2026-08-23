@@ -287,9 +287,9 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
           : new THREE.Vector3(0, 0, -1);
         if (direction.lengthSq() < 0.0001) direction.set(0, 0, -1);
         direction.normalize();
-        desiredCamera.set(live.x - direction.x * 4.2, 3.1, live.z - direction.z * 4.2);
-        desiredTarget.set(live.x + direction.x * 5.5, 0.4, live.z + direction.z * 5.5);
-        camera.position.lerp(desiredCamera, 0.11);
+        desiredCamera.set(live.x - direction.x * 7.4, 4.8, live.z - direction.z * 7.4);
+        desiredTarget.set(live.x + direction.x * 8.5, 0.55, live.z + direction.z * 8.5);
+        camera.position.lerp(desiredCamera, 0.09);
         const currentTarget = new THREE.Vector3();
         camera.getWorldDirection(currentTarget);
         camera.lookAt(desiredTarget);
