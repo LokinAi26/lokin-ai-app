@@ -30,12 +30,11 @@ export default function Fuel() {
     if (!newGallons || !newTotal || !newStation) return;
     const g = parseFloat(newGallons);
     const t = parseFloat(newTotal);
-    const cashback = Math.round(t * 0.03 * 100) / 100; // 3% pay-at-pump cashback demo
     const payload = {
       station: newStation,
       gallons: g,
       total_paid: t,
-      cashback_earned: cashback,
+      cashback_earned: 0,
       purchased_on: new Date().toISOString().slice(0, 10),
     };
     const tempId = `tmp_${Date.now()}`;
@@ -51,23 +50,23 @@ export default function Fuel() {
     }
   }
 
-  const totalCashback = purchases.reduce((s, p) => s + (p.cashback_earned || 0), 0);
+  const totalFuelSpend = purchases.reduce((s, p) => s + Number(p.total_paid || 0), 0);
 
   return (
     <div className="p-5 space-y-5">
       <div className="flex items-center gap-2">
         <FuelIcon className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold font-heading metal-text">Gas Discounts</h1>
+        <h1 className="text-xl font-bold font-heading metal-text">Fuel Tracker & Deals</h1>
       </div>
 
       <div className="rounded-3xl border border-primary/40 bg-primary/[0.08] p-5 glow-border radial-fade">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/80">Total cashback earned</div>
-        <div className="text-4xl font-bold font-display text-primary text-glow mt-1">${totalCashback.toFixed(2)}</div>
-        <div className="text-xs text-white/55 mt-1.5">Pay at the pump · 3% back on every fill-up</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/80">Fuel spend tracked</div>
+        <div className="text-4xl font-bold font-display text-primary text-glow mt-1">${totalFuelSpend.toFixed(2)}</div>
+        <div className="text-xs text-white/55 mt-1.5">Based on fill-ups you log in LOKIN · no automatic cashback is issued</div>
       </div>
 
       <div>
-        <div className="text-sm font-semibold text-white/80 mb-2">Weekly Discount Codes</div>
+        <div className="text-sm font-semibold text-white/80 mb-2">Saved Fuel Deals</div>
         <div className="space-y-2">
           {deals.length === 0 && <div className="text-xs text-white/45 text-center py-3">No active deals.</div>}
           {deals.map((d) => {
@@ -114,9 +113,11 @@ export default function Fuel() {
           <input value={newTotal} onChange={(e) => setNewTotal(e.target.value)} type="number" placeholder="Total $" className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white placeholder:text-white/30" />
         </div>
         <button onClick={logPurchase} disabled={!newStation || !newGallons || !newTotal} className="mt-2 w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-1.5 glow-primary">
-          <Plus className="h-4 w-4" /> Log & earn 3% cashback
+          <Plus className="h-4 w-4" /> Log fill-up
         </button>
       </div>
+
+      <div className="text-[10px] text-white/35 text-center">Fuel prices, promo codes, and cashback shown in saved deal records must be verified with the provider or station before purchase. LOKIN does not issue fuel rewards in this build.</div>
 
       {purchases.length > 0 && (
         <div>
@@ -128,7 +129,7 @@ export default function Fuel() {
                   <div className="font-medium text-white">{p.station}</div>
                   <div className="text-xs text-white/45">{p.purchased_on} · {p.gallons} gal · ${p.total_paid}</div>
                 </div>
-                <div className="text-primary font-semibold text-sm">+${(p.cashback_earned || 0).toFixed(2)}</div>
+                <div className="text-primary font-semibold text-sm">${Number(p.total_paid || 0).toFixed(2)}</div>
               </div>
             ))}
           </div>
