@@ -6,7 +6,7 @@ const FUTURISTIC = [
   { icon: Sparkles, title: "Smart Route Builder", desc: "Optimize every stop for max profit." },
   { icon: TrendingUp, title: "Earnings Predictor", desc: "See pace and projected hourly rate." },
   { icon: Filter, title: "Auto Decline Filter", desc: "Low-pay warnings so you never waste a mile." },
-  { icon: Fuel, title: "Fuel Tracker", desc: "Discounts, cashback & true cost per mile." },
+  { icon: Fuel, title: "Fuel Tracker", desc: "Log fill-ups, saved deals, and fuel costs without simulated rewards." },
   { icon: LineChart, title: "Performance Insights", desc: "Learn what pays. Earn more over time." },
 ];
 
