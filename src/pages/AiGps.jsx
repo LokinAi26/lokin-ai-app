@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import AiGps4D from "@/components/AiGps4D";
+import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -253,9 +253,7 @@ export default function AiGps() {
           )}
         </div>
       ) : (
-        <div className={locked ? "rounded-[2rem] border border-primary/25 bg-black/70 p-1 shadow-[0_0_40px_-18px_hsl(80_100%_50%)]" : ""}>
-          <AiGps4D stops={stops} navigationStatus={nav.status} followDriver={false} />
-        </div>
+        <SatelliteRoutePreview stops={stops} destinationAddress={explicitDestination} />
       )}
 
       {!nav.route && !loadingStops && destinationAddresses.length === 0 && (
