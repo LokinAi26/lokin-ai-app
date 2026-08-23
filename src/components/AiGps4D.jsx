@@ -5,6 +5,7 @@ import { Radar, Clock, MapPin, RefreshCw, Camera, Save, KeyRound, Building2, Che
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { geometryToScenePoints } from "@/lib/navigationGeometry";
 
 // Lay stops along a gentle curve in the XZ plane; `perturb` shifts positions
 // when the live re-route runs so the 4D sequence visibly evolves over time.
@@ -42,9 +43,9 @@ function roadRibbonGeometry(curve, width = 2.2, segments = 96, y = 0.02) {
   return geometry;
 }
 
-export default function AiGps4D({ stops: stopsProp, compact = false }) {
+export default function AiGps4D({ stops: stopsProp, compact = false, routeGeometry = null, snappedPosition = null, maneuver = null, navigationStatus = "" }) {
   const containerRef = useRef(null);
-  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1 });
+  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1, routeGeometry: [], projectGeo: null, liveScene: null });
   const rebuildRef = useRef(null);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -60,7 +61,20 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
   const current = stops[idx];
   const etaTotal = stops.reduce((s, o) => s + (o.est_minutes || 0), 0);
   const etaRemaining = Math.round(etaTotal * (1 - time));
-  const accuracy = pins.length ? 100 : current ? 58 : 0;
+  const accuracy = snappedPosition ? Math.max(0, Math.round(100 - Math.min(100, Number(snappedPosition.distance_m || 0) * 2))) : pins.length ? 100 : current ? 58 : 0;
+  const hasRoadGeometry = Array.isArray(routeGeometry?.coordinates || routeGeometry) && (routeGeometry?.coordinates || routeGeometry).length >= 2;
+
+  useEffect(() => {
+    const coords = routeGeometry?.coordinates || routeGeometry || [];
+    stateRef.current.routeGeometry = Array.isArray(coords) ? coords : [];
+    if (rebuildRef.current) rebuildRef.current();
+  }, [routeGeometry]);
+
+  useEffect(() => {
+    const coord = snappedPosition?.coordinate;
+    const projected = coord && stateRef.current.projectGeo ? stateRef.current.projectGeo(coord) : null;
+    stateRef.current.liveScene = projected;
+  }, [snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   // Load stops (own optimizeRoute call only when not provided)
   useEffect(() => {
