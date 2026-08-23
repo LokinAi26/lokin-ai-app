@@ -95,6 +95,24 @@ export default function AiGps() {
         </div>
       )}
 
+      {nav.providerConfigured === true && (
+        <div className={`rounded-2xl border p-3 ${nav.providerVerified === true ? "border-primary/30 bg-primary/[0.06]" : "border-white/10 bg-white/[0.025]"}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <CircleCheck className={`h-4 w-4 shrink-0 ${nav.providerVerified === true ? "text-primary" : "text-white/45"}`} />
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-white">{nav.providerVerified === true ? "Mapbox API verified" : "Mapbox secret detected"}</div>
+                <div className="text-[10px] text-white/40">{nav.providerVerified === true ? "Geocoding provider answered successfully." : "Run one provider check before the road test."}</div>
+              </div>
+            </div>
+            <button onClick={verifyProvider} disabled={probingProvider} className="shrink-0 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-[10px] font-bold text-primary disabled:opacity-50">
+              {probingProvider ? "CHECKING…" : nav.providerVerified === true ? "RECHECK" : "VERIFY MAPBOX"}
+            </button>
+          </div>
+          {nav.providerProbeError && <div className="mt-2 text-[10px] text-red-300">{nav.providerProbeError}</div>}
+        </div>
+      )}
+
       {locked ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full border border-primary/40 bg-primary/10 flex items-center justify-center glow-primary"><Lock className="h-4 w-4 text-primary" /></div>
@@ -110,6 +128,24 @@ export default function AiGps() {
           <Link to="/ai-gps?focus=locked" className="shrink-0 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary">Lock in</Link>
         </div>
       )}
+
+      <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[10px] tracking-[0.2em] text-accent/75 font-display">LIVE ROAD TEST</div>
+            <div className="text-[10px] text-white/35">Enter any real destination to prove the production routing path.</div>
+          </div>
+          {explicitDestination && <button type="button" onClick={useDeliveryRoute} className="text-[10px] font-semibold text-white/45">Use delivery route</button>}
+        </div>
+        <div className="flex gap-2">
+          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3">
+            <MapPin className="h-4 w-4 shrink-0 text-primary" />
+            <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Enter destination address" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/25" />
+          </div>
+          <button type="submit" disabled={!destinationInput.trim()} className="rounded-2xl bg-primary px-4 text-xs font-extrabold text-black glow-primary disabled:opacity-35">NAVIGATE</button>
+        </div>
+        {explicitDestination && <div className="mt-2 truncate text-[10px] text-primary/70">ACTIVE DESTINATION · {explicitDestination}</div>}
+      </form>
 
       {(loadingStops || nav.status === "waiting_location" || nav.status === "routing") && destinationAddresses.length > 0 && (
         <div className="rounded-2xl border border-accent/20 bg-accent/[0.04] p-3 flex items-center gap-3">
