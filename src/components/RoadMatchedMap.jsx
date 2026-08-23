@@ -147,24 +147,24 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           </svg>
         )}
 
-        <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur">
+        <div className={`absolute left-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
             <Map className="h-3.5 w-3.5" /> {perspective ? "REAL 4D MAP · ROAD MATCHED" : "REAL MAP · ROAD MATCHED"}
           </div>
         </div>
 
-        <div className="absolute right-3 top-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur">
+        <div className={`absolute right-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
           <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
           <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />SAT</button>
         </div>
 
-        {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">58° PITCH · HEADING UP</div>}
+        {perspective && <div className={`absolute left-3 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : "top-12"}`}>58° PITCH · HEADING UP</div>}
 
-        <div className="absolute bottom-3 left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur">
+        <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
           <div className="text-[9px] tracking-[0.16em] text-primary/75">NEXT MANEUVER</div>
           <div className="mt-0.5 line-clamp-2 text-sm font-extrabold text-white">{maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
         </div>
-        <div className="absolute bottom-3 right-3 rounded-2xl border border-accent/20 bg-black/80 px-3 py-2 text-right backdrop-blur">
+        <div className={`absolute right-3 rounded-2xl border border-accent/20 bg-black/80 px-3 py-2 text-right backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
           <div className="text-[9px] tracking-wider text-white/40">ETA</div>
           <div className="font-display text-lg font-black text-accent">{formatDuration(remainingDurationS)}</div>
         </div>
