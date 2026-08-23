@@ -23,11 +23,11 @@ const TYPE = [
 
 // What LOKIN stands for — base44-style value grid.
 const VALUES = [
-  { icon: Route, title: "Route AI", desc: "Sequenced by mode for max $/hr. Not the shortest path — the most profitable one." },
-  { icon: TrendingUp, title: "Earnings OS", desc: "Live net-per-hour, goal tracking, and a Lock In Score that grades your shift." },
-  { icon: Fuel, title: "Fuel Deals", desc: "Weekly discount codes and cashback so every gallon pays you back." },
+  { icon: Route, title: "Route AI", desc: "Ranks and sequences offers by your selected earning strategy using the offer data available to LOKIN." },
+  { icon: TrendingUp, title: "Earnings OS", desc: "Tracked net-per-hour, goal progress, and a Lock In Score based on recorded shift data." },
+  { icon: Fuel, title: "Fuel Tracker", desc: "Log fill-ups, review saved deal records, and track fuel spend without simulated rewards." },
   { icon: Truck, title: "On The Road", desc: "Truck stops, weigh stations, rest areas and RV parks — found along your route." },
-  { icon: ShieldAlert, title: "Safety Net", desc: "SOS, live location sharing, and a fake-call scheduler for tough spots." },
+  { icon: ShieldAlert, title: "Safety Net", desc: "911 launch, current-location sharing, emergency contacts, and a fake-call scheduler for tough spots." }
   { icon: Coffee, title: "Break Recharge", desc: "Breathing coach, motivation pep talks, and free streaming between shifts." },
 ];
 
