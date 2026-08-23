@@ -27,14 +27,6 @@ export default function AiGps() {
   useEffect(() => { setDestinationInput(explicitDestination); }, [explicitDestination]);
 
   useEffect(() => {
-    if (!navigationSession || !nav?.route || !mapSectionRef.current) return;
-    const timer = window.setTimeout(() => {
-      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [navigationSession, nav?.route?.generated_at]);
-
-  useEffect(() => {
     let alive = true;
     setLoadingStops(true);
     guardedInvoke(base44, "optimizeRoute", { mode: "most_profit" })
@@ -58,6 +50,14 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+
+  useEffect(() => {
+    if (!navigationSession || !nav.route || !mapSectionRef.current) return;
+    const timer = window.setTimeout(() => {
+      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [navigationSession, nav.route?.generated_at]);
 
   const gpsAccuracy = nav.rawPosition?.accuracy_m;
   const providerReady = nav.providerConfigured !== false;
