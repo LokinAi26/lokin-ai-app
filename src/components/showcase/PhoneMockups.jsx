@@ -43,7 +43,7 @@ function LiveRouteScreen() {
           <div className="text-right"><div className="text-[9px] text-white/40">/hr</div><div className="text-sm font-bold text-white">$22.89</div></div>
         </div>
         <button className="mt-2 w-full rounded-xl bg-primary text-black text-xs font-bold py-2 flex items-center justify-center gap-1">
-          <Navigation className="h-3 w-3" /> Open in Maps
+          <Navigation className="h-3 w-3" /> Start LOKIN Navigation
         </button>
       </div>
     </div>
