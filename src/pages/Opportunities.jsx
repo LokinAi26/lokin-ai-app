@@ -119,7 +119,7 @@ export default function Opportunities() {
     return list;
   }, [items, filters, prefs]);
 
-  const lastScan = items[0]?.scan_date || null;
+  const lastScan = items[0]?.verified_at || null;
 
   function openCompare() {
     setSheet({ open: true, mode: "compare", autoRecommend: false });
