@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
+import RoadMatchedMap from "@/components/RoadMatchedMap";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
@@ -17,6 +18,7 @@ export default function AiGps() {
   const [routeLoadError, setRouteLoadError] = useState("");
   const [loadingStops, setLoadingStops] = useState(true);
   const [voiceGuidance, setVoiceGuidance] = useState(true);
+  const [mapView, setMapView] = useState("real");
   const [destinationInput, setDestinationInput] = useState(explicitDestination);
   const [probingProvider, setProbingProvider] = useState(false);
 
