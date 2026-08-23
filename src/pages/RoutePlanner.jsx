@@ -36,16 +36,6 @@ export default function RoutePlanner() {
     }
   }
 
-  function openInMaps() {
-    const stops = data?.sequenced || [];
-    if (stops.length === 0) return;
-    const dest = stops[stops.length - 1].dropoff_address || "";
-    const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : "";
-    const waypoints = stops.slice(0, -1).map((s) => encodeURIComponent(s.dropoff_address || s.merchant)).join("|");
-    const wpParam = waypoints ? `&waypoints=${waypoints}` : "";
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}${originParam}${wpParam}`, "_blank", "noopener,noreferrer");
-  }
-
   const stops = data?.sequenced || [];
 
   // Parse a store-hours string like "7AM-11PM" or "07:00-23:00" into an
@@ -82,7 +72,7 @@ export default function RoutePlanner() {
           <RouteIcon className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
         </div>
-        <Link to="/drive" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
+        <Link to="/ai-gps?focus=locked" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
           <Radar className="h-3.5 w-3.5" /> AI GPS
         </Link>
       </div>
@@ -156,10 +146,10 @@ export default function RoutePlanner() {
             </svg>
             <div className="absolute top-2 left-3 text-[10px] uppercase tracking-wider text-white/40">Optimized route</div>
           </div>
-          <button onClick={openInMaps}
+          <Link to="/ai-gps?focus=locked"
             className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary">
-            <Navigation className="h-4 w-4" /> Open in Maps
-          </button>
+            <Navigation className="h-4 w-4" /> Start LOKIN Navigation
+          </Link>
         </div>
       )}
 
