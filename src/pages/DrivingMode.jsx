@@ -174,7 +174,7 @@ export default function DrivingMode() {
             <HudStat icon={DollarSign} label="payout" value={`$${current.rate?.gross ?? current.payout ?? 0}`} accent />
           </div>
           <div className="grid grid-cols-2 gap-2 pt-1">
-            <Link to={`/ai-gps?focus=locked&destination=${encodeURIComponent(current.dropoff_address || "")}`} className="rounded-2xl bg-primary text-primary-foreground py-3 flex items-center justify-center gap-1.5 text-sm font-bold glow-primary active:scale-[0.99] transition-transform">
+            <Link to={`/ai-gps?focus=locked&nav=1&view=real&destination=${encodeURIComponent(current.dropoff_address || "")}`} className="rounded-2xl bg-primary text-primary-foreground py-3 flex items-center justify-center gap-1.5 text-sm font-bold glow-primary active:scale-[0.99] transition-transform">
               <Navigation className="h-4 w-4" /> LOKIN Navigate
             </Link>
             <button onClick={arrive} className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold active:scale-[0.99] transition-transform">
