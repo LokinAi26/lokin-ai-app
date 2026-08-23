@@ -59,19 +59,23 @@ function speechRecognitionCtor() {
 
 function extractWakeCommand(raw) {
   const text = String(raw || "").toLowerCase().trim();
-  const match = text.match(/(?:hey\s+)?(?:lokin|lock\s*in)\b(.*)$/i);
+  // Wake recognition is deliberately gated: LOKIN does not react to ambient
+  // speech unless the phrase begins with "Hey LOKIN" (speech engines may render
+  // the brand phonetically as "lock in", so that spelling is accepted too).
+  const match = text.match(/\bhey\s+(?:lokin|lock\s*in)\b(.*)$/i);
   return match ? { matched: true, command: (match[1] || "").trim() } : { matched: false, command: "" };
 }
 
 // Siri/Gemini-style hands-free voice assistant overlay, available app-wide.
 // Tap the orb to talk, or enable "Always Listening" for wake-word ("Hey LOKIN") activation.
-export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChange }) {
+export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChange, drivingMode = false }) {
   const navigate = useNavigate();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
   const setOpen = onOpenChange || setUncontrolledOpen;
   const [listening, setListening] = useState(false);
   const [alwaysOn, setAlwaysOn] = useState(() => localStorage.getItem("lokin_always_on") === "1");
+  const [wakeBlocked, setWakeBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [reply, setReply] = useState("");
@@ -81,7 +85,8 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const wakeTriggerAtRef = useRef(0);
   const alwaysOnRef = useRef(alwaysOn);
   const voiceSupported = Boolean(speechRecognitionCtor());
-  alwaysOnRef.current = alwaysOn;
+  const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
+  alwaysOnRef.current = wakeEnabled;
 
   function speak(text) {
     try {
