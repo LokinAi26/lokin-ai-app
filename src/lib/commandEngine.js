@@ -26,8 +26,8 @@ export const COMMAND_GROUPS = [
   {
     label: "Earn & Optimize",
     commands: [
-      { id: "gigs", title: "Gig Opportunities", subtitle: "Extra paid field tasks", icon: Briefcase, keywords: ["task", "work", "shop"], run: (n) => n("/gigs") },
-      { id: "opportunities", title: "Opportunity Scan", subtitle: "Weekly Hampton Roads courier jobs", icon: Radar, keywords: ["hampton", "roads", "courier", "job", "cannabis", "alcohol", "w2", "1099"], run: (n) => n("/opportunities") },
+      { id: "gigs", title: "Live Paid Opportunities", subtitle: "Verified mystery shop, food review & research work", icon: Briefcase, keywords: ["task", "work", "shop", "review", "research"], run: (n) => n("/gigs") },
+      { id: "opportunities", title: "Live Jobs", subtitle: "Verified current Hampton Roads openings", icon: Radar, keywords: ["hampton", "roads", "courier", "job", "cannabis", "alcohol", "w2", "1099"], run: (n) => n("/opportunities") },
       { id: "showcase", title: "App Showcase", subtitle: "See the full LOKIN vision", icon: LayoutGrid, keywords: ["showcase", "demo", "vision", "brand", "landing"], run: (n) => n("/showcase") },
       { id: "fiveg", title: "Connection Diagnostics", subtitle: "Device-reported network metrics", icon: Wifi, keywords: ["5g", "signal", "cellular", "network", "diagnostics"], run: (n) => n("/5g") },
       { id: "active-delivery", title: "Active Delivery", subtitle: "Live order, status & auto-updates", icon: Navigation, keywords: ["delivery", "order", "customer", "status", "active", "dropoff"], run: (n) => n("/active-delivery") },
