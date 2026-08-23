@@ -72,7 +72,7 @@ export default function RoutePlanner() {
           <RouteIcon className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
         </div>
-        <Link to="/ai-gps?focus=locked" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
+        <Link to="/ai-gps?focus=locked&nav=1&view=real" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
           <Radar className="h-3.5 w-3.5" /> AI GPS
         </Link>
       </div>
@@ -146,7 +146,7 @@ export default function RoutePlanner() {
             </svg>
             <div className="absolute top-2 left-3 text-[10px] uppercase tracking-wider text-white/40">Optimized route</div>
           </div>
-          <Link to="/ai-gps?focus=locked"
+          <Link to="/ai-gps?focus=locked&nav=1&view=real"
             className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary">
             <Navigation className="h-4 w-4" /> Start LOKIN Navigation
           </Link>
