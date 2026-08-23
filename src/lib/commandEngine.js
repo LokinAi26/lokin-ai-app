@@ -31,7 +31,7 @@ export const COMMAND_GROUPS = [
       { id: "showcase", title: "App Showcase", subtitle: "See the full LOKIN vision", icon: LayoutGrid, keywords: ["showcase", "demo", "vision", "brand", "landing"], run: (n) => n("/showcase") },
       { id: "fiveg", title: "Connection Diagnostics", subtitle: "Device-reported network metrics", icon: Wifi, keywords: ["5g", "signal", "cellular", "network", "diagnostics"], run: (n) => n("/5g") },
       { id: "active-delivery", title: "Active Delivery", subtitle: "Live order, status & auto-updates", icon: Navigation, keywords: ["delivery", "order", "customer", "status", "active", "dropoff"], run: (n) => n("/active-delivery") },
-      { id: "hotspots", title: "Predictive Hotspots", subtitle: "Stronger earning zones", icon: Flame, keywords: ["zone", "heat", "busy"], run: (n) => n("/hotspots") },
+      { id: "hotspots", title: "Hotspot Model Preview", subtitle: "Explore simulated earning-zone scenarios", icon: Flame, keywords: ["zone", "heat", "hotspot", "model"], run: (n) => n("/hotspots") },
       { id: "tax", title: "Tax Engine", subtitle: "Mileage & deductions", icon: Calculator, keywords: ["deduction", "irs", "write off"], run: (n) => n("/tax") },
       { id: "receipts", title: "Receipts", subtitle: "Purchase history", icon: Receipt, keywords: ["invoice", "spend"], run: (n) => n("/receipts") },
     ],
