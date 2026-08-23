@@ -129,7 +129,7 @@ export default function Safety() {
           <MapPin className="h-4 w-4 text-accent" />
           <div className="text-sm font-semibold text-white/80">Share My Location</div>
         </div>
-        <p className="text-xs text-white/45 mb-3">Send your live location to your emergency contacts.</p>
+        <p className="text-xs text-white/45 mb-3">Share your current location snapshot with an emergency contact. Refresh it when your location changes.</p>
         {!location ? (
           <button onClick={getLocation} disabled={locLoading}
             className="w-full rounded-xl border border-accent/40 bg-accent/10 py-2.5 text-sm font-bold text-accent glow-cyan disabled:opacity-60 flex items-center justify-center gap-2">
