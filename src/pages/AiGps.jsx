@@ -324,6 +324,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           followDriver={!freeRoam}
           perspective={mapView === "4d"}
           fullscreen
+          onResetFollow={() => setFreeRoam(false)}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
@@ -338,8 +339,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 px-3 pt-[calc(0.55rem+env(safe-area-inset-top))]">
-        <div className="rounded-full border border-primary/35 bg-black/80 px-3 py-2 text-[10px] font-extrabold tracking-[0.16em] text-primary backdrop-blur">
-          ● LOCKED IN
+        <div className={`rounded-full border px-3 py-2 text-[10px] font-extrabold tracking-[0.14em] backdrop-blur ${freeRoam ? "border-accent/35 bg-black/80 text-accent" : "border-primary/35 bg-black/80 text-primary"}`}>
+          {freeRoam ? "FREE ROAM · SHIFT ACTIVE" : "● LOCKED IN"}
         </div>
         <div className="rounded-full border border-accent/30 bg-black/80 px-3 py-2 text-[10px] font-bold tracking-[0.13em] text-accent backdrop-blur">
           SAY “HEY LOKIN”
@@ -357,9 +358,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             type="button"
             onClick={() => setFreeRoam((v) => !v)}
             aria-pressed={freeRoam}
-            className={`absolute left-2 top-1/2 z-50 -translate-y-1/2 rounded-full border px-2.5 py-2 text-[9px] font-extrabold tracking-[0.08em] shadow-lg backdrop-blur active:scale-95 ${freeRoam ? "border-accent/50 bg-accent/90 text-black" : "border-white/15 bg-black/75 text-white/70"}`}
+            className={`absolute left-2 top-[42%] z-50 inline-flex min-h-9 items-center gap-1 rounded-full border px-2 py-1.5 text-[8px] font-extrabold tracking-[0.06em] shadow-md backdrop-blur active:scale-95 ${freeRoam ? "border-accent/50 bg-accent/90 text-black" : "border-white/15 bg-black/65 text-white/65"}`}
           >
-            {freeRoam ? "FOLLOW" : "FREE ROAM"}
+            <Move className="h-3 w-3" /> {freeRoam ? "FOLLOW" : "ROAM"}
           </button>
         </>
       )}
