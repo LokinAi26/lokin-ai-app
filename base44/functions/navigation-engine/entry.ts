@@ -70,16 +70,48 @@ function bytesToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-function simplifyStaticRoute(coords: any[], maxPoints = 72) {
+function pointLineDistance(point: number[], start: number[], end: number[]) {
+  const x = point[0], y = point[1];
+  const x1 = start[0], y1 = start[1];
+  const x2 = end[0], y2 = end[1];
+  const dx = x2 - x1, dy = y2 - y1;
+  if (dx === 0 && dy === 0) return Math.hypot(x - x1, y - y1);
+  const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
+}
+
+function douglasPeucker(points: number[][], tolerance: number): number[][] {
+  if (points.length <= 2) return points;
+  let maxDistance = 0;
+  let index = 0;
+  for (let i = 1; i < points.length - 1; i++) {
+    const distance = pointLineDistance(points[i], points[0], points[points.length - 1]);
+    if (distance > maxDistance) { maxDistance = distance; index = i; }
+  }
+  if (maxDistance <= tolerance) return [points[0], points[points.length - 1]];
+  const left = douglasPeucker(points.slice(0, index + 1), tolerance);
+  const right = douglasPeucker(points.slice(index), tolerance);
+  return [...left.slice(0, -1), ...right];
+}
+
+function simplifyStaticRoute(coords: any[], maxPoints = 120) {
   const valid = (coords || [])
     .map((c: any) => Array.isArray(c) && c.length >= 2 ? [Number(c[0]), Number(c[1])] : null)
     .filter((c: any) => c && Number.isFinite(c[0]) && Number.isFinite(c[1]));
-  if (valid.length <= maxPoints) return valid.map((c: any) => [Number(c[0].toFixed(5)), Number(c[1].toFixed(5))]);
-  const step = (valid.length - 1) / (maxPoints - 1);
-  return Array.from({ length: maxPoints }, (_, i) => {
-    const c = valid[Math.min(valid.length - 1, Math.round(i * step))];
-    return [Number(c[0].toFixed(5)), Number(c[1].toFixed(5))];
-  });
+  if (valid.length <= maxPoints) return valid.map((c: any) => [Number(c[0].toFixed(6)), Number(c[1].toFixed(6))]);
+
+  // Preserve road shape instead of uniformly skipping points. Uniform sampling can
+  // cut across intersections and curves; Douglas-Peucker keeps the meaningful bends.
+  let low = 0;
+  let high = 0.02;
+  let simplified = valid;
+  for (let i = 0; i < 18; i++) {
+    const tolerance = (low + high) / 2;
+    const candidate = douglasPeucker(valid, tolerance);
+    if (candidate.length > maxPoints) low = tolerance;
+    else { high = tolerance; simplified = candidate; }
+  }
+  return simplified.map((c: any) => [Number(c[0].toFixed(6)), Number(c[1].toFixed(6))]);
 }
 
 function staticRouteOverlay(routeGeometry: any) {
