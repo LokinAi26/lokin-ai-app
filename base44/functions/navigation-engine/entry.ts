@@ -138,6 +138,7 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   const q = String(address || "").trim();
   if (!q) throw new Error("Address is required");
 
+  const hasContext = addressHasGeographicContext(q);
   const params = new URLSearchParams({
     q,
     access_token: accessToken,
@@ -145,8 +146,12 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
     autocomplete: "false",
     country: "us",
     permanent: "false",
+    types: "address",
   });
   if (proximity) params.set("proximity", `${proximity.longitude},${proximity.latitude}`);
+  if (proximity && !hasContext) {
+    params.set("bbox", localSearchBBox(proximity).join(","));
+  }
 
   const data = await fetchJson(`${MAPBOX_GEOCODE}/forward?${params.toString()}`);
   const candidates = (data?.features || [])
@@ -169,8 +174,8 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   const selected: any = candidates[0];
   if (!selected) throw new Error(`Could not geocode: ${q}`);
 
-  if (proximity && !addressHasGeographicContext(q) && Number(selected.proximity_miles) > 80) {
-    throw new Error(`Address is ambiguous and the nearest match is ${Math.round(selected.proximity_miles)} miles away. Add city, state, or ZIP to: ${q}`);
+  if (proximity && !hasContext && Number(selected.proximity_miles) > 55) {
+    throw new Error(`Address is ambiguous and the nearest local match is ${Math.round(selected.proximity_miles)} miles away. Add city, state, or ZIP to: ${q}`);
   }
 
   const feature = selected.feature;
