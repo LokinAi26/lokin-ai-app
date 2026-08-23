@@ -107,10 +107,11 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const longitude = Number(viewport?.longitude);
   const latitude = Number(viewport?.latitude);
   const zoom = Math.max(1, Math.min(18.5, Number(viewport?.zoom || 15.5)));
-  const width = Math.max(320, Math.min(800, Math.round(Number(viewport?.width || 640))));
-  const height = Math.max(220, Math.min(700, Math.round(Number(viewport?.height || 420))));
+  const width = Math.max(320, Math.min(1024, Math.round(Number(viewport?.width || 640))));
+  const height = Math.max(220, Math.min(1024, Math.round(Number(viewport?.height || 420))));
   const bearing = ((Number(viewport?.bearing || 0) % 360) + 360) % 360;
   const pitch = Math.max(0, Math.min(60, Number(viewport?.pitch || 0)));
+  const retina = viewport?.retina === true;
   const style = ["dark-v11", "streets-v12", "satellite-streets-v12"].includes(String(viewport?.style))
     ? String(viewport.style)
     : "dark-v11";
@@ -118,7 +119,8 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
 
   if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error("Valid map viewport coordinates are required");
   const params = new URLSearchParams({ access_token: accessToken, attribution: "true", logo: "true" });
-  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}?${params.toString()}`;
+  const densitySuffix = retina ? "@2x" : "";
+  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}${densitySuffix}?${params.toString()}`;
   if (url.length > 8100) throw new Error("Static map route overlay is too large; reduce route detail");
   const response = await fetch(url);
   if (!response.ok) {
@@ -129,7 +131,7 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const bytes = new Uint8Array(await response.arrayBuffer());
   return {
     data_url: `data:${contentType};base64,${bytesToBase64(bytes)}`,
-    viewport: { longitude, latitude, zoom, width, height, style, bearing, pitch },
+    viewport: { longitude, latitude, zoom, width, height, style, bearing, pitch, retina },
     route_overlay: Boolean(overlay),
   };
 }
