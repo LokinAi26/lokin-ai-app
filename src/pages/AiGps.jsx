@@ -64,7 +64,7 @@ export default function AiGps() {
                 <Power className="mx-auto h-6 w-6" /><div className="mt-1 text-[10px] font-bold">TAP OUT</div>
               </button>
             </div>
-            <div className="mt-2 text-center text-[10px] text-white/35">Say “Hey LOKIN” anytime · interactions can pause and resume</div>
+            <div className="mt-2 text-center text-[10px] text-white/35">Enable “Hey LOKIN · App Open” in Voice for wake-word control · Siri shortcuts can launch LOKIN system-wide</div>
           </div>
 
           <div className="sticky bottom-3 z-20 flex justify-center gap-2">
