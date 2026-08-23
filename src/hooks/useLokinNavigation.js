@@ -41,7 +41,20 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const lastSpokenRef = useRef("");
   const startedKeyRef = useRef("");
 
-  useEffect(() => { destinationsRef.current = normalizedDestinations; }, [destinationsKey]);
+  useEffect(() => {
+    destinationsRef.current = normalizedDestinations;
+    routeRef.current = null;
+    cumulativeRef.current = [];
+    geocodedRef.current = [];
+    startedKeyRef.current = "";
+    offRouteSamplesRef.current = 0;
+    lastSpokenRef.current = "";
+    setRoute(null);
+    setGeocodedDestinations([]);
+    setSnapped(null);
+    setManeuver(null);
+    setRerouteCount(0);
+  }, [destinationsKey]);
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
 
