@@ -115,12 +115,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         else await base44.entities.DriverPreference.create(next);
         if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
         const msg = "Leveling up. You're locked in. AI GPS is ready.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 350); setBusy(false); return;
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
       if (includesAny(t, ["lock in", "locked in", "focus mode"])) {
         const msg = "Locked in. Distractions minimized.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 300); setBusy(false); return;
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
       }
 
       if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause"])) {
@@ -136,7 +136,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
         const msg = "Welcome back. Recalculating and locking you back in.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked"), 350); setBusy(false); return;
+        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
       if (includesAny(t, ["tap out", "end work", "end my shift", "finish work"])) {
