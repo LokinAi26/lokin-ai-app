@@ -48,11 +48,21 @@ export default function DriverLayout() {
   const isNested = NESTED_PATHS.includes(loc.pathname);
   const isShopFlow = loc.pathname === "/locator" || loc.pathname === "/shop-deliver";
   const currentTab = pathToTab(loc.pathname);
-  const lockedGps = loc.pathname === "/ai-gps" && new URLSearchParams(loc.search).get("focus") === "locked";
+  const gpsParams = new URLSearchParams(loc.search);
+  const lockedGps = loc.pathname === "/ai-gps" && gpsParams.get("focus") === "locked";
+  const activeNavigation = lockedGps && gpsParams.get("nav") === "1";
 
   useEffect(() => {
     base44.entities.DriverPreference.filter({}).then((p) => setWorking((p[0] && p[0].work_status) === "working"));
   }, [loc.pathname]);
+
+  // While a driver is locked in, the GPS is the primary/home surface.
+  // Returning to the normal root restores the distraction-free navigation shell.
+  useEffect(() => {
+    if (working && loc.pathname === "/") {
+      navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
+    }
+  }, [working, loc.pathname, navigate]);
 
   // Track the last visited path per tab so switching back restores it
   useEffect(() => {
@@ -135,7 +145,7 @@ export default function DriverLayout() {
       </nav>}
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
-      <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} />
+      <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation} />
     </div>
   );
 }
