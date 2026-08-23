@@ -131,6 +131,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         distance_m: Number(prepared.distance_m || 0),
         generated_at: prepared.generated_at || new Date().toISOString(),
         live_traffic: prepared.live_traffic === true,
+        received_at_ms: Date.now(),
       });
 
       // Snap the same GPS origin that requested the route immediately. iOS may
@@ -185,8 +186,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (requestId !== etaRequestRef.current) return null;
       const eta = response.data?.eta;
       if (!eta || !Number.isFinite(Number(eta.duration_s))) return null;
-      setTrafficEta(eta);
-      return eta;
+      const stamped = { ...eta, received_at_ms: Date.now() };
+      setTrafficEta(stamped);
+      return stamped;
     } catch {
       // Keep the last valid traffic ETA rather than replacing it with a fabricated estimate.
       return null;
@@ -326,7 +328,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
   const fallbackRemainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);
   const remainingDistanceM = Number.isFinite(Number(trafficEta?.distance_m)) ? Number(trafficEta.distance_m) : fallbackRemainingDistanceM;
-  const remainingDurationS = Number.isFinite(Number(trafficEta?.duration_s)) ? Number(trafficEta.duration_s) : fallbackRemainingDurationS;
+  const etaElapsedS = trafficEta?.received_at_ms ? Math.max(0, (Date.now() - Number(trafficEta.received_at_ms)) / 1000) : 0;
+  const remainingDurationS = Number.isFinite(Number(trafficEta?.duration_s))
+    ? Math.max(0, Number(trafficEta.duration_s) - etaElapsedS)
+    : fallbackRemainingDurationS;
 
   return {
     route,
