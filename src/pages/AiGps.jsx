@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
 import { base44 } from "@/api/base44Client";
@@ -11,6 +11,7 @@ import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const locked = params.get("focus") === "locked";
   const orderId = params.get("order") || "";
   const explicitDestination = params.get("destination") || "";
@@ -95,6 +96,17 @@ export default function AiGps() {
     finally { setProbingProvider(false); }
   }
 
+  function openAppFreeRoam() {
+    const resume = new URLSearchParams(params);
+    resume.set("focus", "locked");
+    resume.set("nav", "1");
+    resume.set("view", mapView || "real");
+    const resumeUrl = `/ai-gps?${resume.toString()}`;
+    sessionStorage.setItem("lokin_app_free_roam", "1");
+    sessionStorage.setItem("lokin_gps_resume_url", resumeUrl);
+    navigate("/", { replace: true });
+  }
+
   if (navigationSession) {
     return (
       <LockedGpsSurface
@@ -104,6 +116,7 @@ export default function AiGps() {
         routeLoadError={routeLoadError}
         loadingStops={loadingStops}
         destinationAddresses={destinationAddresses}
+        onOpenAppFreeRoam={openAppFreeRoam}
       />
     );
   }
@@ -308,8 +321,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses }) {
-  const [freeRoam, setFreeRoam] = useState(false);
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses, onOpenAppFreeRoam }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -321,10 +333,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           snappedPosition={nav.snappedPosition}
           maneuver={nav.maneuver}
           remainingDurationS={nav.remainingDurationS}
-          followDriver={!freeRoam}
+          followDriver
           perspective={mapView === "4d"}
           fullscreen
-          onResetFollow={() => setFreeRoam(false)}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
@@ -339,8 +350,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 px-3 pt-[calc(0.55rem+env(safe-area-inset-top))]">
-        <div className={`rounded-full border px-3 py-2 text-[10px] font-extrabold tracking-[0.14em] backdrop-blur ${freeRoam ? "border-accent/35 bg-black/80 text-accent" : "border-primary/35 bg-black/80 text-primary"}`}>
-          {freeRoam ? "FREE ROAM · SHIFT ACTIVE" : "● LOCKED IN"}
+        <div className="rounded-full border border-primary/35 bg-black/80 px-3 py-2 text-[10px] font-extrabold tracking-[0.14em] text-primary backdrop-blur">
+          ● LOCKED IN
         </div>
         <div className="rounded-full border border-accent/30 bg-black/80 px-3 py-2 text-[10px] font-bold tracking-[0.13em] text-accent backdrop-blur">
           SAY “HEY LOKIN”
@@ -356,11 +367,10 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
 
           <button
             type="button"
-            onClick={() => setFreeRoam((v) => !v)}
-            aria-pressed={freeRoam}
-            className={`absolute left-2 top-[42%] z-50 inline-flex min-h-9 items-center gap-1 rounded-full border px-2 py-1.5 text-[8px] font-extrabold tracking-[0.06em] shadow-md backdrop-blur active:scale-95 ${freeRoam ? "border-accent/50 bg-accent/90 text-black" : "border-white/15 bg-black/65 text-white/65"}`}
+            onClick={onOpenAppFreeRoam}
+            className="absolute left-2 top-[42%] z-50 inline-flex min-h-9 items-center gap-1 rounded-full border border-white/15 bg-black/65 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.06em] text-white/70 shadow-md backdrop-blur active:scale-95"
           >
-            <Move className="h-3 w-3" /> {freeRoam ? "FOLLOW" : "ROAM"}
+            <Move className="h-3 w-3" /> ROAM
           </button>
         </>
       )}
