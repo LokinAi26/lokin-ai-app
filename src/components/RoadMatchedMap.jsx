@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Layers3, Map, Satellite } from "lucide-react";
+import { Crosshair, Layers3, Map, Minus, Plus, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { bearingDegrees, formatDuration } from "@/lib/navigationGeometry";
 
@@ -55,8 +55,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const renderW = fullscreen ? 360 : MAP_W;
-  const renderH = fullscreen ? 700 : MAP_H;
+  const [zoomOffset, setZoomOffset] = useState(0);
+  const renderW = fullscreen ? 640 : MAP_W;
+  const renderH = fullscreen ? 960 : MAP_H;
 
   const nextPoint = snappedPosition?.segment_index != null && coords.length
     ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
@@ -78,14 +79,14 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       return {
         longitude: bucketCoord(snap[0], perspective ? 0.0012 : 0.0025),
         latitude: bucketCoord(snap[1], perspective ? 0.0012 : 0.0025),
-        zoom: perspective ? 17.1 : 16.1,
+        zoom: Math.max(13.5, Math.min(18.5, (perspective ? 17.8 : 16.6) + zoomOffset)),
         bearing: perspective ? heading : 0,
         pitch: perspective ? 58 : 0,
       };
     }
     const fitted = fitViewport(coords, renderW, renderH);
-    return fitted ? { ...fitted, bearing: perspective ? heading : 0, pitch: perspective ? 50 : 0 } : null;
-  }, [routeGeometry, followDriver, perspective, heading, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+    return fitted ? { ...fitted, zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)), bearing: perspective ? heading : 0, pitch: perspective ? 50 : 0 } : null;
+  }, [routeGeometry, followDriver, perspective, heading, zoomOffset, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
@@ -99,8 +100,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       viewport: {
         ...viewport,
         width: renderW,
-        height: fullscreen ? renderH : perspective ? 620 : MAP_H,
+        height: fullscreen ? renderH : perspective ? 700 : MAP_H,
         style,
+        retina: true,
         route_geometry: perspective ? routeGeometry : null,
       },
     }).then((response) => {
@@ -161,6 +163,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         </div>
 
         {perspective && <div className={`absolute left-3 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : "top-12"}`}>58° PITCH · HEADING UP</div>}
+
+        <div className={`absolute right-3 z-20 flex flex-col gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
+          <button type="button" aria-label="Zoom in" onClick={() => setZoomOffset((z) => Math.min(2, z + 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Zoom out" onClick={() => setZoomOffset((z) => Math.max(-2, z - 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Minus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Reset and follow driver" onClick={() => setZoomOffset(0)} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
+        </div>
 
         <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
           <div className="text-[9px] tracking-[0.16em] text-primary/75">NEXT MANEUVER</div>
