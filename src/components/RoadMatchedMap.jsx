@@ -49,7 +49,7 @@ function project(coord, viewport) {
   return { x: MAP_W / 2 + dx, y: MAP_H / 2 + (point[1] - center[1]) };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false }) {
+export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   const [style, setStyle] = useState(perspective ? "satellite-streets-v12" : "dark-v11");
   const [image, setImage] = useState("");
@@ -129,8 +129,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   if (!viewport) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-accent/30 bg-[#111820] shadow-[0_0_40px_-20px_hsl(188_95%_50%)]">
-      <div className={`relative w-full overflow-hidden bg-[#121820] ${perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}>
+    <div className={`relative overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+      <div className={`relative w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}>
         {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
         <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
