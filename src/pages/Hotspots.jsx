@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Flame, Crosshair, TrendingUp, MapPin, Navigation } from "lucide-react";
+import { Flame, Crosshair, TrendingUp, MapPin } from "lucide-react";
 import ZoneAlertMonitor from "@/components/ZoneAlertMonitor";
 import {
   PLATFORMS, METRICS, DEFAULT_CENTER, buildHotspots, heatColor, metricValue, metricDisplay,
@@ -46,7 +46,6 @@ export default function Hotspots() {
   }, [hotspots, selected]);
 
   const ranked = [...visible].sort((a, b) => metricValue(b, metric) - metricValue(a, metric));
-  const routePoints = ranked.slice(0, 5).map((h) => [h.lat, h.lng]);
 
   function togglePlatform(id) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -121,14 +120,6 @@ export default function Hotspots() {
           <Recenter center={center} />
           <FlyTo target={flyTo} />
 
-          {/* Neon green GPS earnings route through the top 5 zones */}
-          {routePoints.length >= 2 && (
-            <>
-              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 12, opacity: 0.2 }} />
-              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 5, opacity: 1, className: "lokin-route" }} />
-            </>
-          )}
-
           {/* Heat zones — nested translucent circles simulate a radial gradient */}
           {visible.map((h) => {
             const c = heatColor(metric, metricValue(h, metric));
@@ -160,9 +151,8 @@ export default function Hotspots() {
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF3B3B" }} />
           <span className="text-[10px] tracking-widest text-white/50 font-display">HIGH</span>
         </div>
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 rounded-full glass border border-primary/30 px-2.5 py-1">
-          <Navigation className="h-3 w-3 text-primary" />
-          <span className="text-[10px] font-bold tracking-widest text-primary">LOKIN ROUTE</span>
+        <div className="absolute top-2 right-2 rounded-full glass border border-primary/30 px-2.5 py-1 text-[10px] font-bold tracking-widest text-primary">
+          HOTSPOTS · NOT NAVIGATION
         </div>
       </div>
 
