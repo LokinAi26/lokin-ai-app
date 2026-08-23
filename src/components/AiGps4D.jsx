@@ -43,7 +43,7 @@ function roadRibbonGeometry(curve, width = 2.2, segments = 96, y = 0.02) {
   return geometry;
 }
 
-export default function AiGps4D({ stops: stopsProp, compact = false, routeGeometry = null, snappedPosition = null, maneuver = null, navigationStatus = "" }) {
+export default function AiGps4D({ stops: stopsProp, compact = false, routeGeometry = null, snappedPosition = null, maneuver = null, navigationStatus = "", remainingDurationS = null }) {
   const containerRef = useRef(null);
   const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1, routeGeometry: [], projectGeo: null, liveScene: null });
   const rebuildRef = useRef(null);
@@ -61,6 +61,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
   const current = stops[idx];
   const etaTotal = stops.reduce((s, o) => s + (o.est_minutes || 0), 0);
   const etaRemaining = Math.round(etaTotal * (1 - time));
+  const navEtaMinutes = remainingDurationS != null ? Math.max(0, Math.round(Number(remainingDurationS || 0) / 60)) : etaRemaining;
   const accuracy = snappedPosition ? Math.max(0, Math.round(100 - Math.min(100, Number(snappedPosition.distance_m || 0) * 2))) : pins.length ? 100 : current ? 58 : 0;
   const hasRoadGeometry = Array.isArray(routeGeometry?.coordinates || routeGeometry) && (routeGeometry?.coordinates || routeGeometry).length >= 2;
 
@@ -325,45 +326,60 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         <div ref={containerRef} className="w-full" style={{ height: compact ? 200 : 360 }} />
         <div className="absolute inset-0 brand-grid opacity-20 pointer-events-none" />
         <div className="absolute top-2 left-3 flex items-center gap-1.5 text-[10px] tracking-[0.2em] text-accent/80 font-display">
-          <Radar className="h-3.5 w-3.5" /> 4D AI GPS
+          <Radar className="h-3.5 w-3.5" /> {hasRoadGeometry ? "ROAD-MATCHED 4D GPS" : "4D ROUTE PREVIEW"}
         </div>
         <div className="absolute top-2 right-3 text-right">
-          <div className="text-[9px] tracking-wider text-white/40">ETA · 4D</div>
-          <div className="font-display text-sm font-bold text-accent text-glow-cyan">{etaRemaining}m</div>
+          <div className="text-[9px] tracking-wider text-white/40">ETA</div>
+          <div className="font-display text-sm font-bold text-accent text-glow-cyan">{navEtaMinutes}m</div>
         </div>
-        {rerouting && (
+        {(rerouting || navigationStatus === "rerouting") && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <div className="flex items-center gap-2 text-sm text-primary text-glow animate-pulse">
               <RefreshCw className="h-4 w-4 animate-spin" /> Re-routing live…
             </div>
           </div>
         )}
-        {total === 0 && !loading && (
+        {!hasRoadGeometry && total === 0 && !loading && (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-white/50">No drop-offs to map.</div>
         )}
       </div>
 
-      {/* Time (4th dimension) scrubber */}
-      <div className="rounded-2xl border border-white/10 lokin-panel p-3">
-        <div className="flex items-center justify-between text-[11px] text-white/50 mb-2">
-          <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-accent" /> TIME · 4D SCRUB</span>
-          <span>{Math.round(time * 100)}%</span>
+      {hasRoadGeometry ? (
+        <div className="rounded-2xl border border-primary/25 bg-primary/[0.055] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] tracking-[0.2em] text-primary/75 font-display">ROAD-MATCHED · LIVE GPS</div>
+              <div className="mt-1 text-sm font-bold text-white">{maneuver?.maneuver?.instruction || (navigationStatus === "routing" ? "Building road route…" : "Following production road geometry")}</div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-[9px] text-white/35">SNAP ERROR</div>
+              <div className={`text-xs font-bold ${Number(snappedPosition?.distance_m || 0) <= 25 ? "text-primary" : "text-amber-300"}`}>{snappedPosition ? `${Math.round(snappedPosition.distance_m || 0)}m` : "—"}</div>
+            </div>
+          </div>
+          <div className="mt-2 text-[10px] text-white/40">The neon line is generated from the provider's actual drivable road polyline. Your GPS marker is projected onto that geometry; repeated off-route fixes trigger a fresh route.</div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setPlaying((p) => { stateRef.current.playing = !p; return !p; })}
-            className="shrink-0 h-9 w-9 rounded-full border border-accent/40 bg-accent/10 text-accent flex items-center justify-center text-xs active:scale-95">
-            {playing ? "❚❚" : "▶"}
-          </button>
-          <input type="range" min={0} max={1} step={0.001} value={time} onChange={(e) => onTime(parseFloat(e.target.value))}
-            className="flex-1 accent-[#06d9f9]" />
+      ) : (
+        <div className="rounded-2xl border border-white/10 lokin-panel p-3">
+          <div className="flex items-center justify-between text-[11px] text-white/50 mb-2">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-accent" /> MODEL PREVIEW · TIME SCRUB</span>
+            <span>{Math.round(time * 100)}%</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setPlaying((p) => { stateRef.current.playing = !p; return !p; })}
+              className="shrink-0 h-9 w-9 rounded-full border border-accent/40 bg-accent/10 text-accent flex items-center justify-center text-xs active:scale-95">
+              {playing ? "❚❚" : "▶"}
+            </button>
+            <input type="range" min={0} max={1} step={0.001} value={time} onChange={(e) => onTime(parseFloat(e.target.value))}
+              className="flex-1 accent-[#06d9f9]" />
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <button onClick={reroute} className="text-[11px] flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-white/70 active:scale-95">
+              <RefreshCw className="h-3 w-3 text-primary" /> Re-sequence preview
+            </button>
+            <span className="text-[10px] text-white/40">{total} stops · not turn-by-turn navigation</span>
+          </div>
         </div>
-        <div className="mt-2 flex items-center justify-between">
-          <button onClick={reroute} className="text-[11px] flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-white/70 active:scale-95">
-            <RefreshCw className="h-3 w-3 text-primary" /> Re-route live
-          </button>
-          <span className="text-[10px] text-white/40">{total} stops · sequence evolves over time</span>
-        </div>
-      </div>
+      )}
 
       {compact ? (
         <Link to="/ai-gps" className="flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/[0.06] p-3 active:scale-[0.99] transition-transform">
