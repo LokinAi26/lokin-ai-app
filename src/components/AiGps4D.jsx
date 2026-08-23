@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Link } from "react-router-dom";
 import { Radar, Clock, MapPin, RefreshCw, Camera, Save, KeyRound, Building2, Check, Maximize2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -63,9 +64,9 @@ function roadRibbonGeometry(curve, width = 2.2, segments = 96, y = 0.02) {
   return geometry;
 }
 
-export default function AiGps4D({ stops: stopsProp, compact = false, routeGeometry = null, snappedPosition = null, maneuver = null, navigationStatus = "", remainingDurationS = null }) {
+export default function AiGps4D({ stops: stopsProp, compact = false, routeGeometry = null, snappedPosition = null, maneuver = null, navigationStatus = "", remainingDurationS = null, followDriver = false }) {
   const containerRef = useRef(null);
-  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1, routeGeometry: [], projectGeo: null, liveScene: null });
+  const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1, routeGeometry: [], projectGeo: null, liveScene: null, liveSegmentIndex: 0, followDriver: Boolean(followDriver) });
   const rebuildRef = useRef(null);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -95,7 +96,12 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
     const coord = snappedPosition?.coordinate;
     const projected = coord && stateRef.current.projectGeo ? stateRef.current.projectGeo(coord) : null;
     stateRef.current.liveScene = projected;
-  }, [snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+    stateRef.current.liveSegmentIndex = Number(snappedPosition?.segment_index || 0);
+  }, [snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1], snappedPosition?.segment_index]);
+
+  useEffect(() => {
+    stateRef.current.followDriver = Boolean(followDriver);
+  }, [followDriver]);
 
   // Load stops (own optimizeRoute call only when not provided)
   useEffect(() => {
@@ -142,6 +148,17 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
     scene.fog = new THREE.Fog(0x223746, 20, 48);
     const camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 100);
     camera.position.set(0, 9, 15);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enablePan = true;
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.minDistance = 2.2;
+    controls.maxDistance = 32;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.target.set(0, 0, 0);
+    renderer.domElement.style.touchAction = "none";
 
     scene.add(new THREE.HemisphereLight(0xc7e6ff, 0x24391f, 1.15));
     const sun = new THREE.DirectionalLight(0xfff2d0, 1.35); sun.position.set(-8, 16, 10); scene.add(sun);
@@ -252,12 +269,38 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
     rebuild();
 
     let raf, camAngle = 0;
+    const desiredCamera = new THREE.Vector3();
+    const desiredTarget = new THREE.Vector3();
     function animate() {
       raf = requestAnimationFrame(animate);
-      camAngle += 0.0014;
-      const r = 15.5;
-      camera.position.set(Math.sin(camAngle) * r, 8.2, Math.cos(camAngle) * r);
-      camera.lookAt(0, 0, 0);
+      const live = stateRef.current.liveScene;
+      const navCoords = stateRef.current.routeGeometry || [];
+      const following = Boolean(stateRef.current.followDriver && live && navCoords.length >= 2 && stateRef.current.projectGeo);
+      controls.enabled = !following;
+
+      if (following) {
+        const segmentIndex = Math.max(0, Math.min(navCoords.length - 2, stateRef.current.liveSegmentIndex || 0));
+        const nextGeo = navCoords[Math.min(segmentIndex + 1, navCoords.length - 1)];
+        const nextScene = stateRef.current.projectGeo(nextGeo);
+        const direction = nextScene
+          ? new THREE.Vector3(nextScene.x - live.x, 0, nextScene.z - live.z)
+          : new THREE.Vector3(0, 0, -1);
+        if (direction.lengthSq() < 0.0001) direction.set(0, 0, -1);
+        direction.normalize();
+        desiredCamera.set(live.x - direction.x * 4.2, 3.1, live.z - direction.z * 4.2);
+        desiredTarget.set(live.x + direction.x * 5.5, 0.4, live.z + direction.z * 5.5);
+        camera.position.lerp(desiredCamera, 0.11);
+        const currentTarget = new THREE.Vector3();
+        camera.getWorldDirection(currentTarget);
+        camera.lookAt(desiredTarget);
+      } else if (stateRef.current.routeGeometry.length < 2) {
+        camAngle += 0.0014;
+        const r = 15.5;
+        camera.position.set(Math.sin(camAngle) * r, 8.2, Math.cos(camAngle) * r);
+        camera.lookAt(0, 0, 0);
+      } else {
+        controls.update();
+      }
       if (stateRef.current.playing && stateRef.current.pos.length > 1 && stateRef.current.routeGeometry.length < 2) {
         stateRef.current.time = (stateRef.current.time + 0.0022) % 1;
         const pct = Math.round(stateRef.current.time * 100);
@@ -286,6 +329,7 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      controls.dispose();
       pinMeshes.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
       roadMeshes.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
       if (routeLine) { routeLine.geometry.dispose(); routeLine.material.dispose(); }
