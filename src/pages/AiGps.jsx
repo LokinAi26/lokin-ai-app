@@ -95,6 +95,19 @@ export default function AiGps() {
     finally { setProbingProvider(false); }
   }
 
+  if (navigationSession) {
+    return (
+      <LockedGpsSurface
+        nav={nav}
+        mapView={mapView}
+        setMapView={setMapView}
+        routeLoadError={routeLoadError}
+        loadingStops={loadingStops}
+        destinationAddresses={destinationAddresses}
+      />
+    );
+  }
+
   return (
     <div className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} space-y-4 pb-6`}>
       <div className="flex items-center justify-between gap-3">
