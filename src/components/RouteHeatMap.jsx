@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Flame, Navigation, TrendingUp, MapPin } from "lucide-react";
+import { Flame, TrendingUp, MapPin } from "lucide-react";
 import {
   METRICS, DEFAULT_CENTER, buildHotspots, heatColor, metricValue, metricDisplay,
 } from "@/lib/heatData";
@@ -23,9 +23,9 @@ function FlyTo({ target }) {
 }
 
 // Interactive earnings heat overlay for the Route Planner. Color-coded
-// intensity (neon-lime cool → red hot) shows where delivery volume is
-// strongest, plus a neon-green "LOKIN route" drawn through the top zones so
-// you can see exactly where the best volume is along your planned run.
+// intensity shows where delivery volume is strongest. Hotspot visualization is
+// intentionally kept separate from turn-by-turn navigation so heat zones never
+// masquerade as a drivable route.
 export default function RouteHeatMap({ heightClass = "h-60" }) {
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [metric, setMetric] = useState("volume");
@@ -42,7 +42,6 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
 
   const hotspots = useMemo(() => buildHotspots(center), [center]);
   const ranked = [...hotspots].sort((a, b) => metricValue(b, metric) - metricValue(a, metric));
-  const routePoints = ranked.slice(0, 5).map((h) => [h.lat, h.lng]);
   const best = ranked[0];
   const activeMetric = METRICS.find((m) => m.id === metric);
 
@@ -79,14 +78,6 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
           <Recenter center={center} />
           <FlyTo target={flyTo} />
 
-          {/* Neon green route through the top-volume zones */}
-          {routePoints.length >= 2 && (
-            <>
-              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 12, opacity: 0.18 }} />
-              <Polyline positions={routePoints} pathOptions={{ color: "#AAFF00", weight: 5, opacity: 1, className: "lokin-route" }} />
-            </>
-          )}
-
           {/* Heat zones — nested translucent circles = radial glow */}
           {hotspots.map((h) => {
             const c = heatColor(metric, metricValue(h, metric));
@@ -118,9 +109,8 @@ export default function RouteHeatMap({ heightClass = "h-60" }) {
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF3B3B" }} />
           <span className="text-[9px] tracking-widest text-white/50 font-display">HIGH</span>
         </div>
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 rounded-full glass border border-primary/30 px-2.5 py-1">
-          <Navigation className="h-3 w-3 text-primary" />
-          <span className="text-[9px] font-bold tracking-widest text-primary">LOKIN ROUTE</span>
+        <div className="absolute top-2 right-2 rounded-full glass border border-primary/30 px-2.5 py-1 text-[9px] font-bold tracking-widest text-primary">
+          HOTSPOT VIEW
         </div>
       </div>
 
