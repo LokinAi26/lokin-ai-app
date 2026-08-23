@@ -13,8 +13,8 @@ const SECTIONS = [
     icon: Wallet,
     color: "text-primary",
     items: [
-      { to: "/opportunities", icon: Radar, title: "Opportunity Scan", desc: "Weekly courier jobs" },
-      { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Paid field tasks" },
+      { to: "/opportunities", icon: Radar, title: "Live Jobs", desc: "Verified current openings" },
+      { to: "/gigs", icon: ClipboardList, title: "Live Paid Research", desc: "Mystery shops, food reviews & tests" },
       { to: "/hotspots", icon: Flame, title: "Hotspot Model Preview", desc: "Simulated earning-zone scenarios" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage & deductions" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history" },
