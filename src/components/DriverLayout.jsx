@@ -5,10 +5,8 @@ import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 
-import QuickJumpRail from "@/components/QuickJumpRail";
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
-import OpportunityAiSwitch from "@/components/OpportunityAiSwitch";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
@@ -136,8 +134,6 @@ export default function DriverLayout() {
         </div>
       </nav>}
 
-      {!lockedGps && <OpportunityAiSwitch />}
-      {!lockedGps && <QuickJumpRail />}
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} />
     </div>
