@@ -191,6 +191,11 @@ export default function AiGps() {
             <NavMetric label="gps ±" value={gpsAccuracy != null ? `${Math.round(gpsAccuracy)}m` : "—"} />
             <NavMetric label="reroutes" value={String(nav.rerouteCount)} accent={nav.rerouteCount > 0} />
           </div>
+          {nav.geocodedDestinations?.[0]?.full_address && (
+            <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-2 text-[10px] text-white/45">
+              <span className="font-semibold text-primary/75">RESOLVED DESTINATION · </span>{nav.geocodedDestinations[0].full_address}
+            </div>
+          )}
         </div>
       )}
 
