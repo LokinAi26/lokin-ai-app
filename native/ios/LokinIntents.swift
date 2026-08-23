@@ -1,26 +1,44 @@
 import AppIntents
-import UIKit
 
-// MARK: - LOKIN AI · Native Siri/App Intents (iOS 16+)
+// MARK: - LOKIN AI · Native Siri/App Intents
 //
-// Add this file to the actual iOS app target that hosts the LOKIN WKWebView.
-// These intents provide system-level Siri/Shortcuts access. Apple does not let
-// third-party apps replace the system wake phrase with a custom always-on
-// "Hey LOKIN" hotword; Siri remains the system wake layer when the app is not
-// active. Once LOKIN is open, the React voice layer handles "Hey LOKIN".
+// Add this file to the actual iOS target that hosts LOKIN. Siri/Shortcuts is
+// the system-level wake layer. Apple does not expose a public API that lets a
+// third-party app register its own always-on background wake phrase such as
+// "Hey LOKIN". While LOKIN is foregrounded, the React voice layer owns that
+// custom wake phrase.
+//
+// These intents use LOKIN's production HTTPS universal links. The native app
+// must include the Associated Domains entitlement for the production domain.
 
-enum LokinDeepLink {
-    static func url(host: String, queryItems: [URLQueryItem] = []) -> URL {
-        var components = URLComponents()
-        components.scheme = "lokin"
-        components.host = host
+private enum LokinNativeURL {
+    static let appBase = URL(string: "https://lokin-ai-app-604c3139.base44.app")!
+
+    static func make(path: String, queryItems: [URLQueryItem] = []) -> URL {
+        var components = URLComponents(url: appBase.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))), resolvingAgainstBaseURL: false)!
         components.queryItems = queryItems.isEmpty ? nil : queryItems
         return components.url!
     }
 
-    @MainActor
-    static func open(host: String, queryItems: [URLQueryItem] = []) {
-        UIApplication.shared.open(url(host: host, queryItems: queryItems), options: [:], completionHandler: nil)
+    static func gps(destination: String? = nil) -> URL {
+        var items = [
+            URLQueryItem(name: "focus", value: "locked"),
+            URLQueryItem(name: "nav", value: "1"),
+            URLQueryItem(name: "view", value: "real"),
+            URLQueryItem(name: "via", value: "siri")
+        ]
+        if let destination, !destination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            items.append(URLQueryItem(name: "destination", value: destination))
+        }
+        return make(path: "/ai-gps", queryItems: items)
+    }
+
+    static func command(_ command: String) -> URL {
+        make(path: "/command", queryItems: [
+            URLQueryItem(name: "command", value: command),
+            URLQueryItem(name: "via", value: "siri"),
+            URLQueryItem(name: "v", value: "1")
+        ])
     }
 }
 
@@ -28,7 +46,6 @@ enum LokinDeepLink {
 struct LokinStartNavigationIntent: AppIntent {
     static var title: LocalizedStringResource = "Start LOKIN Navigation"
     static var description = IntentDescription("Opens LOKIN directly in the locked fullscreen GPS.")
-    static var openAppWhenRun: Bool = true
 
     @Parameter(title: "Destination", description: "Street address or destination for LOKIN navigation")
     var destination: String?
@@ -37,18 +54,8 @@ struct LokinStartNavigationIntent: AppIntent {
         Summary("Navigate with LOKIN to \(.$destination)")
     }
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        var items = [
-            URLQueryItem(name: "focus", value: "locked"),
-            URLQueryItem(name: "nav", value: "1"),
-            URLQueryItem(name: "view", value: "real")
-        ]
-        if let destination, !destination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            items.append(URLQueryItem(name: "destination", value: destination))
-        }
-        LokinDeepLink.open(host: "gps", queryItems: items)
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.gps(destination: destination)))
     }
 }
 
@@ -56,66 +63,47 @@ struct LokinStartNavigationIntent: AppIntent {
 struct LokinContinueNavigationIntent: AppIntent {
     static var title: LocalizedStringResource = "Continue LOKIN Navigation"
     static var description = IntentDescription("Returns to LOKIN's locked fullscreen GPS.")
-    static var openAppWhenRun: Bool = true
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "gps", queryItems: [
-            URLQueryItem(name: "focus", value: "locked"),
-            URLQueryItem(name: "nav", value: "1"),
-            URLQueryItem(name: "view", value: "real")
-        ])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.gps()))
     }
 }
 
 @available(iOS 16.0, *)
 struct LokinLockInIntent: AppIntent {
     static var title: LocalizedStringResource = "Lock In with LOKIN"
-    static var description = IntentDescription("Starts the LOKIN work session and opens locked GPS.")
-    static var openAppWhenRun: Bool = true
+    static var description = IntentDescription("Starts the LOKIN work session and opens focused GPS.")
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "command", queryItems: [URLQueryItem(name: "command", value: "lock_in")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.command("lock_in")))
     }
 }
 
 @available(iOS 16.0, *)
 struct LokinPauseIntent: AppIntent {
     static var title: LocalizedStringResource = "Pause LOKIN"
-    static var openAppWhenRun: Bool = true
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "command", queryItems: [URLQueryItem(name: "command", value: "pause")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.command("pause")))
     }
 }
 
 @available(iOS 16.0, *)
 struct LokinResumeIntent: AppIntent {
     static var title: LocalizedStringResource = "Resume LOKIN"
-    static var openAppWhenRun: Bool = true
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "command", queryItems: [URLQueryItem(name: "command", value: "resume")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.command("resume")))
     }
 }
 
 @available(iOS 16.0, *)
 struct LokinTapOutIntent: AppIntent {
     static var title: LocalizedStringResource = "Tap Out of LOKIN"
-    static var description = IntentDescription("Opens LOKIN's protected tap-out flow. LOKIN still requires in-app confirmation before ending the session.")
-    static var openAppWhenRun: Bool = true
+    static var description = IntentDescription("Opens LOKIN's protected tap-out flow. LOKIN still requires confirmation before ending the session.")
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "command", queryItems: [URLQueryItem(name: "command", value: "tap_out")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.command("tap_out")))
     }
 }
 
@@ -123,12 +111,9 @@ struct LokinTapOutIntent: AppIntent {
 struct LokinAssistantIntent: AppIntent {
     static var title: LocalizedStringResource = "Ask LOKIN"
     static var description = IntentDescription("Opens the LOKIN AI assistant.")
-    static var openAppWhenRun: Bool = true
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "assistant", queryItems: [URLQueryItem(name: "via", value: "siri")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.make(path: "/lokin", queryItems: [URLQueryItem(name: "via", value: "siri")])))
     }
 }
 
@@ -136,11 +121,8 @@ struct LokinAssistantIntent: AppIntent {
 struct LokinEarningsIntent: AppIntent {
     static var title: LocalizedStringResource = "Show LOKIN Earnings"
     static var description = IntentDescription("Opens the LOKIN earnings dashboard.")
-    static var openAppWhenRun: Bool = true
 
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        LokinDeepLink.open(host: "earnings", queryItems: [URLQueryItem(name: "via", value: "siri")])
-        return .result()
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(LokinNativeURL.make(path: "/earnings", queryItems: [URLQueryItem(name: "via", value: "siri")])))
     }
 }
