@@ -294,6 +294,34 @@ function normalizeStep(step: any, legIndex: number, stepIndex: number) {
   };
 }
 
+async function trafficEta(
+  coordinates: Array<{ longitude: number; latitude: number }>,
+  accessToken: string,
+) {
+  if (coordinates.length < 2) throw new Error("At least an origin and destination are required");
+  if (coordinates.length > MAX_COORDINATES) throw new Error(`LOKIN navigation supports up to ${MAX_COORDINATES - 1} route destinations per request`);
+  const coordPath = coordinates.map((c) => `${c.longitude},${c.latitude}`).join(";");
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    alternatives: "false",
+    overview: "false",
+    steps: "false",
+    annotations: "duration,congestion_numeric",
+  });
+  const data = await fetchJson(`${MAPBOX_DIRECTIONS}/driving-traffic/${coordPath}?${params.toString()}`);
+  if (data?.code && data.code !== "Ok") throw new Error(data?.message || data.code);
+  const route = data?.routes?.[0];
+  if (!route) throw new Error("No live traffic ETA was returned");
+  return {
+    provider: "mapbox",
+    profile: "driving-traffic",
+    live_traffic: true,
+    generated_at: new Date().toISOString(),
+    distance_m: Number(route.distance || 0),
+    duration_s: Number(route.duration || 0),
+  };
+}
+
 async function directions(
   coordinates: Array<{ longitude: number; latitude: number }>,
   accessToken: string,
@@ -378,7 +406,7 @@ export default async function navigationEngine(req: Request) {
         ok: true,
         provider: "mapbox",
         configured: Boolean(accessToken),
-        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
+        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
         max_destinations: MAX_COORDINATES - 1,
         storage: "temporary_geocoding_only",
       });
@@ -434,6 +462,11 @@ export default async function navigationEngine(req: Request) {
     if (action === "route") {
       const coordinates = (body?.coordinates || []).map(validCoord).filter(Boolean) as Array<{ longitude: number; latitude: number }>;
       return json({ ok: true, route: await directions(coordinates, accessToken, body?.options || {}) });
+    }
+
+    if (action === "traffic_eta") {
+      const coordinates = (body?.coordinates || []).map(validCoord).filter(Boolean) as Array<{ longitude: number; latitude: number }>;
+      return json({ ok: true, eta: await trafficEta(coordinates, accessToken) });
     }
 
     if (action === "route_addresses") {
