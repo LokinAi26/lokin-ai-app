@@ -15,7 +15,7 @@ const SECTIONS = [
     items: [
       { to: "/opportunities", icon: Radar, title: "Opportunity Scan", desc: "Weekly courier jobs" },
       { to: "/gigs", icon: ClipboardList, title: "Gig Opportunities", desc: "Paid field tasks" },
-      { to: "/hotspots", icon: Flame, title: "Predictive Hotspots", desc: "Stronger earning zones" },
+      { to: "/hotspots", icon: Flame, title: "Hotspot Model Preview", desc: "Simulated earning-zone scenarios" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage & deductions" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history" },
     ],
