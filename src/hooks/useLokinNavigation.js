@@ -61,6 +61,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const requestRoute = useCallback(async (originCoord, addresses, reason = "initial") => {
     if (!originCoord || !addresses?.length) return null;
     const requestId = ++routeRequestRef.current;
+    if (reason === "initial") {
+      routeRef.current = null;
+      cumulativeRef.current = [];
+      geocodedRef.current = [];
+      setRoute(null);
+      setGeocodedDestinations([]);
+      setSnapped(null);
+      setManeuver(null);
+      setRerouteCount(0);
+    }
     setStatus(reason === "initial" ? "routing" : "rerouting");
     setError("");
     try {
