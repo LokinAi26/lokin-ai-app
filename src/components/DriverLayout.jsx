@@ -53,16 +53,33 @@ export default function DriverLayout() {
   const activeNavigation = lockedGps && gpsParams.get("nav") === "1";
 
   useEffect(() => {
-    base44.entities.DriverPreference.filter({}).then((p) => setWorking((p[0] && p[0].work_status) === "working"));
-  }, [loc.pathname]);
+    let alive = true;
+    base44.entities.DriverPreference.filter({}).then((p) => {
+      if (!alive) return;
+      const isWorking = (p[0] && p[0].work_status) === "working";
+      setWorking(isWorking);
+      // While a driver is locked in, GPS is the primary/home surface. Resolve
+      // the saved work state first so Tap Out cannot race a stale local value.
+      if (isWorking && loc.pathname === "/") {
+        navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
+      }
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [loc.pathname, navigate]);
 
-  // While a driver is locked in, the GPS is the primary/home surface.
-  // Returning to the normal root restores the distraction-free navigation shell.
+  // Entering active navigation is itself a lock-in action. Persist that state so
+  // returning to Home during the shift restores the GPS instead of the dashboard.
   useEffect(() => {
-    if (working && loc.pathname === "/") {
-      navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
-    }
-  }, [working, loc.pathname, navigate]);
+    if (!activeNavigation) return;
+    let alive = true;
+    base44.entities.DriverPreference.filter({}).then(async (p) => {
+      if (!alive) return;
+      if (p[0]?.id) await base44.entities.DriverPreference.update(p[0].id, { work_status: "working" });
+      else await base44.entities.DriverPreference.create({ work_status: "working" });
+      if (alive) setWorking(true);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [activeNavigation]);
 
   // Track the last visited path per tab so switching back restores it
   useEffect(() => {
