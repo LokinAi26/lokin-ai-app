@@ -17,6 +17,11 @@ function voiceSupported() {
   return typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 }
 
+function addressHasGeographicContext(address) {
+  const q = String(address || "").trim();
+  return /\b\d{5}(?:-\d{4})?\b/.test(q) || /,\s*[A-Za-z .'-]{2,}(?:\s+[A-Z]{2})?(?:\s+\d{5}(?:-\d{4})?)?(?:,|$)/i.test(q);
+}
+
 export default function useLokinNavigation({ destinationAddresses = [], enabled = true, voiceGuidance = true } = {}) {
   const destinationsKey = useMemo(() => destinationAddresses.map((x) => String(x || "").trim()).filter(Boolean).join("||"), [destinationAddresses]);
   const normalizedDestinations = useMemo(() => destinationsKey ? destinationsKey.split("||") : [], [destinationsKey]);
@@ -58,6 +63,23 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
 
+  // Defensive client-side guard for hot-reload/stale responses. An incomplete
+  // local address must never survive on-screen as a hundreds-of-miles route.
+  useEffect(() => {
+    const invalid = geocodedDestinations.find((g, i) => {
+      const input = normalizedDestinations?.[i] || g?.input || "";
+      return !addressHasGeographicContext(input) && Number(g?.proximity_miles) > 55;
+    });
+    if (!invalid) return;
+    routeRef.current = null;
+    cumulativeRef.current = [];
+    setRoute(null);
+    setSnapped(null);
+    setManeuver(null);
+    setStatus("error");
+    setError(`LOKIN blocked a far-away match for “${invalid.input || normalizedDestinations?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
+  }, [geocodedDestinations, destinationsKey]);
+
   const requestRoute = useCallback(async (originCoord, addresses, reason = "initial") => {
     if (!originCoord || !addresses?.length) return null;
     const requestId = ++routeRequestRef.current;
@@ -82,6 +104,14 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       });
       if (requestId !== routeRequestRef.current) return null;
       const nextRoute = response.data?.route;
+      const geocoded = response.data?.geocoded_destinations || [];
+      const invalidLocalMatch = geocoded.find((g, i) => {
+        const input = addresses?.[i] || g?.input || "";
+        return !addressHasGeographicContext(input) && Number(g?.proximity_miles) > 55;
+      });
+      if (invalidLocalMatch) {
+        throw new Error(`LOKIN blocked a far-away match for “${invalidLocalMatch.input || addresses?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
+      }
       if (!nextRoute?.geometry?.coordinates?.length) throw new Error("Routing provider returned no road geometry");
       const prepared = { ...nextRoute, maneuvers: prepareManeuvers(nextRoute) };
       routeRef.current = prepared;
@@ -102,7 +132,6 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         setManeuver(nextManeuverForSnap(prepared.maneuvers || [], initialSnap, prepared.geometry.coordinates));
       }
 
-      const geocoded = response.data?.geocoded_destinations || [];
       geocodedRef.current = geocoded;
       setGeocodedDestinations(geocoded);
       offRouteSamplesRef.current = 0;
