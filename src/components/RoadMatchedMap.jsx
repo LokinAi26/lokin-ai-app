@@ -51,7 +51,8 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
 
 export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
-  const [style, setStyle] = useState(perspective ? "satellite-streets-v12" : "dark-v11");
+  const defaultStyle = perspective ? "satellite-streets-v12" : "dark-v11";
+  const [style, setStyle] = useState(defaultStyle);
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +70,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       : 0;
 
   useEffect(() => {
-    setStyle(perspective ? "satellite-streets-v12" : "dark-v11");
+    setStyle(defaultStyle);
+    setZoomOffset(0);
   }, [perspective]);
 
   const viewport = useMemo(() => {
@@ -167,7 +169,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         <div className={`absolute right-3 z-20 flex flex-col gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
           <button type="button" aria-label="Zoom in" onClick={() => setZoomOffset((z) => Math.min(2, z + 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Plus className="h-4 w-4" /></button>
           <button type="button" aria-label="Zoom out" onClick={() => setZoomOffset((z) => Math.max(-2, z - 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Minus className="h-4 w-4" /></button>
-          <button type="button" aria-label="Reset and follow driver" onClick={() => setZoomOffset(0)} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
+          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setStyle(defaultStyle); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
         </div>
 
         <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
