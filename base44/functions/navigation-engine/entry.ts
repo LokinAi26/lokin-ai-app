@@ -114,25 +114,36 @@ function simplifyStaticRoute(coords: any[], maxPoints = 120) {
   return simplified.map((c: any) => [Number(c[0].toFixed(6)), Number(c[1].toFixed(6))]);
 }
 
+function encodeSigned(value: number) {
+  let v = value < 0 ? ~(value << 1) : value << 1;
+  let out = "";
+  while (v >= 0x20) {
+    out += String.fromCharCode((0x20 | (v & 0x1f)) + 63);
+    v >>= 5;
+  }
+  return out + String.fromCharCode(v + 63);
+}
+
+function encodePolyline5(coords: number[][]) {
+  let prevLat = 0;
+  let prevLon = 0;
+  let encoded = "";
+  for (const [lon, lat] of coords) {
+    const latE5 = Math.round(lat * 1e5);
+    const lonE5 = Math.round(lon * 1e5);
+    encoded += encodeSigned(latE5 - prevLat);
+    encoded += encodeSigned(lonE5 - prevLon);
+    prevLat = latE5;
+    prevLon = lonE5;
+  }
+  return encoded;
+}
+
 function staticRouteOverlay(routeGeometry: any) {
-  const coords = simplifyStaticRoute(routeGeometry?.coordinates || routeGeometry || []);
+  const coords = simplifyStaticRoute(routeGeometry?.coordinates || routeGeometry || [], 240);
   if (coords.length < 2) return "";
-  const featureCollection = {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: { stroke: "#A8FF00", "stroke-width": 12, "stroke-opacity": 0.28 },
-        geometry: { type: "LineString", coordinates: coords },
-      },
-      {
-        type: "Feature",
-        properties: { stroke: "#A8FF00", "stroke-width": 6, "stroke-opacity": 1 },
-        geometry: { type: "LineString", coordinates: coords },
-      },
-    ],
-  };
-  return `geojson(${encodeURIComponent(JSON.stringify(featureCollection))})/`;
+  const polyline = encodeURIComponent(encodePolyline5(coords));
+  return `path-7+A8FF00-1(${polyline})/`;
 }
 
 async function fetchStaticMap(accessToken: string, viewport: any = {}) {
