@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { ScanLine, MapPin, Volume2, VolumeX, X, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Radio } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
-const STEPS = ["SEARCH", "STORE MAP", "GET CLOSER"];
+const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
 
 function stockMeta(item) {
   const count = Number(item?.inventory_count ?? 0);
@@ -28,14 +28,9 @@ export default function Locator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [muted, setMuted] = useState(false);
-  const [distance, setDistance] = useState(100);
-  const [simulating, setSimulating] = useState(false);
   const [tripItems, setTripItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
   });
-  const simRef = useRef(null);
-  const audioRef = useRef(null);
 
   async function locate() {
     if (!query.trim()) return;
@@ -43,45 +38,13 @@ export default function Locator() {
     try {
       const res = await guardedInvoke(base44, "locateItem", { query }, { userInitiated: true });
       setResult(res.data);
-      if (res.data?.found) {
-        setDistance(res.data.distance ?? 80);
-        startSim();
-      }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
 
-  function startSim() {
-    clearInterval(simRef.current);
-    setSimulating(true);
-    simRef.current = setInterval(() => setDistance((d) => Math.round(Math.max(0, d - 4 + (Math.random() * 6 - 3)))), 700);
-  }
-  useEffect(() => () => clearInterval(simRef.current), []);
   useEffect(() => { localStorage.setItem("lokin_smart_shop", JSON.stringify(tripItems)); }, [tripItems]);
 
-  const beepHz = distance <= 4 ? 1 : distance <= 20 ? 2.5 : distance <= 50 ? 1.2 : 0.6;
-  const atItem = distance <= 3;
-  useEffect(() => {
-    if (!simulating || muted) return;
-    let timer;
-    const tick = () => { playBeep(atItem ? 880 : 520); timer = setTimeout(tick, 1000 / beepHz); };
-    timer = setTimeout(tick, 1000 / beepHz);
-    return () => clearTimeout(timer);
-  }, [simulating, muted, beepHz, atItem]);
-
-  function playBeep(freq = 600) {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!audioRef.current) audioRef.current = new Ctx();
-      const ctx = audioRef.current, osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.frequency.value = freq; osc.type = "square"; gain.gain.value = 0.06;
-      osc.connect(gain).connect(ctx.destination); osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); osc.stop(ctx.currentTime + 0.13);
-    } catch {}
-  }
-
-  const intensity = Math.round(100 - distance);
-  const activeStep = !result ? 0 : result.found ? (atItem ? 2 : 1) : 0;
+  const activeStep = !result ? 0 : result.found ? 2 : 0;
   const item = result?.item ? normalizeInventoryItem(result.item) : null;
   const stock = stockMeta(item);
   const freshness = inventoryFreshness(item?.last_inventory_update);
@@ -103,15 +66,10 @@ export default function Locator() {
   return (
     <div className="p-4 space-y-4 pb-8">
       <div className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-primary"><PackageSearch className="h-5 w-5"/><span className="text-[11px] tracking-[0.2em] font-display">LOKIN ITEM LOCATOR</span></div>
-            <h1 className="mt-2 text-3xl font-extrabold font-display metal-text">Find it. Know it. Grab it.</h1>
-            <p className="mt-2 text-sm text-white/50">Search an item, see its aisle and store-map position, check available inventory, then use proximity guidance to walk right to it.</p>
-          </div>
-          <button onClick={() => setMuted((m) => !m)} className="shrink-0 p-3 rounded-2xl border border-white/10 bg-black/40">
-            {muted ? <VolumeX className="h-5 w-5 text-white/40" /> : <Volume2 className="h-5 w-5 text-primary" />}
-          </button>
+        <div>
+          <div className="flex items-center gap-2 text-primary"><PackageSearch className="h-5 w-5"/><span className="text-[11px] tracking-[0.2em] font-display">LOKIN ITEM LOCATOR</span></div>
+          <h1 className="mt-2 text-3xl font-extrabold font-display metal-text">Find it. Know it. Grab it.</h1>
+          <p className="mt-2 text-sm text-white/50">Search an item, see the store-provided aisle/shelf when available, review inventory freshness, and follow the store-map position.</p>
         </div>
       </div>
 
@@ -161,11 +119,11 @@ export default function Locator() {
           <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 lokin-panel p-5 text-center radial-fade">
-          <div className={`text-sm font-semibold tracking-wide ${atItem ? "text-primary text-glow" : "text-white/80"}`}>{atItem ? "YOU'RE HERE — ITEM LOCATED" : "PROXIMITY GUIDANCE ACTIVE"}</div>
-          <div className="relative h-28 flex items-end justify-center gap-1 mt-3">{[...Array(20)].map((_, i) => { const on = i < (intensity / 5); return <div key={i} className={`w-2 rounded-full transition-all ${on ? "bg-primary" : "bg-white/8"}`} style={{ height: `${10 + (i / 20) * 80}%`, boxShadow: on ? "0 0 8px rgba(170,255,0,.6)" : "none" }} />; })}</div>
-          <div className="mt-3 text-xs text-white/55 font-mono">{beepHz.toFixed(1)} beeps/sec · {intensity}% proximity</div>
-          <button onClick={() => { clearInterval(simRef.current); setSimulating(false); setDistance(100); }} className="mt-3 inline-flex items-center gap-1 text-xs text-white/45"><X className="h-3 w-3"/>Stop tracking</button>
+        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><Radio className="h-4 w-4 text-white/45" /></div>
+            <div><div className="text-sm font-semibold text-white">Precision proximity not enabled</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Automatic “getting closer” beeps require a real indoor-positioning source such as supported merchant beacons, UWB, or another verified store-position feed. LOKIN does not simulate distance in this build.</div></div>
+          </div>
         </div>
       </>}
 
