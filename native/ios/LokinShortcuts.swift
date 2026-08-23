@@ -1,32 +1,77 @@
 import AppIntents
 
-// MARK: - LOKIN AI · App Shortcuts Provider (iOS 16+)
+// MARK: - LOKIN AI · App Shortcuts Provider
 //
-// Pairs with LokinIntents.swift. Registering AppShortcuts makes the three
-// LOKIN intents discoverable in the Shortcuts app and callable with
-// "Hey Siri, <phrase>" without the user manually building a shortcut.
-//
-//   \(.applicationName) auto-resolves to the app's display name (LOKIN AI).
+// Siri/Shortcuts is the system wake layer. Suggested phrases become available
+// after these files are compiled into the real iOS target and AppShortcuts are
+// registered by iOS.
 
 @available(iOS 16.0, *)
 struct LokinShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
-            intent: LokinRouteIntent(),
+            intent: LokinStartNavigationIntent(),
             phrases: [
-                "Optimize my \(.applicationName) route",
-                "Open my \(.applicationName) route",
-                "Run my \(.applicationName) route"
+                "Navigate with \(.applicationName)",
+                "Start \(.applicationName) navigation",
+                "Open \(.applicationName) GPS"
             ],
-            shortTitle: "Optimize route",
-            systemImageName: "point.topleft.down.curvedto.point.bottomright.up"
+            shortTitle: "Start navigation",
+            systemImageName: "location.north.line.fill"
+        )
+        AppShortcut(
+            intent: LokinContinueNavigationIntent(),
+            phrases: [
+                "Continue \(.applicationName) navigation",
+                "Resume \(.applicationName) GPS",
+                "Return to \(.applicationName) GPS"
+            ],
+            shortTitle: "Continue GPS",
+            systemImageName: "car.fill"
+        )
+        AppShortcut(
+            intent: LokinLockInIntent(),
+            phrases: [
+                "Lock in with \(.applicationName)",
+                "Level up with \(.applicationName)",
+                "Start my shift with \(.applicationName)"
+            ],
+            shortTitle: "Lock in",
+            systemImageName: "lock.fill"
+        )
+        AppShortcut(
+            intent: LokinPauseIntent(),
+            phrases: [
+                "Pause \(.applicationName)",
+                "Pause my \(.applicationName) shift"
+            ],
+            shortTitle: "Pause",
+            systemImageName: "pause.fill"
+        )
+        AppShortcut(
+            intent: LokinResumeIntent(),
+            phrases: [
+                "Resume \(.applicationName)",
+                "Lock back in with \(.applicationName)"
+            ],
+            shortTitle: "Resume",
+            systemImageName: "play.fill"
+        )
+        AppShortcut(
+            intent: LokinTapOutIntent(),
+            phrases: [
+                "Tap out with \(.applicationName)",
+                "End my \(.applicationName) shift"
+            ],
+            shortTitle: "Tap out",
+            systemImageName: "power"
         )
         AppShortcut(
             intent: LokinAssistantIntent(),
             phrases: [
                 "Ask \(.applicationName)",
-                "Open \(.applicationName) assistant",
-                "Talk to \(.applicationName)"
+                "Talk to \(.applicationName)",
+                "Open \(.applicationName) assistant"
             ],
             shortTitle: "Ask LOKIN",
             systemImageName: "waveform"
@@ -35,8 +80,7 @@ struct LokinShortcuts: AppShortcutsProvider {
             intent: LokinEarningsIntent(),
             phrases: [
                 "Show my \(.applicationName) earnings",
-                "What did I earn on \(.applicationName)",
-                "\(.applicationName) earnings"
+                "What did I earn on \(.applicationName)"
             ],
             shortTitle: "Earnings",
             systemImageName: "chart.bar.fill"
