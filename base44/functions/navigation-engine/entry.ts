@@ -335,7 +335,7 @@ export default async function navigationEngine(req: Request) {
         ok: true,
         provider: "mapbox",
         configured: Boolean(accessToken),
-        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "turn_by_turn", "road_geometry", "live_route_snapping"],
+        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
         max_destinations: MAX_COORDINATES - 1,
         storage: "temporary_geocoding_only",
       });
@@ -347,6 +347,19 @@ export default async function navigationEngine(req: Request) {
         code: "NAV_PROVIDER_NOT_CONFIGURED",
         required_secret: "MAPBOX_ACCESS_TOKEN",
       }, 503);
+    }
+
+    if (action === "satellite_status") {
+      return json({
+        ok: true,
+        provider: "mapbox",
+        imagery_style: "satellite-streets-v12",
+        imagery_type: "provider satellite/aerial mosaic",
+        realtime: false,
+        retina: true,
+        max_pitch_degrees: 60,
+        navigation_accuracy_source: "device GPS + Mapbox road geometry",
+      });
     }
 
     if (action === "provider_probe") {
