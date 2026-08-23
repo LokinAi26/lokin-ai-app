@@ -95,7 +95,7 @@ export default function ShopDeliver() {
                 Stop {active + 1}/{orders.length}
               </div>
             </div>
-            <Link to={`/ai-gps?focus=locked&destination=${encodeURIComponent(current?.dropoff_address || "")}`} className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform">
+            <Link to={`/ai-gps?focus=locked&nav=1&view=real&destination=${encodeURIComponent(current?.dropoff_address || "")}`} className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary active:scale-[0.99] transition-transform">
               <Navigation className="h-4 w-4" /> Start LOKIN Navigation
             </Link>
           </div>
