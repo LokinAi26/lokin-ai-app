@@ -82,12 +82,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         longitude: bucketCoord(snap[0], perspective ? 0.0012 : 0.0025),
         latitude: bucketCoord(snap[1], perspective ? 0.0012 : 0.0025),
         zoom: Math.max(13.5, Math.min(18.5, (perspective ? 17.8 : 16.6) + zoomOffset)),
-        bearing: perspective ? heading : 0,
+        bearing: perspective ? Math.round(heading / 5) * 5 : 0,
         pitch: perspective ? 58 : 0,
       };
     }
     const fitted = fitViewport(coords, renderW, renderH);
-    return fitted ? { ...fitted, zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)), bearing: perspective ? heading : 0, pitch: perspective ? 50 : 0 } : null;
+    return fitted ? { ...fitted, zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)), bearing: perspective ? Math.round(heading / 5) * 5 : 0, pitch: perspective ? 50 : 0 } : null;
   }, [routeGeometry, followDriver, perspective, heading, zoomOffset, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
