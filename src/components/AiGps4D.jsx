@@ -20,6 +20,28 @@ function stopPositions(n, perturb = 0) {
   return pts;
 }
 
+function roadRibbonGeometry(curve, width = 2.2, segments = 96, y = 0.02) {
+  const vertices = [];
+  const indices = [];
+  const up = new THREE.Vector3(0, 1, 0);
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const p = curve.getPoint(t);
+    const tangent = curve.getTangent(t).normalize();
+    const side = new THREE.Vector3().crossVectors(up, tangent).normalize().multiplyScalar(width / 2);
+    vertices.push(p.x + side.x, y, p.z + side.z, p.x - side.x, y, p.z - side.z);
+    if (i < segments) {
+      const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+      indices.push(a, c, b, c, d, b);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export default function AiGps4D({ stops: stopsProp, compact = false }) {
   const containerRef = useRef(null);
   const stateRef = useRef({ total: 0, perturb: 0, playing: true, pos: [], time: 0, lastPct: -1 });
@@ -81,24 +103,56 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050608, 16, 38);
+    scene.background = new THREE.Color(0x223746);
+    scene.fog = new THREE.Fog(0x223746, 20, 48);
     const camera = new THREE.PerspectiveCamera(48, width / height, 0.1, 100);
-    camera.position.set(0, 11, 16);
+    camera.position.set(0, 9, 15);
 
-    scene.add(new THREE.AmbientLight(0x335533, 0.7));
-    const pl = new THREE.PointLight(0xa8ff00, 1.6, 50); pl.position.set(0, 12, 0); scene.add(pl);
-    const cl = new THREE.PointLight(0x00e5ff, 0.7, 50); cl.position.set(8, 8, -8); scene.add(cl);
+    scene.add(new THREE.HemisphereLight(0xc7e6ff, 0x24391f, 1.15));
+    const sun = new THREE.DirectionalLight(0xfff2d0, 1.35); sun.position.set(-8, 16, 10); scene.add(sun);
+    const pl = new THREE.PointLight(0xa8ff00, 1.25, 42); pl.position.set(0, 9, 0); scene.add(pl);
 
-    const grid = new THREE.GridHelper(40, 20, 0xa8ff00, 0x163311);
-    grid.material.transparent = true; grid.material.opacity = 0.32;
-    scene.add(grid);
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(54, 54),
+      new THREE.MeshStandardMaterial({ color: 0x314d2b, roughness: 1, metalness: 0 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.04;
+    scene.add(ground);
 
-    let pinMeshes = [], routeLine = null, vehicle = null;
+    const landscape = new THREE.Group();
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3b24, roughness: 1 });
+    const leafMats = [0x315d2e, 0x274d28, 0x3d6d35].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1 }));
+    const treeSpots = [
+      [-11,-9],[-8,-11],[-4,-10],[1,-11],[6,-10],[11,-8],[-12,9],[-8,11],[-3,10],[3,11],[8,10],[12,7],[-13,2],[13,-1]
+    ];
+    treeSpots.forEach(([x,z], i) => {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 1.15, 7), trunkMat);
+      trunk.position.set(x, 0.55, z);
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(0.72 + (i % 3) * 0.08, 10, 8), leafMats[i % leafMats.length]);
+      crown.scale.y = 1.2;
+      crown.position.set(x, 1.45, z);
+      landscape.add(trunk, crown);
+    });
+    const buildingMat = new THREE.MeshStandardMaterial({ color: 0x59636a, roughness: 0.8, metalness: 0.08 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x353b3f, roughness: 0.9 });
+    [[-12,-5,2.4,3.2],[-10,5,2.8,4.2],[10,-6,3.4,3.8],[11,4,2.6,4.8],[-5,12,3.6,3.1],[6,12,3.1,3.6]].forEach(([x,z,w,h], i) => {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.72), buildingMat);
+      b.position.set(x, h / 2, z);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.15, 0.18, w * 0.72 + 0.15), roofMat);
+      roof.position.set(x, h + 0.08, z);
+      landscape.add(b, roof);
+    });
+    scene.add(landscape);
+
+    let pinMeshes = [], routeLine = null, vehicle = null, roadMeshes = [];
 
     function rebuild() {
       pinMeshes.forEach((m) => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
       pinMeshes = [];
-      if (routeLine) { scene.remove(routeLine); routeLine.geometry.dispose(); routeLine.material.dispose(); }
+      roadMeshes.forEach((m) => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+      roadMeshes = [];
+      if (routeLine) { scene.remove(routeLine); routeLine.geometry.dispose(); routeLine.material.dispose(); routeLine = null; }
       const n = Math.max(stateRef.current.total, 1);
       const pos = stopPositions(n, stateRef.current.perturb);
       stateRef.current.pos = pos;
@@ -116,10 +170,22 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
         ring.rotation.x = -Math.PI / 2; ring.position.set(v.x, 0.02, v.z); scene.add(ring); pinMeshes.push(ring);
       });
       if (pos.length >= 2) {
-        const curve = new THREE.CatmullRomCurve3(pos);
+        const roadCurve = new THREE.CatmullRomCurve3(pos.map((p) => new THREE.Vector3(p.x, 0, p.z)));
+        const shoulder = new THREE.Mesh(
+          roadRibbonGeometry(roadCurve, 3.05, 100, 0.008),
+          new THREE.MeshStandardMaterial({ color: 0x7a786e, roughness: 0.95 })
+        );
+        const asphalt = new THREE.Mesh(
+          roadRibbonGeometry(roadCurve, 2.45, 100, 0.025),
+          new THREE.MeshStandardMaterial({ color: 0x25292d, roughness: 0.9, metalness: 0.05 })
+        );
+        scene.add(shoulder, asphalt);
+        roadMeshes.push(shoulder, asphalt);
+
+        const routeCurve = new THREE.CatmullRomCurve3(pos.map((p) => new THREE.Vector3(p.x, 0.12, p.z)));
         const tube = new THREE.Mesh(
-          new THREE.TubeGeometry(curve, 80, 0.12, 8, false),
-          new THREE.MeshBasicMaterial({ color: 0xa8ff00, transparent: true, opacity: 0.85 })
+          new THREE.TubeGeometry(routeCurve, 100, 0.105, 8, false),
+          new THREE.MeshBasicMaterial({ color: 0xa8ff00, transparent: true, opacity: 0.94 })
         );
         scene.add(tube); routeLine = tube;
       }
@@ -140,8 +206,8 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
     function animate() {
       raf = requestAnimationFrame(animate);
       camAngle += 0.0014;
-      const r = 17;
-      camera.position.set(Math.sin(camAngle) * r, 10.5, Math.cos(camAngle) * r);
+      const r = 15.5;
+      camera.position.set(Math.sin(camAngle) * r, 8.2, Math.cos(camAngle) * r);
       camera.lookAt(0, 0, 0);
       if (stateRef.current.playing && stateRef.current.pos.length > 1) {
         stateRef.current.time = (stateRef.current.time + 0.0022) % 1;
@@ -170,8 +236,11 @@ export default function AiGps4D({ stops: stopsProp, compact = false }) {
       cancelAnimationFrame(raf);
       ro.disconnect();
       pinMeshes.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
+      roadMeshes.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
       if (routeLine) { routeLine.geometry.dispose(); routeLine.material.dispose(); }
       if (vehicle) { vehicle.geometry.dispose(); vehicle.material.dispose(); }
+      ground.geometry.dispose(); ground.material.dispose();
+      landscape.traverse((obj) => { if (obj.isMesh) { obj.geometry?.dispose(); obj.material?.dispose(); } });
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
       rebuildRef.current = null;
