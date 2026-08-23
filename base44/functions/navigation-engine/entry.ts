@@ -46,6 +46,41 @@ async function fetchJson(url: string, init?: RequestInit) {
   return data;
 }
 
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function fetchStaticMap(accessToken: string, viewport: any = {}) {
+  const longitude = Number(viewport?.longitude);
+  const latitude = Number(viewport?.latitude);
+  const zoom = Math.max(1, Math.min(18, Number(viewport?.zoom || 15.5)));
+  const width = Math.max(320, Math.min(800, Math.round(Number(viewport?.width || 640))));
+  const height = Math.max(220, Math.min(700, Math.round(Number(viewport?.height || 420))));
+  const style = ["dark-v11", "streets-v12", "satellite-streets-v12"].includes(String(viewport?.style))
+    ? String(viewport.style)
+    : "dark-v11";
+
+  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error("Valid map viewport coordinates are required");
+  const params = new URLSearchParams({ access_token: accessToken, attribution: "true", logo: "true" });
+  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${longitude},${latitude},${zoom},0,0/${width}x${height}?${params.toString()}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `Static map request failed (${response.status})`);
+  }
+  const contentType = response.headers.get("content-type") || "image/png";
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  return {
+    data_url: `data:${contentType};base64,${bytesToBase64(bytes)}`,
+    viewport: { longitude, latitude, zoom, width, height, style },
+  };
+}
+
 async function geocodeAddress(address: string, accessToken: string, proximity?: { longitude: number; latitude: number } | null) {
   const q = String(address || "").trim();
   if (!q) throw new Error("Address is required");
