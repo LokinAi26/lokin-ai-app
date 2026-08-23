@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Layers3, Map, Navigation, Satellite } from "lucide-react";
+import { Layers3, Map, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { bearingDegrees, formatDuration } from "@/lib/navigationGeometry";
 
