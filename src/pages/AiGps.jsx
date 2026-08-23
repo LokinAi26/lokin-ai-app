@@ -50,14 +50,22 @@ export default function AiGps() {
   const gpsAccuracy = nav.rawPosition?.accuracy_m;
   const providerReady = nav.providerConfigured !== false;
 
+  function setFocusMode(mode) {
+    const next = new URLSearchParams(params);
+    next.set("focus", mode);
+    setParams(next, { replace: true });
+  }
+
   function startDirectNavigation(e) {
     e?.preventDefault?.();
     const destination = destinationInput.trim();
     if (!destination) return;
+    const sameDestination = explicitDestination.trim().toLowerCase() === destination.toLowerCase();
     const next = new URLSearchParams(params);
     next.set("focus", "locked");
     next.set("destination", destination);
-    setParams(next);
+    setParams(next, { replace: true });
+    if (sameDestination && nav.rawPosition) nav.retry();
   }
 
   function useDeliveryRoute() {
@@ -120,12 +128,12 @@ export default function AiGps() {
             <div className="text-sm font-bold text-white">Distraction-Free Navigation</div>
             <div className="text-[11px] text-white/45">Real road geometry, next-turn guidance, and automatic off-route recovery stay front and center.</div>
           </div>
-          <Link to="/ai-gps?focus=free" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-white/70">Free roam</Link>
+          <button type="button" onClick={() => setFocusMode("free")} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-white/70 active:scale-95">Free roam</button>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-white/45">LOKIN converts delivery addresses into a real drivable street route and snaps your live GPS to it.</p>
-          <Link to="/ai-gps?focus=locked" className="shrink-0 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary">Lock in</Link>
+          <button type="button" onClick={() => setFocusMode("locked")} className="shrink-0 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary active:scale-95">Follow driver</button>
         </div>
       )}
 
@@ -194,6 +202,7 @@ export default function AiGps() {
           maneuver={nav.maneuver}
           navigationStatus={nav.status}
           remainingDurationS={nav.remainingDurationS}
+          followDriver={locked}
         />
       </div>
 
@@ -239,9 +248,9 @@ export default function AiGps() {
 
           <div className="sticky bottom-3 z-20 flex justify-center gap-2">
             {orderId && <Link to={`/compliance-handoff?order=${encodeURIComponent(orderId)}`} className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/15 backdrop-blur px-4 py-2 text-xs font-bold text-primary shadow-lg">Arrived · Verify handoff</Link>}
-            <Link to="/ai-gps?focus=free" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/90 backdrop-blur px-4 py-2 text-xs font-semibold text-white/65 shadow-lg">
+            <button type="button" onClick={() => setFocusMode("free")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/90 backdrop-blur px-4 py-2 text-xs font-semibold text-white/65 shadow-lg active:scale-95">
               <Move className="h-3.5 w-3.5" /> Free roam
-            </Link>
+            </button>
           </div>
         </>
       )}
