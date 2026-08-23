@@ -55,19 +55,56 @@ function bytesToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
+function simplifyStaticRoute(coords: any[], maxPoints = 72) {
+  const valid = (coords || [])
+    .map((c: any) => Array.isArray(c) && c.length >= 2 ? [Number(c[0]), Number(c[1])] : null)
+    .filter((c: any) => c && Number.isFinite(c[0]) && Number.isFinite(c[1]));
+  if (valid.length <= maxPoints) return valid.map((c: any) => [Number(c[0].toFixed(5)), Number(c[1].toFixed(5))]);
+  const step = (valid.length - 1) / (maxPoints - 1);
+  return Array.from({ length: maxPoints }, (_, i) => {
+    const c = valid[Math.min(valid.length - 1, Math.round(i * step))];
+    return [Number(c[0].toFixed(5)), Number(c[1].toFixed(5))];
+  });
+}
+
+function staticRouteOverlay(routeGeometry: any) {
+  const coords = simplifyStaticRoute(routeGeometry?.coordinates || routeGeometry || []);
+  if (coords.length < 2) return "";
+  const featureCollection = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { stroke: "#A8FF00", "stroke-width": 12, "stroke-opacity": 0.28 },
+        geometry: { type: "LineString", coordinates: coords },
+      },
+      {
+        type: "Feature",
+        properties: { stroke: "#A8FF00", "stroke-width": 6, "stroke-opacity": 1 },
+        geometry: { type: "LineString", coordinates: coords },
+      },
+    ],
+  };
+  return `geojson(${encodeURIComponent(JSON.stringify(featureCollection))})/`;
+}
+
 async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const longitude = Number(viewport?.longitude);
   const latitude = Number(viewport?.latitude);
-  const zoom = Math.max(1, Math.min(18, Number(viewport?.zoom || 15.5)));
+  const zoom = Math.max(1, Math.min(18.5, Number(viewport?.zoom || 15.5)));
   const width = Math.max(320, Math.min(800, Math.round(Number(viewport?.width || 640))));
   const height = Math.max(220, Math.min(700, Math.round(Number(viewport?.height || 420))));
+  const bearing = ((Number(viewport?.bearing || 0) % 360) + 360) % 360;
+  const pitch = Math.max(0, Math.min(60, Number(viewport?.pitch || 0)));
   const style = ["dark-v11", "streets-v12", "satellite-streets-v12"].includes(String(viewport?.style))
     ? String(viewport.style)
     : "dark-v11";
+  const overlay = staticRouteOverlay(viewport?.route_geometry);
 
   if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error("Valid map viewport coordinates are required");
   const params = new URLSearchParams({ access_token: accessToken, attribution: "true", logo: "true" });
-  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${longitude},${latitude},${zoom},0,0/${width}x${height}?${params.toString()}`;
+  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}?${params.toString()}`;
+  if (url.length > 8100) throw new Error("Static map route overlay is too large; reduce route detail");
   const response = await fetch(url);
   if (!response.ok) {
     const text = await response.text().catch(() => "");
@@ -77,7 +114,8 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const bytes = new Uint8Array(await response.arrayBuffer());
   return {
     data_url: `data:${contentType};base64,${bytesToBase64(bytes)}`,
-    viewport: { longitude, latitude, zoom, width, height, style },
+    viewport: { longitude, latitude, zoom, width, height, style, bearing, pitch },
+    route_overlay: Boolean(overlay),
   };
 }
 
