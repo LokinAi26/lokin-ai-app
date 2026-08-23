@@ -160,8 +160,14 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         </div>
 
         <div className={`absolute right-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
-          <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
-          <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />SAT</button>
+          {perspective ? (
+            <div className="rounded-full bg-primary px-2.5 py-1 text-[9px] font-extrabold text-black"><Satellite className="inline h-3 w-3 mr-1" />SATELLITE HD</div>
+          ) : (
+            <>
+              <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
+              <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />SAT</button>
+            </>
+          )}
         </div>
 
         {perspective && <div className={`absolute left-3 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : "top-12"}`}>58° PITCH · HEADING UP</div>}
