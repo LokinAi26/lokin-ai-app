@@ -57,11 +57,6 @@ export default function DrivingMode() {
   const progress = total ? Math.round((Math.min(idx, total) / total) * 100) : 0;
 
   function arrive() { setIdx((i) => Math.min(total, i + 1)); }
-  function openMaps() {
-    if (!current) return;
-    const dest = current.dropoff_address || current.merchant || "";
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`, "_blank", "noopener,noreferrer");
-  }
 
   return (
     <div className="p-4 space-y-4 pb-6">
@@ -179,9 +174,9 @@ export default function DrivingMode() {
             <HudStat icon={DollarSign} label="payout" value={`$${current.rate?.gross ?? current.payout ?? 0}`} accent />
           </div>
           <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick={openMaps} className="rounded-2xl bg-primary text-primary-foreground py-3 flex items-center justify-center gap-1.5 text-sm font-bold glow-primary active:scale-[0.99] transition-transform">
-              <Navigation className="h-4 w-4" /> Navigate
-            </button>
+            <Link to="/ai-gps?focus=locked" className="rounded-2xl bg-primary text-primary-foreground py-3 flex items-center justify-center gap-1.5 text-sm font-bold glow-primary active:scale-[0.99] transition-transform">
+              <Navigation className="h-4 w-4" /> LOKIN Navigate
+            </Link>
             <button onClick={arrive} className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold active:scale-[0.99] transition-transform">
               <Check className="h-4 w-4" /> Arrived
             </button>
