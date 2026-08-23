@@ -51,11 +51,6 @@ export default function ActiveDelivery() {
   }, [current?.id]);
 
   function pickStop(i) { setIdx(i); setStatusIdx(-1); }
-  function openMaps() {
-    if (!current) return;
-    const dest = current.dropoff_address || current.merchant || "";
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`, "_blank", "noopener,noreferrer");
-  }
   function markDelivered() {
     setStatusIdx(4);
     setAuto(true); // ensure delivered auto-message
@@ -181,9 +176,9 @@ export default function ActiveDelivery() {
 
               {/* delivered + navigate */}
               <div className="grid grid-cols-2 gap-2.5">
-                <button onClick={openMaps} className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold">
-                  <Navigation className="h-4 w-4" /> Open Maps
-                </button>
+                <Link to="/ai-gps?focus=locked" className="rounded-2xl border border-accent/40 bg-accent/[0.08] text-accent py-3 flex items-center justify-center gap-1.5 text-sm font-bold">
+                  <Navigation className="h-4 w-4" /> LOKIN GPS
+                </Link>
                 <button onClick={markDelivered} disabled={statusIdx < 0}
                   className={`rounded-2xl py-3 flex items-center justify-center gap-1.5 text-sm font-bold transition-all ${statusIdx < 0 ? "border border-white/10 text-white/30" : "bg-primary text-black glow-primary"}`}>
                   <Check className="h-4 w-4" /> Delivered
