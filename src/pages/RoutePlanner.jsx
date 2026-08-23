@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
 import RouteHeatMap from "@/components/RouteHeatMap";
-import AiGps4D from "@/components/AiGps4D";
+import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 export default function RoutePlanner() {
@@ -153,7 +153,7 @@ export default function RoutePlanner() {
         </div>
       )}
 
-      {stops.length > 0 && <AiGps4D stops={stops} compact />}
+      {stops.length > 0 && <SatelliteRoutePreview stops={stops} compact />}
 
       {data?.lockInScore && <LockInScore score={data.lockInScore} />}
 
