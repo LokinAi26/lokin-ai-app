@@ -1,98 +1,66 @@
-# LOKIN AI — Native Voice Integration (Siri & Google Assistant)
+# LOKIN AI — Native Voice + System Handoff Package
 
-This folder contains **reference** native code that makes the LOKIN Siri
-Shortcut and Google Assistant App Action integration real on a device with
-the LOKIN native app installed. The Base44 platform publishes the LOKIN
-React app to iOS/Android as a wrapped WebView; these files go into the
-**native shell** of that wrapped app so the OS voice assistants can launch
-LOKIN to a specific screen.
+This folder contains the native iOS/Android source package that complements the Base44 React app.
 
-> These files are **not compiled or shipped by the Base44 builder** — they
-> are source you (or your mobile build pipeline) port into a real Xcode /
-> Android Studio project exported from the platform. They are intentionally
-> minimal: the intents only OPEN the app to a deep link. All real work
-> (route optimization, AI replies, earnings) runs in the React app and
-> Base44 backend, so nothing is duplicated natively.
+## Important iOS boundary
 
-## What it enables
+Apple does **not** provide a public API for a third-party app to register its own always-on system/background hotword such as **“Hey LOKIN.”** The production-safe architecture is:
 
-Once ported, a driver can say:
+- **System/background entry:** Siri + App Intents / App Shortcuts.
+- **Foreground LOKIN entry:** custom **“Hey LOKIN”** wake phrase while LOKIN is open.
+- Siri opens the exact LOKIN deep link; the React app then becomes the fullscreen locked GPS and its own voice assistant takes over.
 
-| Voice | Phrase | Opens |
-|-------|--------|-------|
-| Siri | "Level up / Lock in with LOKIN" | `/command?command=lock_in` |
-| Siri | "Pause LOKIN" | `/command?command=pause` |
-| Siri | "Resume LOKIN" | `/command?command=resume` |
-| Siri | "Tap out with LOKIN" | `/command?command=tap_out` (explicit) |
-| Siri | "Find item with LOKIN" | `/command?command=find_item` |
-| Siri | "Optimize my LOKIN route" | `/route` |
-| Siri | "Ask LOKIN" | `/lokin` |
-| Siri | "Show my LOKIN earnings" | `/earnings` |
-| Google Assistant | "Hey Google, lock in on LOKIN" | `/command?command=lock_in` |
-| Google Assistant | "Hey Google, pause LOKIN" | `/command?command=pause` |
-| Google Assistant | "Hey Google, resume LOKIN" | `/command?command=resume` |
-| Google Assistant | "Hey Google, tap out of LOKIN" | `/command?command=tap_out` |
-| Google Assistant | "Hey Google, find an item with LOKIN" | `/command?command=find_item` |
-| Google Assistant | "Hey Google, optimize my LOKIN route" | `/route` |
-| Google Assistant | "Hey Google, ask LOKIN" | `/lokin` |
-| Google Assistant | "Hey Google, show my LOKIN earnings" | `/earnings` |
+This package therefore gives LOKIN genuine system-level access through Apple's supported Siri/App Intents layer without claiming an unsupported custom background listener.
 
-The native shell translates the voice intent into a deep link
-(`lokin://<target>` on iOS, the fulfillment URL on Android) and loads the
-matching LOKIN React route with `?via=siri` / `?via=assistant`. The React
-app's `DeepLinkHandler` component reads that param and surfaces a brief
-"Locked in" acknowledgment so the driver knows the voice launch worked.
+## iOS source files
 
-## ChatGPT / MCP side
+- `native/ios/LokinIntents.swift` — production App Intents for GPS, lock in, pause, resume, tap out, assistant, and earnings.
+- `native/ios/LokinShortcuts.swift` — Siri/App Shortcut phrases.
+- `native/ios/LokinWebViewDeepLinkBridge.swift` — optional custom-scheme fallback bridge for a WKWebView shell.
+- `native/ios/apple-app-site-association.template.json` — universal-link template.
+- `native/ios/LOKINUniversalLinkValidator.swift.template` — native URL validation reference.
 
-ChatGPT (or any MCP client) can call the `open_lokin` tool to get the exact
-deep link + voice phrases for any target screen. That tool is backed by the
-`native-launch` backend function and is exposed in `base44/mcp/config.json`.
-So when ChatGPT says "open LOKIN via Siri," it returns a real, tappable deep
-link and the exact spoken phrase — the integration is genuinely functional,
-not a placeholder.
+## System-level Siri behavior
 
-## iOS porting checklist
+After these files are compiled into the real iOS app target, examples include:
 
-1. Add `native/ios/LokinIntents.swift` and `native/ios/LokinShortcuts.swift`
-   to your Xcode project target.
-2. Register the custom URL scheme `lokin` in `Info.plist`:
-   - `URL types` → item 0 → `URL Schemes` → item 0 = `lokin`
-3. In `SceneDelegate.scene(_:openURLContexts:)` (or
-   `AppDelegate.application(_:open:options:)`), map `lokin://<target>` to
-   the WebView URL:
-   ```swift
-   func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-       guard let url = URLContexts.first?.url else { return }
-       let target = url.host ?? "route"            // lokin://route -> "route"
-       let map = ["route": "/route", "lokin": "/lokin", "earnings": "/earnings"]
-       let path = map[target] ?? "/"
-       webView.load(URL(string: "\(appBase)\(path)?action=\(target)&via=siri")!)
-   }
-   ```
-4. Set `appBase` to your published app domain.
-5. Build and run on a device (Siri Shortcuts require a real device, not the
-   simulator) and test "Hey Siri, optimize my LOKIN route."
+- “Siri, navigate with LOKIN.”
+- “Siri, continue LOKIN navigation.”
+- “Siri, lock in with LOKIN.”
+- “Siri, pause LOKIN.”
+- “Siri, resume LOKIN.”
+- “Siri, tap out with LOKIN.”
+- “Siri, ask LOKIN.”
+- “Siri, show my LOKIN earnings.”
 
-## Android porting checklist
+Navigation opens directly to:
 
-1. Copy `native/android/actions.xml` to `app/src/main/res/xml/actions.xml`.
-2. Merge `native/android/strings.xml` into `app/src/main/res/values/strings.xml`.
-3. In `AndroidManifest.xml`, inside `<application>`, add:
-   ```xml
-   <meta-data android:name="com.google.actions"
-              android:resource="@xml/actions" />
-   ```
-4. Confirm `actions.xml` uses the published production domain:
-   `https://lokin-ai-app-604c3139.base44.app`.
-5. Ensure your WebView Activity handles the fulfillment URL (it loads the
-   deep link, which the React router resolves to the right screen).
-6. Test with the Google Assistant plugin in Android Studio, then on a
-   device: "Hey Google, optimize my LOKIN route."
+`/ai-gps?focus=locked&nav=1&view=real&via=siri`
 
-## Keeping it in sync
+Once that screen is active, the React voice layer listens for **“Hey LOKIN”** and ignores ordinary ambient speech.
 
-The voice phrases here must match the phrases returned by the `native-launch`
-backend function (`base44/functions/native-launch/entry.ts`). If you change a
-phrase, update both sides so ChatGPT tells the driver the same words Siri /
-Google Assistant actually listen for.
+## Required Xcode activation
+
+The Base44 project currently contains **no `.xcodeproj` / `.xcworkspace`**, so these Swift files are not compiled by Base44 itself. To activate them in the shipping iOS app:
+
+1. Export/open the actual LOKIN native iOS shell in Xcode.
+2. Add `LokinIntents.swift` and `LokinShortcuts.swift` to the main app target.
+3. Enable **Associated Domains** and add:
+   `applinks:lokin-ai-app-604c3139.base44.app`
+4. Ensure the production domain serves a valid `apple-app-site-association` file for LOKIN's app/team identifiers.
+5. If the shell also supports the `lokin://` custom scheme, register it under **URL Types** and use `LokinWebViewDeepLinkBridge.swift` from the shell's URL handler.
+6. Build/install on a physical iPhone.
+7. Open the Shortcuts app once and confirm the LOKIN App Shortcuts are discoverable.
+8. Test the Siri phrases above with the app foregrounded, backgrounded, and not running.
+
+## Safety behavior
+
+- `tap_out` remains confirmation-protected by LOKIN's external-command policy.
+- Siri only opens approved routes/commands; the web app still applies auth, command validation, and release gates.
+- The native layer does not duplicate routing or AI business logic.
+
+## REAL 4D navigation
+
+The live map is powered by Mapbox road/satellite imagery and the same production route geometry used by turn-by-turn navigation. The 4D presentation is a pitched, heading-up view of real map data—not procedural terrain.
+
+The map UI supports zoom in, zoom out, and RESET/FOLLOW so the driver can inspect the map and return to the default follow-driver visualization.
