@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AiGps4D from "@/components/AiGps4D";
@@ -14,6 +14,8 @@ export default function AiGps() {
   const locked = params.get("focus") === "locked";
   const orderId = params.get("order") || "";
   const explicitDestination = params.get("destination") || "";
+  const navigationSession = params.get("nav") === "1";
+  const mapSectionRef = useRef(null);
   const [stops, setStops] = useState([]);
   const [routeLoadError, setRouteLoadError] = useState("");
   const [loadingStops, setLoadingStops] = useState(true);
@@ -23,6 +25,14 @@ export default function AiGps() {
   const [probingProvider, setProbingProvider] = useState(false);
 
   useEffect(() => { setDestinationInput(explicitDestination); }, [explicitDestination]);
+
+  useEffect(() => {
+    if (!navigationSession || !nav?.route || !mapSectionRef.current) return;
+    const timer = window.setTimeout(() => {
+      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [navigationSession, nav?.route?.generated_at]);
 
   useEffect(() => {
     let alive = true;
@@ -66,6 +76,9 @@ export default function AiGps() {
     const next = new URLSearchParams(params);
     next.set("focus", "locked");
     next.set("destination", destination);
+    next.set("nav", "1");
+    next.set("view", "real");
+    setMapView("real");
     setParams(next, { replace: true });
     if (sameDestination && nav.rawPosition) nav.retry();
   }
@@ -105,7 +118,7 @@ export default function AiGps() {
         </div>
       )}
 
-      {nav.providerConfigured === true && (
+      {!navigationSession && nav.providerConfigured === true && (
         <div className={`rounded-2xl border p-3 ${nav.providerVerified === true ? "border-primary/30 bg-primary/[0.06]" : "border-white/10 bg-white/[0.025]"}`}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
@@ -123,7 +136,7 @@ export default function AiGps() {
         </div>
       )}
 
-      {locked ? (
+      {!navigationSession && (locked ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full border border-primary/40 bg-primary/10 flex items-center justify-center glow-primary"><Lock className="h-4 w-4 text-primary" /></div>
           <div className="flex-1 min-w-0">
@@ -137,9 +150,9 @@ export default function AiGps() {
           <p className="text-sm text-white/45">LOKIN converts delivery addresses into a real drivable street route and snaps your live GPS to it.</p>
           <button type="button" onClick={() => setFocusMode("locked")} className="shrink-0 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary active:scale-95">Follow driver</button>
         </div>
-      )}
+      ))}
 
-      <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
+      {!navigationSession && <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
             <div className="text-[10px] tracking-[0.2em] text-accent/75 font-display">LIVE ROAD TEST</div>
@@ -155,7 +168,7 @@ export default function AiGps() {
           <button type="submit" disabled={!destinationInput.trim()} className="rounded-2xl bg-primary px-4 text-xs font-extrabold text-black glow-primary disabled:opacity-35">NAVIGATE</button>
         </div>
         {explicitDestination && <div className="mt-2 truncate text-[10px] text-primary/70">ACTIVE DESTINATION · {explicitDestination}</div>}
-      </form>
+      </form>}
 
       {(loadingStops || nav.status === "waiting_location" || nav.status === "routing") && destinationAddresses.length > 0 && (
         <div className="rounded-2xl border border-accent/20 bg-accent/[0.04] p-3 flex items-center gap-3">
@@ -202,10 +215,10 @@ export default function AiGps() {
       )}
 
       {nav.route ? (
-        <div className="space-y-2">
+        <div ref={mapSectionRef} id="lokin-gps-map" className="space-y-2 scroll-mt-4">
           <div className="mx-auto flex w-fit gap-1 rounded-full border border-white/10 bg-black/80 p-1">
             <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
-            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
+            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
           </div>
           {mapView === "real" ? (
             <RoadMatchedMap
@@ -216,17 +229,14 @@ export default function AiGps() {
               followDriver={locked}
             />
           ) : (
-            <div className={locked ? "rounded-[2rem] border border-primary/25 bg-black/70 p-1 shadow-[0_0_40px_-18px_hsl(80_100%_50%)]" : ""}>
-              <AiGps4D
-                stops={stops}
-                routeGeometry={nav.route.geometry}
-                snappedPosition={nav.snappedPosition}
-                maneuver={nav.maneuver}
-                navigationStatus={nav.status}
-                remainingDurationS={nav.remainingDurationS}
-                followDriver={locked}
-              />
-            </div>
+            <RoadMatchedMap
+              routeGeometry={nav.route.geometry}
+              snappedPosition={nav.snappedPosition}
+              maneuver={nav.maneuver}
+              remainingDurationS={nav.remainingDurationS}
+              followDriver={locked}
+              perspective
+            />
           )}
         </div>
       ) : (
