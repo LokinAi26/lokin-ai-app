@@ -1,8 +1,16 @@
-import { ExternalLink, MapPin, Car, Briefcase, Clock, BadgeCheck, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { ExternalLink, MapPin, Car, Briefcase, Clock, BadgeCheck, CheckCircle2 } from "lucide-react";
 import { estimateNet, PAY_SOURCE_LABEL, SCHEDULE_LABEL, ROLE_LABEL } from "@/lib/opportunityEstimates";
+
+function relativeVerified(value) {
+  const ms = Date.now() - new Date(value).getTime();
+  if (!Number.isFinite(ms) || ms < 120000) return "verified now";
+  const mins = Math.round(ms / 60000);
+  return mins < 60 ? `verified ${mins}m ago` : `verified ${Math.round(mins / 60)}h ago`;
+}
 
 export default function OpportunityCard({ opp, prefs, selected, onToggleSelect }) {
   const est = estimateNet(opp, prefs);
+  const fieldWork = ["mystery_shop", "food_review", "product_test", "paid_research", "survey"].includes(opp.category);
   const isW2 = (opp.employment_type || "").toUpperCase().includes("W-2") || (opp.employment_type || "").toUpperCase().includes("W2");
   const paySource = PAY_SOURCE_LABEL[opp.pay_source] || "Advertised";
 
@@ -53,21 +61,23 @@ export default function OpportunityCard({ opp, prefs, selected, onToggleSelect }
         <span className="flex items-center gap-1"><Briefcase className="h-3 w-3 text-primary" />{opp.category.replace(/_/g, " ")}</span>
       </div>
 
-      {/* estimated economics */}
-      <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
-        <div className="rounded-lg border border-white/8 bg-black/20 py-1.5">
-          <div className="text-[9px] uppercase text-white/35">Gross/wk</div>
-          <div className="text-xs font-bold text-white/85">${est.gross}</div>
+      {/* Driver economics are estimates, so keep them off field-work cards and off listings with no published rate. */}
+      {!fieldWork && Number(opp.pay_amount) > 0 && (
+        <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-lg border border-white/8 bg-black/20 py-1.5">
+            <div className="text-[9px] uppercase text-white/35">Gross/wk est.</div>
+            <div className="text-xs font-bold text-white/85">${est.gross}</div>
+          </div>
+          <div className="rounded-lg border border-white/8 bg-black/20 py-1.5">
+            <div className="text-[9px] uppercase text-white/35">Vehicle est.</div>
+            <div className="text-xs font-bold text-destructive/80">-${est.vehicleCost}</div>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/[0.06] py-1.5">
+            <div className="text-[9px] uppercase text-white/40">Net/hr est.</div>
+            <div className="text-xs font-bold text-primary">${est.netPerHour}</div>
+          </div>
         </div>
-        <div className="rounded-lg border border-white/8 bg-black/20 py-1.5">
-          <div className="text-[9px] uppercase text-white/35">Est. vehicle</div>
-          <div className="text-xs font-bold text-destructive/80">-${est.vehicleCost}</div>
-        </div>
-        <div className="rounded-lg border border-primary/20 bg-primary/[0.06] py-1.5">
-          <div className="text-[9px] uppercase text-white/40">Net/hr</div>
-          <div className="text-xs font-bold text-primary">${est.netPerHour}</div>
-        </div>
-      </div>
+      )}
 
       {(opp.vehicle_requirements || opp.qualifications) && (
         <div className="mt-2 text-[11px] text-white/50 space-y-0.5">
@@ -76,18 +86,14 @@ export default function OpportunityCard({ opp, prefs, selected, onToggleSelect }
         </div>
       )}
 
-      <div className="mt-2.5 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-[10px] text-white/35">
-          <BadgeCheck className="h-3 w-3" />{opp.verified_at ? `Verified ${opp.verified_at}` : opp.source || "Public listing"}
-        </span>
-        {opp.apply_url ? (
-          <a href={opp.apply_url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary active:scale-95 transition-transform">
-            Apply <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : (
-          <span className="flex items-center gap-1 text-[10px] text-white/30"><ShieldAlert className="h-3 w-3" />No direct link</span>
-        )}
+      <div className="mt-2.5 flex items-center justify-between gap-2">
+        <a href={opp.source_url} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-1 text-[10px] text-white/35 hover:text-white/60">
+          <BadgeCheck className="h-3 w-3 shrink-0 text-primary" /><span className="truncate">LIVE · {relativeVerified(opp.verified_at)} · {opp.source || "source"}</span>
+        </a>
+        <a href={opp.apply_url} target="_blank" rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary active:scale-95 transition-transform">
+          Apply <ExternalLink className="h-3 w-3" />
+        </a>
       </div>
     </div>
   );
