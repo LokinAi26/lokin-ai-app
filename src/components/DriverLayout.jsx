@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck } from "lucide-react";
+import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
@@ -42,6 +42,7 @@ export default function DriverLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [working, setWorking] = useState(false);
+  const [appFreeRoam, setAppFreeRoam] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("lokin_app_free_roam") === "1");
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -58,9 +59,11 @@ export default function DriverLayout() {
       if (!alive) return;
       const isWorking = (p[0] && p[0].work_status) === "working";
       setWorking(isWorking);
-      // While a driver is locked in, GPS is the primary/home surface. Resolve
-      // the saved work state first so Tap Out cannot race a stale local value.
-      if (isWorking && loc.pathname === "/") {
+      const roamActive = sessionStorage.getItem("lokin_app_free_roam") === "1";
+      setAppFreeRoam(roamActive);
+      // GPS is the primary Home surface while working, except when the driver
+      // deliberately opened app Free Roam to use the rest of LOKIN.
+      if (isWorking && !roamActive && loc.pathname === "/") {
         navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
       }
     }).catch(() => {});
@@ -71,6 +74,8 @@ export default function DriverLayout() {
   // returning to Home during the shift restores the GPS instead of the dashboard.
   useEffect(() => {
     if (!activeNavigation) return;
+    sessionStorage.removeItem("lokin_app_free_roam");
+    setAppFreeRoam(false);
     let alive = true;
     base44.entities.DriverPreference.filter({}).then(async (p) => {
       if (!alive) return;
@@ -87,6 +92,13 @@ export default function DriverLayout() {
       setLastPaths((prev) => ({ ...prev, [currentTab]: loc.pathname }));
     }
   }, [loc.pathname, currentTab]);
+
+  function resumeGps() {
+    const resumeUrl = sessionStorage.getItem("lokin_gps_resume_url") || "/ai-gps?focus=locked&nav=1&view=real";
+    sessionStorage.removeItem("lokin_app_free_roam");
+    setAppFreeRoam(false);
+    navigate(resumeUrl);
+  }
 
   function handleTabClick(tabKey) {
     if (tabKey === currentTab) {
@@ -160,6 +172,18 @@ export default function DriverLayout() {
           })}
         </div>
       </nav>}
+
+      {!lockedGps && working && appFreeRoam && (
+        <button
+          type="button"
+          onClick={resumeGps}
+          className="fixed right-3 z-50 inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-black/85 px-3 py-2 text-[9px] font-extrabold tracking-[0.08em] text-primary shadow-lg backdrop-blur active:scale-95"
+          style={{ bottom: "calc(5.6rem + env(safe-area-inset-bottom))" }}
+          aria-label="Resume locked GPS navigation"
+        >
+          <Navigation className="h-3.5 w-3.5" /> RESUME GPS
+        </button>
+      )}
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation} />
