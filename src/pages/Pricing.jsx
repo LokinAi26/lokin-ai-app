@@ -100,11 +100,11 @@ export default function Pricing() {
           <LokinGlyph size={36} />
         </div>
         <h1 className="text-2xl font-bold font-heading metal-text">Unlock LOKIN</h1>
-        <p className="text-sm text-white/50 mt-1">Advanced routing. Deeper AI. More money per hour.</p>
+        <p className="text-sm text-white/50 mt-1">Routing tools, earnings analysis, and driver-focused AI.</p>
       </div>
 
       <div className="space-y-3">
-        {TIERS.map((t) => {
+        {(RELEASE_FLAGS.externalDigitalSubscriptions ? TIERS : TIERS.filter((t) => t.id === "free")).map((t) => {
           const active = plan === t.tier || (t.id !== "free" && plan !== "free" && t.id.startsWith(plan));
           const isPaidActive = t.id !== "free" && (plan === t.tier || (t.id === "elite_monthly" && plan === "elite"));
           return (
