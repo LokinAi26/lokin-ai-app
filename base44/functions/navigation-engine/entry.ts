@@ -295,6 +295,10 @@ export default async function navigationEngine(req: Request) {
       });
     }
 
+    if (action === "static_map") {
+      return json({ ok: true, map: await fetchStaticMap(accessToken, body?.viewport || {}) });
+    }
+
     if (action === "geocode") {
       const proximity = validCoord(body?.proximity);
       return json({ ok: true, result: await geocodeAddress(body?.address, accessToken, proximity) });
