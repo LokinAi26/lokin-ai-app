@@ -12,12 +12,15 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "scanOpportunities",
-            "args": {}
+            "args": {
+              "scheduled": true,
+              "mode": "jobs"
+            }
           },
           "then": "end",
           "x-base44": {
             "title": "Run Hampton Roads scan",
-            "description": "Web scan for new delivery & courier opportunities"
+            "description": "Live verification scan for current delivery & courier openings"
           }
         }
       }
@@ -41,5 +44,5 @@
     }
   },
   "name": "Monday Opportunity Scan",
-  "description": "Every Monday morning, scans Hampton Roads for newly available delivery & courier opportunities (gig apps, W-2, 1099, medical, package, legal cannabis & alcohol delivery) and stores them in OpportunityScan."
+  "description": "Weekly backup scan that live-verifies current Hampton Roads delivery & courier openings. App pages also refresh on demand and hide expired/unverified records."
 }
