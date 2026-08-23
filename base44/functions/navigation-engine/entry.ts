@@ -13,10 +13,6 @@ function token() {
   return (Deno.env.get("MAPBOX_ACCESS_TOKEN") || Deno.env.get("MAPBOX_TOKEN") || "").trim();
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
 function validCoord(value: any) {
   const longitude = Number(value?.longitude ?? value?.lng ?? value?.lon ?? value?.[0]);
   const latitude = Number(value?.latitude ?? value?.lat ?? value?.[1]);
@@ -147,7 +143,7 @@ async function directions(
   });
 
   if (opts.curbApproach !== false) {
-    params.set("approaches", coordinates.map((_, i) => (i === 0 ? "unrestricted" : "curb")).join(";"));
+    params.set("approaches", coordinates.map((_, i) => (i === 0 ? "" : "curb")).join(";"));
   }
 
   const data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${params.toString()}`);
@@ -189,34 +185,6 @@ async function directions(
   };
 }
 
-async function matchTrace(points: any[], accessToken: string) {
-  const valid = (points || []).map((p) => ({ coord: validCoord(p), accuracy: Number(p?.accuracy), timestamp: Number(p?.timestamp) })).filter((p) => p.coord);
-  if (valid.length < 2) throw new Error("At least two GPS points are required for trace matching");
-  if (valid.length > 100) throw new Error("Trace matching accepts at most 100 GPS points per request");
-
-  const coords = valid.map((p: any) => `${p.coord.longitude},${p.coord.latitude}`).join(";");
-  const radiuses = valid.map((p: any) => String(clamp(Number.isFinite(p.accuracy) ? p.accuracy * 1.5 : 15, 5, 50))).join(";");
-  const params = new URLSearchParams({
-    access_token: accessToken,
-    geometries: "geojson",
-    overview: "full",
-    tidy: "true",
-    radiuses,
-  });
-  if (valid.every((p: any) => Number.isFinite(p.timestamp) && p.timestamp > 0)) {
-    params.set("timestamps", valid.map((p: any) => String(Math.floor(p.timestamp / (p.timestamp > 1e12 ? 1000 : 1)))).join(";"));
-  }
-
-  const data = await fetchJson(`https://api.mapbox.com/matching/v5/mapbox/driving/${coords}.json?${params.toString()}`);
-  const matching = data?.matchings?.[0];
-  return {
-    provider: "mapbox",
-    confidence: Number(matching?.confidence || 0),
-    geometry: matching?.geometry || null,
-    tracepoints: data?.tracepoints || [],
-  };
-}
-
 export default async function navigationEngine(req: Request) {
   try {
     const base44 = createClientFromRequest(req);
@@ -232,7 +200,7 @@ export default async function navigationEngine(req: Request) {
         ok: true,
         provider: "mapbox",
         configured: Boolean(accessToken),
-        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "turn_by_turn", "road_geometry", "trace_matching"],
+        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "turn_by_turn", "road_geometry", "live_route_snapping"],
         max_destinations: MAX_COORDINATES - 1,
         storage: "temporary_geocoding_only",
       });
@@ -283,10 +251,6 @@ export default async function navigationEngine(req: Request) {
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
       return json({ ok: true, geocoded_destinations: geocoded, route });
-    }
-
-    if (action === "match_trace") {
-      return json({ ok: true, match: await matchTrace(body?.points || [], accessToken) });
     }
 
     return json({ error: `Unsupported navigation action: ${action}` }, 400);
