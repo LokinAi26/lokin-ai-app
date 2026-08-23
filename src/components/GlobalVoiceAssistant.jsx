@@ -206,6 +206,13 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     rec.onend = () => {
       setListening(false);
       recRef.current = null;
+      if (alwaysOnRef.current && wakeRef.current) {
+        wakeRestartRef.current = setTimeout(() => {
+          if (alwaysOnRef.current && wakeRef.current) {
+            try { wakeRef.current.start(); } catch {}
+          }
+        }, 650);
+      }
     };
     rec.onresult = (e) => {
       const text = e.results?.[0]?.[0]?.transcript || "";
@@ -296,7 +303,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     wake.onend = () => {
       if (!alwaysOnRef.current) return;
       wakeRestartRef.current = setTimeout(() => {
-        if (alwaysOnRef.current && wakeRef.current === wake) {
+        if (alwaysOnRef.current && wakeRef.current === wake && !recRef.current) {
           try { wake.start(); } catch {}
         }
       }, 650);
