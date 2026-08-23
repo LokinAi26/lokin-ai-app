@@ -394,10 +394,15 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
         <div className="absolute top-2 left-3 flex items-center gap-1.5 text-[10px] tracking-[0.2em] text-accent/80 font-display">
           <Radar className="h-3.5 w-3.5" /> {hasRoadGeometry ? "ROAD-MATCHED 4D GPS" : "4D ROUTE PREVIEW"}
         </div>
-        <div className="absolute top-2 right-3 text-right">
+        <div className="absolute top-2 right-3 text-right pointer-events-none">
           <div className="text-[9px] tracking-wider text-white/40">ETA</div>
           <div className="font-display text-sm font-bold text-accent text-glow-cyan">{navEtaMinutes}m</div>
         </div>
+        {hasRoadGeometry && (
+          <div className="absolute bottom-3 left-3 rounded-full border border-black/30 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-white/70 pointer-events-none">
+            {followDriver ? "DRIVER FOLLOW" : "TOUCH · DRAG · PINCH"}
+          </div>
+        )}
         {(rerouting || navigationStatus === "rerouting") && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <div className="flex items-center gap-2 text-sm text-primary text-glow animate-pulse">
