@@ -49,7 +49,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + dx, y: height / 2 + (point[1] - center[1]) };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false }) {
+export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   const defaultStyle = perspective ? "satellite-streets-v12" : "dark-v11";
   const [style, setStyle] = useState(defaultStyle);
@@ -231,7 +231,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
         <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
           <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">PINCH TO ZOOM</div>
-          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
+          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); onResetFollow?.(); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
         </div>
 
         <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
