@@ -191,7 +191,7 @@ export default function LokinAI() {
               <LokinGlyph size={36} />
             </div>
             <VoiceWaveform active={listening} className="mb-3" />
-            <div className="text-sm text-white/60">Say <span className="text-accent font-semibold">“Hey LOKIN…”</span></div>
+            <div className="text-sm text-white/60">Tap the mic and say <span className="text-accent font-semibold">“LOKIN…”</span></div>
             <div className="text-xs text-white/55 mt-1">or tap a quick command below.</div>
           </div>
         )}
