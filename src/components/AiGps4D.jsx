@@ -168,9 +168,21 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       roadMeshes = [];
       if (routeLine) { scene.remove(routeLine); routeLine.geometry.dispose(); routeLine.material.dispose(); routeLine = null; }
       const n = Math.max(stateRef.current.total, 1);
-      const pos = stopPositions(n, stateRef.current.perturb);
+      const navCoords = stateRef.current.routeGeometry || [];
+      let pos;
+      let pinPositions;
+      if (navCoords.length >= 2) {
+        const mapped = geometryToScenePoints(navCoords, 180, 18);
+        pos = mapped.points.map((p) => new THREE.Vector3(p.x, 0, p.z));
+        stateRef.current.projectGeo = mapped.project;
+        pinPositions = [pos[0], pos[pos.length - 1]].filter(Boolean);
+      } else {
+        pos = stopPositions(n, stateRef.current.perturb);
+        stateRef.current.projectGeo = null;
+        pinPositions = pos;
+      }
       stateRef.current.pos = pos;
-      pos.forEach((v, i) => {
+      pinPositions.forEach((v, i) => {
         const color = i === 0 ? 0x00e5ff : 0xa8ff00;
         const cone = new THREE.Mesh(
           new THREE.ConeGeometry(0.32, 1.05, 7),
@@ -223,13 +235,15 @@ export default function AiGps4D({ stops: stopsProp, compact = false, routeGeomet
       const r = 15.5;
       camera.position.set(Math.sin(camAngle) * r, 8.2, Math.cos(camAngle) * r);
       camera.lookAt(0, 0, 0);
-      if (stateRef.current.playing && stateRef.current.pos.length > 1) {
+      if (stateRef.current.playing && stateRef.current.pos.length > 1 && stateRef.current.routeGeometry.length < 2) {
         stateRef.current.time = (stateRef.current.time + 0.0022) % 1;
         const pct = Math.round(stateRef.current.time * 100);
         if (pct !== stateRef.current.lastPct) { stateRef.current.lastPct = pct; setTime(stateRef.current.time); }
       }
       const pos = stateRef.current.pos;
-      if (vehicle && pos.length) {
+      if (vehicle && stateRef.current.liveScene) {
+        vehicle.position.set(stateRef.current.liveScene.x, 0.5, stateRef.current.liveScene.z);
+      } else if (vehicle && pos.length) {
         const tt = stateRef.current.time * (pos.length - 1);
         const i = Math.floor(tt), f = tt - i;
         const a = pos[Math.min(i, pos.length - 1)], b = pos[Math.min(i + 1, pos.length - 1)];
