@@ -33,7 +33,22 @@ function milesBetween(a: { longitude: number; latitude: number }, b: { longitude
 
 function addressHasGeographicContext(address: string) {
   const q = String(address || "").trim();
-  return /\b\d{5}(?:-\d{4})?\b/.test(q) || /,\s*[A-Za-z .'-]{2,}(?:,|$)/.test(q) || /\b(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b/i.test(q);
+  // ZIP codes and comma-delimited locality/state context are reliable signals.
+  // Do NOT treat a bare two-letter token as a state because street suffixes like
+  // "Ct" (Court) can otherwise be mistaken for "CT" (Connecticut).
+  return /\b\d{5}(?:-\d{4})?\b/.test(q) || /,\s*[A-Za-z .'-]{2,}(?:\s+[A-Z]{2})?(?:\s+\d{5}(?:-\d{4})?)?(?:,|$)/i.test(q);
+}
+
+function localSearchBBox(proximity: { longitude: number; latitude: number }, radiusMiles = 55) {
+  const latDelta = radiusMiles / 69;
+  const cosLat = Math.max(0.25, Math.cos((proximity.latitude * Math.PI) / 180));
+  const lonDelta = radiusMiles / (69 * cosLat);
+  return [
+    Math.max(-180, proximity.longitude - lonDelta),
+    Math.max(-90, proximity.latitude - latDelta),
+    Math.min(180, proximity.longitude + lonDelta),
+    Math.min(90, proximity.latitude + latDelta),
+  ];
 }
 
 async function fetchJson(url: string, init?: RequestInit) {
