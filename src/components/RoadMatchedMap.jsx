@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Crosshair, Layers3, Map, Minus, Plus, Satellite } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { bearingDegrees, formatDuration } from "@/lib/navigationGeometry";
 
@@ -57,6 +57,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [zoomOffset, setZoomOffset] = useState(0);
+  const [gestureScale, setGestureScale] = useState(1);
+  const pinchRef = useRef({ distance: 0, scale: 1 });
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
 
@@ -132,26 +134,70 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     ? { x: renderW / 2, y: renderH * 0.72 }
     : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
 
+  function touchDistance(touches) {
+    if (!touches || touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function onTouchStart(e) {
+    if (e.touches?.length !== 2) return;
+    const distance = touchDistance(e.touches);
+    pinchRef.current = { distance, scale: 1 };
+  }
+
+  function onTouchMove(e) {
+    if (e.touches?.length !== 2 || !pinchRef.current.distance) return;
+    e.preventDefault();
+    const scale = Math.max(0.62, Math.min(1.7, touchDistance(e.touches) / pinchRef.current.distance));
+    pinchRef.current.scale = scale;
+    setGestureScale(scale);
+  }
+
+  function finishPinch() {
+    if (!pinchRef.current.distance) return;
+    const scale = pinchRef.current.scale || 1;
+    const zoomDelta = Math.log2(scale);
+    if (Math.abs(zoomDelta) > 0.03) {
+      setZoomOffset((z) => Math.max(-2, Math.min(2, z + zoomDelta)));
+    }
+    pinchRef.current = { distance: 0, scale: 1 };
+    setGestureScale(1);
+  }
+
   if (!viewport) return null;
 
   return (
     <div className={`relative overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
-      <div className={`relative w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}>
-        {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
-        <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+      <div
+        className={`relative w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
+        style={{ touchAction: "none" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={finishPinch}
+        onTouchCancel={finishPinch}
+      >
+        <div
+          className="absolute inset-0 will-change-transform"
+          style={{ transform: `scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 ? "transform 160ms ease-out" : "none" }}
+        >
+          {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
+          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
-        {image && (
-          <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
-            {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
-            {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
-            {driverPoint && (
-              <g transform={`translate(${driverPoint.x} ${driverPoint.y}) rotate(${perspective ? 0 : heading})`}>
-                <circle r="22" fill="rgba(0,229,255,.18)" stroke="rgba(0,229,255,.62)" strokeWidth="3" />
-                <path d="M0 -18 L11 13 L0 8 L-11 13 Z" fill="#B7FF42" stroke="#071009" strokeWidth="3" style={{ filter: "drop-shadow(0 0 5px rgba(168,255,0,.9))" }} />
-              </g>
-            )}
-          </svg>
-        )}
+          {image && (
+            <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
+              {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
+              {driverPoint && (
+                <g transform={`translate(${driverPoint.x} ${driverPoint.y}) rotate(${perspective ? 0 : heading})`}>
+                  <circle r="22" fill="rgba(0,229,255,.18)" stroke="rgba(0,229,255,.62)" strokeWidth="3" />
+                  <path d="M0 -18 L11 13 L0 8 L-11 13 Z" fill="#B7FF42" stroke="#071009" strokeWidth="3" style={{ filter: "drop-shadow(0 0 5px rgba(168,255,0,.9))" }} />
+                </g>
+              )}
+            </svg>
+          )}
+        </div>
 
         <div className={`absolute left-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur ${fullscreen ? "top-[calc(6.25rem+env(safe-area-inset-top))]" : "top-3"}`}>
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
@@ -172,10 +218,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
         {perspective && <div className={`absolute left-3 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : "top-12"}`}>58° PITCH · HEADING UP</div>}
 
-        <div className={`absolute right-3 z-20 flex flex-col gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
-          <button type="button" aria-label="Zoom in" onClick={() => setZoomOffset((z) => Math.min(2, z + 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Plus className="h-4 w-4" /></button>
-          <button type="button" aria-label="Zoom out" onClick={() => setZoomOffset((z) => Math.max(-2, z - 0.6))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur active:scale-95"><Minus className="h-4 w-4" /></button>
-          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setStyle(defaultStyle); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
+        <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${fullscreen ? "top-[calc(9rem+env(safe-area-inset-top))]" : perspective ? "top-24" : "top-14"}`}>
+          <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">PINCH TO ZOOM</div>
+          <button type="button" aria-label="Reset and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); }} className={`flex items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95 ${fullscreen ? "h-10 px-2" : "h-10 w-10"}`}><Crosshair className="h-4 w-4" />{fullscreen && <span className="ml-1 text-[8px] font-extrabold">RESET</span>}</button>
         </div>
 
         <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
@@ -187,7 +232,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           <div className="font-display text-lg font-black text-accent">{formatDuration(remainingDurationS)}</div>
         </div>
 
-        {(loading || error) && (
+        {!image && (loading || error) && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#111820]/85 px-6 text-center backdrop-blur-sm">
             {loading ? (
               <div className="flex items-center gap-2 text-sm font-semibold text-accent"><Layers3 className="h-4 w-4 animate-pulse" /> {perspective ? "Loading real 4D Mapbox view…" : "Loading real Mapbox streets…"}</div>
@@ -196,6 +241,10 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             )}
           </div>
         )}
+        {image && loading && (
+          <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent/20 bg-black/75 px-3 py-1.5 text-[9px] font-bold tracking-[0.1em] text-accent backdrop-blur"><Layers3 className="mr-1 inline h-3 w-3 animate-pulse" />REFINING SATELLITE</div>
+        )}
+        {image && error && <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-red-400/20 bg-black/80 px-3 py-1.5 text-[9px] text-red-300 backdrop-blur">{error}</div>}
       </div>
     </div>
   );
