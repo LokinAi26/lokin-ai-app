@@ -52,6 +52,17 @@ function matchCommand(text) {
   return null;
 }
 
+function speechRecognitionCtor() {
+  if (typeof window === "undefined") return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function extractWakeCommand(raw) {
+  const text = String(raw || "").toLowerCase().trim();
+  const match = text.match(/(?:hey\s+)?(?:lokin|lock\s*in)\b(.*)$/i);
+  return match ? { matched: true, command: (match[1] || "").trim() } : { matched: false, command: "" };
+}
+
 // Siri/Gemini-style hands-free voice assistant overlay, available app-wide.
 // Tap the orb to talk, or enable "Always Listening" for wake-word ("Hey LOKIN") activation.
 export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChange }) {
@@ -66,7 +77,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const [reply, setReply] = useState("");
   const recRef = useRef(null);
   const wakeRef = useRef(null);
+  const wakeRestartRef = useRef(null);
+  const wakeTriggerAtRef = useRef(0);
   const alwaysOnRef = useRef(alwaysOn);
+  const voiceSupported = Boolean(speechRecognitionCtor());
   alwaysOnRef.current = alwaysOn;
 
   function speak(text) {
@@ -177,21 +191,42 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }
 
   function startOnce() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { handleCommand("What should I do next?"); return; }
+    const SR = speechRecognitionCtor();
+    if (!SR) {
+      setOpen(true);
+      setReply("Voice recognition is not available in this app environment. Use the on-screen controls or Siri shortcuts instead.");
+      return;
+    }
+    if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} }
     setListening(true);
     const rec = new SR();
     rec.lang = "en-US";
     rec.interimResults = false;
     rec.onstart = () => setListening(true);
-    rec.onend = () => setListening(false);
-    rec.onresult = (e) => {
-      const text = e.results[0][0].transcript;
-      handleCommand(text);
+    rec.onend = () => {
+      setListening(false);
+      recRef.current = null;
     };
-    rec.onerror = () => setListening(false);
+    rec.onresult = (e) => {
+      const text = e.results?.[0]?.[0]?.transcript || "";
+      if (text.trim()) handleCommand(text);
+    };
+    rec.onerror = (e) => {
+      setListening(false);
+      recRef.current = null;
+      const code = e?.error || "voice_error";
+      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(code)) {
+        setOpen(true);
+        setReply("Microphone and speech access are required for LOKIN voice. Enable them in iPhone Settings, then tap the microphone again.");
+      } else if (code !== "aborted" && code !== "no-speech") {
+        setReply("Voice recognition stopped. Tap the microphone to retry.");
+      }
+    };
     recRef.current = rec;
-    try { rec.start(); } catch {}
+    try { rec.start(); } catch {
+      setListening(false);
+      setReply("Voice recognition could not start. Tap the microphone to retry.");
+    }
   }
 
   // One command ingress for UI controls, deep links, Siri/App Intents,
@@ -223,9 +258,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     return () => window.removeEventListener("lokin:voice-command", onVoiceCommand);
   }, []);
 
-  // Always-on wake-word listener
+  // Foreground wake-word listener. iOS may suspend web speech recognition when
+  // the app is backgrounded, so system-level Siri shortcuts remain the native
+  // entry point outside the open LOKIN app.
   useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SR = speechRecognitionCtor();
+    if (wakeRestartRef.current) { clearTimeout(wakeRestartRef.current); wakeRestartRef.current = null; }
     if (!SR || !alwaysOn) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
       return;
@@ -236,36 +274,66 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     wake.lang = "en-US";
     wake.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const text = e.results[i][0].transcript.toLowerCase();
-        if (text.includes("lokin")) {
-          const after = text.split("lokin")[1].trim();
-          try { wake.stop(); } catch {}
-          if (after) {
-            handleCommand(after);
-          } else {
-            speak("I'm here.");
-            setOpen(true);
-            setReply("I'm listening.");
-            setTimeout(() => startOnce(), 350);
-          }
-          break;
+        const heard = e.results?.[i]?.[0]?.transcript || "";
+        const wakeCommand = extractWakeCommand(heard);
+        if (!wakeCommand.matched) continue;
+        const now = Date.now();
+        if (now - wakeTriggerAtRef.current < 1400) break;
+        wakeTriggerAtRef.current = now;
+        try { wake.stop(); } catch {}
+        if (wakeCommand.command) {
+          setOpen(true);
+          handleCommand(wakeCommand.command);
+        } else {
+          speak("I'm here.");
+          setOpen(true);
+          setReply("I'm listening.");
+          setTimeout(() => startOnce(), 350);
         }
+        break;
       }
     };
     wake.onend = () => {
-      if (alwaysOnRef.current) { try { wake.start(); } catch {} }
+      if (!alwaysOnRef.current) return;
+      wakeRestartRef.current = setTimeout(() => {
+        if (alwaysOnRef.current && wakeRef.current === wake) {
+          try { wake.start(); } catch {}
+        }
+      }, 650);
     };
-    wake.onerror = () => {};
+    wake.onerror = (e) => {
+      const code = e?.error || "voice_error";
+      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(code)) {
+        alwaysOnRef.current = false;
+        setAlwaysOn(false);
+        localStorage.setItem("lokin_always_on", "0");
+        setOpen(true);
+        setReply("Always Listening was turned off because microphone or speech access is unavailable. Enable access in iPhone Settings and try again.");
+      }
+    };
     wakeRef.current = wake;
-    try { wake.start(); } catch {}
-    return () => { try { wake.stop(); } catch {} wakeRef.current = null; };
+    try { wake.start(); } catch {
+      setAlwaysOn(false);
+      localStorage.setItem("lokin_always_on", "0");
+    }
+    return () => {
+      if (wakeRestartRef.current) clearTimeout(wakeRestartRef.current);
+      wakeRestartRef.current = null;
+      try { wake.stop(); } catch {}
+      if (wakeRef.current === wake) wakeRef.current = null;
+    };
   }, [alwaysOn]);
 
   function toggleAlwaysOn() {
+    if (!voiceSupported) {
+      setOpen(true);
+      setReply("Always Listening is unavailable in this app environment. Use the microphone button or Siri shortcuts.");
+      return;
+    }
     setAlwaysOn((v) => {
       const next = !v;
       localStorage.setItem("lokin_always_on", next ? "1" : "0");
-      if (next) speak("Always listening. Say Hey LOKIN.");
+      if (next) speak("Foreground listening enabled. Say Hey LOKIN while the app is open.");
       return next;
     });
   }
@@ -315,7 +383,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                   {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                 </button>
                 <div className="mt-2 text-xs text-white/55">
-                  {listening ? "Listening…" : busy ? "Thinking…" : "Tap to speak"}
+                  {listening ? "Listening…" : busy ? "Thinking…" : voiceSupported ? "Tap to speak" : "Voice unavailable · use controls"}
                 </div>
               </div>
 
@@ -333,19 +401,22 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                 </div>
               )}
 
-              {/* Always-on toggle */}
+              {/* Foreground wake-word toggle */}
               <button
                 onClick={toggleAlwaysOn}
                 className={`mt-4 w-full flex items-center justify-between rounded-xl border px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : "border-white/10 bg-white/[0.03]"}`}
               >
                 <span className="flex items-center gap-2 text-sm text-white/80">
                   <Ear className={`h-4 w-4 ${alwaysOn ? "text-accent" : "text-white/40"}`} />
-                  Always Listening
+                  Hey LOKIN · App Open
                 </span>
                 <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                  {alwaysOn ? "ON · say “Hey LOKIN”" : "OFF"}
+                  {!voiceSupported ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
                 </span>
               </button>
+              <div className="mt-1.5 text-center text-[10px] text-white/35">
+                Wake-word listening works while LOKIN is open. Use Siri shortcuts for system-level voice launch.
+              </div>
 
               <div className="mt-3 grid grid-cols-4 gap-2">
                 <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/25 bg-primary/[0.06] p-2 text-center"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
