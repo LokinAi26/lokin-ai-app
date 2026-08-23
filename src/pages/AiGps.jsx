@@ -310,6 +310,63 @@ export default function AiGps() {
   );
 }
 
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses }) {
+  const error = nav.error || routeLoadError;
+  const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
+
+  return (
+    <div className="fixed inset-0 z-20 overflow-hidden bg-black text-white">
+      {nav.route ? (
+        <RoadMatchedMap
+          routeGeometry={nav.route.geometry}
+          snappedPosition={nav.snappedPosition}
+          maneuver={nav.maneuver}
+          remainingDurationS={nav.remainingDurationS}
+          followDriver
+          perspective={mapView === "4d"}
+          fullscreen
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
+          <div>
+            <Radar className="mx-auto h-10 w-10 animate-pulse text-primary" />
+            <div className="mt-4 font-display text-lg font-black tracking-[0.16em] text-primary">LOKIN GPS</div>
+            <div className="mt-2 text-sm text-white/55">
+              {error ? "Navigation needs attention" : waiting ? "Locking onto your live road route…" : "Waiting for a destination…"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 px-3 pt-[calc(0.55rem+env(safe-area-inset-top))]">
+        <div className="rounded-full border border-primary/35 bg-black/80 px-3 py-2 text-[10px] font-extrabold tracking-[0.16em] text-primary backdrop-blur">
+          ● LOCKED IN
+        </div>
+        <div className="rounded-full border border-accent/30 bg-black/80 px-3 py-2 text-[10px] font-bold tracking-[0.13em] text-accent backdrop-blur">
+          SAY “HEY LOKIN”
+        </div>
+      </div>
+
+      {nav.route && (
+        <div className="absolute left-1/2 top-[calc(3.25rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-white/10 bg-black/85 p-1 shadow-xl backdrop-blur">
+          <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "real" ? "bg-primary text-black" : "text-white/60"}`}>MAP</button>
+          <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.1em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/60"}`}>4D</button>
+        </div>
+      )}
+
+      {error && !nav.route && (
+        <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">
+          <AlertTriangle className="mx-auto h-6 w-6 text-red-300" />
+          <div className="mt-2 text-sm font-bold text-red-200">{error}</div>
+          {nav.rawPosition && destinationAddresses.length > 0 && (
+            <button onClick={nav.retry} className="mt-4 rounded-2xl bg-primary px-5 py-3 text-xs font-extrabold text-black">RETRY GPS</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NavMetric({ label, value, accent = false }) {
   return (
     <div className="rounded-xl border border-white/8 bg-white/[0.025] p-2">
