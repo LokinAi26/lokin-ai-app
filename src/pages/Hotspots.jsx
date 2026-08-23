@@ -57,12 +57,12 @@ export default function Hotspots() {
     <div className="p-4 space-y-4 pb-8">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">EARNINGS HEAT MAP</div>
-          <h1 className="text-2xl font-bold font-heading metal-text">Hot Spots</h1>
+          <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">SIMULATED MODEL PREVIEW</div>
+          <h1 className="text-2xl font-bold font-heading metal-text">Hotspot Model</h1>
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
           <Flame className="h-4 w-4 text-primary" />
-          <span className="text-xs font-bold text-primary">{visible.length} zones</span>
+          <span className="text-xs font-bold text-primary">{visible.length} sample zones</span>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export default function Hotspots() {
           <Recenter center={center} />
           <FlyTo target={flyTo} />
 
-          {/* Heat zones — nested translucent circles simulate a radial gradient */}
+          {/* Sample model zones — intentionally not represented as live platform demand. */}
           {visible.map((h) => {
             const c = heatColor(metric, metricValue(h, metric));
             const r = 16 + h.volume / 8;
@@ -159,7 +159,7 @@ export default function Hotspots() {
       {/* Zone ranking */}
       <div>
         <div className="text-[11px] tracking-[0.24em] text-white/40 font-display mb-2 flex items-center gap-1.5">
-          <TrendingUp className="h-3.5 w-3.5 text-primary" /> TOP ZONES · BY {activeMetric.label.toUpperCase()}
+          <TrendingUp className="h-3.5 w-3.5 text-primary" /> SAMPLE ZONES · BY {activeMetric.label.toUpperCase()}
         </div>
         <div className="space-y-2">
           {ranked.map((h, i) => {
@@ -216,7 +216,7 @@ export default function Hotspots() {
       </div>
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1">
-        HEAT DATA IS SIMULATED · CONNECT PLATFORM APIs TO GO LIVE
+        MODEL PREVIEW ONLY · NOT LIVE DOORDASH / UBER / INSTACART DEMAND DATA
       </div>
     </div>
   );
