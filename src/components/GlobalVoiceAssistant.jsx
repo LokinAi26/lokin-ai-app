@@ -7,6 +7,7 @@ import { LokinGlyph } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { setAiConsent } from "@/lib/aiConsent";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -79,6 +80,8 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [reply, setReply] = useState("");
+  const [consentRequired, setConsentRequired] = useState(false);
+  const [pendingAiCommand, setPendingAiCommand] = useState("");
   const recRef = useRef(null);
   const wakeRef = useRef(null);
   const wakeRestartRef = useRef(null);
@@ -193,10 +196,35 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       setReply(data.reply || "I didn't catch that.");
       speak(data.reply || "I didn't catch that.");
     } catch (e) {
-      setReply("Sorry, something went wrong.");
+      if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
+        setPendingAiCommand(command);
+        setConsentRequired(true);
+        setReply("To answer open-ended requests, LOKIN needs permission to securely process your request with its configured AI service.");
+      } else if (e?.code === "LOKIN_CREDIT_DEFERRED") {
+        setReply("AI assistance is temporarily unavailable, but voice navigation commands still work. Try again in a moment.");
+      } else {
+        console.error("LOKIN voice assistant request failed", e);
+        setReply("I heard you, but the AI response service did not complete the request. Try again, or use a voice navigation command.");
+      }
     } finally {
       setBusy(false);
     }
+  }
+
+  function allowAiProcessing() {
+    setAiConsent("granted");
+    setConsentRequired(false);
+    const retry = pendingAiCommand;
+    setPendingAiCommand("");
+    setReply("AI processing enabled. Retrying your request…");
+    if (retry) setTimeout(() => handleCommand(retry), 120);
+  }
+
+  function declineAiProcessing() {
+    setAiConsent("denied");
+    setConsentRequired(false);
+    setPendingAiCommand("");
+    setReply("AI processing stays off. Voice navigation commands such as “find gas,” “lock in,” “pause,” and “resume” will still work.");
   }
 
   function startOnce(wakeGranted = false) {
@@ -434,6 +462,29 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                   <button onClick={() => speak(reply)} className="ml-2 align-middle text-accent/70">
                     <Volume2 className="h-3.5 w-3.5 inline" />
                   </button>
+                </div>
+              )}
+
+              {consentRequired && (
+                <div className="mt-3 rounded-xl border border-primary/30 bg-primary/[0.06] p-3">
+                  <div className="text-xs font-semibold text-white/90">Allow AI processing?</div>
+                  <div className="mt-1 text-[11px] leading-relaxed text-white/55">
+                    LOKIN will securely send your spoken request and limited context needed to answer it to the app&apos;s configured AI service. You can keep using non-AI voice controls without allowing this.
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={declineAiProcessing}
+                      className="min-h-11 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/65"
+                    >
+                      Not Now
+                    </button>
+                    <button
+                      onClick={allowAiProcessing}
+                      className="min-h-11 rounded-xl border border-primary/40 bg-primary/15 px-3 text-xs font-bold text-primary"
+                    >
+                      Allow & Retry
+                    </button>
+                  </div>
                 </div>
               )}
 
