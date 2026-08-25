@@ -17,6 +17,7 @@ import {
   subscribeNativeLocationAuthorization,
   subscribeNativeLocationError,
 } from "@/lib/nativeLocationBridge";
+import { reroutePolicy } from "@/lib/navigationQuality";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -279,12 +280,24 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const next = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
     setManeuver(next);
 
-    const threshold = Math.max(35, Math.min(90, sample.accuracy_m * 1.5 || 35));
-    if (snap.distance_m > threshold) offRouteSamplesRef.current += 1;
-    else offRouteSamplesRef.current = 0;
+    const policy = reroutePolicy(sample, snap);
+    if (sample.dead_reckoned === true) {
+      // Dead-reckoned fixes keep the map moving through a tunnel/garage, but
+      // never create a network reroute on their own. Wait for an absolute
+      // Core Location / Fused Location Provider fix to confirm the deviation.
+      offRouteSamplesRef.current = 0;
+    } else if (snap.distance_m > policy.thresholdM) {
+      offRouteSamplesRef.current += 1;
+    } else {
+      offRouteSamplesRef.current = 0;
+    }
 
     const now = Date.now();
-    if (offRouteSamplesRef.current >= 3 && now - lastRerouteAtRef.current > 12000) {
+    if (
+      policy.canReroute &&
+      offRouteSamplesRef.current >= policy.requiredSamples &&
+      now - lastRerouteAtRef.current > policy.cooldownMs
+    ) {
       lastRerouteAtRef.current = now;
       offRouteSamplesRef.current = 0;
       const currentIndex = snap.segment_index || 0;
