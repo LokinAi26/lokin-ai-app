@@ -1,7 +1,6 @@
 {
   "name": "OasisProject",
   "type": "object",
-  "description": "LOKIN OASIS idea-to-profit project",
   "properties": {
     "organization_id": {
       "type": "string",
