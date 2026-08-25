@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import OasisDesignStudio from "@/components/OasisDesignStudio";
+import OasisProductization from "@/components/OasisProductization";
 
 const STAGES = [
   { key: "idea", label: "Idea", icon: Lightbulb },
@@ -87,8 +88,10 @@ function Score({ label, value }) {
   );
 }
 
-function ProjectCard({ project, assets, advancing, analyzing, generating, reviewingId, onAdvance, onAnalyze, onGenerate, onReview }) {
+function ProjectCard({ project, assets, specs, supplierCandidates, advancing, analyzing, generating, reviewingId, productizing, onAdvance, onAnalyze, onGenerate, onReview, onProductize }) {
   const [detailsOpen, setDetailsOpen] = useState(Boolean(project.director_summary));
+  const approvedAsset = assets.find((asset) => asset.status === "approved");
+  const latestSpec = specs[0] || null;
   const price = Number(project.target_price || 0);
   const margin = Number(project.target_margin || 0);
   const estimatedContribution = price * (margin / 100);
@@ -182,6 +185,15 @@ function ProjectCard({ project, assets, advancing, analyzing, generating, review
         onReview={onReview}
       />
 
+      <OasisProductization
+        project={project}
+        approvedAsset={approvedAsset}
+        spec={latestSpec}
+        candidates={supplierCandidates.filter((candidate) => candidate.product_spec_id === latestSpec?.id)}
+        building={productizing}
+        onBuild={onProductize}
+      />
+
       <button
         type="button"
         disabled={advancing || analyzing || Boolean(generating) || project.status === "scale" || project.status === "retired"}
@@ -203,6 +215,8 @@ function ProjectCard({ project, assets, advancing, analyzing, generating, review
 export default function Oasis() {
   const [projects, setProjects] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [specs, setSpecs] = useState([]);
+  const [supplierCandidates, setSupplierCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
   const [idea, setIdea] = useState(EMPTY_IDEA);
@@ -212,6 +226,7 @@ export default function Oasis() {
   const [generatingProjectId, setGeneratingProjectId] = useState("");
   const [generatingStudy, setGeneratingStudy] = useState("");
   const [reviewingId, setReviewingId] = useState("");
+  const [productizingId, setProductizingId] = useState("");
   const [error, setError] = useState("");
 
   async function loadProjects() {
@@ -220,12 +235,16 @@ export default function Oasis() {
     try {
       const user = await base44.auth.me();
       const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
-      const [records, designAssets] = await Promise.all([
+      const [records, designAssets, productSpecs, candidates] = await Promise.all([
         base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
         base44.entities.OasisDesignAsset.filter(ownerFilter, "-created_at", 100, 0),
+        base44.entities.OasisProductSpec.filter(ownerFilter, "-created_at", 100, 0),
+        base44.entities.OasisSupplierCandidate.filter(ownerFilter, "-checked_at", 200, 0),
       ]);
       setProjects(records || []);
       setAssets(designAssets || []);
+      setSpecs(productSpecs || []);
+      setSupplierCandidates(candidates || []);
     } catch (err) {
       setError("OASIS could not load its project pipeline.");
     } finally {
@@ -448,6 +467,27 @@ export default function Oasis() {
     }
   }
 
+  async function productizeProject(project) {
+    const approved = window.confirm(`Create a draft product specification for ${project.title}? This creates no supplier order and publishes nothing.`);
+    if (!approved) return;
+
+    setProductizingId(project.id);
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-productization", { projectId: project.id });
+      const result = response?.data || response || {};
+      if (!result.spec) throw new Error("Productization returned no specification.");
+      setSpecs((current) => [result.spec, ...current]);
+      setSupplierCandidates((current) => [...(result.candidates || []), ...current]);
+      if (result.project) setProjects((current) => current.map((item) => item.id === project.id ? result.project : item));
+    } catch (err) {
+      const message = err?.response?.data?.error || err?.message || "OASIS Productization failed.";
+      setError(`${message} No supplier order or storefront change was made.`);
+    } finally {
+      setProductizingId("");
+    }
+  }
+
   async function advanceProject(project) {
     const currentIndex = FLOW.indexOf(project.status);
     if (currentIndex < 0 || currentIndex >= FLOW.length - 1) return;
@@ -563,14 +603,18 @@ export default function Oasis() {
                 key={project.id}
                 project={project}
                 assets={assets.filter((asset) => asset.project_id === project.id)}
+                specs={specs.filter((spec) => spec.project_id === project.id)}
+                supplierCandidates={supplierCandidates.filter((candidate) => candidate.project_id === project.id)}
                 advancing={advancingId === project.id}
                 analyzing={analyzingId === project.id}
                 generating={generatingProjectId === project.id ? generatingStudy : ""}
                 reviewingId={reviewingId}
+                productizing={productizingId === project.id}
                 onAdvance={advanceProject}
                 onAnalyze={analyzeProject}
                 onGenerate={generateDesign}
                 onReview={reviewDesign}
+                onProductize={productizeProject}
               />
             ))}
           </div>
