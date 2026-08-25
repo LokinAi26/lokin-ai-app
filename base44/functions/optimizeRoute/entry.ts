@@ -9,6 +9,20 @@ import {
   OPTIMIZATION_MODES,
 } from "../../shared/delivery.js";
 
+const TRUSTED_SOURCES = new Set(["user_entered", "user_shared", "official_api", "merchant_feed"]);
+const TRUSTED_VERIFICATION = new Set(["address_verified", "platform_verified"]);
+
+function isCurrentTrustedOffer(offer) {
+  if (offer?.status && offer.status !== "available") return false;
+  if (!TRUSTED_SOURCES.has(String(offer?.source_type || ""))) return false;
+  if (!TRUSTED_VERIFICATION.has(String(offer?.verification_status || ""))) return false;
+  const capturedAt = Date.parse(String(offer?.captured_at || ""));
+  const expiresAt = Date.parse(String(offer?.expires_at || ""));
+  if (!Number.isFinite(capturedAt) || !Number.isFinite(expiresAt)) return false;
+  if (capturedAt > Date.now() + 5 * 60000) return false;
+  return expiresAt > Date.now();
+}
+
 // LOKIN AI — Route Optimizer + Strategy Advisor
 // Input: { originAddress?: string, mode?: string }
 export default async function(req) {
@@ -42,7 +56,8 @@ export default async function(req) {
     const todayEarnings = todays.reduce((s, e) => s + (e.amount || 0), 0);
     const todayMiles = todays.reduce((s, e) => s + (e.miles || 0), 0);
 
-    const eligible = filterAndRank(allOffers, prefs, blocked, avoidPlaces);
+    const currentOffers = allOffers.filter(isCurrentTrustedOffer);
+    const eligible = filterAndRank(currentOffers, prefs, blocked, avoidPlaces);
     const ranked = rankByMode(eligible, mode, originAddress);
     const sequenced = sequenceByZone(ranked, originAddress);
     const stats = totalRouteStats(sequenced, prefs, originAddress);
@@ -64,7 +79,7 @@ export default async function(req) {
       routeEfficiency: stats.efficiency,
     });
 
-    const declined = allOffers
+    const declined = currentOffers
       .filter((o) => !sequenced.find((s) => s.id === o.id))
       .map((o) => ({
         merchant: o.merchant,
@@ -79,6 +94,23 @@ export default async function(req) {
       }));
 
     const modeLabel = OPTIMIZATION_MODES.find((m) => m.value === mode)?.label || "Most Profit";
+
+    if (sequenced.length === 0) {
+      return Response.json({
+        mode,
+        sequenced: [],
+        stats,
+        lockInScore: score,
+        declinedCount: declined.length,
+        todayEarnings,
+        briefing: "No current verified offers match your filters. Add a fresh Virginia offer from your delivery app; LOKIN will not optimize legacy, expired, or unverified records.",
+        feed: {
+          active_verified: currentOffers.length,
+          excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+          market: "Virginia-first",
+        },
+      });
+    }
 
     const briefing = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: [
@@ -122,6 +154,11 @@ export default async function(req) {
       declinedCount: declined.length,
       todayEarnings,
       briefing,
+      feed: {
+        active_verified: currentOffers.length,
+        excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+        market: "Virginia-first",
+      },
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
