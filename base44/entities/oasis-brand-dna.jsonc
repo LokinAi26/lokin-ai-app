@@ -1,0 +1,48 @@
+{
+  "name": "OasisBrandDNA",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "brand_name": {
+      "type": "string"
+    },
+    "tagline": {
+      "type": "string"
+    },
+    "mission": {
+      "type": "string"
+    },
+    "primary_color": {
+      "type": "string"
+    },
+    "secondary_color": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "voice_rules": {
+      "type": "string"
+    },
+    "visual_rules": {
+      "type": "string"
+    },
+    "forbidden_treatments": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "brand_name",
+    "version"
+  ]
+}
