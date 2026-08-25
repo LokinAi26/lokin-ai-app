@@ -68,6 +68,7 @@ const SECTIONS = [
       { to: "/merchant-hub", icon: Store, title: "Merchant Hub", desc: "Pilot partners" },
       { to: "/merchant-portal", icon: Building2, title: "Merchant Portal", desc: "Pickups & drivers" },
       { to: "/compliance-handoff", icon: BadgeCheck, title: "Verified Handoff", desc: "ID check workflow" },
+      { to: "/oasis", icon: Sparkles, title: "LOKIN OASIS", desc: "Ideas into products and profit" },
       { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Apparel & gear" },
       { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals & vehicle" },
       { to: "/support", icon: Headphones, title: "AI Support", desc: "Help & billing" },
