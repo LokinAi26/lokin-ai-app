@@ -1,6 +1,7 @@
 {
   "name": "OasisApproval",
   "type": "object",
+  "description": "Human approval gate for external commitments",
   "properties": {
     "organization_id": {
       "type": "string"
