@@ -34,7 +34,7 @@ function oasisDirectorSystemPrompt() {
     "Never publish, purchase inventory, place supplier orders, launch campaigns, or spend money. Human approval is mandatory.",
     "If inputs are missing, state assumptions and keep recommendations reversible.",
     "Return strict JSON only, matching the required shape. Keep each narrative field under 900 characters.",
-  ].join("\\n");
+  ].join("\n");
 }
 
 // LOKIN Adaptive Support — empathetic, de-escalating AI help for BOTH customers
