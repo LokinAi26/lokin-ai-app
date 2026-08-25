@@ -7,6 +7,7 @@ const required = [
   "native/ios/LokinLocationEngine.swift",
   "native/ios/LokinSensorFusion.swift",
   "native/ios/LokinLocationBridge.swift",
+  "native/ios/LokinLocationShellInstaller.swift",
   "native/android/settings.gradle.kts",
   "native/android/build.gradle.kts",
   "native/android/location-core/build.gradle.kts",
@@ -15,6 +16,7 @@ const required = [
   "native/android/LokinLocationService.kt",
   "native/android/LokinSensorFusion.kt",
   "native/android/LokinLocationBridge.kt",
+  "native/android/LokinLocationShellInstaller.kt",
 ];
 for (const path of required) assert.ok(fs.existsSync(path), `missing native package file: ${path}`);
 
@@ -22,6 +24,7 @@ const iosPackage = fs.readFileSync("native/ios/Package.swift", "utf8");
 assert.match(iosPackage, /LokinLocationCore/);
 assert.match(iosPackage, /linkedLibrary\("sqlite3"\)/);
 assert.match(iosPackage, /LokinSensorFusion\.swift/);
+assert.match(iosPackage, /LokinLocationShellInstaller\.swift/);
 
 const iosEngine = fs.readFileSync("native/ios/LokinLocationEngine.swift", "utf8");
 assert.match(iosEngine, /authoritative: false/);
@@ -39,6 +42,8 @@ const androidBridge = fs.readFileSync("native/android/LokinLocationBridge.kt", "
 assert.match(androidBridge, /requestWhenInUse/);
 assert.match(androidBridge, /ActivityCompat\.requestPermissions/);
 assert.match(androidBridge, /lokin:native-location-authorization/);
+const androidInstaller = fs.readFileSync("native/android/LokinLocationShellInstaller.kt", "utf8");
+assert.match(androidInstaller, /addJavascriptInterface\(bridge, "LokinLocation"\)/);
 
 const reactHook = fs.readFileSync("src/hooks/useLokinNavigation.js", "utf8");
 assert.match(reactHook, /nativeStartedRef/);
