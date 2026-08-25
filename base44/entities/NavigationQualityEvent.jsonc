@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp_ms": {
+      "type": "number"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "accuracy_m": {
+      "type": "number"
+    },
+    "dead_reckoned": {
+      "type": "boolean"
+    },
+    "details_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "event_type"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationQualityEvent"
+}

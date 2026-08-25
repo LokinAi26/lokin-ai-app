@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "scenario": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string"
+    },
+    "metrics_json": {
+      "type": "string"
+    },
+    "build_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scenario",
+    "platform",
+    "result"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationCalibrationRun"
+}

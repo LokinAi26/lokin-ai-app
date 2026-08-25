@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp_ms": {
+      "type": "number"
+    },
+    "outage_duration_s": {
+      "type": "number"
+    },
+    "recovery_distance_m": {
+      "type": "number"
+    },
+    "pre_recovery_confidence": {
+      "type": "number"
+    },
+    "post_recovery_accuracy_m": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationRecoveryEvent"
+}

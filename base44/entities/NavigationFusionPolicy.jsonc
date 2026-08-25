@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "dead_reckoning_persist": {
+      "type": "boolean"
+    },
+    "max_dead_reckoning_age_s": {
+      "type": "number"
+    },
+    "min_navigation_confidence": {
+      "type": "number"
+    },
+    "min_reroute_confidence": {
+      "type": "number"
+    },
+    "low_power_sensor_hz": {
+      "type": "number"
+    },
+    "normal_sensor_hz": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "version"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationFusionPolicy"
+}

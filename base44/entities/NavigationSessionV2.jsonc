@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string"
+    },
+    "started_at_ms": {
+      "type": "number"
+    },
+    "last_seq": {
+      "type": "number"
+    },
+    "last_anchor_seq": {
+      "type": "number"
+    },
+    "last_confidence": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "mode",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationSessionV2"
+}

@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "sample_seq": {
+      "type": "number"
+    },
+    "anchor_seq": {
+      "type": "number"
+    },
+    "authoritative": {
+      "type": "boolean"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "uncertainty_m": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "session_id",
+    "sample_seq"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationAnchorLineage"
+}

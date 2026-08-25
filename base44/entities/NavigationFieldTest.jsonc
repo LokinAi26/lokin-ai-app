@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "scenario": {
+      "type": "string"
+    },
+    "started_at_ms": {
+      "type": "number"
+    },
+    "completed_at_ms": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "device_model": {
+      "type": "string"
+    },
+    "os_version": {
+      "type": "string"
+    },
+    "metrics_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scenario",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationFieldTest"
+}

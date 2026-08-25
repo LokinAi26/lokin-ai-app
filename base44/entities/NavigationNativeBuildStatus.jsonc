@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string"
+    },
+    "module": {
+      "type": "string"
+    },
+    "buildable_package_present": {
+      "type": "boolean"
+    },
+    "compile_status": {
+      "type": "string"
+    },
+    "physical_device_status": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "platform",
+    "module"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationNativeBuildStatus"
+}

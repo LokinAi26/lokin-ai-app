@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "scenario": {
+      "type": "string"
+    },
+    "match_confidence": {
+      "type": "number"
+    },
+    "distance_error_m": {
+      "type": "number"
+    },
+    "heading_error_deg": {
+      "type": "number"
+    },
+    "reroute_suppressed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationRouteMatchStat"
+}

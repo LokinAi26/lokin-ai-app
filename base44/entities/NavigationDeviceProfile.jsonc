@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string"
+    },
+    "device_model": {
+      "type": "string"
+    },
+    "os_version": {
+      "type": "string"
+    },
+    "low_power_mode": {
+      "type": "boolean"
+    },
+    "avg_accuracy_m": {
+      "type": "number"
+    },
+    "p95_accuracy_m": {
+      "type": "number"
+    },
+    "battery_drop_pct_per_hour": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "platform"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationDeviceProfile"
+}

@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "duration_s": {
+      "type": "number"
+    },
+    "estimated_drift_m": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "scenario": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "duration_s"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationDriftMetric"
+}

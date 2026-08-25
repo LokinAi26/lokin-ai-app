@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "first_seq": {
+      "type": "number"
+    },
+    "last_seq": {
+      "type": "number"
+    },
+    "point_count": {
+      "type": "number"
+    },
+    "authoritative_count": {
+      "type": "number"
+    },
+    "estimated_count": {
+      "type": "number"
+    },
+    "payload_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "first_seq",
+    "last_seq",
+    "point_count"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationTelemetryBatch"
+}

@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp_ms": {
+      "type": "number"
+    },
+    "decision": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "match_confidence": {
+      "type": "number"
+    },
+    "dead_reckoned": {
+      "type": "boolean"
+    },
+    "off_route_samples": {
+      "type": "number"
+    },
+    "threshold_m": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "session_id",
+    "decision"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationRerouteDecision"
+}

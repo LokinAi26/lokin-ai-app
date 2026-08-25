@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp_ms": {
+      "type": "number"
+    },
+    "battery_level": {
+      "type": "number"
+    },
+    "low_power_mode": {
+      "type": "boolean"
+    },
+    "sensor_rate_hz": {
+      "type": "number"
+    },
+    "location_mode": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "name": "NavigationPowerSample"
+}
