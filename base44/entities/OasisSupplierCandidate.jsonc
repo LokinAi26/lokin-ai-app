@@ -1,0 +1,66 @@
+{
+  "name": "OasisSupplierCandidate",
+  "type": "object",
+  "description": "Non-binding supplier catalog candidate for an OASIS product specification",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "product_spec_id": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "supplier_product_id": {
+      "type": "string"
+    },
+    "match_status": {
+      "type": "string",
+      "enum": [
+        "needs_catalog_match",
+        "candidate",
+        "verified",
+        "unavailable",
+        "rejected"
+      ],
+      "default": "needs_catalog_match"
+    },
+    "estimated_base_cost": {
+      "type": "number"
+    },
+    "estimated_shipping": {
+      "type": "number"
+    },
+    "estimated_margin_percent": {
+      "type": "number"
+    },
+    "inventory_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "quality_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "project_id",
+    "product_spec_id",
+    "supplier",
+    "match_status"
+  ]
+}
