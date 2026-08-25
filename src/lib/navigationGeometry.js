@@ -88,7 +88,7 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
 
   const cumulative = cumulativeInput || routeCumulativeDistances(geometry);
   const previous = options.previousSnap || null;
-  const heading = Number(options.heading);
+  const heading = options.heading == null ? Number.NaN : Number(options.heading);
   const speedMps = Math.max(0, Number(options.speedMps) || 0);
   const accuracyM = Math.max(4, Math.min(60, Number(options.accuracyM) || 12));
   const timestamp = Number(options.timestamp) || Date.now();
