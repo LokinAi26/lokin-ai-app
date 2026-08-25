@@ -1,6 +1,7 @@
 {
   "name": "OasisBrandDNA",
   "type": "object",
+  "description": "Versioned LOKIN OASIS brand source of truth",
   "properties": {
     "organization_id": {
       "type": "string"
