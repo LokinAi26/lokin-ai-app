@@ -22,12 +22,14 @@ import kotlin.math.PI
  * brief GNSS gaps only; prediction stops after eight seconds without an anchor.
  */
 class LokinSensorFusion(context: Context) : SensorEventListener {
+    private val appContext = context.applicationContext
     data class FusedFix(
         val location: Location,
         val confidence: Double,
         val deadReckoned: Boolean,
         val barometricAltitudeM: Double?,
-        val source: String
+        val source: String,
+        val anchorSeq: Long?
     )
 
     private val sensors = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -40,6 +42,7 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
     private var running = false
 
     private var anchor: Location? = null
+    private var anchorSeq: Long? = null
     private var anchorElapsedNs = 0L
     private var lastPredictionElapsedNs = 0L
     private var lastEmitElapsedNs = 0L
@@ -54,10 +57,16 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
 
     var onPredictedFix: ((FusedFix) -> Unit)? = null
 
+    private fun contextPowerSaveMode(): Boolean {
+        val pm = appContext.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        return pm.isPowerSaveMode
+    }
+
     fun start() {
         if (running) return
         running = true
-        val delay = SensorManager.SENSOR_DELAY_GAME
+        val power = contextPowerSaveMode()
+        val delay = if (power) SensorManager.SENSOR_DELAY_UI else SensorManager.SENSOR_DELAY_GAME
         rotation?.let { sensors.registerListener(this, it, delay) }
         linearAcceleration?.let { sensors.registerListener(this, it, delay) }
         pressure?.let { sensors.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
@@ -67,6 +76,7 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         running = false
         sensors.unregisterListener(this)
         anchor = null
+        anchorSeq = null
         predictedLat = null
         predictedLon = null
         velocityNorth = 0.0
@@ -77,10 +87,11 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         latestBarometricAltitudeM = null
     }
 
-    fun ingestAnchor(location: Location) {
+    fun ingestAnchor(location: Location, anchorSeq: Long? = null) {
         val speed = if (location.hasSpeed()) max(location.speed.toDouble(), 0.0) else 0.0
         val headingRad = if (location.hasBearing()) location.bearing.toDouble() * PI / 180.0 else 0.0
         anchor = Location(location)
+        this.anchorSeq = anchorSeq
         anchorElapsedNs = SystemClock.elapsedRealtimeNanos()
         lastPredictionElapsedNs = anchorElapsedNs
         predictedLat = location.latitude
@@ -118,7 +129,8 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         val lon0 = predictedLon ?: return
         val nowNs = SystemClock.elapsedRealtimeNanos()
         val ageS = (nowNs - anchorElapsedNs) / 1_000_000_000.0
-        if (ageS < 0.60 || ageS > 8.0) {
+        val maxDeadReckoningAgeS = 20.0
+        if (ageS < 0.60 || ageS > maxDeadReckoningAgeS) {
             lastPredictionElapsedNs = nowNs
             return
         }
@@ -155,8 +167,8 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         if ((nowNs - lastEmitElapsedNs) < 200_000_000L) return
         lastEmitElapsedNs = nowNs
 
-        val uncertainty = min(120.0, max(base.accuracy.toDouble(), 4.0) + ageS * 4.5)
-        val confidence = max(0.05, min(0.98, exp(-ageS / 5.5) * exp(-uncertainty / 120.0)))
+        val uncertainty = min(220.0, max(base.accuracy.toDouble(), 4.0) + ageS * 5.5 + ageS * ageS * 0.20)
+        val confidence = max(0.03, min(0.98, exp(-ageS / 8.0) * exp(-uncertainty / 180.0)))
         val heading = (atan2(velocityEast, velocityNorth) * 180.0 / PI + 360.0) % 360.0
         val predicted = Location("lokin-dead-reckoning").apply {
             latitude = lat
@@ -173,7 +185,8 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
             confidence = confidence,
             deadReckoned = true,
             barometricAltitudeM = latestBarometricAltitudeM,
-            source = "fused+imu+barometer-dead-reckoning"
+            source = "fused+imu+barometer-dead-reckoning",
+            anchorSeq = anchorSeq
         ))
     }
 }

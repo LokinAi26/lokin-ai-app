@@ -13,6 +13,7 @@ final class LokinSensorFusion {
         let deadReckoned: Bool
         let barometricAltitudeM: Double?
         let source: String
+        let anchorSeq: Int64?
     }
 
     private let motion = CMMotionManager()
@@ -22,6 +23,7 @@ final class LokinSensorFusion {
 
     private var running = false
     private var lastAnchor: CLLocation?
+    private var lastAnchorSeq: Int64?
     private var lastAnchorMonotonic = ProcessInfo.processInfo.systemUptime
     private var lastPredictionMonotonic = ProcessInfo.processInfo.systemUptime
     private var lastEmitMonotonic = 0.0
@@ -50,7 +52,9 @@ final class LokinSensorFusion {
         lastPredictionMonotonic = ProcessInfo.processInfo.systemUptime
 
         if motion.isDeviceMotionAvailable {
-            motion.deviceMotionUpdateInterval = 1.0 / 50.0
+            // Reduce IMU duty cycle in Low Power Mode without reducing Core Location
+            // anchor accuracy. Navigation remains responsive while battery use drops.
+            motion.deviceMotionUpdateInterval = ProcessInfo.processInfo.isLowPowerModeEnabled ? 1.0 / 25.0 : 1.0 / 50.0
             let frame: CMAttitudeReferenceFrame = CMMotionManager.availableAttitudeReferenceFrames().contains(.xTrueNorthZVertical)
                 ? .xTrueNorthZVertical
                 : .xArbitraryCorrectedZVertical
@@ -75,6 +79,7 @@ final class LokinSensorFusion {
         lock.lock()
         defer { lock.unlock() }
         lastAnchor = nil
+        lastAnchorSeq = nil
         predictedLatitude = nil
         predictedLongitude = nil
         velocityNorth = 0
@@ -84,11 +89,12 @@ final class LokinSensorFusion {
         latestBarometricAltitudeM = nil
     }
 
-    func ingestAnchor(_ location: CLLocation) {
+    func ingestAnchor(_ location: CLLocation, anchorSeq: Int64? = nil) {
         let speed = max(location.lokinSpeedMps ?? 0, 0)
         let heading = (location.lokinHeadingDeg ?? 0) * .pi / 180
         lock.lock()
         lastAnchor = location
+        lastAnchorSeq = anchorSeq
         lastAnchorMonotonic = ProcessInfo.processInfo.systemUptime
         lastPredictionMonotonic = lastAnchorMonotonic
         predictedLatitude = location.coordinate.latitude
@@ -126,9 +132,11 @@ final class LokinSensorFusion {
         }
 
         let anchorAge = now - lastAnchorMonotonic
-        // Dead reckoning is deliberately bounded. Past this point uncertainty
-        // grows too quickly for safe turn-by-turn use, so wait for a new anchor.
-        guard anchorAge >= 0.60, anchorAge <= 8.0 else {
+        // Dead reckoning is bounded but long enough to bridge ordinary tunnels and
+        // garages. Confidence/uncertainty decay continuously and downstream
+        // routing suppresses reroutes when the estimate is not trustworthy.
+        let maxDeadReckoningAge = 20.0
+        guard anchorAge >= 0.60, anchorAge <= maxDeadReckoningAge else {
             lastPredictionMonotonic = now
             lock.unlock()
             return
@@ -170,8 +178,8 @@ final class LokinSensorFusion {
         let altitude = latestBarometricAltitudeM ?? anchor.altitude
         let heading = (atan2(velocityEast, velocityNorth) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
         let predictedSpeed = hypot(velocityNorth, velocityEast)
-        let uncertainty = min(120.0, max(anchor.horizontalAccuracy, 4.0) + anchorAge * 4.5)
-        let confidence = max(0.05, min(0.98, exp(-anchorAge / 5.5) * exp(-uncertainty / 120.0)))
+        let uncertainty = min(220.0, max(anchor.horizontalAccuracy, 4.0) + anchorAge * 5.5 + anchorAge * anchorAge * 0.20)
+        let confidence = max(0.03, min(0.98, exp(-anchorAge / 8.0) * exp(-uncertainty / 180.0)))
         let shouldEmit = now - lastEmitMonotonic >= 0.20
         if shouldEmit { lastEmitMonotonic = now }
         lock.unlock()
@@ -191,7 +199,8 @@ final class LokinSensorFusion {
             confidence: confidence,
             deadReckoned: true,
             barometricAltitudeM: latestBarometricAltitudeM,
-            source: "corelocation+imu+barometer-dead-reckoning"
+            source: "corelocation+imu+barometer-dead-reckoning",
+            anchorSeq: lastAnchorSeq
         ))
     }
 }
