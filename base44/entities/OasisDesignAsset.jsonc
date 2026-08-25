@@ -32,6 +32,22 @@
       "type": "string",
       "format": "uri"
     },
+    "generation_prompt": {
+      "type": "string"
+    },
+    "colorway": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "review_note": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "status": {
       "type": "string",
       "enum": [
