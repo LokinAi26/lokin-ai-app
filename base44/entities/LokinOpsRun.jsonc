@@ -1,0 +1,67 @@
+{
+  "name": "LokinOpsRun",
+  "type": "object",
+  "properties": {
+    "operator": {
+      "type": "string"
+    },
+    "app": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "manual",
+        "chatgpt"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "warning",
+        "action_required",
+        "failed"
+      ]
+    },
+    "health_score": {
+      "type": "number"
+    },
+    "checks": {
+      "type": "object"
+    },
+    "repairs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "approvals_required": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "operator",
+    "app",
+    "mode",
+    "status",
+    "health_score",
+    "checks",
+    "repairs",
+    "approvals_required",
+    "started_at",
+    "completed_at"
+  ]
+}
