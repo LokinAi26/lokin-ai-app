@@ -1,6 +1,7 @@
 {
   "name": "OasisDesignAsset",
   "type": "object",
+  "description": "Versioned OASIS creative and production asset",
   "properties": {
     "organization_id": {
       "type": "string"
