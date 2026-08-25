@@ -30,6 +30,10 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
 
     func requestWhenInUse() {
         manager.requestWhenInUseAuthorization()
+        // Also publish the current state immediately. If permission was already
+        // granted, iOS may not emit another delegate transition, and the web
+        // bridge still needs a deterministic authorization handshake.
+        onAuthorizationChanged?(manager.authorizationStatus, manager.accuracyAuthorization)
     }
 
     func requestAlwaysAfterUserExplanation() {
