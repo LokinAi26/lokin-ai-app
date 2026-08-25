@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
 
     const asset = await base44.asServiceRole.entities.OasisDesignAsset.create({
       organization_id: project.organization_id || user.organization_id || user.id,
+      owner_user_id: user.id,
       project_id: project.id,
       asset_type: study.assetType,
       name: `${study.name} v${version}`,
