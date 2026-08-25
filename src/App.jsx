@@ -21,6 +21,7 @@ import AvoidList from './pages/AvoidList';
 import Settings from './pages/Settings';
 import DrivingMode from './pages/DrivingMode';
 import Brand from './pages/Brand';
+import Oasis from './pages/Oasis';
 import Pricing from './pages/Pricing';
 import ThankYou from './pages/ThankYou';
 import Support from './pages/Support';
@@ -122,6 +123,7 @@ const AuthenticatedApp = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/drive" element={<DrivingMode />} />
           <Route path="/brand" element={<Brand />} />
+          <Route path="/oasis" element={<Oasis />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/support" element={<Support />} />
           <Route path="/gigs" element={<GigTasks />} />
