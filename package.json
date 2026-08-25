@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
+    "verify:navigation": "node scripts/verify-navigation-v2.mjs && npm run build && npm run lint",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },
