@@ -78,7 +78,11 @@ export default function RoutePlanner() {
       </div>
       <p className="text-sm text-white/45 -mt-2">Pick a mode — LOKIN ranks offers for that goal and sequences them by zone.</p>
 
-      <RouteHeatMap />
+      <RouteHeatMap
+        mode={mode}
+        originAddress={origin}
+        selectedOfferIds={stops.map((stop) => stop.id)}
+      />
 
       <div className="flex flex-wrap gap-2">
         {OPTIMIZATION_MODES.map((m) => (
