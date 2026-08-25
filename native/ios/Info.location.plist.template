@@ -1,0 +1,14 @@
+<!-- Merge these keys/capabilities into the shipping iOS target's Info.plist. -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>LOKIN uses your precise location to provide live turn-by-turn navigation, route matching, and driver context while you use navigation.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>LOKIN can continue an active navigation session when the app is not on screen so route guidance and trip tracking do not stop unexpectedly.</string>
+<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+<dict>
+  <key>NavigationPreciseLocation</key>
+  <string>Precise location improves road matching, turn timing, and rerouting during active navigation.</string>
+</dict>
+<key>UIBackgroundModes</key>
+<array>
+  <string>location</string>
+</array>
