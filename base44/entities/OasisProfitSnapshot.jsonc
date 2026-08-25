@@ -1,6 +1,7 @@
 {
   "name": "OasisProfitSnapshot",
   "type": "object",
+  "description": "Truthful contribution-profit measurement",
   "properties": {
     "organization_id": {
       "type": "string"
