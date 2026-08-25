@@ -1,0 +1,63 @@
+{
+  "name": "OasisSampleRequest",
+  "type": "object",
+  "description": "Approval-controlled request for a physical OASIS product sample",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "product_spec_id": {
+      "type": "string"
+    },
+    "supplier_candidate_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "awaiting_approval",
+        "approved_not_ordered",
+        "ordered",
+        "received",
+        "passed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "quantity": {
+      "type": "integer",
+      "default": 1
+    },
+    "estimated_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "approval_id": {
+      "type": "string"
+    },
+    "external_order_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "project_id",
+    "product_spec_id",
+    "status",
+    "created_at"
+  ]
+}
