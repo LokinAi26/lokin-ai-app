@@ -5,6 +5,9 @@ const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
 const MAX_OFFERS = 30;
 const MAX_RADIUS_MILES = 55;
 const ZONE_STEP_DEGREES = 0.012;
+const VIRGINIA_BEACH_ORIGIN = { longitude: -75.978, latitude: 36.8529 };
+const TRUSTED_SOURCES = new Set(["user_entered", "user_shared", "official_api", "merchant_feed"]);
+const TRUSTED_VERIFICATION = new Set(["address_verified", "platform_verified"]);
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status });
@@ -97,6 +100,20 @@ async function mapWithConcurrency<T, R>(items: T[], concurrency: number, worker:
   return results;
 }
 
+function isCurrentTrustedOffer(offer: any, marketState = "") {
+  if (offer?.status && offer.status !== "available") return false;
+  if (!TRUSTED_SOURCES.has(String(offer?.source_type || ""))) return false;
+  if (!TRUSTED_VERIFICATION.has(String(offer?.verification_status || ""))) return false;
+  if (marketState && String(offer?.state_code || "").toUpperCase() !== marketState) return false;
+
+  const capturedAt = Date.parse(String(offer?.captured_at || ""));
+  const expiresAt = Date.parse(String(offer?.expires_at || ""));
+  if (!Number.isFinite(capturedAt) || !Number.isFinite(expiresAt)) return false;
+  if (capturedAt > Date.now() + 5 * 60000) return false;
+  if (expiresAt <= Date.now()) return false;
+  return true;
+}
+
 function freshness(updatedAt: string | null) {
   const timestamp = updatedAt ? Date.parse(updatedAt) : NaN;
   if (!Number.isFinite(timestamp)) return { state: "unknown", age_minutes: null };
@@ -143,6 +160,8 @@ export default async function hotspotMap(req: Request) {
         ? { longitude: geocodedOrigin.longitude, latitude: geocodedOrigin.latitude }
         : null;
     }
+    const marketState = String(body?.market_state || "VA").trim().toUpperCase() === "VA" ? "VA" : "";
+    if (!origin && marketState === "VA") origin = VIRGINIA_BEACH_ORIGIN;
     const mode = OPTIMIZATION_MODES.some((item: any) => item.value === body?.mode) ? body.mode : "most_profit";
     const selectedOfferIds = new Set(
       Array.isArray(body?.selected_offer_ids)
@@ -167,7 +186,8 @@ export default async function hotspotMap(req: Request) {
       mileage_cost: 0.67,
     };
 
-    const eligible = filterAndRank(allOffers, preferences, blocked, avoidPlaces);
+    const currentOffers = allOffers.filter((offer: any) => isCurrentTrustedOffer(offer, marketState));
+    const eligible = filterAndRank(currentOffers, preferences, blocked, avoidPlaces);
     const ranked = rankByMode(eligible, mode, originAddress).slice(0, MAX_OFFERS);
     const geocoded = await mapWithConcurrency(ranked, 4, async (offer: any) => {
       try {
@@ -254,7 +274,7 @@ export default async function hotspotMap(req: Request) {
       .sort((a: any, b: any) => b.mode_score - a.mode_score);
 
     const newestUpdate = ranked
-      .map((offer: any) => offer.updated_date || offer.created_date || null)
+      .map((offer: any) => offer.captured_at || null)
       .filter(Boolean)
       .sort()
       .at(-1) || null;
@@ -270,6 +290,9 @@ export default async function hotspotMap(req: Request) {
         freshness: status.state,
         age_minutes: status.age_minutes,
         newest_offer_at: newestUpdate,
+        market_state: marketState || "CURRENT_LOCATION",
+        active_verified_offers: currentOffers.length,
+        excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
         eligible_offers: eligible.length,
         located_offers: located.length,
         skipped_unlocated: Math.max(0, ranked.length - located.length),
