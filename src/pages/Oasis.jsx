@@ -86,7 +86,8 @@ function Score({ label, value }) {
   );
 }
 
-function ProjectCard({ project, advancing, onAdvance }) {
+function ProjectCard({ project, advancing, analyzing, onAdvance, onAnalyze }) {
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(project.director_summary));
   const price = Number(project.target_price || 0);
   const margin = Number(project.target_margin || 0);
   const estimatedContribution = price * (margin / 100);
@@ -130,7 +131,50 @@ function ProjectCard({ project, advancing, onAdvance }) {
 
       <button
         type="button"
-        disabled={advancing || project.status === "scale" || project.status === "retired"}
+        disabled={analyzing}
+        onClick={() => onAnalyze(project)}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-xs font-black text-black disabled:opacity-50"
+      >
+        {analyzing ? <Clock3 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+        {analyzing ? "OASIS Director is analyzing…" : project.director_summary ? "Refresh Director analysis" : "Analyze with OASIS Director"}
+      </button>
+
+      {project.director_summary && (
+        <div className="mt-3 rounded-xl border border-primary/20 bg-primary/[0.04] p-3">
+          <button type="button" onClick={() => setDetailsOpen((open) => !open)} className="flex w-full items-center justify-between text-left">
+            <span>
+              <span className="block font-display text-[9px] tracking-[0.16em] text-primary">DIRECTOR BRIEF</span>
+              <span className="mt-1 block text-xs font-bold text-white/80">{project.director_summary}</span>
+            </span>
+            <span className="ml-3 text-lg text-primary">{detailsOpen ? "−" : "+"}</span>
+          </button>
+          {detailsOpen && (
+            <div className="mt-3 space-y-3 border-t border-white/10 pt-3">
+              {[
+                ["Design direction", project.design_direction],
+                ["Production plan", project.production_plan],
+                ["Demand thesis", project.demand_thesis],
+                ["Rights & risk review", project.risk_review],
+              ].filter(([, value]) => value).map(([label, value]) => (
+                <div key={label}>
+                  <div className="text-[9px] uppercase tracking-[0.14em] text-white/35">{label}</div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-white/65">{value}</p>
+                </div>
+              ))}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-black/35 p-2"><div className="text-[8px] text-white/35">PRICE</div><div className="text-xs font-bold text-white">${Number(project.recommended_price || 0).toFixed(2)}</div></div>
+                <div className="rounded-lg bg-black/35 p-2"><div className="text-[8px] text-white/35">UNIT COST</div><div className="text-xs font-bold text-white">${Number(project.estimated_unit_cost || 0).toFixed(2)}</div></div>
+                <div className="rounded-lg bg-black/35 p-2"><div className="text-[8px] text-white/35">CONTRIBUTION</div><div className="text-xs font-bold text-primary">${Number(project.estimated_contribution_profit || 0).toFixed(2)}</div></div>
+              </div>
+              <p className="text-[9px] leading-relaxed text-white/30">AI decision support—not verified demand, legal clearance, supplier inventory, or a physical sample.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <button
+        type="button"
+        disabled={advancing || analyzing || project.status === "scale" || project.status === "retired"}
         onClick={() => onAdvance(project)}
         className="mt-3 flex w-full items-center justify-between rounded-xl border border-primary/25 bg-primary/[0.07] px-3 py-2.5 text-left disabled:opacity-45"
       >
@@ -153,6 +197,7 @@ export default function Oasis() {
   const [idea, setIdea] = useState(EMPTY_IDEA);
   const [saving, setSaving] = useState(false);
   const [advancingId, setAdvancingId] = useState("");
+  const [analyzingId, setAnalyzingId] = useState("");
   const [error, setError] = useState("");
 
   async function loadProjects() {
@@ -224,6 +269,91 @@ export default function Oasis() {
       setError("The idea was not saved. Check your connection and try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function analyzeProject(project) {
+    setAnalyzingId(project.id);
+    setError("");
+    try {
+      const response = await base44.functions.invoke("external-ai-gateway", {
+        mode: "oasis",
+        command: JSON.stringify({
+          project_id: project.id,
+          title: project.title,
+          idea: project.idea,
+          category: project.category,
+          audience: project.audience,
+          target_price: Number(project.target_price || 0),
+          target_margin: Number(project.target_margin || 0),
+        }),
+      });
+      const result = response?.data || response || {};
+      const user = await base44.auth.me().catch(() => null);
+      const now = new Date().toISOString();
+
+      if (result.analysis_status === "setup_required" || result.configured === false) {
+        await base44.entities.OasisDirectorRun.create({
+          organization_id: project.organization_id || user?.organization_id || user?.id || "lokin",
+          owner_user_id: user?.id || "",
+          project_id: project.id,
+          run_status: "setup_required",
+          output_json: JSON.stringify({ message: result.director_summary || "Provider setup required" }),
+          provider: result.provider || "local-fallback",
+          model: "",
+          input_tokens: 0,
+          output_tokens: 0,
+          estimated_cost_usd: 0,
+          guardian_mode: result.guardian?.mode || "normal",
+          created_at: now,
+        });
+        setError(result.director_summary || "OASIS Director provider setup is required. Your project was not changed.");
+        return;
+      }
+
+      const clampScore = (value) => Math.max(0, Math.min(100, Number(value || 0)));
+      const update = {
+        director_summary: String(result.director_summary || "").slice(0, 1400),
+        design_direction: String(result.design_direction || "").slice(0, 1800),
+        production_plan: String(result.production_plan || "").slice(0, 1800),
+        demand_thesis: String(result.demand_thesis || "").slice(0, 1800),
+        risk_review: String(result.risk_review || "").slice(0, 1800),
+        brand_score: clampScore(result.brand_score),
+        production_score: clampScore(result.production_score),
+        demand_score: clampScore(result.demand_score),
+        profit_score: clampScore(result.profit_score),
+        recommended_price: Math.max(0, Number(result.recommended_price || 0)),
+        estimated_unit_cost: Math.max(0, Number(result.estimated_unit_cost || 0)),
+        estimated_contribution_profit: Number(result.estimated_contribution_profit || 0),
+        director_provider: result.provider || "external",
+        director_model: result.model || "",
+        director_analyzed_at: now,
+        status: project.status === "idea" ? "concept" : project.status,
+        next_action: String(result.next_action || "Review Director brief").slice(0, 500),
+        updated_at: now,
+      };
+
+      const updated = await base44.entities.OasisProject.update(project.id, update);
+      await base44.entities.OasisDirectorRun.create({
+        organization_id: project.organization_id || user?.organization_id || user?.id || "lokin",
+        owner_user_id: user?.id || "",
+        project_id: project.id,
+        run_status: "completed",
+        output_json: JSON.stringify(result).slice(0, 12000),
+        provider: result.provider || "external",
+        model: result.model || "",
+        input_tokens: Number(result.usage?.input_tokens || 0),
+        output_tokens: Number(result.usage?.output_tokens || 0),
+        estimated_cost_usd: Number(result.usage?.estimated_cost_usd || 0),
+        guardian_mode: result.guardian?.mode || "normal",
+        created_at: now,
+      });
+      setProjects((current) => current.map((item) => item.id === project.id ? updated : item));
+    } catch (err) {
+      const message = err?.response?.data?.error || err?.message || "OASIS Director analysis failed.";
+      setError(`${message} Your saved project remains unchanged.`);
+    } finally {
+      setAnalyzingId("");
     }
   }
 
@@ -342,7 +472,9 @@ export default function Oasis() {
                 key={project.id}
                 project={project}
                 advancing={advancingId === project.id}
+                analyzing={analyzingId === project.id}
                 onAdvance={advanceProject}
+                onAnalyze={analyzeProject}
               />
             ))}
           </div>
