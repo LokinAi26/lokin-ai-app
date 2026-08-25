@@ -19,7 +19,7 @@ import kotlin.math.PI
 /**
  * Bounded short-horizon dead reckoning for active navigation.
  * Fused Location Provider remains the absolute anchor. IMU + pressure bridge
- * brief GNSS gaps only; prediction stops after eight seconds without an anchor.
+ * brief GNSS gaps only; prediction is confidence-bounded and stops after twenty seconds without an anchor.
  */
 class LokinSensorFusion(context: Context) : SensorEventListener {
     private val appContext = context.applicationContext
