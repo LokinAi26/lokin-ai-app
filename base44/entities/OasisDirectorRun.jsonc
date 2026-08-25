@@ -1,0 +1,58 @@
+{
+  "name": "OasisDirectorRun",
+  "type": "object",
+  "description": "Versioned OASIS Director analysis with provider and cost telemetry",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "run_status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "setup_required",
+        "blocked",
+        "failed"
+      ]
+    },
+    "output_json": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "input_tokens": {
+      "type": "number",
+      "default": 0
+    },
+    "output_tokens": {
+      "type": "number",
+      "default": 0
+    },
+    "estimated_cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "guardian_mode": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "project_id",
+    "run_status",
+    "created_at"
+  ]
+}
