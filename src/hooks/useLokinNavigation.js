@@ -238,8 +238,81 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     }
   }, []);
 
+  const processLocationSample = useCallback((sample, source = "web") => {
+    const coord = sample?.coordinate;
+    if (!coord || coord.length < 2) return;
+    if (source === "native") nativeSeenAtRef.current = Date.now();
+    setRawPosition(sample);
+
+    const key = destinationsRef.current.join("||");
+    if (!routeRef.current && startedKeyRef.current !== key) {
+      startedKeyRef.current = key;
+      requestRoute(coord, destinationsRef.current, "initial");
+      return;
+    }
+
+    const activeRoute = routeRef.current;
+    const geometry = activeRoute?.geometry?.coordinates || [];
+    if (!geometry.length) return;
+    const snap = snapToRoute(coord, geometry, cumulativeRef.current);
+    if (!snap) return;
+    const enrichedSnap = { ...snap, raw_coordinate: coord, accuracy_m: sample.accuracy_m, heading: sample.heading, speed_mps: sample.speed_mps, timestamp: sample.timestamp };
+    setSnapped(enrichedSnap);
+    const next = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
+    setManeuver(next);
+
+    const threshold = Math.max(35, Math.min(90, sample.accuracy_m * 1.5 || 35));
+    if (snap.distance_m > threshold) offRouteSamplesRef.current += 1;
+    else offRouteSamplesRef.current = 0;
+
+    const now = Date.now();
+    if (offRouteSamplesRef.current >= 3 && now - lastRerouteAtRef.current > 12000) {
+      lastRerouteAtRef.current = now;
+      offRouteSamplesRef.current = 0;
+      const currentIndex = snap.segment_index || 0;
+      const remaining = destinationsRef.current.filter((address, i) => {
+        const g = geocodedRef.current?.[i];
+        if (!g) return true;
+        const idx = nearestGeometryIndex([g.longitude, g.latitude], geometry);
+        return idx >= currentIndex - 2;
+      });
+      requestRoute(coord, remaining.length ? remaining : destinationsRef.current.slice(-1), "off_route");
+    }
+  }, [requestRoute]);
+
   useEffect(() => {
-    if (!enabled || !normalizedDestinations.length) return;
+    if (!enabled || !normalizedDestinations.length || !nativeLocationAvailable()) return;
+    setStatus("waiting_location");
+    setError("");
+
+    const unsubscribeLocation = subscribeNativeLocation((raw) => {
+      const sample = normalizeNativeLocationSample(raw);
+      if (sample) processLocationSample(sample, "native");
+    });
+    const unsubscribeAuthorization = subscribeNativeLocationAuthorization((authorization) => {
+      if (["denied", "restricted"].includes(authorization?.status)) {
+        setStatus("error");
+        setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
+      }
+    });
+    const unsubscribeError = subscribeNativeLocationError((nativeError) => {
+      setStatus("error");
+      setError(nativeError?.message || "LOKIN native location engine reported an error.");
+    });
+
+    requestNativeWhenInUse();
+    startNativeLocation({ mode: "activeNavigation", sessionId: `lokin-nav-${Date.now()}` });
+
+    return () => {
+      unsubscribeLocation();
+      unsubscribeAuthorization();
+      unsubscribeError();
+      stopNativeLocation();
+    };
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
+
+  useEffect(() => {
+    if (!enabled || !normalizedDestinations.length || nativeLocationAvailable()) return;
     if (!navigator.geolocation) {
       setStatus("error");
       setError("This device does not expose GPS location to LOKIN.");
@@ -251,56 +324,22 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       (position) => {
         const coord = asCoord(position);
         if (!coord) return;
-        const sample = {
+        processLocationSample({
           coordinate: coord,
           latitude: coord[1],
           longitude: coord[0],
           accuracy_m: Number(position.coords.accuracy || 0),
           heading: Number.isFinite(position.coords.heading) ? position.coords.heading : null,
           speed_mps: Number.isFinite(position.coords.speed) ? position.coords.speed : null,
+          altitude_m: Number.isFinite(position.coords.altitude) ? position.coords.altitude : null,
           timestamp: position.timestamp || Date.now(),
-        };
-        setRawPosition(sample);
-
-        const key = destinationsRef.current.join("||");
-        if (!routeRef.current && startedKeyRef.current !== key) {
-          startedKeyRef.current = key;
-          requestRoute(coord, destinationsRef.current, "initial");
-          return;
-        }
-
-        const activeRoute = routeRef.current;
-        const geometry = activeRoute?.geometry?.coordinates || [];
-        if (!geometry.length) return;
-        const snap = snapToRoute(coord, geometry, cumulativeRef.current);
-        if (!snap) return;
-        const enrichedSnap = { ...snap, raw_coordinate: coord, accuracy_m: sample.accuracy_m, heading: sample.heading, speed_mps: sample.speed_mps, timestamp: sample.timestamp };
-        setSnapped(enrichedSnap);
-        const next = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
-        setManeuver(next);
-
-        const threshold = Math.max(35, Math.min(90, sample.accuracy_m * 1.5 || 35));
-        if (snap.distance_m > threshold) offRouteSamplesRef.current += 1;
-        else offRouteSamplesRef.current = 0;
-
-        const now = Date.now();
-        if (offRouteSamplesRef.current >= 3 && now - lastRerouteAtRef.current > 12000) {
-          lastRerouteAtRef.current = now;
-          offRouteSamplesRef.current = 0;
-          const currentIndex = snap.segment_index || 0;
-          const remaining = destinationsRef.current.filter((address, i) => {
-            const g = geocodedRef.current?.[i];
-            if (!g) return true;
-            const idx = nearestGeometryIndex([g.longitude, g.latitude], geometry);
-            return idx >= currentIndex - 2;
-          });
-          requestRoute(coord, remaining.length ? remaining : destinationsRef.current.slice(-1), "off_route");
-        }
+          source: "web-geolocation",
+        }, "web");
       },
       (geoError) => {
         setStatus("error");
         const message = geoError?.code === 1
-          ? "Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in iPhone Settings."
+          ? "Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings."
           : geoError?.message || "LOKIN could not read the current GPS position.";
         setError(message);
       },
@@ -308,7 +347,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [enabled, destinationsKey, requestRoute]);
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
 
   useEffect(() => {
     if (!voiceGuidance || !voiceSupported() || !maneuver) return;
