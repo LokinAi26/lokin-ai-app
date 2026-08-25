@@ -14,6 +14,8 @@ import {
   startNativeLocation,
   stopNativeLocation,
   subscribeNativeLocation,
+  subscribeNativeLocationAuthorization,
+  subscribeNativeLocationError,
 } from "@/lib/nativeLocationBridge";
 
 function asCoord(position) {
