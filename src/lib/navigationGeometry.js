@@ -72,6 +72,103 @@ export function snapToRoute(point, geometry = [], cumulativeInput) {
   return { ...best, progress: total > 0 ? Math.max(0, Math.min(1, best.along_route_m / total)) : 0 };
 }
 
+function angularDifferenceDeg(a, b) {
+  if (!Number.isFinite(Number(a)) || !Number.isFinite(Number(b))) return 0;
+  return Math.abs((((Number(a) - Number(b)) % 360) + 540) % 360 - 180);
+}
+
+/**
+ * Online HMM-style route matcher. Emission probability comes from distance and
+ * heading agreement; transition probability comes from along-route continuity.
+ * This is stateful across fixes through previousSnap and avoids the common
+ * nearest-segment failure on parallel roads and divided highways.
+ */
+export function matchToRouteHMM(point, geometry = [], cumulativeInput, options = {}) {
+  if (!point || !Array.isArray(geometry) || geometry.length < 2) return snapToRoute(point, geometry, cumulativeInput);
+
+  const cumulative = cumulativeInput || routeCumulativeDistances(geometry);
+  const previous = options.previousSnap || null;
+  const heading = Number(options.heading);
+  const speedMps = Math.max(0, Number(options.speedMps) || 0);
+  const accuracyM = Math.max(4, Math.min(60, Number(options.accuracyM) || 12));
+  const timestamp = Number(options.timestamp) || Date.now();
+  const sigmaDistance = Math.max(6, accuracyM);
+  const sigmaHeading = speedMps >= 5 ? 28 : 45;
+
+  const evaluate = (start, end) => {
+    let best = null;
+    for (let i = start; i < end; i++) {
+      const p = projectPointToSegment(point, geometry[i], geometry[i + 1]);
+      const segLen = haversineMeters(geometry[i], geometry[i + 1]);
+      const alongRouteM = cumulative[i] + segLen * p.t;
+      const segmentHeading = bearingDegrees(geometry[i], geometry[i + 1]);
+
+      const distanceCost = Math.pow(p.distance_m / sigmaDistance, 2);
+      const headingError = Number.isFinite(heading) && speedMps > 1.5 ? angularDifferenceDeg(heading, segmentHeading) : 0;
+      const headingCost = Number.isFinite(heading) && speedMps > 1.5
+        ? 0.9 * Math.pow(headingError / sigmaHeading, 2)
+        : 0;
+
+      let transitionCost = 0;
+      if (previous && Number.isFinite(Number(previous.along_route_m))) {
+        const dt = Math.max(0.05, Math.min(10, (timestamp - Number(previous.timestamp || timestamp)) / 1000));
+        const previousSpeed = Math.max(0, Number(previous.speed_mps) || speedMps);
+        const expectedTravel = previousSpeed * dt;
+        const actualTravel = alongRouteM - Number(previous.along_route_m);
+
+        // Strongly penalize jumping backward on the route unless position
+        // uncertainty is large; modestly penalize impossible forward jumps.
+        if (actualTravel < -Math.max(12, accuracyM)) {
+          transitionCost += 5.0 * Math.pow(Math.abs(actualTravel) / Math.max(20, accuracyM * 1.5), 2);
+        }
+        const forwardResidual = Math.abs(actualTravel - expectedTravel);
+        transitionCost += 0.55 * Math.pow(forwardResidual / Math.max(30, expectedTravel + accuracyM * 1.5), 2);
+
+        const segmentJump = Math.abs(i - Number(previous.segment_index || 0));
+        if (segmentJump > 45) transitionCost += Math.pow((segmentJump - 45) / 35, 2);
+      }
+
+      const cost = distanceCost + headingCost + transitionCost;
+      if (!best || cost < best.cost) {
+        best = {
+          coordinate: p.coordinate,
+          distance_m: p.distance_m,
+          segment_index: i,
+          segment_fraction: p.t,
+          along_route_m: alongRouteM,
+          cost,
+          heading_error_deg: headingError,
+          segment_heading_deg: segmentHeading,
+        };
+      }
+    }
+    return best;
+  };
+
+  let candidate;
+  if (previous && Number.isFinite(Number(previous.segment_index))) {
+    const center = Number(previous.segment_index);
+    candidate = evaluate(Math.max(0, center - 24), Math.min(geometry.length - 1, center + 100));
+    // If the local window is a very poor spatial fit, recover globally. This
+    // allows route re-entry without letting every noisy fix teleport the snap.
+    if (!candidate || candidate.distance_m > Math.max(75, accuracyM * 3.5)) {
+      candidate = evaluate(0, geometry.length - 1);
+    }
+  } else {
+    candidate = evaluate(0, geometry.length - 1);
+  }
+
+  if (!candidate) return null;
+  const total = cumulative[cumulative.length - 1] || 0;
+  const confidence = Math.max(0.01, Math.min(0.999, Math.exp(-candidate.cost / 2)));
+  return {
+    ...candidate,
+    progress: total > 0 ? Math.max(0, Math.min(1, candidate.along_route_m / total)) : 0,
+    match_confidence: confidence,
+    match_method: "online-hmm",
+  };
+}
+
 export function nearestGeometryIndex(coord, geometry = []) {
   if (!coord || !geometry.length) return 0;
   let bestIndex = 0, bestDistance = Infinity;
