@@ -63,6 +63,9 @@ class LokinLocationBridge(
         .put("speedMps", s.speedMps)
         .put("headingDeg", s.headingDeg)
         .put("source", s.source)
+        .put("confidence", s.confidence)
+        .put("deadReckoned", s.deadReckoned)
+        .put("barometricAltitudeM", s.barometricAltitudeM)
 
     private fun evaluate(script: String) {
         webView.post { webView.evaluateJavascript(script, null) }
