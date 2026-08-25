@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { AlertTriangle, Clock3, Crosshair, DollarSign, Flame, MapPin, RefreshCw, TrendingUp } from "lucide-react";
+import { AlertTriangle, Clock3, DollarSign, Flame, MapPin, RefreshCw, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
