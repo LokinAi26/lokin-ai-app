@@ -30,8 +30,9 @@ function highwayParallelRoadScenario() {
     [-75.9500, 36.8500],
   ];
   const cumulative = routeCumulativeDistances(route);
-  const first = matchToRouteHMM([-75.976, 36.85003], route, cumulative, { heading: 90, speedMps: 25, accuracyM: 7, timestamp: 1_000 });
-  const second = matchToRouteHMM([-75.968, 36.85004], route, cumulative, { previousSnap: { ...first, timestamp: 1_000, speed_mps: 25 }, heading: 90, speedMps: 25, accuracyM: 8, timestamp: 2_800 });
+  // Cross a segment boundary at a physically plausible highway speed (~53 m in 2.2 s).
+  const first = matchToRouteHMM([-75.9704, 36.85003], route, cumulative, { heading: 90, speedMps: 25, accuracyM: 7, timestamp: 1_000 });
+  const second = matchToRouteHMM([-75.9698, 36.85004], route, cumulative, { previousSnap: { ...first, timestamp: 1_000, speed_mps: 25 }, heading: 90, speedMps: 25, accuracyM: 8, timestamp: 3_200 });
   assert.ok(second.along_route_m > first.along_route_m, "highway matcher must preserve forward continuity");
   assert.ok(second.match_confidence > 0.5, "highway match confidence should remain useful");
   return { firstSegment: first.segment_index, secondSegment: second.segment_index, confidence: second.match_confidence };
