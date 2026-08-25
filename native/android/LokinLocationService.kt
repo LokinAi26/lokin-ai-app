@@ -36,8 +36,8 @@ class LokinLocationService : Service() {
         override fun onLocationResult(result: LocationResult) {
             result.locations.forEach { raw ->
                 val cleaned = filter.filter(raw, mode) ?: return@forEach
-                if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) fusion.ingestAnchor(cleaned)
                 val seq = nextSequence()
+                if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) fusion.ingestAnchor(cleaned, seq)
                 val confidence = kotlin.math.max(0.05, kotlin.math.min(0.99, kotlin.math.exp(-cleaned.accuracy.toDouble() / 65.0)))
                 val sample = LokinLocationSample(
                     seq = seq,
@@ -51,7 +51,10 @@ class LokinLocationService : Service() {
                     source = if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) "fused+sensor-fusion-anchor" else "fused",
                     confidence = confidence,
                     deadReckoned = false,
-                    barometricAltitudeM = null
+                    barometricAltitudeM = null,
+                    authoritative = true,
+                    anchorSeq = seq,
+                    estimatedUncertaintyM = cleaned.accuracy.toDouble()
                 )
                 queue.enqueue(sample)
                 LokinLocationBus.publish(sample)
@@ -66,8 +69,9 @@ class LokinLocationService : Service() {
         fusion = LokinSensorFusion(this)
         fusion.onPredictedFix = { fix ->
             val predicted = fix.location
-            LokinLocationBus.publish(LokinLocationSample(
-                seq = 0L,
+            val seq = nextSequence()
+            val sample = LokinLocationSample(
+                seq = seq,
                 timestampMs = predicted.time,
                 latitude = predicted.latitude,
                 longitude = predicted.longitude,
@@ -78,8 +82,15 @@ class LokinLocationService : Service() {
                 source = fix.source,
                 confidence = fix.confidence,
                 deadReckoned = fix.deadReckoned,
-                barometricAltitudeM = fix.barometricAltitudeM
-            ))
+                barometricAltitudeM = fix.barometricAltitudeM,
+                authoritative = false,
+                anchorSeq = fix.anchorSeq,
+                estimatedUncertaintyM = predicted.accuracy.toDouble()
+            )
+            // Persist estimates for offline continuity; provenance keeps them
+            // separate from absolute Fused Location Provider anchors.
+            queue.enqueue(sample)
+            LokinLocationBus.publish(sample)
         }
         createNotificationChannel()
     }
@@ -142,6 +153,7 @@ class LokinLocationService : Service() {
         stopSelf()
     }
 
+    @Synchronized
     private fun nextSequence(): Long {
         val prefs = getSharedPreferences("lokin_location", MODE_PRIVATE)
         val next = prefs.getLong("sequence", 0L) + 1L
