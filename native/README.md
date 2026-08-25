@@ -94,6 +94,18 @@ Compile these under the shipping Android app namespace (adjust `ai.lokin.locatio
 
 The current native package intentionally queues telemetry locally. Background cloud upload should use a short-lived authenticated navigation-session upload token rather than placing a permanent Base44 or provider secret inside either app binary.
 
+## Sensor Fusion v2
+
+Sensor Fusion v2 extends the native location core without increasing raw GPS polling:
+
+- `native/ios/LokinSensorFusion.swift` uses Core Motion device motion plus `CMAltimeter` as a bounded short-horizon dead-reckoning layer. Core Location remains the absolute anchor. Predictions begin only after a short anchor gap and stop after eight seconds without a fresh absolute fix.
+- `native/android/LokinSensorFusion.kt` uses rotation-vector, linear-acceleration, and pressure sensors around Fused Location Provider anchors under the same bounded-prediction policy.
+- Predicted fixes are marked with confidence, `deadReckoned`, barometric altitude, and a source label. They are emitted to the live navigation UI but intentionally are not persisted as authoritative offline telemetry; only absolute provider anchors enter the SQLite queue.
+- `src/lib/navigationGeometry.js` now contains an online HMM-style route matcher. Distance/accuracy form the observation cost while heading, along-route continuity, expected travel, and segment jumps form transition costs. This replaces stateless nearest-segment snapping in `useLokinNavigation.js`.
+- `npm run verify:navigation` runs synthetic forward-progress, parallel-road/direction, and continuity regression checks, then the production web build and lint suite.
+
+This is deliberately a bounded navigation fusion layer, not a claim of inertial-only absolute positioning. The iOS/Android source still must be compiled into the exported native shells and physically road-tested before the feature is treated as active in a shipping build.
+
 ## REAL 4D navigation
 
 The live map is powered by Mapbox road/satellite imagery and the same production route geometry used by turn-by-turn navigation. The 4D presentation is a pitched, heading-up view of real map data—not procedural terrain.
