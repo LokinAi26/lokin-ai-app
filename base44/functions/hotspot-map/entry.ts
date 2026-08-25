@@ -135,8 +135,14 @@ export default async function hotspotMap(req: Request) {
       }, 503);
     }
 
-    const origin = validCoordinate(body?.origin);
+    let origin = validCoordinate(body?.origin);
     const originAddress = String(body?.origin_address || "").trim();
+    if (!origin && originAddress) {
+      const geocodedOrigin = await geocodeAddress(originAddress, accessToken, null);
+      origin = geocodedOrigin
+        ? { longitude: geocodedOrigin.longitude, latitude: geocodedOrigin.latitude }
+        : null;
+    }
     const mode = OPTIMIZATION_MODES.some((item: any) => item.value === body?.mode) ? body.mode : "most_profit";
     const selectedOfferIds = new Set(
       Array.isArray(body?.selected_offer_ids)
