@@ -6,6 +6,9 @@
     "organization_id": {
       "type": "string"
     },
+    "owner_user_id": {
+      "type": "string"
+    },
     "project_id": {
       "type": "string"
     },
