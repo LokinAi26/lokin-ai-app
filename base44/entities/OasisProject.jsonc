@@ -78,6 +78,40 @@
     "next_action": {
       "type": "string"
     },
+    "director_summary": {
+      "type": "string"
+    },
+    "design_direction": {
+      "type": "string"
+    },
+    "production_plan": {
+      "type": "string"
+    },
+    "demand_thesis": {
+      "type": "string"
+    },
+    "risk_review": {
+      "type": "string"
+    },
+    "recommended_price": {
+      "type": "number"
+    },
+    "estimated_unit_cost": {
+      "type": "number"
+    },
+    "estimated_contribution_profit": {
+      "type": "number"
+    },
+    "director_provider": {
+      "type": "string"
+    },
+    "director_model": {
+      "type": "string"
+    },
+    "director_analyzed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"
