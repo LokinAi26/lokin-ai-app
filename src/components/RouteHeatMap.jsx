@@ -5,7 +5,7 @@ import { AlertTriangle, Clock3, DollarSign, Flame, MapPin, RefreshCw, TrendingUp
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
-const FALLBACK_CENTER = [39.8283, -98.5795];
+const FALLBACK_CENTER = [36.8529, -75.978];
 const METRICS = [
   { id: "earnings", label: "Net/hr", icon: TrendingUp },
   { id: "payout", label: "Payout", icon: DollarSign },
@@ -82,6 +82,7 @@ export default function RouteHeatMap({
   mode = "most_profit",
   originAddress = "",
   selectedOfferIds = [],
+  refreshKey = 0,
 }) {
   const [metric, setMetric] = useState("earnings");
   const [deviceCenter, setDeviceCenter] = useState(null);
@@ -127,19 +128,16 @@ export default function RouteHeatMap({
   useEffect(() => {
     let alive = true;
     if (!locationReady) return () => { alive = false; };
-    if (!deviceCenter && !effectiveOriginAddress) {
-      setPayload(null);
-      setError("");
-      return () => { alive = false; };
-    }
 
     setLoading(true);
     setError("");
     guardedInvoke(base44, "hotspot-map", {
-      origin: deviceCenter
-        ? { latitude: deviceCenter[0], longitude: deviceCenter[1] }
-        : null,
+      origin: {
+        latitude: (deviceCenter || FALLBACK_CENTER)[0],
+        longitude: (deviceCenter || FALLBACK_CENTER)[1],
+      },
       origin_address: effectiveOriginAddress,
+      market_state: "VA",
       mode,
       selected_offer_ids: selectedKey ? selectedKey.split("|") : [],
     }, {
@@ -162,7 +160,7 @@ export default function RouteHeatMap({
       .finally(() => alive && setLoading(false));
 
     return () => { alive = false; };
-  }, [locationReady, deviceCenter?.[0], deviceCenter?.[1], effectiveOriginAddress, mode, selectedKey, refreshTick]);
+  }, [locationReady, deviceCenter?.[0], deviceCenter?.[1], effectiveOriginAddress, mode, selectedKey, refreshTick, refreshKey]);
 
   const zones = payload?.zones || [];
   const center = deviceCenter
@@ -194,7 +192,7 @@ export default function RouteHeatMap({
         <button
           type="button"
           onClick={() => setRefreshTick((value) => value + 1)}
-          disabled={loading || (!deviceCenter && !effectiveOriginAddress)}
+          disabled={loading}
           aria-label="Refresh real hotspot data"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 text-primary disabled:opacity-35"
         >
@@ -295,7 +293,7 @@ export default function RouteHeatMap({
           PICKUPS · NOT CUSTOMER LOCATIONS
         </div>
 
-        {(loading || error || (!deviceCenter && !effectiveOriginAddress)) && (
+        {(loading || error) && (
           <div className="absolute inset-0 z-[600] flex items-center justify-center bg-black/72 p-6 text-center backdrop-blur-sm">
             {loading ? (
               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
@@ -305,10 +303,10 @@ export default function RouteHeatMap({
               <div className="max-w-sm">
                 <AlertTriangle className="mx-auto h-5 w-5 text-amber-300" />
                 <div className="mt-2 text-sm font-bold text-white">
-                  {error ? "Real hotspot map unavailable" : "Location needed"}
+                  Real hotspot map unavailable
                 </div>
                 <div className="mt-1 text-[11px] leading-relaxed text-white/50">
-                  {error || locationError || "Allow precise location or enter a start address below. LOKIN will not invent hotspot data."}
+                  {error || locationError || "LOKIN will not invent hotspot data."}
                 </div>
               </div>
             )}
@@ -318,7 +316,7 @@ export default function RouteHeatMap({
 
       {!loading && !error && payload && zones.length === 0 && (
         <div className="border-t border-white/10 bg-amber-400/[0.05] px-3 py-3 text-[11px] leading-relaxed text-amber-100/75">
-          No eligible merchant pickup offers were located within {payload.source?.radius_miles || 55} miles. LOKIN is showing no zones instead of simulated demand.
+          No current verified Virginia offers are available within {payload.source?.radius_miles || 55} miles. Add an offer you can currently see in your delivery app; LOKIN will not invent demand.
         </div>
       )}
 
