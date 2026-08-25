@@ -60,6 +60,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const lastSpokenRef = useRef("");
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
+  const nativeStartedRef = useRef(false);
 
   useEffect(() => {
     destinationsRef.current = normalizedDestinations;
@@ -320,8 +321,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       const sample = normalizeNativeLocationSample(raw);
       if (sample) processLocationSample(sample, "native");
     });
+    const nativeSessionId = `lokin-nav-${Date.now()}`;
     const unsubscribeAuthorization = subscribeNativeLocationAuthorization((authorization) => {
-      if (["denied", "restricted"].includes(authorization?.status)) {
+      const authStatus = authorization?.status;
+      if (["always", "whenInUse"].includes(authStatus) && !nativeStartedRef.current) {
+        nativeStartedRef.current = true;
+        setError("");
+        startNativeLocation({ mode: "activeNavigation", sessionId: nativeSessionId });
+        return;
+      }
+      if (["denied", "restricted"].includes(authStatus)) {
         setStatus("error");
         setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
       }
@@ -331,14 +340,17 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setError(nativeError?.message || "LOKIN native location engine reported an error.");
     });
 
+    // Native engines start only after the OS confirms permission. This avoids
+    // racing Android's permission dialog and prevents a foreground service from
+    // starting and immediately stopping before ACCESS_FINE/COARSE is granted.
     requestNativeWhenInUse();
-    startNativeLocation({ mode: "activeNavigation", sessionId: `lokin-nav-${Date.now()}` });
 
     return () => {
       unsubscribeLocation();
       unsubscribeAuthorization();
       unsubscribeError();
-      stopNativeLocation();
+      if (nativeStartedRef.current) stopNativeLocation();
+      nativeStartedRef.current = false;
     };
   }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
 
