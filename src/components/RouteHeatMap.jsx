@@ -132,7 +132,7 @@ export default function RouteHeatMap({
     setLoading(true);
     setError("");
     guardedInvoke(base44, "hotspot-map", {
-      origin: {
+      origin: effectiveOriginAddress ? null : {
         latitude: (deviceCenter || FALLBACK_CENTER)[0],
         longitude: (deviceCenter || FALLBACK_CENTER)[1],
       },
