@@ -20,6 +20,22 @@
         "pharmacy"
       ]
     },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "doordash",
+        "uber_eats",
+        "instacart",
+        "spark",
+        "shipt",
+        "grubhub",
+        "amazon_flex",
+        "roadie",
+        "other"
+      ],
+      "default": "other",
+      "description": "Delivery platform named by the authenticated user or official source. LOKIN does not infer platform affiliation."
+    },
     "payout": {
       "type": "number"
     },
@@ -39,9 +55,63 @@
     "dropoff_address": {
       "type": "string"
     },
+    "state_code": {
+      "type": "string",
+      "description": "Two-letter state verified from the pickup address by the server-side map provider."
+    },
+    "postal_code": {
+      "type": "string",
+      "description": "Pickup postal code verified from the geocoding response."
+    },
+    "region": {
+      "type": "string",
+      "description": "Verified operating market label, initially Virginia / Hampton Roads."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "user_entered",
+        "user_shared",
+        "official_api",
+        "merchant_feed"
+      ],
+      "description": "Provenance of the offer. Scraped or inferred platform offers are not accepted."
+    },
+    "source_reference": {
+      "type": "string",
+      "description": "Optional external reference supplied by an authorized source."
+    },
+    "source_disclosure": {
+      "type": "string",
+      "description": "Plain-language disclosure of what was and was not independently verified."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "address_verified",
+        "platform_verified",
+        "rejected"
+      ],
+      "default": "unverified"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current offer was observed."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "After this time the offer is excluded from routing and hotspots."
+    },
+    "capture_id": {
+      "type": "string",
+      "description": "Client-generated idempotency key preventing duplicate offer ingestion."
+    },
     "store_hours": {
       "type": "string",
-      "description": "Merchant pickup location operating hours, e.g. '7AM-11PM' or '07:00-23:00'. Shown on route stops so drivers know closing/opening times."
+      "description": "Merchant pickup location operating hours, e.g. '7AM-11PM' or '07:00-23:00'."
     },
     "items_count": {
       "type": "number",
