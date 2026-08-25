@@ -122,8 +122,8 @@
     },
     "region": {
       "type": "string",
-      "default": "",
-      "description": "Driver's working region (e.g. Hampton Roads), used to match against opportunity region."
+      "default": "Hampton Roads, VA",
+      "description": "Driver's primary working market. LOKIN AI launches Virginia-first in Hampton Roads while retaining future multi-market support."
     },
     "alert_enabled": {
       "type": "boolean",
