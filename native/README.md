@@ -59,6 +59,41 @@ The Base44 project currently contains **no `.xcodeproj` / `.xcworkspace`**, so t
 - Siri only opens approved routes/commands; the web app still applies auth, command validation, and release gates.
 - The native layer does not duplicate routing or AI business logic.
 
+## Native background-safe location core
+
+The repository now also contains a platform location package that can replace browser `navigator.geolocation` in the shipping shells while preserving it as the Base44/web fallback.
+
+### iOS
+
+- `native/ios/LokinLocationModels.swift`
+- `native/ios/LokinLocationFilter.swift`
+- `native/ios/LokinLocationQueue.swift`
+- `native/ios/LokinLocationEngine.swift`
+- `native/ios/LokinLocationBridge.swift`
+- `native/ios/Info.location.plist.template`
+
+Compile these into the real Xcode target, link `libsqlite3`, enable **Background Modes → Location updates**, and merge the location privacy strings from the plist template. `LokinLocationEngine` uses `kCLLocationAccuracyBestForNavigation` only during active navigation, switches to a lower-power profile for passive mode, rejects stale/implausible fixes, smooths accepted points, and writes them to a local SQLite queue before publishing them to the web UI.
+
+Install `LokinLocationBridge` on the trusted LOKIN WKWebView and use `lokin-ai-app-604c3139.base44.app` as the allowed host. The React hook automatically prefers native location when this handler exists and otherwise continues using browser Geolocation.
+
+### Android
+
+- `native/android/LokinLocationModels.kt`
+- `native/android/LokinLocationFilter.kt`
+- `native/android/LokinLocationQueue.kt`
+- `native/android/LokinLocationBus.kt`
+- `native/android/LokinLocationService.kt`
+- `native/android/LokinLocationBridge.kt`
+- `native/android/AndroidManifest.location.xml.template`
+
+Compile these under the shipping Android app namespace (adjust `ai.lokin.location` if required), include Google Play Services Location and AndroidX Core, merge the manifest template, and add the `LokinLocationBridge` JavaScript interface only to the trusted LOKIN WebView. Active navigation runs as a location foreground service with a persistent notification and stores accepted fixes in SQLite before exposing them to the UI.
+
+### JS contract
+
+`src/lib/nativeLocationBridge.js` defines the native command/event contract. `src/hooks/useLokinNavigation.js` now prefers native samples when the bridge is present, but remains fully functional in Base44 preview/browser environments.
+
+The current native package intentionally queues telemetry locally. Background cloud upload should use a short-lived authenticated navigation-session upload token rather than placing a permanent Base44 or provider secret inside either app binary.
+
 ## REAL 4D navigation
 
 The live map is powered by Mapbox road/satellite imagery and the same production route geometry used by turn-by-turn navigation. The 4D presentation is a pitched, heading-up view of real map data—not procedural terrain.
