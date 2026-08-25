@@ -94,17 +94,21 @@ Compile these under the shipping Android app namespace (adjust `ai.lokin.locatio
 
 The current native package intentionally queues telemetry locally. Background cloud upload should use a short-lived authenticated navigation-session upload token rather than placing a permanent Base44 or provider secret inside either app binary.
 
-## Sensor Fusion v2
+## Sensor Fusion v2.1
 
-Sensor Fusion v2 extends the native location core without increasing raw GPS polling:
+Sensor Fusion v2.1 extends the native location core without increasing raw GPS polling:
 
-- `native/ios/LokinSensorFusion.swift` uses Core Motion device motion plus `CMAltimeter` as a bounded short-horizon dead-reckoning layer. Core Location remains the absolute anchor. Predictions begin only after a short anchor gap and stop after eight seconds without a fresh absolute fix.
-- `native/android/LokinSensorFusion.kt` uses rotation-vector, linear-acceleration, and pressure sensors around Fused Location Provider anchors under the same bounded-prediction policy.
-- Predicted fixes are marked with confidence, `deadReckoned`, barometric altitude, and a source label. They are emitted to the live navigation UI but intentionally are not persisted as authoritative offline telemetry; only absolute provider anchors enter the SQLite queue.
-- `src/lib/navigationGeometry.js` now contains an online HMM-style route matcher. Distance/accuracy form the observation cost while heading, along-route continuity, expected travel, and segment jumps form transition costs. This replaces stateless nearest-segment snapping in `useLokinNavigation.js`.
-- `npm run verify:navigation` runs synthetic forward-progress, parallel-road/direction, and continuity regression checks, then the production web build and lint suite.
+- `native/ios/LokinSensorFusion.swift` uses Core Motion device motion plus `CMAltimeter` around Core Location anchors. `native/android/LokinSensorFusion.kt` uses rotation-vector, linear-acceleration, and pressure sensors around Fused Location Provider anchors.
+- Dead reckoning is now calibrated for bounded tunnel/garage continuity up to 20 seconds. Uncertainty grows non-linearly and confidence decays continuously; the engine stops predicting beyond the calibrated horizon rather than pretending IMU-only positioning is absolute.
+- Every predicted sample now receives a real monotonic sequence number and is persisted to SQLite. It carries `authoritative=false`, `deadReckoned=true`, the originating `anchorSeq`, confidence, source, and explicit uncertainty. This preserves complete offline navigation history while keeping absolute-provider fixes distinguishable from estimates.
+- `src/lib/navigationQuality.js` prevents dead-reckoned samples from triggering a network reroute by themselves. A sufficiently confident absolute Core Location/Fused Location anchor must confirm the off-route condition. Thresholds automatically widen under urban-canyon accuracy and low HMM-match confidence.
+- `src/lib/navigationGeometry.js` contains the online HMM-style road matcher using distance, heading, route continuity, expected travel, and segment-jump costs to reduce parallel-road snapping.
+- Low Power Mode reduces IMU duty cycle while keeping absolute navigation anchors active: iOS drops Core Motion from 50 Hz to 25 Hz, and Android uses the lower-power sensor delivery profile.
+- `native/ios/Package.swift` packages the location stack as `LokinLocationCore` with SQLite linkage. `native/android/location-core` is an importable Android library module with Fused Location Provider and foreground-location service dependencies declared.
+- `npm run verify:navigation` now runs HMM regression checks, tunnel/garage, urban-canyon, highway continuity, adaptive reroute checks, native-package contract verification, the production web build, and lint.
+- `base44/functions/navigation-calibration-report` accepts authenticated structured field-test results. `base44/functions/navigation-telemetry-ingest` preserves authoritative/estimated counts and anchor lineage when opted-in telemetry is uploaded.
 
-This is deliberately a bounded navigation fusion layer, not a claim of inertial-only absolute positioning. The iOS/Android source still must be compiled into the exported native shells and physically road-tested before the feature is treated as active in a shipping build.
+This remains a bounded fusion system, not a claim that phone IMU dead reckoning becomes absolute GNSS. The Base44 sandbox has no Xcode, Swift compiler, Android SDK, Gradle, ADB, or physical device access, so the package can be made build-ready here but the final native compile/sign/install and real road test must occur in the exported shipping shells. Do not mark physical-device validation complete until those measurements exist.
 
 ## REAL 4D navigation
 
