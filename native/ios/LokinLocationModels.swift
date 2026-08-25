@@ -18,6 +18,9 @@ struct LokinLocationSample: Codable, Sendable {
     let speedMps: Double?
     let headingDeg: Double?
     let source: String
+    let confidence: Double?
+    let deadReckoned: Bool?
+    let barometricAltitudeM: Double?
 
     var compactArray: [Any] {
         [
@@ -29,7 +32,9 @@ struct LokinLocationSample: Codable, Sendable {
             speedMps.map { Int(($0 * 100).rounded()) } ?? NSNull(),
             headingDeg.map { Int(($0 * 100).rounded()) } ?? NSNull(),
             altitudeM.map { Int(($0 * 10).rounded()) } ?? NSNull(),
-            source
+            source,
+            confidence.map { Int(($0 * 1000).rounded()) } ?? NSNull(),
+            deadReckoned ?? false
         ]
     }
 }
