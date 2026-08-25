@@ -6,6 +6,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
 
     private let manager = CLLocationManager()
     private let filter = LokinLocationFilter()
+    private let fusion = LokinSensorFusion()
     private let queue: LokinLocationQueue?
     private let defaults = UserDefaults.standard
     private let sequenceKey = "lokin.location.sequence"
@@ -21,6 +22,9 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
         queue = try? LokinLocationQueue()
         super.init()
         manager.delegate = self
+        fusion.onPredictedFix = { [weak self] fix in
+            self?.publishPredicted(fix)
+        }
     }
 
     func requestWhenInUse() {
@@ -54,6 +58,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
             manager.pausesLocationUpdatesAutomatically = false
             manager.allowsBackgroundLocationUpdates = true
             manager.showsBackgroundLocationIndicator = true
+            fusion.start()
             manager.startUpdatingLocation()
 
         case .passive:
@@ -63,6 +68,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
             manager.pausesLocationUpdatesAutomatically = true
             manager.allowsBackgroundLocationUpdates = false
             manager.showsBackgroundLocationIndicator = false
+            fusion.stop()
             manager.startUpdatingLocation()
 
         case .stopped:
@@ -74,6 +80,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
         manager.stopUpdatingLocation()
         manager.stopMonitoringSignificantLocationChanges()
         manager.allowsBackgroundLocationUpdates = false
+        fusion.stop()
         mode = .stopped
         filter.reset()
     }
@@ -98,7 +105,9 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
         guard mode != .stopped else { return }
         for raw in locations {
             guard let cleaned = filter.filter(raw, mode: mode) else { continue }
+            if mode == .activeNavigation { fusion.ingestAnchor(cleaned) }
             let seq = nextSequence()
+            let accuracyConfidence = max(0.05, min(0.99, exp(-cleaned.horizontalAccuracy / 65.0)))
             let sample = LokinLocationSample(
                 seq: seq,
                 timestampMs: Int64((cleaned.timestamp.timeIntervalSince1970 * 1000).rounded()),
@@ -109,11 +118,37 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
                 verticalAccuracyM: cleaned.verticalAccuracy >= 0 ? cleaned.verticalAccuracy : nil,
                 speedMps: cleaned.lokinSpeedMps,
                 headingDeg: cleaned.lokinHeadingDeg,
-                source: "corelocation"
+                source: mode == .activeNavigation ? "corelocation+sensor-fusion-anchor" : "corelocation",
+                confidence: accuracyConfidence,
+                deadReckoned: false,
+                barometricAltitudeM: fusion.latestBarometricAltitudeM
             )
             queue?.enqueue(sample)
             DispatchQueue.main.async { [weak self] in self?.onSample?(sample) }
         }
+    }
+
+    private func publishPredicted(_ fix: LokinSensorFusion.FusedFix) {
+        guard mode == .activeNavigation else { return }
+        let location = fix.location
+        let sample = LokinLocationSample(
+            seq: 0,
+            timestampMs: Int64((location.timestamp.timeIntervalSince1970 * 1000).rounded()),
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude,
+            altitudeM: location.verticalAccuracy >= 0 ? location.altitude : fix.barometricAltitudeM,
+            horizontalAccuracyM: location.horizontalAccuracy,
+            verticalAccuracyM: location.verticalAccuracy >= 0 ? location.verticalAccuracy : nil,
+            speedMps: location.lokinSpeedMps,
+            headingDeg: location.lokinHeadingDeg,
+            source: fix.source,
+            confidence: fix.confidence,
+            deadReckoned: fix.deadReckoned,
+            barometricAltitudeM: fix.barometricAltitudeM
+        )
+        // Predicted fixes are intentionally ephemeral. Only absolute location
+        // anchors are persisted to the offline telemetry queue.
+        DispatchQueue.main.async { [weak self] in self?.onSample?(sample) }
     }
 
     private func nextSequence() -> Int64 {
