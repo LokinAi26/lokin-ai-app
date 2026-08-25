@@ -1,0 +1,89 @@
+{
+  "name": "OasisProductSpec",
+  "type": "object",
+  "description": "Versioned draft specification derived from an approved OASIS concept",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "design_asset_id": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    },
+    "category": {
+      "type": "string"
+    },
+    "materials": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "string"
+    },
+    "decoration_method": {
+      "type": "string"
+    },
+    "colorway": {
+      "type": "string"
+    },
+    "packaging": {
+      "type": "string"
+    },
+    "quality_checks": {
+      "type": "string"
+    },
+    "target_retail_price": {
+      "type": "number"
+    },
+    "estimated_unit_cost": {
+      "type": "number"
+    },
+    "estimated_contribution_profit": {
+      "type": "number"
+    },
+    "estimated_margin_percent": {
+      "type": "number"
+    },
+    "readiness_score": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "approved",
+        "blocked",
+        "superseded"
+      ],
+      "default": "draft"
+    },
+    "assumptions": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "project_id",
+    "design_asset_id",
+    "sku",
+    "version",
+    "status",
+    "created_at"
+  ]
+}
