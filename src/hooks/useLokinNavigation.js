@@ -7,6 +7,14 @@ import {
   routeCumulativeDistances,
   snapToRoute,
 } from "@/lib/navigationGeometry";
+import {
+  nativeLocationAvailable,
+  normalizeNativeLocationSample,
+  requestNativeWhenInUse,
+  startNativeLocation,
+  stopNativeLocation,
+  subscribeNativeLocation,
+} from "@/lib/nativeLocationBridge";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -48,6 +56,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const lastRerouteAtRef = useRef(0);
   const lastSpokenRef = useRef("");
   const startedKeyRef = useRef("");
+  const nativeSeenAtRef = useRef(0);
 
   useEffect(() => {
     destinationsRef.current = normalizedDestinations;
