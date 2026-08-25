@@ -25,7 +25,10 @@ function validPoint(raw: any): Point | null {
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) return null;
 
   const deadReckoned = raw?.deadReckoned === true;
-  const authoritative = raw?.authoritative === true && !deadReckoned;
+  // Backward-compatible: older absolute-anchor queue records predate the
+  // explicit authoritative field. Only an explicit false or DR provenance
+  // downgrades the point from an absolute provider anchor.
+  const authoritative = !deadReckoned && raw?.authoritative !== false;
   const anchorSeqRaw = Number(raw?.anchorSeq);
   const anchorSeq = Number.isSafeInteger(anchorSeqRaw) && anchorSeqRaw > 0 ? anchorSeqRaw : null;
 
