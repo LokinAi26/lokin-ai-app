@@ -103,6 +103,11 @@ export function normalizeNativeLocationSample(sample) {
     barometric_altitude_m: Number.isFinite(Number(sample.barometricAltitudeM)) ? Number(sample.barometricAltitudeM) : null,
     confidence: Number.isFinite(Number(sample.confidence)) ? Number(sample.confidence) : null,
     dead_reckoned: sample.deadReckoned === true,
+    authoritative: sample.authoritative !== false && sample.deadReckoned !== true,
+    anchor_seq: Number.isFinite(Number(sample.anchorSeq)) ? Number(sample.anchorSeq) : null,
+    estimated_uncertainty_m: Number.isFinite(Number(sample.estimatedUncertaintyM))
+      ? Number(sample.estimatedUncertaintyM)
+      : Number(sample.horizontalAccuracyM ?? sample.accuracy_m ?? 0),
     timestamp: Number(sample.timestampMs ?? sample.timestamp ?? Date.now()),
     seq: Number.isFinite(Number(sample.seq)) ? Number(sample.seq) : null,
     source: sample.source || "native",

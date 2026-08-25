@@ -29,6 +29,9 @@ class LokinLocationQueue(context: Context) : SQLiteOpenHelper(context, "lokin-lo
             .put("confidence", sample.confidence)
             .put("deadReckoned", sample.deadReckoned)
             .put("barometricAltitudeM", sample.barometricAltitudeM)
+            .put("authoritative", sample.authoritative)
+            .put("anchorSeq", sample.anchorSeq)
+            .put("estimatedUncertaintyM", sample.estimatedUncertaintyM)
             .toString()
 
         val values = ContentValues().apply {
@@ -58,7 +61,10 @@ class LokinLocationQueue(context: Context) : SQLiteOpenHelper(context, "lokin-lo
                     source = o.optString("source", "fused"),
                     confidence = if (!o.has("confidence") || o.isNull("confidence")) null else o.getDouble("confidence"),
                     deadReckoned = if (!o.has("deadReckoned") || o.isNull("deadReckoned")) null else o.getBoolean("deadReckoned"),
-                    barometricAltitudeM = if (!o.has("barometricAltitudeM") || o.isNull("barometricAltitudeM")) null else o.getDouble("barometricAltitudeM")
+                    barometricAltitudeM = if (!o.has("barometricAltitudeM") || o.isNull("barometricAltitudeM")) null else o.getDouble("barometricAltitudeM"),
+                    authoritative = if (!o.has("authoritative") || o.isNull("authoritative")) null else o.getBoolean("authoritative"),
+                    anchorSeq = if (!o.has("anchorSeq") || o.isNull("anchorSeq")) null else o.getLong("anchorSeq"),
+                    estimatedUncertaintyM = if (!o.has("estimatedUncertaintyM") || o.isNull("estimatedUncertaintyM")) null else o.getDouble("estimatedUncertaintyM")
                 )
             }
         }
