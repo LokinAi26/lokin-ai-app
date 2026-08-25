@@ -28,6 +28,7 @@ class LokinLocationService : Service() {
 
     private lateinit var fused: FusedLocationProviderClient
     private lateinit var queue: LokinLocationQueue
+    private lateinit var fusion: LokinSensorFusion
     private val filter = LokinLocationFilter()
     private var mode = LokinTrackingMode.ACTIVE_NAVIGATION
 
@@ -35,7 +36,9 @@ class LokinLocationService : Service() {
         override fun onLocationResult(result: LocationResult) {
             result.locations.forEach { raw ->
                 val cleaned = filter.filter(raw, mode) ?: return@forEach
+                if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) fusion.ingestAnchor(cleaned)
                 val seq = nextSequence()
+                val confidence = kotlin.math.max(0.05, kotlin.math.min(0.99, kotlin.math.exp(-cleaned.accuracy.toDouble() / 65.0)))
                 val sample = LokinLocationSample(
                     seq = seq,
                     timestampMs = cleaned.time,
@@ -45,7 +48,10 @@ class LokinLocationService : Service() {
                     horizontalAccuracyM = cleaned.accuracy.toDouble(),
                     speedMps = if (cleaned.hasSpeed()) cleaned.speed.toDouble() else null,
                     headingDeg = if (cleaned.hasBearing()) cleaned.bearing.toDouble() else null,
-                    source = "fused"
+                    source = if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) "fused+sensor-fusion-anchor" else "fused",
+                    confidence = confidence,
+                    deadReckoned = false,
+                    barometricAltitudeM = null
                 )
                 queue.enqueue(sample)
                 LokinLocationBus.publish(sample)
@@ -57,6 +63,24 @@ class LokinLocationService : Service() {
         super.onCreate()
         fused = LocationServices.getFusedLocationProviderClient(this)
         queue = LokinLocationQueue(this)
+        fusion = LokinSensorFusion(this)
+        fusion.onPredictedFix = { fix ->
+            val predicted = fix.location
+            LokinLocationBus.publish(LokinLocationSample(
+                seq = 0L,
+                timestampMs = predicted.time,
+                latitude = predicted.latitude,
+                longitude = predicted.longitude,
+                altitudeM = if (predicted.hasAltitude()) predicted.altitude else fix.barometricAltitudeM,
+                horizontalAccuracyM = predicted.accuracy.toDouble(),
+                speedMps = if (predicted.hasSpeed()) predicted.speed.toDouble() else null,
+                headingDeg = if (predicted.hasBearing()) predicted.bearing.toDouble() else null,
+                source = fix.source,
+                confidence = fix.confidence,
+                deadReckoned = fix.deadReckoned,
+                barometricAltitudeM = fix.barometricAltitudeM
+            ))
+        }
         createNotificationChannel()
     }
 
@@ -82,6 +106,7 @@ class LokinLocationService : Service() {
 
     override fun onDestroy() {
         fused.removeLocationUpdates(callback)
+        fusion.stop()
         super.onDestroy()
     }
 
@@ -105,12 +130,14 @@ class LokinLocationService : Service() {
                 .build()
         }
         filter.reset()
+        if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) fusion.start() else fusion.stop()
         fused.removeLocationUpdates(callback)
         fused.requestLocationUpdates(request, callback, mainLooper)
     }
 
     private fun stopTracking() {
         fused.removeLocationUpdates(callback)
+        fusion.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
