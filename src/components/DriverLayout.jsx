@@ -10,7 +10,7 @@ import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings",
-  "/drive", "/brand", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver",
+  "/drive", "/brand", "/oasis", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver",
   "/stash", "/stash/cart", "/green-delivery", "/insurance",
 ];
 
