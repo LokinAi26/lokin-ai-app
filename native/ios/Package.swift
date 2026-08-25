@@ -29,7 +29,8 @@ let package = Package(
                 "LokinLocationQueue.swift",
                 "LokinSensorFusion.swift",
                 "LokinLocationEngine.swift",
-                "LokinLocationBridge.swift"
+                "LokinLocationBridge.swift",
+                "LokinLocationShellInstaller.swift"
             ],
             linkerSettings: [
                 .linkedLibrary("sqlite3")
