@@ -12,7 +12,10 @@ data class LokinLocationSample(
     val source: String = "fused",
     val confidence: Double? = null,
     val deadReckoned: Boolean? = null,
-    val barometricAltitudeM: Double? = null
+    val barometricAltitudeM: Double? = null,
+    val authoritative: Boolean? = null,
+    val anchorSeq: Long? = null,
+    val estimatedUncertaintyM: Double? = null
 )
 
 enum class LokinTrackingMode(val wireValue: String) {

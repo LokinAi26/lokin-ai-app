@@ -21,6 +21,13 @@ struct LokinLocationSample: Codable, Sendable {
     let confidence: Double?
     let deadReckoned: Bool?
     let barometricAltitudeM: Double?
+    /// True only for an absolute Core Location/Fused Location anchor.
+    /// Dead-reckoned samples are persisted, but never mislabeled as absolute.
+    let authoritative: Bool?
+    /// Sequence number of the absolute fix that seeded this estimate.
+    let anchorSeq: Int64?
+    /// Explicit uncertainty carried through offline replay/backend ingestion.
+    let estimatedUncertaintyM: Double?
 
     var compactArray: [Any] {
         [
@@ -34,7 +41,10 @@ struct LokinLocationSample: Codable, Sendable {
             altitudeM.map { Int(($0 * 10).rounded()) } ?? NSNull(),
             source,
             confidence.map { Int(($0 * 1000).rounded()) } ?? NSNull(),
-            deadReckoned ?? false
+            deadReckoned ?? false,
+            authoritative ?? !(deadReckoned ?? false),
+            anchorSeq ?? NSNull(),
+            estimatedUncertaintyM.map { Int(($0 * 10).rounded()) } ?? NSNull()
         ]
     }
 }
