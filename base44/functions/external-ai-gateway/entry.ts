@@ -14,11 +14,27 @@ function compactContext(value) {
 }
 
 function systemFor(mode) {
+  if (mode === "oasis") return oasisDirectorSystemPrompt();
   const common = "You are LOKIN AI, a concise, practical copilot for gig drivers. Be accurate, useful, and brief. Never claim an action was completed unless the app confirms it. Use learned user preferences only as soft personalization, never as authoritative facts. Do not infer sensitive traits. If drafting a customer message, return the draft separately.";
   if (mode === "text") return `${common} Improve the supplied text according to the requested writing mode and tone. Return only JSON.`;
   if (mode === "motivation") return `${common} Give an energetic but grounded pep talk, usually 2-4 sentences. Return only JSON.`;
   if (mode === "support") return supportSystemPrompt();
   return `${common} Answer the driver's command using the supplied context and relevant learned preferences. Return only JSON.`;
+}
+
+function oasisDirectorSystemPrompt() {
+  return [
+    "You are OASIS Director, the senior creative-commerce intelligence for the entire LOKIN brand.",
+    "OASIS means Originality, Artistry, Strategy, Intelligence, and Scale.",
+    "Transform the supplied product idea into a concise, executable creative and commercial brief.",
+    "Protect LOKIN Brand DNA: vault black, neon lime #AAFF00, AI cyan #06D9F9, premium functional construction, cinematic energy, bold intelligent voice.",
+    "Evaluate brand fit, manufacturability, demand logic, and contribution-profit potential independently.",
+    "Scores are decision-support estimates from 0 to 100, never claims of verified demand, legal clearance, supplier availability, or physical testing.",
+    "Never claim a mockup is a manufactured sample. Never claim trademark or copyright clearance. Flag rights risks explicitly.",
+    "Never publish, purchase inventory, place supplier orders, launch campaigns, or spend money. Human approval is mandatory.",
+    "If inputs are missing, state assumptions and keep recommendations reversible.",
+    "Return strict JSON only, matching the required shape. Keep each narrative field under 900 characters.",
+  ].join("\\n");
 }
 
 // LOKIN Adaptive Support — empathetic, de-escalating AI help for BOTH customers
@@ -71,6 +87,7 @@ function schemaFor(mode) {
   if (mode === "text") return '{"result":"string","suggestions":["string"]}';
   if (mode === "motivation") return '{"message":"string"}';
   if (mode === "support") return '{"reply":"string"}';
+  if (mode === "oasis") return '{"analysis_status":"completed","director_summary":"string","design_direction":"string","production_plan":"string","demand_thesis":"string","risk_review":"string","brand_score":0,"production_score":0,"demand_score":0,"profit_score":0,"recommended_price":0,"estimated_unit_cost":0,"estimated_contribution_profit":0,"next_action":"string","assumptions":["string"]}';
   return '{"reply":"string","draftedMessage":"string or empty"}';
 }
 
@@ -139,7 +156,7 @@ export default async function(req) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const mode = ["assistant", "text", "motivation", "support"].includes(body.mode) ? body.mode : "assistant";
+    const mode = ["assistant", "text", "motivation", "support", "oasis"].includes(body.mode) ? body.mode : "assistant";
     const apiKey = secrets.get("OPENAI_API_KEY");
     const defaultModel = secrets.get("OPENAI_MODEL") || "gpt-5.6";
     const lowCostModel = secrets.get("OPENAI_LOW_COST_MODEL") || "";
@@ -213,6 +230,7 @@ export default async function(req) {
       if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
+      if (mode === "oasis") return Response.json({ analysis_status: "setup_required", director_summary: "OASIS Director requires the protected external AI provider to generate a new analysis. Your saved project remains intact.", provider: "local-fallback", configured: false, guardian: { mode: guardianMode, api_key_exposed: false } });
       const earnings = Number(safe.context?.todayEarnings || 0);
       const goal = Number(safe.context?.dailyGoal || 0);
       const remaining = goal > 0 ? Math.max(0, goal - earnings) : 0;
@@ -270,7 +288,7 @@ export default async function(req) {
     const text = extractText(r.data).trim();
     let parsed;
     try { parsed = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()); }
-    catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : { reply: text, draftedMessage: "" }; }
+    catch { parsed = mode === "motivation" ? { message: text } : mode === "text" ? { result: text, suggestions: [] } : mode === "oasis" ? { analysis_status: "unparsed", director_summary: text, brand_score: 0, production_score: 0, demand_score: 0, profit_score: 0 } : { reply: text, draftedMessage: "" }; }
 
     try {
       await base44.asServiceRole.entities.LokinLearningEvent.create({
