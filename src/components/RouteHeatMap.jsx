@@ -138,6 +138,7 @@ export default function RouteHeatMap({
       },
       origin_address: effectiveOriginAddress,
       market_state: "VA",
+      feed_revision: refreshKey,
       mode,
       selected_offer_ids: selectedKey ? selectedKey.split("|") : [],
     }, {
