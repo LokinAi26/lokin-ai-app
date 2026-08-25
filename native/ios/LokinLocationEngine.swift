@@ -10,6 +10,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
     private let queue: LokinLocationQueue?
     private let defaults = UserDefaults.standard
     private let sequenceKey = "lokin.location.sequence"
+    private let sequenceLock = NSLock()
 
     private(set) var mode: LokinTrackingMode = .stopped
     private(set) var sessionId: String = UUID().uuidString
@@ -105,8 +106,8 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
         guard mode != .stopped else { return }
         for raw in locations {
             guard let cleaned = filter.filter(raw, mode: mode) else { continue }
-            if mode == .activeNavigation { fusion.ingestAnchor(cleaned) }
             let seq = nextSequence()
+            if mode == .activeNavigation { fusion.ingestAnchor(cleaned, anchorSeq: seq) }
             let accuracyConfidence = max(0.05, min(0.99, exp(-cleaned.horizontalAccuracy / 65.0)))
             let sample = LokinLocationSample(
                 seq: seq,
@@ -121,7 +122,10 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
                 source: mode == .activeNavigation ? "corelocation+sensor-fusion-anchor" : "corelocation",
                 confidence: accuracyConfidence,
                 deadReckoned: false,
-                barometricAltitudeM: fusion.latestBarometricAltitudeM
+                barometricAltitudeM: fusion.latestBarometricAltitudeM,
+                authoritative: true,
+                anchorSeq: seq,
+                estimatedUncertaintyM: cleaned.horizontalAccuracy
             )
             queue?.enqueue(sample)
             DispatchQueue.main.async { [weak self] in self?.onSample?(sample) }
@@ -131,8 +135,12 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
     private func publishPredicted(_ fix: LokinSensorFusion.FusedFix) {
         guard mode == .activeNavigation else { return }
         let location = fix.location
+        // Dead-reckoned fixes now receive normal monotonic sequence numbers and
+        // are persisted for complete offline replay. Provenance prevents them
+        // from ever being confused with absolute provider anchors.
+        let seq = nextSequence()
         let sample = LokinLocationSample(
-            seq: 0,
+            seq: seq,
             timestampMs: Int64((location.timestamp.timeIntervalSince1970 * 1000).rounded()),
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
@@ -144,14 +152,18 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
             source: fix.source,
             confidence: fix.confidence,
             deadReckoned: fix.deadReckoned,
-            barometricAltitudeM: fix.barometricAltitudeM
+            barometricAltitudeM: fix.barometricAltitudeM,
+            authoritative: false,
+            anchorSeq: fix.anchorSeq,
+            estimatedUncertaintyM: location.horizontalAccuracy
         )
-        // Predicted fixes are intentionally ephemeral. Only absolute location
-        // anchors are persisted to the offline telemetry queue.
+        queue?.enqueue(sample)
         DispatchQueue.main.async { [weak self] in self?.onSample?(sample) }
     }
 
     private func nextSequence() -> Int64 {
+        sequenceLock.lock()
+        defer { sequenceLock.unlock() }
         let current = Int64(defaults.integer(forKey: sequenceKey))
         let next = current + 1
         defaults.set(Int(next), forKey: sequenceKey)
