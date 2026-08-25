@@ -5,6 +5,7 @@ import {
   TrendingUp, X
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import OasisDesignStudio from "@/components/OasisDesignStudio";
 
 const STAGES = [
   { key: "idea", label: "Idea", icon: Lightbulb },
@@ -86,7 +87,7 @@ function Score({ label, value }) {
   );
 }
 
-function ProjectCard({ project, advancing, analyzing, onAdvance, onAnalyze }) {
+function ProjectCard({ project, assets, advancing, analyzing, generating, reviewingId, onAdvance, onAnalyze, onGenerate, onReview }) {
   const [detailsOpen, setDetailsOpen] = useState(Boolean(project.director_summary));
   const price = Number(project.target_price || 0);
   const margin = Number(project.target_margin || 0);
@@ -172,9 +173,18 @@ function ProjectCard({ project, advancing, analyzing, onAdvance, onAnalyze }) {
         </div>
       )}
 
+      <OasisDesignStudio
+        project={project}
+        assets={assets}
+        generating={generating}
+        reviewingId={reviewingId}
+        onGenerate={onGenerate}
+        onReview={onReview}
+      />
+
       <button
         type="button"
-        disabled={advancing || analyzing || project.status === "scale" || project.status === "retired"}
+        disabled={advancing || analyzing || Boolean(generating) || project.status === "scale" || project.status === "retired"}
         onClick={() => onAdvance(project)}
         className="mt-3 flex w-full items-center justify-between rounded-xl border border-primary/25 bg-primary/[0.07] px-3 py-2.5 text-left disabled:opacity-45"
       >
@@ -192,20 +202,28 @@ function ProjectCard({ project, advancing, analyzing, onAdvance, onAnalyze }) {
 
 export default function Oasis() {
   const [projects, setProjects] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
   const [idea, setIdea] = useState(EMPTY_IDEA);
   const [saving, setSaving] = useState(false);
   const [advancingId, setAdvancingId] = useState("");
   const [analyzingId, setAnalyzingId] = useState("");
+  const [generatingProjectId, setGeneratingProjectId] = useState("");
+  const [generatingStudy, setGeneratingStudy] = useState("");
+  const [reviewingId, setReviewingId] = useState("");
   const [error, setError] = useState("");
 
   async function loadProjects() {
     setLoading(true);
     setError("");
     try {
-      const records = await base44.entities.OasisProject.filter({}, "-created_at", 50, 0);
+      const [records, designAssets] = await Promise.all([
+        base44.entities.OasisProject.filter({}, "-created_at", 50, 0),
+        base44.entities.OasisDesignAsset.filter({}, "-created_at", 100, 0),
+      ]);
       setProjects(records || []);
+      setAssets(designAssets || []);
     } catch (err) {
       setError("OASIS could not load its project pipeline.");
     } finally {
@@ -357,6 +375,76 @@ export default function Oasis() {
     }
   }
 
+  async function generateDesign(project, studyType, colorway) {
+    const approved = window.confirm(`Generate a ${studyType.replaceAll("_", " ")} for ${project.title}? This uses image-generation credits and creates a review-stage mockup.`);
+    if (!approved) return;
+
+    setGeneratingProjectId(project.id);
+    setGeneratingStudy(studyType);
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-design-studio", {
+        projectId: project.id,
+        studyType,
+        colorway,
+      });
+      const result = response?.data || response || {};
+      if (!result.asset) throw new Error("The image provider returned no design asset.");
+      setAssets((current) => [result.asset, ...current]);
+      if (result.project) setProjects((current) => current.map((item) => item.id === project.id ? result.project : item));
+    } catch (err) {
+      const message = err?.response?.data?.error || err?.message || "OASIS Design Studio generation failed.";
+      setError(`${message} No asset was approved or sent to production.`);
+    } finally {
+      setGeneratingProjectId("");
+      setGeneratingStudy("");
+    }
+  }
+
+  async function reviewDesign(asset, decision) {
+    setReviewingId(asset.id);
+    setError("");
+    try {
+      const user = await base44.auth.me().catch(() => null);
+      const now = new Date().toISOString();
+      const updated = await base44.entities.OasisDesignAsset.update(asset.id, {
+        status: decision,
+        approved_at: decision === "approved" ? now : null,
+        review_note: decision === "approved"
+          ? "Creative direction approved; rights and production clearance remain pending."
+          : "Rejected during creative review; retained in version history.",
+        production_ready: false,
+      });
+      await base44.entities.OasisApproval.create({
+        organization_id: asset.organization_id || user?.organization_id || user?.id || "lokin",
+        project_id: asset.project_id,
+        gate: "brand",
+        decision,
+        reviewer_user_id: user?.id || "",
+        note: `Design asset ${asset.name} ${decision}. This decision does not grant rights or production clearance.`,
+        decided_at: now,
+      });
+      setAssets((current) => current.map((item) => item.id === asset.id ? updated : item));
+      if (decision === "approved") {
+        const project = projects.find((item) => item.id === asset.project_id);
+        if (project) {
+          const updatedProject = await base44.entities.OasisProject.update(project.id, {
+            status: "design",
+            approval_state: "needs_review",
+            next_action: "Submit approved concept for Brand DNA, rights, and production review",
+            updated_at: now,
+          });
+          setProjects((current) => current.map((item) => item.id === project.id ? updatedProject : item));
+        }
+      }
+    } catch (err) {
+      const message = err?.response?.data?.error || err?.message || "Design review failed.";
+      setError(`${message} The previous review state remains in effect.`);
+    } finally {
+      setReviewingId("");
+    }
+  }
+
   async function advanceProject(project) {
     const currentIndex = FLOW.indexOf(project.status);
     if (currentIndex < 0 || currentIndex >= FLOW.length - 1) return;
@@ -471,10 +559,15 @@ export default function Oasis() {
               <ProjectCard
                 key={project.id}
                 project={project}
+                assets={assets.filter((asset) => asset.project_id === project.id)}
                 advancing={advancingId === project.id}
                 analyzing={analyzingId === project.id}
+                generating={generatingProjectId === project.id ? generatingStudy : ""}
+                reviewingId={reviewingId}
                 onAdvance={advanceProject}
                 onAnalyze={analyzeProject}
+                onGenerate={generateDesign}
+                onReview={reviewDesign}
               />
             ))}
           </div>
