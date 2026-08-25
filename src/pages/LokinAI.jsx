@@ -6,6 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { setAiConsent } from "@/lib/aiConsent";
 
 const QUICK = [
   "What should I do next?",
@@ -30,6 +31,8 @@ export default function LokinAI() {
   const [voices, setVoices] = useState([]);
   const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem("lokin_voice") || "");
   const [learning, setLearning] = useState({ enabled: true, memoryCount: 0, profileVersion: 1 });
+  const [consentRequired, setConsentRequired] = useState(false);
+  const [pendingAiCommand, setPendingAiCommand] = useState("");
 
   useEffect(() => {
     base44.functions.invoke("learning-intelligence", { action: "context" })
@@ -82,10 +85,34 @@ export default function LokinAI() {
       if (data.learning) setLearning((prev) => ({ ...prev, ...data.learning }));
       if (data.draftedMessage) setDraft(data.draftedMessage);
     } catch (e) {
-      setLog((l) => [...l, { role: "lokin", text: `Error: ${e.message}` }]);
+      if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
+        setPendingAiCommand(command);
+        setConsentRequired(true);
+        setLog((l) => [...l, { role: "lokin", text: "To answer open-ended requests, LOKIN needs permission to securely process your request with its configured AI service." }]);
+      } else if (e?.code === "LOKIN_CREDIT_DEFERRED") {
+        setLog((l) => [...l, { role: "lokin", text: "AI assistance is temporarily unavailable, but core LOKIN navigation and deterministic voice controls still work." }]);
+      } else {
+        console.error("LOKIN AI request failed", e);
+        setLog((l) => [...l, { role: "lokin", text: "I heard you, but the AI response service did not complete the request. Try again in a moment." }]);
+      }
     } finally {
       setBusy(false);
     }
+  }
+
+  function allowAiProcessing() {
+    setAiConsent("granted");
+    setConsentRequired(false);
+    const retry = pendingAiCommand;
+    setPendingAiCommand("");
+    if (retry) window.setTimeout(() => ask(retry), 120);
+  }
+
+  function declineAiProcessing() {
+    setAiConsent("denied");
+    setConsentRequired(false);
+    setPendingAiCommand("");
+    setLog((l) => [...l, { role: "lokin", text: "AI processing stays off. You can still use LOKIN's non-AI navigation and app controls." }]);
   }
 
   async function sendFeedback(index, rating) {
@@ -236,6 +263,19 @@ export default function LokinAI() {
           </div>
         )}
       </div>
+
+      {consentRequired && (
+        <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3">
+          <div className="text-xs font-semibold text-white/90">Allow AI processing?</div>
+          <div className="mt-1 text-[11px] leading-relaxed text-white/55">
+            LOKIN will securely send your request and limited context needed to answer it to the app&apos;s configured AI service. Non-AI navigation controls remain available if you decline.
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button onClick={declineAiProcessing} className="min-h-11 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/65">Not Now</button>
+            <button onClick={allowAiProcessing} className="min-h-11 rounded-xl border border-primary/40 bg-primary/15 px-3 text-xs font-bold text-primary">Allow & Retry</button>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {QUICK.map((q) => (
