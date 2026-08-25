@@ -72,9 +72,9 @@ The repository now also contains a platform location package that can replace br
 - `native/ios/LokinLocationBridge.swift`
 - `native/ios/Info.location.plist.template`
 
-Compile these into the real Xcode target, link `libsqlite3`, enable **Background Modes → Location updates**, and merge the location privacy strings from the plist template. `LokinLocationEngine` uses `kCLLocationAccuracyBestForNavigation` only during active navigation, switches to a lower-power profile for passive mode, rejects stale/implausible fixes, smooths accepted points, and writes them to a local SQLite queue before publishing them to the web UI.
+The iOS location stack is now packaged by `native/ios/Package.swift` as the local Swift package `LokinLocationCore`, including SQLite linkage. Add the local package to the exported Xcode app target, enable **Background Modes → Location updates**, and merge the location privacy strings from the plist template. `LokinLocationEngine` uses `kCLLocationAccuracyBestForNavigation` only during active navigation, switches to a lower-power profile for passive mode, rejects stale/implausible fixes, fuses short outages, and writes both absolute anchors and provenance-marked estimates to the local SQLite queue.
 
-Install `LokinLocationBridge` on the trusted LOKIN WKWebView and use `lokin-ai-app-604c3139.base44.app` as the allowed host. The React hook automatically prefers native location when this handler exists and otherwise continues using browser Geolocation.
+Retain `LokinLocationShellInstaller(webView:)` for the lifetime of the trusted LOKIN WKWebView. It installs `LokinLocationBridge` against `lokin-ai-app-604c3139.base44.app`. The React hook now waits for the native authorization event before starting the engine, then automatically prefers native location while preserving browser Geolocation as the Base44/web fallback.
 
 ### Android
 
@@ -86,7 +86,7 @@ Install `LokinLocationBridge` on the trusted LOKIN WKWebView and use `lokin-ai-a
 - `native/android/LokinLocationBridge.kt`
 - `native/android/AndroidManifest.location.xml.template`
 
-Compile these under the shipping Android app namespace (adjust `ai.lokin.location` if required), include Google Play Services Location and AndroidX Core, merge the manifest template, and add the `LokinLocationBridge` JavaScript interface only to the trusted LOKIN WebView. Active navigation runs as a location foreground service with a persistent notification and stores accepted fixes in SQLite before exposing them to the UI.
+`native/android/location-core` is now an importable Android library module and declares Google Play Services Location, AndroidX Core, and the foreground-location service manifest. The exported shell can include this module directly. Retain `LokinLocationShellInstaller(activity, webView)` and call `install()` after creating the trusted WebView. The Android bridge now performs the Fine/Coarse runtime-permission handshake and publishes authorization back to React before the foreground service starts, eliminating the previous permission race. Active navigation stores both absolute anchors and provenance-marked dead-reckoned estimates in SQLite before exposing them to the UI.
 
 ### JS contract
 
