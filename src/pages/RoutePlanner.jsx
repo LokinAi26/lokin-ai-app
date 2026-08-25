@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
 import RouteHeatMap from "@/components/RouteHeatMap";
+import LocalOfferCapture from "@/components/LocalOfferCapture";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
@@ -15,6 +16,7 @@ export default function RoutePlanner() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [prefs, setPrefs] = useState(null);
+  const [offerRevision, setOfferRevision] = useState(0);
 
   useEffect(() => {
     base44.entities.DriverPreference.filter({}).then((p) => {
@@ -82,6 +84,14 @@ export default function RoutePlanner() {
         mode={mode}
         originAddress={origin}
         selectedOfferIds={stops.map((stop) => stop.id)}
+        refreshKey={offerRevision}
+      />
+
+      <LocalOfferCapture
+        onSaved={() => {
+          setOfferRevision((value) => value + 1);
+          setData(null);
+        }}
       />
 
       <div className="flex flex-wrap gap-2">
