@@ -4,11 +4,15 @@ const ERROR_EVENT = "lokin:native-location-error";
 const QUEUE_EVENT = "lokin:native-location-queue";
 
 function iosHandler() {
-  return typeof window !== "undefined" ? window.webkit?.messageHandlers?.lokinLocation : null;
+  if (typeof window === "undefined") return null;
+  const nativeWindow = /** @type {any} */ (window);
+  return nativeWindow.webkit?.messageHandlers?.lokinLocation || null;
 }
 
 function androidHandler() {
-  return typeof window !== "undefined" ? window.LokinLocation : null;
+  if (typeof window === "undefined") return null;
+  const nativeWindow = /** @type {any} */ (window);
+  return nativeWindow.LokinLocation || null;
 }
 
 export function nativeLocationAvailable() {
@@ -31,6 +35,7 @@ export function postNativeLocationCommand(command, payload = {}) {
   return false;
 }
 
+/** @param {{ mode?: string, sessionId?: string }} [options] */
 export function startNativeLocation({ mode = "activeNavigation", sessionId } = {}) {
   return postNativeLocationCommand("start", { mode, sessionId });
 }
