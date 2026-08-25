@@ -26,6 +26,9 @@ class LokinLocationQueue(context: Context) : SQLiteOpenHelper(context, "lokin-lo
             .put("speedMps", sample.speedMps)
             .put("headingDeg", sample.headingDeg)
             .put("source", sample.source)
+            .put("confidence", sample.confidence)
+            .put("deadReckoned", sample.deadReckoned)
+            .put("barometricAltitudeM", sample.barometricAltitudeM)
             .toString()
 
         val values = ContentValues().apply {
@@ -52,7 +55,10 @@ class LokinLocationQueue(context: Context) : SQLiteOpenHelper(context, "lokin-lo
                     horizontalAccuracyM = o.getDouble("horizontalAccuracyM"),
                     speedMps = if (o.isNull("speedMps")) null else o.getDouble("speedMps"),
                     headingDeg = if (o.isNull("headingDeg")) null else o.getDouble("headingDeg"),
-                    source = o.optString("source", "fused")
+                    source = o.optString("source", "fused"),
+                    confidence = if (!o.has("confidence") || o.isNull("confidence")) null else o.getDouble("confidence"),
+                    deadReckoned = if (!o.has("deadReckoned") || o.isNull("deadReckoned")) null else o.getBoolean("deadReckoned"),
+                    barometricAltitudeM = if (!o.has("barometricAltitudeM") || o.isNull("barometricAltitudeM")) null else o.getDouble("barometricAltitudeM")
                 )
             }
         }
