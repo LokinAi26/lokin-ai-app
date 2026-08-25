@@ -218,9 +218,11 @@ export default function Oasis() {
     setLoading(true);
     setError("");
     try {
+      const user = await base44.auth.me();
+      const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
       const [records, designAssets] = await Promise.all([
-        base44.entities.OasisProject.filter({}, "-created_at", 50, 0),
-        base44.entities.OasisDesignAsset.filter({}, "-created_at", 100, 0),
+        base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
+        base44.entities.OasisDesignAsset.filter(ownerFilter, "-created_at", 100, 0),
       ]);
       setProjects(records || []);
       setAssets(designAssets || []);
@@ -407,14 +409,15 @@ export default function Oasis() {
     try {
       const user = await base44.auth.me().catch(() => null);
       const now = new Date().toISOString();
-      const updated = await base44.entities.OasisDesignAsset.update(asset.id, {
+      const assetUpdate = {
         status: decision,
-        approved_at: decision === "approved" ? now : null,
         review_note: decision === "approved"
           ? "Creative direction approved; rights and production clearance remain pending."
           : "Rejected during creative review; retained in version history.",
         production_ready: false,
-      });
+      };
+      if (decision === "approved") assetUpdate.approved_at = now;
+      const updated = await base44.entities.OasisDesignAsset.update(asset.id, assetUpdate);
       await base44.entities.OasisApproval.create({
         organization_id: asset.organization_id || user?.organization_id || user?.id || "lokin",
         project_id: asset.project_id,
