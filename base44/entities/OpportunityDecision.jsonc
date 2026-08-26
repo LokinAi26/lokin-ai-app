@@ -19,6 +19,32 @@
     "score_at_decision": {
       "type": "number"
     },
+    "confidence_at_decision": {
+      "type": "number",
+      "description": "SEAL data-confidence percentage when the driver made the decision."
+    },
+    "seal_version": {
+      "type": "string",
+      "description": "Version of the deterministic SEAL scoring policy."
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": [
+        "strong_match",
+        "consider",
+        "low_match",
+        "avoid"
+      ]
+    },
+    "factor_scores": {
+      "type": "object",
+      "description": "Explainable economics, goal, mileage, vehicle, freshness, and source factor scores."
+    },
+    "driver_authorized": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only after an explicit driver action."
+    },
     "reason": {
       "type": "string"
     },
