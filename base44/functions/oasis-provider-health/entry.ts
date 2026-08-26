@@ -22,7 +22,7 @@ async function checkRecraft() {
   try {
     const response = await fetch("https://external.api.recraft.ai/v1/users/me", {
       headers: { authorization: `Bearer ${token}` },
-      redirect: "error",
+      redirect: "manual",
     });
     const latency = Date.now() - started;
     if (!response.ok) {
@@ -45,7 +45,7 @@ async function checkProductions() {
   try {
     const response = await fetch(url, {
       headers: { authorization: `Bearer ${token}` },
-      redirect: "error",
+      redirect: "manual",
     });
     const latency = Date.now() - started;
     const data = await response.json().catch(() => ({}));
