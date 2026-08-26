@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Shield, Cpu } from "lucide-react";
+import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Shield, Cpu, BadgeDollarSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
@@ -76,6 +76,7 @@ const SECTIONS = [
       { to: "/insurance-admin", icon: ShieldCheck, title: "Cover Admin", desc: "Bind insurance apps" },
       { to: "/printful-connect", icon: Link2, title: "Printful Connect", desc: "OAuth account tools" },
       { to: "/showcase", icon: Smartphone, title: "App Showcase", desc: "The LOKIN vision" },
+      { to: "/funding-command", icon: BadgeDollarSign, title: "Funding Command", desc: "Virginia grants, contracts & readiness", requires: "admin" },
     ],
   },
 ];
@@ -125,7 +126,13 @@ function Section({ section, defaultOpen }) {
 }
 
 export default function More() {
-  const visibleSections = SECTIONS.map((section) => ({ ...section, items: section.items.filter((item) => item.requires === "cannabis" ? RELEASE_FLAGS.regulatedCannabis : item.requires === "insurance" ? RELEASE_FLAGS.insuranceTransactions : true) })).filter((section) => section.items.length > 0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    base44.auth.me().then((user) => { if (alive) setIsAdmin(user?.role === "admin"); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const visibleSections = SECTIONS.map((section) => ({ ...section, items: section.items.filter((item) => item.requires === "cannabis" ? RELEASE_FLAGS.regulatedCannabis : item.requires === "insurance" ? RELEASE_FLAGS.insuranceTransactions : item.requires === "admin" ? isAdmin : true) })).filter((section) => section.items.length > 0);
   async function logout() {
     await base44.auth.logout("/login");
   }
