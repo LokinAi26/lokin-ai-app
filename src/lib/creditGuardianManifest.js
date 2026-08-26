@@ -15,6 +15,7 @@ export const CREDIT_GUARDIAN_MANIFEST = {
   "printify-stock-alert": { tier: "ON_DEMAND", ttl: 0, reason: "explicit alert configuration" },
   "optimizeRoute": { tier: "ON_DEMAND", ttl: 120000, reason: "high-value route intelligence; dedupe identical requests" },
   "seal-evaluate": { tier: "ON_DEMAND", ttl: 0, reason: "deterministic, explainable driver decision with optional audit persistence" },
+  "seal-feedback": { tier: "MISSION_CRITICAL", ttl: 0, reason: "driver-confirmed outcome write feeding the SEAL learning loop" },
   "hotspot-map": { tier: "CACHE", ttl: 120000, reason: "real merchant pickup geocoding; refresh at most every two minutes" },
   "ingest-local-offer": { tier: "MISSION_CRITICAL", ttl: 0, reason: "validated current-offer write with Virginia address verification" },
   "findRoadStops": { tier: "ON_DEMAND", ttl: 300000, reason: "location search" },
