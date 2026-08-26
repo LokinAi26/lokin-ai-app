@@ -52,7 +52,7 @@ export default function OpportunityCompare({ open, onClose, opps, prefs, autoRec
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-bold font-heading metal-text">{autoRecommend ? "AI Recommendation" : "Compare Opportunities"}</h2>
+          <h2 className="text-sm font-bold font-heading metal-text">{autoRecommend ? "SEAL Decision Intelligence" : "Compare Opportunities"}</h2>
         </div>
         <button onClick={onClose} aria-label="Close" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/50 active:scale-90 transition-transform"><X className="h-5 w-5" /></button>
       </div>
@@ -87,7 +87,7 @@ export default function OpportunityCompare({ open, onClose, opps, prefs, autoRec
           disabled={loading || opps.length === 0}
           className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground py-3 text-sm font-bold glow-primary active:scale-[0.98] disabled:opacity-50 transition-transform"
         >
-          {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Analyzing…</> : <><Sparkles className="h-4 w-4" />Get AI recommendation</>}
+          {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Sensing and evaluating…</> : <><Sparkles className="h-4 w-4" />Run SEAL analysis</>}
         </button>
 
         {rec && (
@@ -96,8 +96,16 @@ export default function OpportunityCompare({ open, onClose, opps, prefs, autoRec
               <div className="text-xs text-destructive">{rec.error}</div>
             ) : (
               <>
-                <div className="text-[10px] tracking-[0.18em] text-primary font-display">LOKIN ADVISOR</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[10px] tracking-[0.18em] text-primary font-display">LOKIN SEAL · SENSE → EVALUATE → ADVISE</div>
+                  {rec.ranked?.[0] && <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{rec.ranked[0].score}/100 · {rec.ranked[0].confidence}% confidence</span>}
+                </div>
                 <p className="text-sm text-white/85 leading-relaxed">{rec.recommendation}</p>
+                {rec.ranked?.[0]?.evaluate?.blockers?.length > 0 && (
+                  <div className="rounded-lg border border-destructive/25 bg-destructive/5 p-2 text-[11px] text-destructive/90">
+                    {rec.ranked[0].evaluate.blockers.join(" · ")}
+                  </div>
+                )}
                 {Array.isArray(rec.alternatives) && rec.alternatives.length > 0 && (
                   <div className="space-y-1 pt-1">
                     {rec.alternatives.map((a, i) => (
@@ -107,7 +115,7 @@ export default function OpportunityCompare({ open, onClose, opps, prefs, autoRec
                     ))}
                   </div>
                 )}
-                <p className="text-[10px] text-white/35 pt-1">Pay figures are advertised or estimated and never guaranteed.</p>
+                <p className="text-[10px] text-white/35 pt-1">Pay figures are advertised or estimated and never guaranteed. SEAL advises; you authorize every application or platform action.</p>
               </>
             )}
           </div>
