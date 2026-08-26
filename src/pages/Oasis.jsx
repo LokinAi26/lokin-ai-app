@@ -88,7 +88,7 @@ function Score({ label, value }) {
   );
 }
 
-function ProjectCard({ project, assets, specs, supplierCandidates, advancing, analyzing, generating, reviewingId, productizing, onAdvance, onAnalyze, onGenerate, onReview, onProductize }) {
+function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequests, advancing, analyzing, generating, reviewingId, productizing, supplierAction, onAdvance, onAnalyze, onGenerate, onReview, onProductize, onMatchSuppliers, onVerifySupplierCost, onRequestSample, onApproveSample }) {
   const [detailsOpen, setDetailsOpen] = useState(Boolean(project.director_summary));
   const approvedAsset = assets.find((asset) => asset.status === "approved");
   const latestSpec = specs[0] || null;
@@ -190,8 +190,14 @@ function ProjectCard({ project, assets, specs, supplierCandidates, advancing, an
         approvedAsset={approvedAsset}
         spec={latestSpec}
         candidates={supplierCandidates.filter((candidate) => candidate.product_spec_id === latestSpec?.id)}
+        samples={sampleRequests.filter((sample) => sample.product_spec_id === latestSpec?.id)}
         building={productizing}
+        supplierAction={supplierAction}
         onBuild={onProductize}
+        onMatch={onMatchSuppliers}
+        onVerifyCost={onVerifySupplierCost}
+        onRequestSample={onRequestSample}
+        onApproveSample={onApproveSample}
       />
 
       <button
@@ -217,6 +223,8 @@ export default function Oasis() {
   const [assets, setAssets] = useState([]);
   const [specs, setSpecs] = useState([]);
   const [supplierCandidates, setSupplierCandidates] = useState([]);
+  const [sampleRequests, setSampleRequests] = useState([]);
+  const [supplierAction, setSupplierAction] = useState("");
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
   const [idea, setIdea] = useState(EMPTY_IDEA);
@@ -235,16 +243,18 @@ export default function Oasis() {
     try {
       const user = await base44.auth.me();
       const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
-      const [records, designAssets, productSpecs, candidates] = await Promise.all([
+      const [records, designAssets, productSpecs, candidates, samples] = await Promise.all([
         base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
         base44.entities.OasisDesignAsset.filter(ownerFilter, "-created_at", 100, 0),
         base44.entities.OasisProductSpec.filter(ownerFilter, "-created_at", 100, 0),
         base44.entities.OasisSupplierCandidate.filter(ownerFilter, "-checked_at", 200, 0),
+        base44.entities.OasisSampleRequest.filter(ownerFilter, "-created_at", 100, 0),
       ]);
       setProjects(records || []);
       setAssets(designAssets || []);
       setSpecs(productSpecs || []);
       setSupplierCandidates(candidates || []);
+      setSampleRequests(samples || []);
     } catch (err) {
       setError("OASIS could not load its project pipeline.");
     } finally {
@@ -488,6 +498,112 @@ export default function Oasis() {
     }
   }
 
+  async function matchSuppliers(project) {
+    const approved = window.confirm(`Read the connected Printful and Printify catalogs for ${project.title}? This is read-only and creates no supplier product or order.`);
+    if (!approved) return;
+
+    setSupplierAction("matching");
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-supplier-control", {
+        action: "match",
+        projectId: project.id,
+      });
+      const result = response?.data || response || {};
+      setSupplierCandidates((current) => {
+        const changed = new Set((result.candidates || []).map((item) => item.id));
+        return [...(result.candidates || []), ...current.filter((item) => !changed.has(item.id))];
+      });
+      if (result.project) setProjects((current) => current.map((item) => item.id === project.id ? result.project : item));
+    } catch (err) {
+      const message = err?.response?.data?.error || err?.message || "Live supplier matching failed.";
+      setError(`${message} Nothing was ordered or changed at either supplier.`);
+    } finally {
+      setSupplierAction("");
+    }
+  }
+
+  async function verifySupplierCost(candidate) {
+    const baseInput = window.prompt(`Confirmed base product cost for ${candidate.supplier} ${candidate.product_title || candidate.supplier_product_id}:`);
+    if (baseInput === null) return;
+    const shippingInput = window.prompt("Confirmed per-unit shipping or allocation:", "0");
+    if (shippingInput === null) return;
+    const baseCost = Number(baseInput);
+    const shipping = Number(shippingInput);
+    if (!Number.isFinite(baseCost) || baseCost <= 0 || !Number.isFinite(shipping) || shipping < 0) {
+      setError("Enter a positive base cost and non-negative shipping amount.");
+      return;
+    }
+    const approved = window.confirm(`Confirm landed cost $${(baseCost + shipping).toFixed(2)}? This value is user-confirmed, not a supplier quote.`);
+    if (!approved) return;
+
+    setSupplierAction("cost");
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-supplier-control", {
+        action: "verify_cost",
+        candidateId: candidate.id,
+        baseCost,
+        shipping,
+      });
+      const result = response?.data || response || {};
+      if (result.candidate) {
+        setSupplierCandidates((current) => current.map((item) => item.id === result.candidate.id ? result.candidate : item));
+      }
+      if (result.project) setProjects((current) => current.map((item) => item.id === result.project.id ? result.project : item));
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Landed cost could not be confirmed.");
+    } finally {
+      setSupplierAction("");
+    }
+  }
+
+  async function requestSample(candidate) {
+    const approved = window.confirm(`Create a one-unit sample approval request for ${candidate.supplier}? This will not place an order or make a payment.`);
+    if (!approved) return;
+
+    setSupplierAction("sample");
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-supplier-control", {
+        action: "request_sample",
+        candidateId: candidate.id,
+      });
+      const result = response?.data || response || {};
+      if (result.sample) {
+        setSampleRequests((current) => [result.sample, ...current.filter((item) => item.id !== result.sample.id)]);
+      }
+      if (result.project) setProjects((current) => current.map((item) => item.id === result.project.id ? result.project : item));
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Sample approval request could not be created.");
+    } finally {
+      setSupplierAction("");
+    }
+  }
+
+  async function approveSample(sample) {
+    const approved = window.confirm("Approve this sample request for planning? This still will not place a supplier order or make a payment.");
+    if (!approved) return;
+
+    setSupplierAction("approval");
+    setError("");
+    try {
+      const response = await base44.functions.invoke("oasis-supplier-control", {
+        action: "approve_sample",
+        sampleRequestId: sample.id,
+      });
+      const result = response?.data || response || {};
+      if (result.sample) {
+        setSampleRequests((current) => current.map((item) => item.id === result.sample.id ? result.sample : item));
+      }
+      if (result.project) setProjects((current) => current.map((item) => item.id === result.project.id ? result.project : item));
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Sample approval failed.");
+    } finally {
+      setSupplierAction("");
+    }
+  }
+
   async function advanceProject(project) {
     const currentIndex = FLOW.indexOf(project.status);
     if (currentIndex < 0 || currentIndex >= FLOW.length - 1) return;
@@ -605,16 +721,22 @@ export default function Oasis() {
                 assets={assets.filter((asset) => asset.project_id === project.id)}
                 specs={specs.filter((spec) => spec.project_id === project.id)}
                 supplierCandidates={supplierCandidates.filter((candidate) => candidate.project_id === project.id)}
+                sampleRequests={sampleRequests.filter((sample) => sample.project_id === project.id)}
                 advancing={advancingId === project.id}
                 analyzing={analyzingId === project.id}
                 generating={generatingProjectId === project.id ? generatingStudy : ""}
                 reviewingId={reviewingId}
                 productizing={productizingId === project.id}
+                supplierAction={supplierAction}
                 onAdvance={advanceProject}
                 onAnalyze={analyzeProject}
                 onGenerate={generateDesign}
                 onReview={reviewDesign}
                 onProductize={productizeProject}
+                onMatchSuppliers={matchSuppliers}
+                onVerifySupplierCost={verifySupplierCost}
+                onRequestSample={requestSample}
+                onApproveSample={approveSample}
               />
             ))}
           </div>
