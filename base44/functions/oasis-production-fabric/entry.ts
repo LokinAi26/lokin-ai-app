@@ -61,16 +61,26 @@ Deno.serve(async (req) => {
     const action = clean(body.action || "compile", 40);
 
     if (action === "list_recipes") {
+      const providers = await base44.asServiceRole.entities.OasisProviderCapability.list("-updated_at", 100, 0).catch(() => []);
+      const providerByKey = new Map();
+      for (const provider of providers || []) {
+        if (!providerByKey.has(provider.provider_key)) providerByKey.set(provider.provider_key, provider);
+      }
       return Response.json({
-        recipes: Object.entries(RECIPES).map(([key, recipe]) => ({
-          key,
-          name: recipe.name,
-          domain: recipe.domain,
-          capability: recipe.capability,
-          provider_key: recipe.providerKey,
-          setup_status: "setup_required",
-        })),
-        disclosure: "Catalog only. Listing a recipe does not execute a provider or spend credits.",
+        recipes: Object.entries(RECIPES).map(([key, recipe]) => {
+          const provider = providerByKey.get(recipe.providerKey);
+          return {
+            key,
+            name: recipe.name,
+            domain: recipe.domain,
+            capability: recipe.capability,
+            provider_key: recipe.providerKey,
+            setup_status: provider?.setup_status || "setup_required",
+            health_status: provider?.health_status || "unknown",
+            executable: provider?.setup_status === "configured" && provider?.health_status === "healthy",
+          };
+        }),
+        disclosure: "Live provider catalog only. Listing recipes does not execute a provider or spend credits.",
       });
     }
 
@@ -99,11 +109,32 @@ Deno.serve(async (req) => {
       0,
     );
     if (existingJobs?.[0]) {
+      let existingJob = existingJobs[0];
+      const providerRows = await base44.asServiceRole.entities.OasisProviderCapability.filter(
+        { provider_key: recipe.providerKey, capability: recipe.capability },
+        "-updated_at",
+        1,
+        0,
+      );
+      const liveProvider = providerRows?.[0];
+      if (
+        existingJob.status === "setup_required"
+        && liveProvider?.setup_status === "configured"
+        && liveProvider?.health_status === "healthy"
+      ) {
+        existingJob = await base44.asServiceRole.entities.OasisProductionJob.update(existingJob.id, {
+          status: "awaiting_approval",
+          error_code: "",
+          error_message: "",
+          credit_guardian_decision: "approval_required_before_reservation",
+          updated_at: new Date().toISOString(),
+        });
+      }
       return Response.json({
         success: true,
         idempotent_replay: true,
-        job: existingJobs[0],
-        disclosure: "No provider call or additional credit reservation occurred.",
+        job: existingJob,
+        disclosure: "Existing workflow returned and reconciled against live provider health. No provider call or additional credit reservation occurred.",
       });
     }
 
