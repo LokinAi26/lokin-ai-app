@@ -8,6 +8,7 @@ import {
   lockInScore,
   OPTIMIZATION_MODES,
 } from "../../shared/delivery.js";
+import { buildSealSummary, evaluateOffersWithSeal } from "../../shared/seal.js";
 
 const TRUSTED_SOURCES = new Set(["user_entered", "user_shared", "official_api", "merchant_feed"]);
 const TRUSTED_VERIFICATION = new Set(["address_verified", "platform_verified"]);
@@ -57,10 +58,22 @@ export default async function(req) {
     const todayMiles = todays.reduce((s, e) => s + (e.miles || 0), 0);
 
     const currentOffers = allOffers.filter(isCurrentTrustedOffer);
-    const eligible = filterAndRank(currentOffers, prefs, blocked, avoidPlaces);
+    const sealDecisions = evaluateOffersWithSeal(allOffers, prefs, {
+      blocked,
+      avoidPlaces,
+      mode,
+      now: new Date(),
+    });
+    const sealDecisionByOffer = new Map(sealDecisions.map((decision) => [decision.subject_id, decision]));
+    const sealEligibleIds = new Set(
+      sealDecisions.filter((decision) => decision.action !== "PASS").map((decision) => decision.subject_id),
+    );
+    const eligible = filterAndRank(currentOffers, prefs, blocked, avoidPlaces)
+      .filter((offer) => sealEligibleIds.has(String(offer.id)));
     const ranked = rankByMode(eligible, mode, originAddress);
     const sequenced = sequenceByZone(ranked, originAddress);
     const stats = totalRouteStats(sequenced, prefs, originAddress);
+    const seal = buildSealSummary(sealDecisions);
 
     const avgPerHour = sequenced.length
       ? sequenced.reduce((s, o) => s + o._score.netPerHour, 0) / sequenced.length
@@ -86,11 +99,12 @@ export default async function(req) {
         payout: o.payout,
         category: o.category,
         reason:
-          (o.payout || 0) < (prefs.min_payout || 0)
+          sealDecisionByOffer.get(String(o.id))?.advise?.reasons?.[0] ||
+          ((o.payout || 0) < (prefs.min_payout || 0)
             ? `Below $${prefs.min_payout} minimum`
             : (o.miles || 0) > (prefs.max_miles || 99)
               ? `Over ${prefs.max_miles} mile max`
-              : "Below target net $/hr",
+              : "Below target net $/hr"),
       }));
 
     const modeLabel = OPTIMIZATION_MODES.find((m) => m.value === mode)?.label || "Most Profit";
@@ -101,6 +115,7 @@ export default async function(req) {
         sequenced: [],
         stats,
         lockInScore: score,
+        seal,
         declinedCount: declined.length,
         todayEarnings,
         briefing: "No current verified offers match your filters. Add a fresh Virginia offer from your delivery app; LOKIN will not optimize legacy, expired, or unverified records.",
@@ -148,9 +163,11 @@ export default async function(req) {
         store_hours: o.store_hours || "",
         sequence: o.sequence,
         rate: o._score,
+        seal: sealDecisionByOffer.get(String(o.id)) || null,
       })),
       stats,
       lockInScore: score,
+      seal,
       declinedCount: declined.length,
       todayEarnings,
       briefing,
