@@ -1,0 +1,105 @@
+{
+  "type": "object",
+  "description": "Versioned submission-ready funding artifact or outreach draft",
+  "properties": {
+    "artifact_key": {
+      "type": "string"
+    },
+    "program_key": {
+      "type": "string"
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": [
+        "project_pitch",
+        "ffap_intake",
+        "capability_statement",
+        "registration_checklist",
+        "proposal_section",
+        "outreach_email"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review_ready",
+        "blocked",
+        "submitted",
+        "superseded"
+      ],
+      "default": "draft"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "content_json": {
+      "type": "string",
+      "description": "Canonical JSON containing the structured artifact body"
+    },
+    "character_count_json": {
+      "type": "string",
+      "description": "Character counts/limits for constrained submission fields"
+    },
+    "missing_facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "created_at_external": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at_external": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "artifact_key",
+    "program_key",
+    "artifact_type",
+    "title",
+    "status",
+    "version",
+    "content_json"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "FundingArtifact"
+}

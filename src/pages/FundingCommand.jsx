@@ -38,6 +38,7 @@ export default function FundingCommand() {
   const [me, setMe] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [artifacts, setArtifacts] = useState([]);
   const [readiness, setReadiness] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,14 +52,16 @@ export default function FundingCommand() {
         if (!alive) return;
         setMe(user);
         if (user?.role !== "admin") return;
-        const [p, a, r] = await Promise.all([
+        const [p, a, f, r] = await Promise.all([
           base44.entities.FundingProgram.list("-fit_score", 100),
           base44.entities.FundingApplication.list("-last_updated_at", 100),
+          base44.entities.FundingArtifact.list("-updated_at_external", 100),
           base44.entities.VirginiaReadinessItem.list("category", 200),
         ]);
         if (!alive) return;
         setPrograms(p || []);
         setApplications(a || []);
+        setArtifacts(f || []);
         setReadiness(r || []);
       } catch (e) {
         if (alive) setError(e?.message || "Funding control data could not be loaded.");
@@ -107,6 +110,24 @@ export default function FundingCommand() {
           <div className="rounded-xl border border-white/10 bg-black/20 p-3"><div className="text-[10px] text-white/35">NEXT ACTION</div><p className="mt-1 text-xs text-white/70">{lead.next_action}</p></div>
         </section>
       )}
+
+      <section className="space-y-3">
+        <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-violet-300" /><h2 className="text-sm font-bold text-white">Submission artifacts</h2></div>
+        <div className="space-y-2">
+          {artifacts.map((artifact) => {
+            let counts = {};
+            try { counts = JSON.parse(artifact.character_count_json || "{}"); } catch { counts = {}; }
+            return (
+              <article key={artifact.id} className="rounded-2xl border border-white/10 lokin-panel p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-semibold text-white">{artifact.title}</h3><div className="mt-0.5 text-[10px] text-white/40">v{artifact.version} · {String(artifact.artifact_type || "").replaceAll("_", " ")}</div></div><StatusPill status={artifact.status} /></div>
+                {Object.keys(counts).length > 0 && <div className="grid grid-cols-2 gap-2">{Object.entries(counts).map(([key, value]) => <div key={key} className="rounded-xl border border-white/10 bg-black/20 p-2.5"><div className="text-[9px] text-white/30">{key.replaceAll("_", " ").toUpperCase()}</div><div className="mt-1 text-[10px] text-white/65">{value.count} / {value.limit} chars</div></div>)}</div>}
+                {artifact.missing_facts?.length > 0 && <div className="space-y-1">{artifact.missing_facts.map((fact, i) => <div key={`${artifact.id}-missing-${i}`} className="flex gap-2 text-[10px] leading-relaxed text-amber-100/70"><AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-300" />{fact}</div>)}</div>}
+                <div className="rounded-xl border border-white/10 bg-black/20 p-2.5"><div className="text-[9px] text-white/30">NEXT ACTION</div><p className="mt-1 text-[10px] leading-relaxed text-white/60">{artifact.next_action}</p></div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2"><BadgeDollarSign className="h-4 w-4 text-primary" /><h2 className="text-sm font-bold text-white">Funding targets</h2></div>
