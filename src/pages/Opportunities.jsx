@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Radar, RefreshCw, Sparkles, GitCompare, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { estimateNet } from "@/lib/opportunityEstimates";
 import { rankSealOpportunities } from "@/lib/sealDecisionEngine";
 import OpportunityFilters from "@/components/opportunities/OpportunityFilters";
 import OpportunityCard from "@/components/opportunities/OpportunityCard";
