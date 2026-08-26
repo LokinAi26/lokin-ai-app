@@ -125,7 +125,7 @@ export default function Opportunities() {
     setSheet({ open: true, mode: "compare", autoRecommend: false });
   }
   function openRecommend() {
-    // recommend on the top of the filtered list (capped at 12 for cost)
+    // Rank the top filtered opportunities through deterministic SEAL scoring.
     setSelected(filtered.slice(0, 12));
     setSheet({ open: true, mode: "recommend", autoRecommend: true });
   }
@@ -139,7 +139,7 @@ export default function Opportunities() {
           <Radar className="h-5 w-5 text-primary shrink-0" />
           <div className="min-w-0">
             <h1 className="text-xl font-bold font-heading metal-text leading-tight">Driver Opportunity Hub</h1>
-            <p className="text-[11px] text-white/40 truncate">Live verified openings only · no sample jobs.</p>
+            <p className="text-[11px] text-white/40 truncate">SEAL-ranked · live verified openings only · no sample jobs.</p>
           </div>
         </div>
         <button onClick={runScan} disabled={scanning}
@@ -162,7 +162,7 @@ export default function Opportunities() {
           onClick={openRecommend}
           className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm font-bold text-accent glow-cyan active:scale-[0.98] transition-transform"
         >
-          <Sparkles className="h-4 w-4" /> Recommend
+          <Sparkles className="h-4 w-4" /> SEAL Recommend
         </button>
         <button
           onClick={openCompare}
