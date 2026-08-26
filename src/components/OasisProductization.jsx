@@ -77,7 +77,7 @@ export default function OasisProductization({
             <div className="space-y-2">
               {(candidates || []).map((candidate) => {
                 const sample = (samples || []).find((item) => item.supplier_candidate_id === candidate.id);
-                const ready = candidate.match_status === "verified" && candidate.cost_verified && candidate.inventory_verified;
+                const ready = candidate.match_status === "verified" && candidate.cost_verified && candidate.margin_passed && candidate.inventory_verified;
                 return (
                   <div key={candidate.id} className="rounded-lg border border-white/10 bg-black/30 p-2.5">
                     <div className="flex items-start justify-between gap-2">
@@ -92,10 +92,11 @@ export default function OasisProductization({
                     {candidate.supplier_product_id && (
                       <div className="mt-1 text-[9px] text-white/35">Provider product #{candidate.supplier_product_id} · match {Number(candidate.live_match_score || 0).toFixed(1)}%</div>
                     )}
-                    <div className="mt-2 grid grid-cols-3 gap-1">
+                    <div className="mt-2 grid grid-cols-4 gap-1">
                       <Gate label="Catalog" passed={Boolean(candidate.supplier_product_id)} />
                       <Gate label="Available" passed={candidate.inventory_verified === true} />
                       <Gate label="Cost" passed={candidate.cost_verified === true} />
+                      <Gate label="Margin" passed={candidate.margin_passed === true} />
                     </div>
                     {candidate.cost_verified && (
                       <div className="mt-2 grid grid-cols-2 gap-1">
