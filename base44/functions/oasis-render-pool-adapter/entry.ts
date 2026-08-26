@@ -15,7 +15,7 @@ async function bridge(action:string, payload:any={}) {
       ...(action === "health" ? {} : { "content-type":"application/json" }),
     },
     ...(action === "health" ? {} : { body:JSON.stringify({ action, ...payload }) }),
-    redirect:"error",
+    redirect:"manual",
   });
   return { ok:response.ok, status:response.status, data:await response.json().catch(()=>({})) };
 }
