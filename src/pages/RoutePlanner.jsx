@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
+import SealDecisionCard from "@/components/SealDecisionCard";
 import RouteHeatMap from "@/components/RouteHeatMap";
 import LocalOfferCapture from "@/components/LocalOfferCapture";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
@@ -145,6 +146,8 @@ export default function RoutePlanner() {
         </div>
       )}
 
+      {data?.seal && <SealDecisionCard seal={data.seal} />}
+
       {/* Dark map card with bright route line */}
       {stops.length > 0 && (
         <div className="rounded-3xl border border-white/10 overflow-hidden lokin-panel">
@@ -192,7 +195,18 @@ export default function RoutePlanner() {
                     <div className="font-semibold text-sm truncate text-white">{o.merchant}</div>
                     <div className="text-sm font-bold text-primary">${o.rate.gross}</div>
                   </div>
-                  <div className="text-xs text-white/45">{CATEGORY_LABELS[o.category] || o.category}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-white/45">{CATEGORY_LABELS[o.category] || o.category}</div>
+                    {o.seal && (
+                      <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-black ${
+                        o.seal.action === "TAKE"
+                          ? "border-primary/35 bg-primary/10 text-primary"
+                          : "border-amber-400/35 bg-amber-400/10 text-amber-300"
+                      }`}>
+                        SEAL {o.seal.action} · {o.seal.score}
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/55">
                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-primary" />{o.miles}mi</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-primary" />{o.est_minutes}m</span>
