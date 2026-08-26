@@ -58,6 +58,10 @@
       "type": "boolean",
       "default": false
     },
+    "margin_passed": {
+      "type": "boolean",
+      "default": false
+    },
     "inventory_verified": {
       "type": "boolean",
       "default": false
