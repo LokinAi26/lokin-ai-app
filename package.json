@@ -9,6 +9,7 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "verify:navigation": "node scripts/verify-navigation-v2.mjs && node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-native-location-packaging.mjs && npm run build && npm run lint",
+    "verify:seal": "node scripts/verify-seal.mjs",
     "verify:sensor-fusion": "node scripts/verify-sensor-fusion-v21.mjs",
     "verify:native-location": "node scripts/verify-native-location-packaging.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
