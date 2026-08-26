@@ -21,6 +21,12 @@
     "supplier_product_id": {
       "type": "string"
     },
+    "product_title": {
+      "type": "string"
+    },
+    "product_image_url": {
+      "type": "string"
+    },
     "match_status": {
       "type": "string",
       "enum": [
@@ -32,14 +38,25 @@
       ],
       "default": "needs_catalog_match"
     },
+    "live_match_score": {
+      "type": "number",
+      "default": 0
+    },
     "estimated_base_cost": {
       "type": "number"
     },
     "estimated_shipping": {
       "type": "number"
     },
+    "landed_cost": {
+      "type": "number"
+    },
     "estimated_margin_percent": {
       "type": "number"
+    },
+    "cost_verified": {
+      "type": "boolean",
+      "default": false
     },
     "inventory_verified": {
       "type": "boolean",
@@ -53,6 +70,10 @@
       "type": "string"
     },
     "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "catalog_checked_at": {
       "type": "string",
       "format": "date-time"
     }
