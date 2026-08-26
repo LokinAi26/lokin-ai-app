@@ -14,6 +14,7 @@ export const CREDIT_GUARDIAN_MANIFEST = {
   "printify-catalog": { tier: "CACHE", ttl: 600000, reason: "inventory/catalog reads" },
   "printify-stock-alert": { tier: "ON_DEMAND", ttl: 0, reason: "explicit alert configuration" },
   "optimizeRoute": { tier: "ON_DEMAND", ttl: 120000, reason: "high-value route intelligence; dedupe identical requests" },
+  "seal-evaluate": { tier: "ON_DEMAND", ttl: 0, reason: "deterministic, explainable driver decision with optional audit persistence" },
   "hotspot-map": { tier: "CACHE", ttl: 120000, reason: "real merchant pickup geocoding; refresh at most every two minutes" },
   "ingest-local-offer": { tier: "MISSION_CRITICAL", ttl: 0, reason: "validated current-offer write with Virginia address verification" },
   "findRoadStops": { tier: "ON_DEMAND", ttl: 300000, reason: "location search" },
