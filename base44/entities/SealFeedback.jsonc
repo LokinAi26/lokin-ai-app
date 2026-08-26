@@ -1,0 +1,70 @@
+{
+  "name": "SealFeedback",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "decision_id": {
+      "type": "string"
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "selected_action": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "dismissed",
+        "expired",
+        "completed",
+        "cancelled"
+      ]
+    },
+    "actual_payout": {
+      "type": "number"
+    },
+    "actual_minutes": {
+      "type": "number"
+    },
+    "actual_miles": {
+      "type": "number"
+    },
+    "actual_wait_minutes": {
+      "type": "number"
+    },
+    "driver_rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "notes": {
+      "type": "string"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "decision_id",
+    "subject_id",
+    "selected_action",
+    "recorded_at"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}
