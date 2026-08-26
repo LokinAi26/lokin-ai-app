@@ -1,0 +1,88 @@
+{
+  "type": "object",
+  "description": "Versioned immutable workflow graph compiled by the OASIS Production Fabric",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "workflow_key": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "design",
+        "vector",
+        "apparel",
+        "video",
+        "audio",
+        "mastering"
+      ]
+    },
+    "graph_json": {
+      "type": "string"
+    },
+    "input_schema_json": {
+      "type": "string"
+    },
+    "output_schema_json": {
+      "type": "string"
+    },
+    "approval_policy_json": {
+      "type": "string"
+    },
+    "rights_policy_json": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_by_user_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "name",
+    "workflow_key",
+    "version",
+    "domain",
+    "graph_json",
+    "active",
+    "created_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "OasisWorkflowDefinition"
+}

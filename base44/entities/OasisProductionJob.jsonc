@@ -1,5 +1,4 @@
 {
-  "name": "OasisProductionJob",
   "type": "object",
   "description": "Auditable queued execution job for the OASIS Production Fabric",
   "properties": {
@@ -157,5 +156,6 @@
         "role": "admin"
       }
     }
-  }
+  },
+  "name": "OasisProductionJob"
 }
