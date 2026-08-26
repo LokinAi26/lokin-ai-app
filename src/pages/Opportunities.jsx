@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Radar, RefreshCw, Sparkles, GitCompare, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { estimateNet } from "@/lib/opportunityEstimates";
+import { rankSealOpportunities } from "@/lib/sealDecisionEngine";
 import OpportunityFilters from "@/components/opportunities/OpportunityFilters";
 import OpportunityCard from "@/components/opportunities/OpportunityCard";
 import OpportunityCompare from "@/components/opportunities/OpportunityCompare";
@@ -112,8 +113,7 @@ export default function Opportunities() {
     if (filters.vehicle !== "any") list = list.filter((o) => o.role_type === filters.vehicle || o.role_type === "any");
     if (filters.schedule !== "any") list = list.filter((o) => o.schedule === filters.schedule);
 
-    const netOf = (o) => estimateNet(o, prefs).netPerHour;
-    if (filters.sort === "net") list.sort((a, b) => netOf(b) - netOf(a));
+    if (filters.sort === "net") list = rankSealOpportunities(list, prefs).map(({ opportunity }) => opportunity);
     else if (filters.sort === "gross") list.sort((a, b) => (b.pay_amount || 0) - (a.pay_amount || 0));
     else list.sort((a, b) => (b.scan_date || "").localeCompare(a.scan_date || ""));
     return list;
