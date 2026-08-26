@@ -1,0 +1,119 @@
+{
+  "type": "object",
+  "description": "Authoritative funding-opportunity registry for LOKIN AI and LOKIN Productions",
+  "properties": {
+    "program_key": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "sponsor": {
+      "type": "string"
+    },
+    "program_type": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "sbir_sttr",
+        "government_contract",
+        "venture",
+        "loan",
+        "accelerator"
+      ]
+    },
+    "target_product": {
+      "type": "string",
+      "enum": [
+        "lokin_ai",
+        "lokin_productions",
+        "both"
+      ]
+    },
+    "fit_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "funding_min_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "funding_max_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "repayable": {
+      "type": "boolean",
+      "default": false
+    },
+    "dilutive": {
+      "type": "boolean",
+      "default": false
+    },
+    "deadline": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "researching",
+        "preparing",
+        "open",
+        "submitted",
+        "awarded",
+        "declined",
+        "closed"
+      ],
+      "default": "researching"
+    },
+    "eligibility_summary": {
+      "type": "string"
+    },
+    "technical_fit": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "official_url": {
+      "type": "string"
+    },
+    "last_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "program_key",
+    "name",
+    "sponsor",
+    "program_type",
+    "target_product",
+    "fit_score",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "FundingProgram"
+}

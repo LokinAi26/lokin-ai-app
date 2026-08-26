@@ -1,0 +1,96 @@
+{
+  "type": "object",
+  "description": "Evidence-based Virginia operational and funding readiness gate for LOKIN products",
+  "properties": {
+    "app_key": {
+      "type": "string",
+      "enum": [
+        "lokin_ai",
+        "lokin_productions",
+        "both"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "corporate",
+        "tax",
+        "local_license",
+        "procurement",
+        "federal_funding",
+        "privacy_security",
+        "native_validation",
+        "intellectual_property",
+        "regulated_features"
+      ]
+    },
+    "requirement_key": {
+      "type": "string"
+    },
+    "requirement": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "in_progress",
+        "blocked",
+        "not_applicable",
+        "needs_user_action"
+      ],
+      "default": "needs_user_action"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "authoritative_source": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "blocks_funding": {
+      "type": "boolean",
+      "default": false
+    },
+    "blocks_production": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "app_key",
+    "category",
+    "requirement_key",
+    "requirement",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "name": "VirginiaReadinessItem"
+}
