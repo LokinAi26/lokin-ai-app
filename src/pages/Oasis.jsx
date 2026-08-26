@@ -7,6 +7,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import OasisDesignStudio from "@/components/OasisDesignStudio";
 import OasisProductization from "@/components/OasisProductization";
+import OasisProductionFabric from "@/components/OasisProductionFabric";
 
 const STAGES = [
   { key: "idea", label: "Idea", icon: Lightbulb },
@@ -199,6 +200,8 @@ function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequest
         onRequestSample={onRequestSample}
         onApproveSample={onApproveSample}
       />
+
+      <OasisProductionFabric project={project} sourceAsset={approvedAsset} />
 
       <button
         type="button"
