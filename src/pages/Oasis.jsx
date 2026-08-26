@@ -293,32 +293,21 @@ export default function Oasis() {
     setSaving(true);
     setError("");
     try {
-      const user = await base44.auth.me().catch(() => null);
-      const now = new Date().toISOString();
-      const record = await base44.entities.OasisProject.create({
-        organization_id: user?.organization_id || user?.id || "lokin",
-        owner_user_id: user?.id || "",
+      const response = await base44.functions.invoke("oasis-project-create", {
         title: idea.title.trim(),
         idea: idea.idea.trim(),
         category: idea.category,
         audience: idea.audience.trim(),
         target_price: Number(idea.target_price || 0),
         target_margin: Number(idea.target_margin || 0),
-        status: "idea",
-        approval_state: "draft",
-        brand_score: 0,
-        production_score: 0,
-        demand_score: 0,
-        profit_score: 0,
-        next_action: "Develop concept",
-        created_at: now,
-        updated_at: now,
       });
-      setProjects((current) => [record, ...current]);
+      const result = response?.data || response || {};
+      if (!result.project) throw new Error(result.error || "OASIS project creation returned no project.");
+      setProjects((current) => [result.project, ...current]);
       setIdea(EMPTY_IDEA);
       setComposerOpen(false);
     } catch (err) {
-      setError("The idea was not saved. Check your connection and try again.");
+      setError(err?.response?.data?.error || err?.message || "The idea was not saved. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -815,7 +804,13 @@ export default function Oasis() {
                   </p>
                 </div>
 
-                <button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-black text-black disabled:opacity-50">
+                {error && (
+                  <div role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-[11px] text-red-200">
+                    {error}
+                  </div>
+                )}
+
+                <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-black text-black disabled:opacity-50">
                   {saving ? <Clock3 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {saving ? "Planting idea…" : "Create OASIS project"}
                 </button>
