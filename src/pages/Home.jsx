@@ -11,6 +11,7 @@ import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import SealDecisionCard from "@/components/SealDecisionCard";
 
 function greeting() {
   const h = new Date().getHours();
@@ -161,6 +162,8 @@ export default function Home() {
         <div className="text-[11px] text-white/45">AI recommendation</div>
         <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.error ? "Couldn't load — pull down to refresh." : (data?.briefing || "Ready when you are."))}</div>
       </div>
+
+      {data?.seal && <SealDecisionCard seal={data.seal} compact />}
 
       <AwarenessBanner />
 
