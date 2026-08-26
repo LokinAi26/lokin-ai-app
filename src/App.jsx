@@ -67,6 +67,7 @@ import DriverOnboarding from './pages/DriverOnboarding';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import SupportInfo from './pages/SupportInfo';
+import FundingCommand from './pages/FundingCommand';
 import ReleaseGate from './components/ReleaseGate';
 import { RELEASE_FLAGS } from './lib/releaseFlags';
 
@@ -141,6 +142,7 @@ const AuthenticatedApp = () => {
           <Route path="/connect" element={<Connect />} />
           <Route path="/opportunities" element={<Opportunities />} />
           <Route path="/showcase" element={<Showcase />} />
+          <Route path="/funding-command" element={<FundingCommand />} />
           <Route path="/5g" element={<FiveG />} />
           <Route path="/active-delivery" element={<ActiveDelivery />} />
           <Route path="/certified" element={<Certified />} />
