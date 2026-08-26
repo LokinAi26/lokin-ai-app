@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk";
 import { filterAndRank, rankByMode, trueEarningRate, OPTIMIZATION_MODES } from "../../shared/delivery.js";
+import { buildSealSummary, evaluateOffersWithSeal } from "../../shared/seal.js";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
 const MAX_OFFERS = 30;
@@ -187,12 +188,28 @@ export default async function hotspotMap(req: Request) {
     };
 
     const currentOffers = allOffers.filter((offer: any) => isCurrentTrustedOffer(offer, marketState));
-    const eligible = filterAndRank(currentOffers, preferences, blocked, avoidPlaces);
+    const sealDecisions = evaluateOffersWithSeal(allOffers, preferences, {
+      blocked,
+      avoidPlaces,
+      mode,
+      now: new Date(),
+    });
+    const sealDecisionByOffer = new Map(sealDecisions.map((decision: any) => [decision.subject_id, decision]));
+    const sealEligibleIds = new Set(
+      sealDecisions.filter((decision: any) => decision.action !== "PASS").map((decision: any) => decision.subject_id),
+    );
+    const eligible = filterAndRank(currentOffers, preferences, blocked, avoidPlaces)
+      .filter((offer: any) => sealEligibleIds.has(String(offer.id)));
     const ranked = rankByMode(eligible, mode, originAddress).slice(0, MAX_OFFERS);
     const geocoded = await mapWithConcurrency(ranked, 4, async (offer: any) => {
       try {
         const point = await geocodeAddress(offer.pickup_address, accessToken, origin);
-        return point ? { offer, point, rate: offer._score || trueEarningRate(offer, preferences) } : null;
+        return point ? {
+          offer,
+          point,
+          rate: offer._score || trueEarningRate(offer, preferences),
+          seal: sealDecisionByOffer.get(String(offer.id)) || null,
+        } : null;
       } catch {
         return null;
       }
@@ -214,6 +231,8 @@ export default async function hotspotMap(req: Request) {
         net_per_hour_sum: 0,
         avg_minutes_sum: 0,
         avg_miles_sum: 0,
+        seal_score_sum: 0,
+        seal_confidence_sum: 0,
         merchants: new Set<string>(),
         categories: new Set<string>(),
         offer_ids: [],
@@ -228,6 +247,8 @@ export default async function hotspotMap(req: Request) {
       zone.net_per_hour_sum += Number(item.rate.netPerHour || 0);
       zone.avg_minutes_sum += Number(item.offer.est_minutes || 0);
       zone.avg_miles_sum += Number(item.offer.miles || 0);
+      zone.seal_score_sum += Number(item.seal?.score || 0);
+      zone.seal_confidence_sum += Number(item.seal?.confidence_score || 0);
       zone.merchants.add(String(item.offer.merchant || "Merchant"));
       zone.categories.add(String(item.offer.category || ""));
       zone.offer_ids.push(String(item.offer.id));
@@ -258,6 +279,8 @@ export default async function hotspotMap(req: Request) {
         net_per_hour: Number((zone.net_per_hour_sum / count).toFixed(2)),
         avg_minutes: Number((zone.avg_minutes_sum / count).toFixed(1)),
         avg_miles: Number((zone.avg_miles_sum / count).toFixed(1)),
+        seal_score: Math.round(zone.seal_score_sum / count),
+        seal_confidence: Math.round(zone.seal_confidence_sum / count),
         distance_miles: Number.isFinite(zone.nearest_distance_miles)
           ? Number(zone.nearest_distance_miles.toFixed(1))
           : null,
@@ -284,8 +307,10 @@ export default async function hotspotMap(req: Request) {
       ok: true,
       mode,
       generated_at: new Date().toISOString(),
+      seal: buildSealSummary(sealDecisions),
       source: {
         kind: "authenticated_offer_records",
+        decision_engine: "LOKIN_SEAL",
         provider: "mapbox",
         freshness: status.state,
         age_minutes: status.age_minutes,
