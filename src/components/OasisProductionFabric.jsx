@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Boxes, CheckCircle2, Clock3, Cpu, ShieldCheck } from "lucide-react";
+import { Boxes, CheckCircle2, Clock3, Cpu, RefreshCw, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const FALLBACK_RECIPES = [
@@ -18,6 +18,8 @@ export default function OasisProductionFabric({ project, sourceAsset }) {
   const [busyKey, setBusyKey] = useState("");
   const [jobs, setJobs] = useState({});
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [healthMessage, setHealthMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -31,6 +33,27 @@ export default function OasisProductionFabric({ project, sourceAsset }) {
       });
     return () => { active = false; };
   }, []);
+
+  async function refreshProviderHealth() {
+    setRefreshing(true);
+    setError("");
+    setHealthMessage("");
+    try {
+      const healthResponse = await base44.functions.invoke("oasis-provider-health", {});
+      const healthResult = healthResponse?.data || healthResponse || {};
+      const catalogResponse = await base44.functions.invoke("oasis-production-fabric", { action: "list_recipes" });
+      const catalogResult = catalogResponse?.data || catalogResponse || {};
+      if (Array.isArray(catalogResult.recipes) && catalogResult.recipes.length) setRecipes(catalogResult.recipes);
+      const readyCount = Array.isArray(healthResult.providers)
+        ? healthResult.providers.filter((provider) => provider.setup_status === "configured" && provider.health_status === "healthy").length
+        : 0;
+      setHealthMessage(`${readyCount} of 2 live adapters healthy. Health checks do not generate media or spend credits.`);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Provider health check failed.");
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function compile(recipe) {
     const confirmed = window.confirm(
@@ -69,7 +92,16 @@ export default function OasisProductionFabric({ project, sourceAsset }) {
             Compile repeatable, auditable production graphs. Providers remain fail-closed until configured, healthy, approved, and cleared by Credit Guardian.
           </p>
         </div>
-        <ShieldCheck className="h-5 w-5 shrink-0 text-cyan-300/70" />
+        <button
+          type="button"
+          disabled={refreshing || Boolean(busyKey)}
+          onClick={refreshProviderHealth}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-cyan-200 transition hover:border-cyan-300/50 disabled:opacity-50"
+          title="Run zero-spend provider health checks"
+        >
+          {refreshing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+          Health
+        </button>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -94,11 +126,15 @@ export default function OasisProductionFabric({ project, sourceAsset }) {
               <div className={`mt-2 text-[9px] font-bold uppercase tracking-wider ${status === "setup_required" ? "text-amber-300" : "text-primary"}`}>
                 {title(status)}
               </div>
+              <div className="mt-1 text-[8px] uppercase tracking-wider text-white/30">
+                Health: {title(recipe.health_status || "unknown")}
+              </div>
             </button>
           );
         })}
       </div>
 
+      {healthMessage && <div className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-[10px] text-cyan-100/70">{healthMessage}</div>}
       {error && <div className="mt-3 rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-[10px] text-red-200">{error}</div>}
       <p className="mt-3 text-[9px] leading-relaxed text-white/30">
         Compiling is zero-spend. Execution requires provider activation, rights clearance, human approval, and a separate cost reservation.
