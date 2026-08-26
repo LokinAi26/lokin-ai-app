@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
           .sort((a: any, b: any) => b.score - a.score);
         const best = ranked[0];
 
-        if (!best?.product?.id) {
+        if (!best?.product?.id || best.score <= 0) {
           candidates.push(await base44.asServiceRole.entities.OasisSupplierCandidate.update(candidate.id, {
             supplier_product_id: "",
             product_title: "",
@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
             match_status: result.note ? "needs_catalog_match" : "unavailable",
             live_match_score: 0,
             cost_verified: false,
+            margin_passed: false,
             inventory_verified: false,
             notes: result.note || "The connected live catalog returned no matching products.",
             checked_at: now,
@@ -160,6 +161,7 @@ Deno.serve(async (req) => {
           landed_cost: 0,
           estimated_margin_percent: 0,
           cost_verified: false,
+          margin_passed: false,
           inventory_verified: inventoryVerified,
           quality_verified: false,
           notes: "Matched to a real live catalog product. Availability is a catalog signal only. Base cost, shipping, taxes, fees, quality, and physical suitability remain unverified.",
@@ -198,7 +200,9 @@ Deno.serve(async (req) => {
       const retail = Number(spec.target_retail_price || project.recommended_price || project.target_price || 0);
       const landed = Number((baseCost + shipping).toFixed(2));
       const margin = retail > 0 ? Number((((retail - landed) / retail) * 100).toFixed(2)) : 0;
-      const verified = Boolean(candidate.inventory_verified);
+      const targetMargin = Math.max(0, Number(project.target_margin || 0));
+      const marginPassed = retail > 0 && margin >= targetMargin;
+      const verified = Boolean(candidate.inventory_verified) && marginPassed;
 
       const updatedCandidate = await base44.asServiceRole.entities.OasisSupplierCandidate.update(candidate.id, {
         estimated_base_cost: Number(baseCost.toFixed(2)),
@@ -206,14 +210,19 @@ Deno.serve(async (req) => {
         landed_cost: landed,
         estimated_margin_percent: margin,
         cost_verified: true,
+        margin_passed: marginPassed,
         match_status: verified ? "verified" : "candidate",
-        notes: "Landed cost was manually confirmed by the user; it was not quoted automatically by the provider. Taxes, transaction fees, quality, and physical suitability remain unverified.",
+        notes: marginPassed
+          ? "Landed cost was manually confirmed by the user and passes the target margin. It was not quoted automatically by the provider. Taxes, transaction fees, quality, and physical suitability remain unverified."
+          : `Landed cost was manually confirmed, but the ${margin.toFixed(1)}% margin misses the ${targetMargin.toFixed(1)}% target. Sample advancement is blocked until economics improve.`,
         checked_at: now,
       });
       const updatedProject = await base44.asServiceRole.entities.OasisProject.update(project.id, {
         next_action: verified
           ? "Create a sample approval request"
-          : "Recheck live catalog availability before requesting a sample",
+          : marginPassed
+            ? "Recheck live catalog availability before requesting a sample"
+            : "Reduce landed cost or revise retail price before requesting a sample",
         updated_at: now,
       });
       return Response.json({ success: true, candidate: updatedCandidate, project: updatedProject });
@@ -225,10 +234,11 @@ Deno.serve(async (req) => {
       if (
         candidate.match_status !== "verified" ||
         candidate.cost_verified !== true ||
+        candidate.margin_passed !== true ||
         candidate.inventory_verified !== true ||
         !candidate.supplier_product_id
       ) {
-        return Response.json({ error: "Verified product ID, availability, and landed cost are required before sample approval" }, { status: 409 });
+        return Response.json({ error: "Verified product ID, availability, landed cost, and target-margin pass are required before sample approval" }, { status: 409 });
       }
 
       const existing = await base44.asServiceRole.entities.OasisSampleRequest.filter(
