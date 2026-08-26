@@ -266,6 +266,7 @@ export default function RouteHeatMap({
                   <Tooltip direction="top" offset={[0, -5]} className="lokin-tip">
                     <b>{zone.name}</b><br />
                     {metricDisplay(zone, metric)} · {zone.offer_count} eligible offer{zone.offer_count === 1 ? "" : "s"}
+                    <br />SEAL {zone.seal_score}/100 · {zone.seal_confidence}% confidence
                     {selected ? <><br />Included in optimized route</> : null}
                   </Tooltip>
                 </CircleMarker>
@@ -336,7 +337,7 @@ export default function RouteHeatMap({
               <MapPin className="h-3 w-3 text-primary" /> {best.name}
             </div>
             <div className="text-[10px] text-white/40">
-              {best.distance_miles == null ? "Distance unavailable" : `${best.distance_miles.toFixed(1)} mi away`} · {best.offer_count} eligible offer{best.offer_count === 1 ? "" : "s"}
+              {best.distance_miles == null ? "Distance unavailable" : `${best.distance_miles.toFixed(1)} mi away`} · {best.offer_count} eligible offer{best.offer_count === 1 ? "" : "s"} · SEAL {best.seal_score}/100
             </div>
           </div>
           <div className="shrink-0 text-right">
@@ -350,7 +351,7 @@ export default function RouteHeatMap({
       {payload?.source && (
         <div className="flex items-center justify-between gap-3 border-t border-white/8 bg-black/35 px-3 py-2 text-[9px] text-white/35">
           <span>{payload.source.located_offers}/{payload.source.eligible_offers} eligible offers mapped</span>
-          <span className="truncate text-right">Mapbox geocoding · merchant pickups only</span>
+          <span className="truncate text-right">LOKIN SEAL · Mapbox · merchant pickups only</span>
         </div>
       )}
     </div>
