@@ -13,7 +13,7 @@ export default function LockInScore({ score, compact = false }) {
   const overall = score?.overall ?? 0;
   const breakdown = score?.breakdown || {};
   const color = overall >= 80 ? "#AAFF00" : overall >= 55 ? "#facc15" : "#f87171";
-  const topLabel = overall >= 90 ? "Top 10% of LOKIN Drivers" : overall >= 80 ? "Top 25% of LOKIN Drivers" : overall >= 70 ? "Top 50% of LOKIN Drivers" : "Keep pushing — you're climbing";
+  const topLabel = overall >= 90 ? "Elite efficiency band" : overall >= 80 ? "Strong efficiency band" : overall >= 70 ? "On-target efficiency band" : "Improvement opportunity";
   const r = 52;
   const circ = 2 * Math.PI * r;
   const dash = (overall / 100) * circ;
@@ -30,7 +30,7 @@ export default function LockInScore({ score, compact = false }) {
           <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold font-display">{overall}</span>
         </div>
         <div className="leading-tight">
-          <div className="text-[10px] uppercase tracking-wider text-white/50">Lock In Score</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/50">SEAL Lock In Score</div>
         </div>
       </div>
     );
@@ -40,7 +40,7 @@ export default function LockInScore({ score, compact = false }) {
     <div className="rounded-3xl border border-white/10 lokin-panel p-5">
       <div className="flex items-center gap-2 mb-4">
         <Lock className="h-4 w-4 text-primary" />
-        <div className="text-sm font-semibold tracking-wide text-white">LOCK IN SCORE</div>
+        <div className="text-sm font-semibold tracking-wide text-white">LOKIN SEAL · LOCK IN SCORE</div>
       </div>
       <div className="flex items-center gap-5">
         <div className="relative h-28 w-28 shrink-0">
