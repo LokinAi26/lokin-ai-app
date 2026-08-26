@@ -107,7 +107,7 @@ export default async function(req:Request) {
           ],
         },
       }),
-      redirect: "error",
+      redirect: "manual",
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(clean(payload?.error?.message || payload?.error || `Recraft returned HTTP ${response.status}`, 1000));
