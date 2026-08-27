@@ -36,6 +36,36 @@
       "default": "other",
       "description": "Delivery platform named by the authenticated user or official source. LOKIN does not infer platform affiliation."
     },
+    "owner_user_id": {
+      "type": "string",
+      "description": "Owning LOKIN user for private account/user-derived offers."
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "private",
+        "market"
+      ],
+      "default": "private",
+      "description": "Private offers are visible only to their owning driver; market offers are explicitly shareable feed records."
+    },
+    "provider_event_id": {
+      "type": "string",
+      "description": "Idempotent event identifier supplied by an authorized provider adapter."
+    },
+    "provider_sync_id": {
+      "type": "string",
+      "description": "Synchronization batch/run identifier from an authorized provider adapter."
+    },
+    "source_account_id": {
+      "type": "string",
+      "description": "Provider-side account reference for private authorized data; never an OAuth token or secret."
+    },
+    "source_received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When LOKIN received this record from the source channel."
+    },
     "payout": {
       "type": "number"
     },
