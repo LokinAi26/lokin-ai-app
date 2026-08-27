@@ -60,6 +60,18 @@
     "metadata_json": {
       "type": "string"
     },
+    "source_provider": {
+      "type": "string",
+      "description": "Authorized source provider for imported measured outcomes."
+    },
+    "source_external_id": {
+      "type": "string",
+      "description": "Provider-side activity/trip identifier used for traceability."
+    },
+    "source_sync_key": {
+      "type": "string",
+      "description": "Per-user idempotency key preventing the same measured outcome from being learned twice."
+    },
     "occurred_at": {
       "type": "string"
     }
