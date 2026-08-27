@@ -74,6 +74,26 @@
       "type": "number",
       "default": 22
     },
+    "target_per_mile": {
+      "type": "number",
+      "default": 1.5,
+      "description": "Preferred minimum projected net dollars per mile for Earnings Intelligence scoring."
+    },
+    "max_wait_minutes": {
+      "type": "number",
+      "default": 15,
+      "description": "Driver tolerance used to penalize high-friction offers in Earnings Intelligence."
+    },
+    "earnings_intelligence_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enables LOKIN Earnings Intelligence recommendations for verified offers."
+    },
+    "human_acceptance_required": {
+      "type": "boolean",
+      "default": true,
+      "description": "Safety policy: third-party offer acceptance always remains an explicit driver action."
+    },
     "mileage_cost": {
       "type": "number",
       "default": 0.67
