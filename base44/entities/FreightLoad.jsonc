@@ -1,0 +1,174 @@
+{
+  "name": "FreightLoad",
+  "type": "object",
+  "properties": {
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "official_api",
+        "carrier_feed",
+        "broker_feed"
+      ],
+      "default": "manual"
+    },
+    "source_reference": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "source_verified",
+        "rate_verified",
+        "rejected"
+      ],
+      "default": "unverified"
+    },
+    "broker_name": {
+      "type": "string"
+    },
+    "broker_mc_number": {
+      "type": "string"
+    },
+    "shipper_name": {
+      "type": "string"
+    },
+    "commodity": {
+      "type": "string"
+    },
+    "equipment_type": {
+      "type": "string",
+      "enum": [
+        "dry_van",
+        "reefer",
+        "flatbed",
+        "step_deck",
+        "power_only",
+        "box_truck",
+        "cargo_van",
+        "other"
+      ],
+      "default": "dry_van"
+    },
+    "weight_lbs": {
+      "type": "number"
+    },
+    "hazmat": {
+      "type": "boolean",
+      "default": false
+    },
+    "pickup_address": {
+      "type": "string"
+    },
+    "pickup_window_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pickup_window_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dropoff_address": {
+      "type": "string"
+    },
+    "delivery_window_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delivery_window_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "loaded_miles": {
+      "type": "number"
+    },
+    "deadhead_miles": {
+      "type": "number",
+      "default": 0
+    },
+    "linehaul_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "fuel_surcharge": {
+      "type": "number",
+      "default": 0
+    },
+    "accessorial_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "total_rate": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "offered",
+        "assigned",
+        "en_route_pickup",
+        "picked_up",
+        "in_transit",
+        "delivered",
+        "canceled",
+        "rejected"
+      ],
+      "default": "available"
+    },
+    "assigned_driver_user_id": {
+      "type": "string"
+    },
+    "assigned_vehicle_id": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "pickup_address",
+    "dropoff_address",
+    "loaded_miles",
+    "total_rate",
+    "captured_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.assigned_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
