@@ -170,11 +170,11 @@ function baseScores(workload) {
 }
 
 function hardRoute(workload) {
-  if (workload.explicitEngine) return { engineId: workload.explicitEngine, reason: 'explicit_engine' };
-  if (workload.failedBefore) return { engineId: 'sentinel', reason: 'retry_or_failed_workload' };
-  if (workload.qualityCritical && !workload.realtime) return { engineId: 'sentinel', reason: 'fail_closed_quality_or_security' };
-  if (workload.continuityCritical && !workload.realtime) return { engineId: 'atlas', reason: 'canonical_continuity_or_memory' };
-  if (workload.realtime) return { engineId: 'pulse', reason: 'latency_critical' };
+  if (workload.explicitEngine) return { engineId: workload.explicitEngine, reason: 'explicit_engine', failClosed: false };
+  if (workload.failedBefore) return { engineId: 'sentinel', reason: 'retry_or_failed_workload', failClosed: false };
+  if (workload.qualityCritical && !workload.realtime) return { engineId: 'sentinel', reason: 'fail_closed_quality_or_security', failClosed: true };
+  if (workload.continuityCritical && !workload.realtime) return { engineId: 'atlas', reason: 'canonical_continuity_or_memory', failClosed: true };
+  if (workload.realtime) return { engineId: 'pulse', reason: 'latency_critical', failClosed: false };
   return null;
 }
 
@@ -249,6 +249,17 @@ export function scheduleWorkload(workloadInput = {}, snapshot = {}, index = 0) {
         score: 1000,
         reason: hard.reason,
         leaseMs: leaseFor(workload, state),
+        decisionVersion: ECOSYSTEM_FABRIC_VERSION,
+      };
+    }
+    if (hard.failClosed) {
+      return {
+        accepted: false,
+        status: 'deferred',
+        workloadId: workload.id,
+        idempotencyKey: workload.idempotencyKey,
+        reason: `${hard.reason}_protected_engine_unavailable`,
+        retryAfterMs: Math.round(clamp(1_500 + state.load * 750 + workload.attempts * 1_500, 1_500, 60_000)),
         decisionVersion: ECOSYSTEM_FABRIC_VERSION,
       };
     }
