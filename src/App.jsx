@@ -16,6 +16,7 @@ import Locator from './pages/Locator';
 import Fuel from './pages/Fuel';
 import LokinAI from './pages/LokinAI';
 import Earnings from './pages/Earnings';
+import EarningsIntelligence from './pages/EarningsIntelligence';
 import More from './pages/More';
 import AvoidList from './pages/AvoidList';
 import Settings from './pages/Settings';
@@ -116,6 +117,7 @@ const AuthenticatedApp = () => {
           <Route path="/route" element={<RoutePlanner />} />
           <Route path="/lokin" element={<LokinAI />} />
           <Route path="/earnings" element={<Earnings />} />
+          <Route path="/earnings-intelligence" element={<EarningsIntelligence />} />
           <Route path="/more" element={<More />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/locator" element={<Locator />} />
