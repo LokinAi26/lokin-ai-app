@@ -26,6 +26,17 @@ export default async function(req: Request) {
       console.warn("delete-account: EarningsDecision purge skipped", error);
     }
 
+    // Purge driver-platform OAuth and imported activity before removing the account.
+    // OAuth credentials are encrypted and service-owned, so they cannot rely on user RLS deletion.
+    for (const entityName of ["DriverOAuthCredential", "DriverPlatformActivity", "DriverPlatformConnection"]) {
+      try {
+        const rows = await base44.asServiceRole.entities[entityName].filter({ user_id: String(user.id) });
+        await Promise.all((rows || []).map((row: any) => base44.asServiceRole.entities[entityName].delete(row.id)));
+      } catch (error) {
+        console.warn(`delete-account: ${entityName} purge skipped`, error);
+      }
+    }
+
     // Service-role deletion removes the built-in User record itself, not merely local profile data.
     await base44.asServiceRole.entities.User.delete(user.id);
     return Response.json({ ok: true });
