@@ -4,6 +4,7 @@ import {
   evaluateOffersWithSeal,
   SEAL_ENGINE_VERSION,
 } from "../../shared/seal.js";
+import { filterOffersForUser } from "../../shared/offerAccess.js";
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status });
@@ -35,6 +36,8 @@ export default async function sealEvaluate(req: Request) {
       base44.entities.AvoidPlace.filter({}),
     ]);
 
+    const visibleOffers = filterOffersForUser(allOffers, String(user.id));
+
     const preferences = preferenceRows[0] || {
       accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
       min_payout: 6,
@@ -44,7 +47,7 @@ export default async function sealEvaluate(req: Request) {
       gas_price: 3.45,
       mileage_cost: 0.67,
     };
-    const offers = ids.size ? allOffers.filter((offer: any) => ids.has(String(offer.id))) : allOffers.slice(0, 30);
+    const offers = ids.size ? visibleOffers.filter((offer: any) => ids.has(String(offer.id))) : visibleOffers.slice(0, 30);
     if (!offers.length) return json({ error: "No current offers to evaluate", code: "NO_OFFERS" }, 400);
 
     const decisions = evaluateOffersWithSeal(offers, preferences, {
