@@ -64,11 +64,23 @@ export default function Settings() {
     base44.entities.DriverPreference.filter({}).then((p) => {
       const def = p[0];
       setPrefs(def);
-      setForm(def || {
+      setForm({
         user_type: "driver",
-        vehicle_mpg: 26, gas_price: 3.45, min_per_hour: 22, mileage_cost: 0.67,
-        daily_goal: 150, weekly_goal: 850, daily_hours_goal: 8, optimization_mode: "most_profit",
+        vehicle_mpg: 26,
+        gas_price: 3.45,
+        min_per_hour: 22,
+        target_per_mile: 1.5,
+        max_wait_minutes: 15,
+        earnings_intelligence_enabled: true,
+        human_acceptance_required: true,
+        mileage_cost: 0.67,
+        daily_goal: 150,
+        weekly_goal: 850,
+        daily_hours_goal: 8,
+        optimization_mode: "most_profit",
         accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
+        ...(def || {}),
+        human_acceptance_required: true,
       });
     });
   }, []);
@@ -109,6 +121,8 @@ export default function Settings() {
 
       <Section title="Earnings Goals">
         <Field label="Min hourly rate $/hr"><Num value={form.min_per_hour} onChange={(v) => set("min_per_hour", v)} /></Field>
+        <Field label="Target net $/mile"><Num value={form.target_per_mile} onChange={(v) => set("target_per_mile", v)} step={0.05} /></Field>
+        <Field label="Max wait tolerance (minutes)"><Num value={form.max_wait_minutes} onChange={(v) => set("max_wait_minutes", v)} /></Field>
         <Field label="Daily hours goal"><Num value={form.daily_hours_goal} onChange={(v) => set("daily_hours_goal", v)} /></Field>
         <div>
           <div className="text-xs text-white/60 mb-1">Daily goal</div>
@@ -126,6 +140,27 @@ export default function Settings() {
           </div>
         </div>
         <Field label="Weekly goal $"><Num value={form.weekly_goal} onChange={(v) => set("weekly_goal", v)} /></Field>
+      </Section>
+
+      <Section title="Earnings Intelligence">
+        <button
+          type="button"
+          onClick={() => set("earnings_intelligence_enabled", !form.earnings_intelligence_enabled)}
+          className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${form.earnings_intelligence_enabled ? "border-primary/35 bg-primary/[0.07]" : "border-white/10 bg-white/[0.03]"}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold text-white">Earnings Intelligence</div>
+              <div className="mt-0.5 text-[11px] text-white/45">Rank verified offers by net rate, destination value, sequence value, and friction.</div>
+            </div>
+            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${form.earnings_intelligence_enabled ? "border-primary/35 bg-primary/10 text-primary" : "border-white/10 text-white/40"}`}>
+              {form.earnings_intelligence_enabled ? "ON" : "OFF"}
+            </span>
+          </div>
+        </button>
+        <div className="rounded-2xl border border-primary/20 bg-primary/[0.035] p-3 text-[10px] leading-relaxed text-white/50">
+          Driver confirmation is permanently required for third-party offers. LOKIN never auto-accepts or bypasses platform controls.
+        </div>
       </Section>
 
       <Section title="Default Optimization Mode">
