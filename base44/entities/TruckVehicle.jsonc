@@ -1,0 +1,134 @@
+{
+  "name": "TruckVehicle",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "vehicle_type": {
+      "type": "string",
+      "enum": [
+        "tractor_trailer",
+        "straight_truck",
+        "box_truck",
+        "cargo_van"
+      ],
+      "default": "tractor_trailer"
+    },
+    "equipment_type": {
+      "type": "string",
+      "enum": [
+        "dry_van",
+        "reefer",
+        "flatbed",
+        "step_deck",
+        "power_only",
+        "box_truck",
+        "cargo_van",
+        "other"
+      ],
+      "default": "dry_van"
+    },
+    "vin_last6": {
+      "type": "string"
+    },
+    "gross_weight_lbs": {
+      "type": "number",
+      "default": 80000
+    },
+    "current_weight_lbs": {
+      "type": "number"
+    },
+    "max_payload_lbs": {
+      "type": "number"
+    },
+    "height_ft": {
+      "type": "number",
+      "default": 13.5
+    },
+    "width_ft": {
+      "type": "number",
+      "default": 8.5
+    },
+    "length_ft": {
+      "type": "number",
+      "default": 70
+    },
+    "axles": {
+      "type": "number",
+      "default": 5
+    },
+    "mpg": {
+      "type": "number",
+      "default": 6.5
+    },
+    "hazmat_capable": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "dispatched",
+        "maintenance",
+        "offline"
+      ],
+      "default": "available"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "owner_user_id",
+    "unit_number"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
