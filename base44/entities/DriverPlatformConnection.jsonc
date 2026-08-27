@@ -1,4 +1,5 @@
 {
+  "name": "DriverPlatformConnection",
   "type": "object",
   "properties": {
     "user_id": {
@@ -16,14 +17,51 @@
         "import"
       ]
     },
+    "access_mode": {
+      "type": "string",
+      "enum": [
+        "oauth_limited_access",
+        "marketplace_partner",
+        "connect_partner",
+        "manual_until_official"
+      ]
+    },
     "status": {
       "type": "string",
       "enum": [
+        "approval_required",
+        "pending_authorization",
         "connected",
-        "pending",
+        "manual_only",
         "expired",
-        "disconnected"
-      ]
+        "error",
+        "disconnected",
+        "unsupported"
+      ],
+      "default": "disconnected"
+    },
+    "approval_state": {
+      "type": "string",
+      "enum": [
+        "not_requested",
+        "required",
+        "pending",
+        "approved",
+        "not_available"
+      ],
+      "default": "required"
+    },
+    "authorization_state": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "authorized",
+        "expired",
+        "revoked",
+        "unavailable"
+      ],
+      "default": "not_started"
     },
     "capabilities": {
       "type": "array",
@@ -31,7 +69,42 @@
         "type": "string"
       }
     },
+    "can_sync_profile": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_sync_trips": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_sync_payments": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_ingest_live_offers": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_ingest_partner_orders": {
+      "type": "boolean",
+      "default": false
+    },
+    "data_disclosure": {
+      "type": "string"
+    },
+    "external_account_ref": {
+      "type": "string",
+      "description": "Non-secret provider account reference. OAuth tokens and secrets must never be stored here."
+    },
     "last_sync_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_error": {
       "type": "string"
     }
   },
@@ -53,6 +126,5 @@
     "delete": {
       "data.user_id": "{{user.id}}"
     }
-  },
-  "name": "DriverPlatformConnection"
+  }
 }
