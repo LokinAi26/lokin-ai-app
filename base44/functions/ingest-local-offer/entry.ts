@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk";
+import { offerVisibleToUser, privateOfferScope } from "../../shared/offerAccess.js";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
 const CATEGORIES = new Set(["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package", "alcohol", "pharmacy"]);
@@ -128,8 +129,9 @@ export default async function ingestLocalOffer(req: Request) {
 
     if (captureId) {
       const duplicates = await base44.entities.Offer.filter({ capture_id: captureId });
-      if (duplicates[0]) {
-        return json({ ok: true, duplicate: true, offer: duplicates[0] });
+      const duplicate = duplicates.find((offer: any) => offerVisibleToUser(offer, String(user.id)));
+      if (duplicate) {
+        return json({ ok: true, duplicate: true, offer: duplicate });
       }
     }
 
@@ -141,6 +143,7 @@ export default async function ingestLocalOffer(req: Request) {
     const capturedAt = new Date();
     const expiresAt = new Date(capturedAt.getTime() + expirationMinutes * 60000);
     const offer = await base44.entities.Offer.create({
+      ...privateOfferScope(String(user.id)),
       merchant,
       category,
       platform,
@@ -160,6 +163,7 @@ export default async function ingestLocalOffer(req: Request) {
         : "Entered by an authenticated LOKIN user. Virginia addresses were verified; platform availability and payout were not independently verified.",
       verification_status: "address_verified",
       captured_at: capturedAt.toISOString(),
+      source_received_at: capturedAt.toISOString(),
       expires_at: expiresAt.toISOString(),
       capture_id: captureId || crypto.randomUUID(),
       store_hours: text(body?.store_hours, 80),
