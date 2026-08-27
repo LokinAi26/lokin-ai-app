@@ -11,7 +11,6 @@ import {
   Route,
   ShieldCheck,
   Sparkles,
-  Target,
   TrendingUp,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
