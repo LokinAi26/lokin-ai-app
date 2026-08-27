@@ -18,6 +18,7 @@ import LokinAI from './pages/LokinAI';
 import Earnings from './pages/Earnings';
 import EarningsIntelligence from './pages/EarningsIntelligence';
 import DriverPlatforms from './pages/DriverPlatforms';
+import UberDriverCallback from './pages/UberDriverCallback';
 import More from './pages/More';
 import AvoidList from './pages/AvoidList';
 import Settings from './pages/Settings';
@@ -120,6 +121,7 @@ const AuthenticatedApp = () => {
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/earnings-intelligence" element={<EarningsIntelligence />} />
           <Route path="/driver-platforms" element={<DriverPlatforms />} />
+          <Route path="/driver-platforms/uber/callback" element={<UberDriverCallback />} />
           <Route path="/more" element={<More />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/locator" element={<Locator />} />
