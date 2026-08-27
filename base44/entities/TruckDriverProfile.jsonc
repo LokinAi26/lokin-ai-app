@@ -1,0 +1,139 @@
+{
+  "name": "TruckDriverProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "carrier_name": {
+      "type": "string"
+    },
+    "usdot_number": {
+      "type": "string"
+    },
+    "mc_number": {
+      "type": "string"
+    },
+    "driver_mode": {
+      "type": "string",
+      "enum": [
+        "owner_operator",
+        "company_driver",
+        "fleet_dispatcher"
+      ],
+      "default": "owner_operator"
+    },
+    "cdl_class": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "not_required",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "endorsements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "home_terminal": {
+      "type": "string"
+    },
+    "preferred_equipment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "preferred_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "max_deadhead_miles": {
+      "type": "number",
+      "default": 75
+    },
+    "min_rate_per_mile": {
+      "type": "number",
+      "default": 2.0
+    },
+    "min_load_rate": {
+      "type": "number",
+      "default": 500
+    },
+    "operating_cost_per_mile": {
+      "type": "number",
+      "default": 1.15
+    },
+    "target_net_per_hour": {
+      "type": "number",
+      "default": 45
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "on_load",
+        "off_duty",
+        "paused"
+      ],
+      "default": "available"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
