@@ -1,0 +1,97 @@
+{
+  "name": "DriverPlatformActivity",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "uber_eats"
+      ]
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "profile",
+        "trip",
+        "payment"
+      ]
+    },
+    "external_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "fare": {
+      "type": "number"
+    },
+    "distance_miles": {
+      "type": "number"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "wait_minutes": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string"
+    },
+    "city_name": {
+      "type": "string"
+    },
+    "currency_code": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "learned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "provider",
+    "record_type",
+    "external_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
