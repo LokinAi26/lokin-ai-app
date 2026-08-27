@@ -66,6 +66,38 @@ export default async function earningsIntelligence(req: Request) {
       max_wait_minutes: 15,
     };
 
+    if (preferences.earnings_intelligence_enabled === false) {
+      return json({
+        ok: true,
+        disabled: true,
+        engine: "LOKIN_EARNINGS_INTELLIGENCE",
+        engine_version: EARNINGS_INTELLIGENCE_VERSION,
+        policy_version: EARNINGS_POLICY_VERSION,
+        generated_at: now.toISOString(),
+        mission: {
+          goal: Number(preferences.daily_goal || 150),
+          earned: 0,
+          remaining: Number(preferences.daily_goal || 150),
+          goal_progress_pct: 0,
+          current_earnings_velocity: 0,
+          projected_minutes_to_goal: null,
+          top_decision: null,
+          next_action: "Earnings Intelligence is turned off in Settings.",
+          driver_confirmation_required: true,
+          automatic_platform_action: false,
+        },
+        decisions: [],
+        safety: {
+          driver_confirmation_required: true,
+          automatic_platform_action: false,
+          gps_spoofing: false,
+          platform_scraping: false,
+          acceptance_bypass: false,
+        },
+        disclosure: "Earnings Intelligence is disabled by the driver.",
+      });
+    }
+
     const today = now.toISOString().slice(0, 10);
     const todayEarnings = earnings
       .filter((row: any) => row.date === today)
