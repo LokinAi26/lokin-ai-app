@@ -17,6 +17,15 @@ export default async function(req: Request) {
       });
     } catch (_) {}
 
+    // Purge server-owned driver intelligence rows before deleting the built-in User record.
+    // These rows are intentionally not user-deletable through normal RLS because they are audit records.
+    try {
+      const earningsDecisions = await base44.asServiceRole.entities.EarningsDecision.filter({ user_id: String(user.id) });
+      await Promise.all(earningsDecisions.map((row: any) => base44.asServiceRole.entities.EarningsDecision.delete(row.id)));
+    } catch (error) {
+      console.warn("delete-account: EarningsDecision purge skipped", error);
+    }
+
     // Service-role deletion removes the built-in User record itself, not merely local profile data.
     await base44.asServiceRole.entities.User.delete(user.id);
     return Response.json({ ok: true });
