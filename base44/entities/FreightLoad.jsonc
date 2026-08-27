@@ -117,6 +117,10 @@
       ],
       "default": "available"
     },
+    "scope_user_id": {
+      "type": "string",
+      "description": "Owner for manually entered/private loads; blank for shared authorized feeds."
+    },
     "assigned_driver_user_id": {
       "type": "string"
     },
@@ -145,6 +149,9 @@
   "rls": {
     "read": {
       "$or": [
+        {
+          "data.scope_user_id": "{{user.id}}"
+        },
         {
           "data.assigned_driver_user_id": "{{user.id}}"
         },
