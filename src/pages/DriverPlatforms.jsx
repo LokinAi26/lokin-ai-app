@@ -33,6 +33,8 @@ export default function DriverPlatforms() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [workingProvider, setWorkingProvider] = useState("");
+  const [syncSummary, setSyncSummary] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +50,35 @@ export default function DriverPlatforms() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  async function connectUber() {
+    setWorkingProvider("uber-connect");
+    setError("");
+    try {
+      const response = await base44.functions.invoke("uber-driver-oauth-connect", {});
+      const url = response?.data?.authorize_url;
+      if (!url) throw new Error(response?.data?.error || "Uber authorization URL was not returned");
+      window.location.assign(url);
+    } catch (nextError) {
+      setError(nextError?.response?.data?.error || nextError?.message || "Could not start Uber authorization");
+      setWorkingProvider("");
+    }
+  }
+
+  async function syncUber() {
+    setWorkingProvider("uber-sync");
+    setError("");
+    setSyncSummary(null);
+    try {
+      const response = await base44.functions.invoke("uber-driver-sync", { days: 30 });
+      setSyncSummary(response.data);
+      await load();
+    } catch (nextError) {
+      setError(nextError?.response?.data?.error || nextError?.message || "Could not sync Uber Driver data");
+    } finally {
+      setWorkingProvider("");
+    }
+  }
 
   return (
     <div className="space-y-4 p-4 pb-8">
@@ -127,14 +158,71 @@ export default function DriverPlatforms() {
 
               {active.length > 0 && (
                 <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.035] p-3">
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-primary/75">Active capabilities</div>
+                  <div className="text-[9px] font-bold uppercase tracking-widest text-primary/75">Production-active capabilities</div>
                   <div className="mt-1 text-[10px] text-white/65">{active.map(([key]) => capabilityLabel(key)).join(" · ")}</div>
+                </div>
+              )}
+
+              {provider.key === "uber_eats" && (
+                <div className="mt-3 space-y-2">
+                  {provider.authorization_state === "authorized" && provider.credential_present && provider.approval_state !== "approved" && (
+                    <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-3 text-[10px] leading-relaxed text-amber-100/75">
+                      Driver OAuth is authorized for limited/developer access. Public production use still requires Uber approval for the Driver API scopes.
+                    </div>
+                  )}
+
+                  {!provider.connect_available && (
+                    <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
+                      <div className="text-[9px] font-bold uppercase tracking-widest text-white/35">OAuth setup required</div>
+                      <div className="mt-1 text-[10px] leading-relaxed text-white/55">
+                        Add {provider.missing_oauth_secrets?.length ? provider.missing_oauth_secrets.join(" · ") : "the Uber Driver OAuth secrets"} in Base44 Secrets.
+                      </div>
+                      <div className="mt-1 text-[9px] text-white/35">Redirect URI: {window.location.origin}/driver-platforms/uber/callback</div>
+                    </div>
+                  )}
+
+                  {provider.connect_available && provider.authorization_state !== "authorized" && (
+                    <button
+                      type="button"
+                      onClick={connectUber}
+                      disabled={Boolean(workingProvider)}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-2.5 text-xs font-black text-primary-foreground disabled:opacity-50"
+                    >
+                      {workingProvider === "uber-connect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                      CONNECT UBER DRIVER
+                    </button>
+                  )}
+
+                  {provider.sync_available && (
+                    <button
+                      type="button"
+                      onClick={syncUber}
+                      disabled={Boolean(workingProvider)}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/[0.07] py-2.5 text-xs font-black text-primary disabled:opacity-50"
+                    >
+                      {workingProvider === "uber-sync" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                      SYNC LAST 30 DAYS
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {syncSummary?.counts && (
+        <div className="rounded-3xl border border-primary/25 bg-primary/[0.045] p-4">
+          <div className="text-xs font-black text-primary">Uber Outcome Learning updated</div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
+            <State label="Trips received" value={syncSummary.counts.trips_received} />
+            <State label="Payments received" value={syncSummary.counts.payments_received} />
+            <State label="New outcomes learned" value={syncSummary.counts.new_outcomes_learned} />
+            <State label="Duplicates skipped" value={syncSummary.counts.duplicate_outcomes_skipped} />
+          </div>
+          <p className="mt-2 text-[9px] leading-relaxed text-white/40">Completed trips feed LOKIN's measured-outcome model. Repeat syncs are idempotent.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Link to="/route" className="flex items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-primary/[0.055] px-3 py-3 text-xs font-black text-primary">
