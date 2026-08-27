@@ -66,6 +66,11 @@ export default async function earningsIntelligence(req: Request) {
       max_wait_minutes: 15,
     };
 
+    const today = now.toISOString().slice(0, 10);
+    const todayEarnings = earnings
+      .filter((row: any) => row.date === today)
+      .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+
     if (preferences.earnings_intelligence_enabled === false) {
       return json({
         ok: true,
@@ -76,9 +81,9 @@ export default async function earningsIntelligence(req: Request) {
         generated_at: now.toISOString(),
         mission: {
           goal: Number(preferences.daily_goal || 150),
-          earned: 0,
-          remaining: Number(preferences.daily_goal || 150),
-          goal_progress_pct: 0,
+          earned: Number(todayEarnings.toFixed(2)),
+          remaining: Number(Math.max(0, Number(preferences.daily_goal || 150) - todayEarnings).toFixed(2)),
+          goal_progress_pct: Math.min(100, Math.round((todayEarnings / Math.max(1, Number(preferences.daily_goal || 150))) * 100)),
           current_earnings_velocity: 0,
           projected_minutes_to_goal: null,
           top_decision: null,
@@ -97,11 +102,6 @@ export default async function earningsIntelligence(req: Request) {
         disclosure: "Earnings Intelligence is disabled by the driver.",
       });
     }
-
-    const today = now.toISOString().slice(0, 10);
-    const todayEarnings = earnings
-      .filter((row: any) => row.date === today)
-      .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
 
     const currentOffers = allOffers.filter((offer: any) => isCurrentTrustedOffer(offer, now.getTime())).slice(0, 40);
     const sealDecisions = evaluateOffersWithSeal(currentOffers, preferences, {
