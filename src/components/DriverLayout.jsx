@@ -9,7 +9,7 @@ import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 
 const NESTED_PATHS = [
-  "/categories", "/locator", "/avoid", "/fuel", "/settings", "/earnings-intelligence",
+  "/categories", "/locator", "/avoid", "/fuel", "/settings", "/earnings-intelligence", "/driver-platforms",
   "/drive", "/brand", "/oasis", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver", "/driver-dispatch",
   "/stash", "/stash/cart", "/green-delivery", "/insurance",
 ];
