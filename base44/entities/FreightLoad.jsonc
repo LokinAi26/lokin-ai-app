@@ -15,6 +15,10 @@
     "source_reference": {
       "type": "string"
     },
+    "capture_id": {
+      "type": "string",
+      "description": "Stable idempotency key supplied by an authorized freight feed."
+    },
     "verification_status": {
       "type": "string",
       "enum": [
@@ -119,7 +123,11 @@
     },
     "scope_user_id": {
       "type": "string",
-      "description": "Owner for manually entered/private loads; blank for shared authorized feeds."
+      "description": "Owner for manually entered/private loads; blank for carrier-scoped or shared authorized feeds."
+    },
+    "scope_usdot_number": {
+      "type": "string",
+      "description": "Optional carrier USDOT scope for authorized carrier/broker feeds."
     },
     "assigned_driver_user_id": {
       "type": "string"
