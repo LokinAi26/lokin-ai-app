@@ -193,6 +193,7 @@ async function freightDashboard(base44, user) {
     if (!FREIGHT_SOURCES.has(String(load.source_type || ""))) return false;
     if (load.verification_status === "rejected") return false;
     if (load.scope_user_id && load.scope_user_id !== user.id) return false;
+    if (load.scope_usdot_number && String(load.scope_usdot_number) !== String(ctx.profile?.usdot_number || "")) return false;
     const expires = Date.parse(String(load.expires_at || ""));
     if (Number.isFinite(expires) && expires <= now) return false;
     return true;
@@ -238,7 +239,8 @@ async function freightDashboard(base44, user) {
     provider_status: {
       truck_routing: Deno.env.get("HERE_API_KEY") ? "ready" : "setup_required",
       truck_routing_provider: "HERE Routing API v8",
-      load_feeds: "manual_or_authorized_feed_only",
+      load_feeds: Deno.env.get("LOKIN_FREIGHT_FEED_SECRET") ? "authorized_feed_ready" : "manual_only_until_feed_secret",
+      feed_ingest_function: "freight-feed-ingest",
       automatic_load_acceptance: false,
     },
     metrics: {
@@ -261,6 +263,28 @@ async function upsertUserEntity(base44, entityName, query, data) {
 
 async function handleFreight(base44, user, body, action) {
   if (action === "freight_dashboard") return Response.json(await freightDashboard(base44, user));
+
+  if (action === "freight_briefing") {
+    const dashboard = await freightDashboard(base44, user);
+    const candidates = (dashboard.loads || []).slice(0, 5);
+    if (!candidates.length) {
+      return Response.json({ briefing: "No current freight loads are available to rank. Add a private load or connect an authorized freight feed." });
+    }
+    const briefing = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: [
+        "You are LOKIN AI Dispatch, a commercial-truck decision assistant.",
+        "Advise only; never claim to accept, book, negotiate, or dispatch a load automatically.",
+        "Never advise violating HOS, vehicle restrictions, hazmat requirements, posted restrictions, or carrier policy.",
+        "Prefer verified data. Explicitly identify manual/unverified load data as unverified.",
+        `Driver HOS planning state fresh: ${dashboard.hos_fresh ? "yes" : "no"}.`,
+        `Truck: ${dashboard.selected_vehicle ? `${dashboard.selected_vehicle.unit_number} ${dashboard.selected_vehicle.equipment_type}` : "not configured"}.`,
+        "Top current candidates:",
+        ...candidates.map((row, i) => `${i + 1}. ${row.decision.action} score ${row.decision.score}; ${row.load.pickup_address} -> ${row.load.dropoff_address}; all-in $${Number(row.load.total_rate || 0).toFixed(2)}; ${row.decision.economics.rate_per_mile}/mi; expected net $${row.decision.economics.expected_net}; expected net/hr $${row.decision.economics.expected_net_per_hour}; source ${row.load.source_type}/${row.load.verification_status}; hard blocks ${row.decision.hard_blocks.join(",") || "none"}; preference misses ${row.decision.preference_misses.join(",") || "none"}.`),
+        "Return a concise dispatch briefing: best next load, why it wins, the main risk/check before booking, and one fallback. Keep it under 140 words.",
+      ].join("\n"),
+    });
+    return Response.json({ briefing, generated_at: nowIso(), driver_confirmation_required: true });
+  }
 
   if (action === "freight_save_profile") {
     const input = body.profile || {};
