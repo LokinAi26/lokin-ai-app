@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Tooltip } from "recharts";
-import { Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } from "lucide-react";
+import { ArrowRight, BrainCircuit, Sparkles, TrendingUp, Clock, MapPin, Fuel as FuelIcon, DollarSign } from "lucide-react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -128,6 +129,18 @@ export default function Earnings() {
         <h1 className="text-2xl font-bold font-heading metal-text">Earnings</h1>
         <p className="text-sm text-white/45">True earning rate — gross, fuel, mileage, net.</p>
       </div>
+
+      <Link to="/earnings-intelligence" className="flex items-center gap-3 rounded-3xl border border-primary/30 bg-primary/[0.06] p-4 active:scale-[0.99] transition-transform">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/35 bg-primary/10">
+          <BrainCircuit className="h-5 w-5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-display tracking-[0.18em] text-primary">LOKIN DRIVER</div>
+          <div className="text-sm font-black text-white">Earnings Intelligence</div>
+          <div className="mt-0.5 text-[11px] text-white/45">Optimize the next 60 minutes, destination value, and follow-on order flow.</div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+      </Link>
 
       <div className="flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 text-sm">
         {RANGES.map((r) => (
