@@ -1,0 +1,102 @@
+{
+  "name": "DriverHosState",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "user_entered",
+        "eld_import",
+        "official_integration"
+      ],
+      "default": "user_entered"
+    },
+    "duty_status": {
+      "type": "string",
+      "enum": [
+        "off_duty",
+        "sleeper",
+        "driving",
+        "on_duty_not_driving"
+      ],
+      "default": "off_duty"
+    },
+    "drive_minutes_remaining": {
+      "type": "number",
+      "default": 660
+    },
+    "shift_minutes_remaining": {
+      "type": "number",
+      "default": 840
+    },
+    "cycle_minutes_remaining": {
+      "type": "number",
+      "default": 4200
+    },
+    "break_due_in_minutes": {
+      "type": "number",
+      "default": 480
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "advisory_only": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "last_synced_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
