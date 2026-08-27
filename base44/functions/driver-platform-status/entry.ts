@@ -1,9 +1,11 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { secrets } from "base44:runtime";
 import {
   driverProviderList,
   normalizeDriverProviderKey,
   providerSafetyContract,
 } from "../../shared/driverProviderRegistry.js";
+import { UBER_PROVIDER_KEY, uberOAuthConfigured, uberOAuthMissingSecrets } from "../../shared/uberDriverOAuth.ts";
 
 function envSet(name: string) {
   return new Set(
@@ -24,15 +26,21 @@ export default async function driverPlatformStatus(req: Request) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
 
-    const rows = await base44.entities.DriverPlatformConnection.filter({ user_id: String(user.id) });
+    const [rows, credentials] = await Promise.all([
+      base44.entities.DriverPlatformConnection.filter({ user_id: String(user.id) }),
+      base44.asServiceRole.entities.DriverOAuthCredential.filter({ user_id: String(user.id) }),
+    ]);
     const oauthReady = envSet("LOKIN_DRIVER_OAUTH_PROVIDERS");
+    if (uberOAuthConfigured(secrets)) oauthReady.add(UBER_PROVIDER_KEY);
     const offerIngestReady = envSet("LOKIN_DRIVER_PROVIDER_ALLOWLIST");
 
     const providers = driverProviderList().map((provider) => {
       const row = (rows || []).find((candidate: any) => normalizeDriverProviderKey(candidate.platform_name) === provider.key) || null;
+      const credential = (credentials || []).find((candidate: any) => normalizeDriverProviderKey(candidate.provider) === provider.key) || null;
       const adapterConfigured = oauthReady.has(provider.key) || offerIngestReady.has(provider.key);
-      const authorized = row?.authorization_state === "authorized" && row?.approval_state === "approved";
-      const active = authorized && adapterConfigured && row?.status === "connected";
+      const driverAuthorized = row?.authorization_state === "authorized" && credential?.status === "connected";
+      const productionAuthorized = driverAuthorized && row?.approval_state === "approved";
+      const active = productionAuthorized && adapterConfigured && row?.status === "connected";
       const potential = { ...provider.capabilities };
       const activeCapabilities = {
         profile: active && Boolean(row?.can_sync_profile),
@@ -56,6 +64,17 @@ export default async function driverPlatformStatus(req: Request) {
         potential_capability_names: capabilityNames(potential),
         active_capabilities: activeCapabilities,
         active_capability_names: capabilityNames(activeCapabilities),
+        driver_authorized_capabilities: {
+          profile: driverAuthorized && Boolean(row?.can_sync_profile),
+          trips: driverAuthorized && Boolean(row?.can_sync_trips),
+          payments: driverAuthorized && Boolean(row?.can_sync_payments),
+          live_offers: false,
+          partner_orders: false,
+        },
+        credential_present: Boolean(credential),
+        connect_available: provider.key === UBER_PROVIDER_KEY && oauthReady.has(provider.key),
+        sync_available: provider.key === UBER_PROVIDER_KEY && driverAuthorized && oauthReady.has(provider.key),
+        missing_oauth_secrets: provider.key === UBER_PROVIDER_KEY ? uberOAuthMissingSecrets(secrets) : [],
         last_sync_at: row?.last_sync_at || null,
         last_checked_at: row?.last_checked_at || null,
         last_error: row?.last_error || null,
