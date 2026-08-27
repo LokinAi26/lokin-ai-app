@@ -29,6 +29,7 @@ function money(value) {
 }
 
 function timeToGoal(minutes) {
+  if (minutes === null || minutes === undefined || minutes === "") return "Waiting for a qualifying offer";
   const value = Number(minutes);
   if (!Number.isFinite(value)) return "Waiting for a qualifying offer";
   if (value <= 0) return "Goal reached";
