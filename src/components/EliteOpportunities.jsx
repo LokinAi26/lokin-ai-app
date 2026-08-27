@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Crown, Flame, TrendingUp, Zap, Gift, Check } from "lucide-react";
 import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
-// Curated high-value promotional opportunities locked in for Elite members.
-// Modeled after partner-app promos like DashLink boosts, priority blocks, and surge windows.
+// Curated opportunity intelligence for Elite members.
+// LOKIN analyzes only user-visible or authorized partner-supplied data; it does not reserve or pre-claim third-party offers.
 const OPPORTUNITIES = [
   {
     id: "dashlink_boost",
     name: "DashLink Boost",
     partner: "DoorDash",
-    desc: "Exclusive high-payout delivery windows locked in before they hit the public offer pool.",
+    desc: "Analyze high-value DashLink-style promotions when they are visible to the driver or supplied through an authorized feed.",
     value: "+$3–8 / order",
     icon: Flame,
     tag: "Promo",
@@ -19,7 +19,7 @@ const OPPORTUNITIES = [
     id: "veho_priority",
     name: "Veho Priority Blocks",
     partner: "Veho",
-    desc: "Reserve first-pick delivery blocks during peak holiday surges before they fill.",
+    desc: "Rank visible delivery blocks by expected net earnings and route fit during high-demand windows.",
     value: "+25% routes",
     icon: TrendingUp,
     tag: "Blocks",
@@ -28,7 +28,7 @@ const OPPORTUNITIES = [
     id: "flex_surge",
     name: "Amazon Flex Surge Zones",
     partner: "Amazon Flex",
-    desc: "AI flags surge zones near you and locks the offer window before it refreshes.",
+    desc: "Score user-visible surge blocks against distance, time, expenses, and the next-best route decision.",
     value: "+$2–6 / block",
     icon: Zap,
     tag: "Surge",
@@ -44,12 +44,12 @@ const OPPORTUNITIES = [
   },
   {
     id: "spark_early",
-    name: "Spark Early Claim",
+    name: "Spark Offer Analysis",
     partner: "Walmart Spark",
-    desc: "Lock in high-value Spark offers 60 seconds before they go public.",
-    value: "+$3–10",
+    desc: "Score current Spark offers the driver can see or that arrive through a future approved official adapter.",
+    value: "Value score",
     icon: Flame,
-    tag: "Early",
+    tag: "Analysis",
   },
   {
     id: "fuel_boost",
@@ -76,10 +76,10 @@ export default function EliteOpportunities({ plan }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Crown className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-bold font-heading metal-text">Elite Locked-In Opportunities</h2>
+        <h2 className="text-base font-bold font-heading metal-text">Elite Opportunity Intelligence</h2>
       </div>
       <p className="text-xs text-white/45 -mt-1">
-        High-value promos &amp; offers reserved for Elite members — locked in before they go public.
+        High-value opportunities prioritized from authorized or user-provided data. LOKIN never reserves or pre-claims third-party offers.
       </p>
 
       <div className="space-y-3">
@@ -115,14 +115,14 @@ export default function EliteOpportunities({ plan }) {
                 {isElite ? (
                   isLockedIn ? (
                     <div className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-primary/40 bg-primary/15 py-2.5 text-sm font-bold text-primary">
-                      <Check className="h-4 w-4" /> Locked In
+                      <Check className="h-4 w-4" /> Tracked
                     </div>
                   ) : (
                     <button
                       onClick={() => lockIn(opp)}
                       className="mt-3 w-full rounded-2xl bg-primary text-primary-foreground py-2.5 text-sm font-bold glow-primary active:scale-[0.98] transition-transform"
                     >
-                      Lock In This Opportunity
+                      Track This Opportunity
                     </button>
                   )
                 ) : (
@@ -148,7 +148,7 @@ export default function EliteOpportunities({ plan }) {
           onClick={() => navigate("/pricing")}
           className="w-full rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
         >
-          <Crown className="h-4 w-4" /> Upgrade to Elite to lock these in
+          <Crown className="h-4 w-4" /> Upgrade to Elite opportunity intelligence
         </button>
       )}
     </div>
