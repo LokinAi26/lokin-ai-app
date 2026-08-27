@@ -49,6 +49,7 @@ export default function DriverDispatch() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [routeResult, setRouteResult] = useState(null);
+  const [briefing, setBriefing] = useState("");
   const [profileForm, setProfileForm] = useState(/** @type {any} */ ({}));
   const [vehicleForm, setVehicleForm] = useState(/** @type {any} */ ({}));
   const [hosForm, setHosForm] = useState(/** @type {any} */ ({}));
@@ -193,6 +194,16 @@ export default function DriverDispatch() {
     finally { setBusy(false); }
   }
 
+  async function getDispatchBriefing() {
+    setBusy(true); setError("");
+    try {
+      const res = await base44.functions.invoke("driver-dispatch", { action: "freight_briefing" });
+      const value = res.data?.briefing;
+      setBriefing(typeof value === "string" ? value : value?.text || value?.content || JSON.stringify(value || ""));
+    } catch (e) { setError(errorText(e)); }
+    finally { setBusy(false); }
+  }
+
   async function checkTruckRoute(load) {
     setBusy(true); setError(""); setRouteResult(null);
     try {
@@ -252,6 +263,8 @@ export default function DriverDispatch() {
           topDecision={topDecision}
           dispatchReady={dispatchReady}
           routeResult={routeResult}
+          briefing={briefing}
+          onBriefing={getDispatchBriefing}
           onRefresh={() => loadFreight()}
           onAccept={acceptFreight}
           onAdvance={advanceAssignment}
@@ -277,7 +290,7 @@ export default function DriverDispatch() {
 }
 
 function FreightCenter(props) {
-  const { data, busy, topDecision, dispatchReady, routeResult, onRefresh, onAccept, onAdvance, onTruckRoute } = props;
+  const { data, busy, topDecision, dispatchReady, routeResult, briefing, onBriefing, onRefresh, onAccept, onAdvance, onTruckRoute } = props;
   if (!data) return <div className="rounded-2xl border border-white/10 p-5 text-sm text-white/45">Loading dispatch intelligence…</div>;
 
   return <div className="space-y-4">
@@ -309,6 +322,8 @@ function FreightCenter(props) {
         <div className="text-right"><div className="text-xl font-black text-primary">{decimalMoney(topDecision.decision.economics.rate_per_mile)}/mi</div><div className="text-[10px] text-white/40">{money(topDecision.load.total_rate)} all-in</div></div>
       </div>
       <div className="mt-3 text-xs text-white/55 truncate">{topDecision.load.pickup_address} → {topDecision.load.dropoff_address}</div>
+      <button onClick={onBriefing} disabled={busy} className="mt-3 w-full rounded-2xl border border-primary/25 bg-black/35 py-3 text-[10px] font-extrabold text-primary disabled:opacity-40"><BrainCircuit className="inline h-3.5 w-3.5 mr-1"/>ASK LOKIN DISPATCH</button>
+      {briefing && <div className="mt-3 rounded-2xl border border-white/10 bg-black/35 p-3 text-xs leading-relaxed text-white/60 whitespace-pre-wrap">{briefing}</div>}
     </div>}
 
     {routeResult && <TruckRouteResult result={routeResult} />}
