@@ -9,6 +9,7 @@ import {
   OPTIMIZATION_MODES,
 } from "../../shared/delivery.js";
 import { buildSealSummary, evaluateOffersWithSeal } from "../../shared/seal.js";
+import { filterOffersForUser } from "../../shared/offerAccess.js";
 
 const TRUSTED_SOURCES = new Set(["user_entered", "user_shared", "official_api", "merchant_feed"]);
 const TRUSTED_VERIFICATION = new Set(["address_verified", "platform_verified"]);
@@ -44,6 +45,8 @@ export default async function(req) {
       base44.entities.Earning.filter({}),
     ]);
 
+    const visibleOffers = filterOffersForUser(allOffers, String(user.id));
+
     const prefs = prefsList[0] || {
       accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
       min_payout: 6, max_miles: 12, min_per_hour: 22,
@@ -57,8 +60,8 @@ export default async function(req) {
     const todayEarnings = todays.reduce((s, e) => s + (e.amount || 0), 0);
     const todayMiles = todays.reduce((s, e) => s + (e.miles || 0), 0);
 
-    const currentOffers = allOffers.filter(isCurrentTrustedOffer);
-    const sealDecisions = evaluateOffersWithSeal(allOffers, prefs, {
+    const currentOffers = visibleOffers.filter(isCurrentTrustedOffer);
+    const sealDecisions = evaluateOffersWithSeal(visibleOffers, prefs, {
       blocked,
       avoidPlaces,
       mode,
@@ -121,7 +124,8 @@ export default async function(req) {
         briefing: "No current verified offers match your filters. Add a fresh Virginia offer from your delivery app; LOKIN will not optimize legacy, expired, or unverified records.",
         feed: {
           active_verified: currentOffers.length,
-          excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+          excluded_untrusted_or_expired: Math.max(0, visibleOffers.length - currentOffers.length),
+          excluded_not_visible_to_driver: Math.max(0, allOffers.length - visibleOffers.length),
           market: "Virginia-first",
         },
       });
@@ -173,7 +177,8 @@ export default async function(req) {
       briefing,
       feed: {
         active_verified: currentOffers.length,
-        excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+        excluded_untrusted_or_expired: Math.max(0, visibleOffers.length - currentOffers.length),
+        excluded_not_visible_to_driver: Math.max(0, allOffers.length - visibleOffers.length),
         market: "Virginia-first",
       },
     });
