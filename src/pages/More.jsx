@@ -28,7 +28,7 @@ const SECTIONS = [
     items: [
       { to: "/5g", icon: Signal, title: "Connection Diagnostics", desc: "Device-reported network metrics" },
       { to: "/active-delivery", icon: Package, title: "Active Delivery", desc: "Live order status" },
-      { to: "/driver-dispatch", icon: Truck, title: "Merchant Pickups", desc: "Accept pickup offers" },
+      { to: "/driver-dispatch", icon: Truck, title: "AI Dispatch Center", desc: "Truck freight + local pickups" },
       { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops & road tools" },
       { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts & costs" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan & find the shelf" },
