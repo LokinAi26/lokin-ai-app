@@ -6,6 +6,7 @@ import {
   EARNINGS_POLICY_VERSION,
   rankEarningsOffers,
 } from "../../shared/earningsIntelligence.js";
+import { filterOffersForUser } from "../../shared/offerAccess.js";
 
 const TRUSTED_SOURCES = new Set(["user_entered", "user_shared", "official_api", "merchant_feed"]);
 const TRUSTED_VERIFICATION = new Set(["address_verified", "platform_verified"]);
@@ -52,6 +53,8 @@ export default async function earningsIntelligence(req: Request) {
       base44.entities.BlockedCustomer.filter({}),
       base44.entities.AvoidPlace.filter({}),
     ]);
+
+    const visibleOffers = filterOffersForUser(allOffers, String(user.id));
 
     const preferences = preferenceRows[0] || {
       accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
@@ -103,7 +106,7 @@ export default async function earningsIntelligence(req: Request) {
       });
     }
 
-    const currentOffers = allOffers.filter((offer: any) => isCurrentTrustedOffer(offer, now.getTime())).slice(0, 40);
+    const currentOffers = visibleOffers.filter((offer: any) => isCurrentTrustedOffer(offer, now.getTime())).slice(0, 40);
     const sealDecisions = evaluateOffersWithSeal(currentOffers, preferences, {
       blocked,
       avoidPlaces,
@@ -158,7 +161,8 @@ export default async function earningsIntelligence(req: Request) {
       decisions,
       source: {
         active_verified_offers: currentOffers.length,
-        excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+        excluded_untrusted_or_expired: Math.max(0, visibleOffers.length - currentOffers.length),
+        excluded_not_visible_to_driver: Math.max(0, allOffers.length - visibleOffers.length),
         market: preferences.region || "Virginia-first",
         provenance: "Only authenticated user-entered/shared offers, authorized official APIs, and merchant feeds with accepted verification are evaluated.",
       },
