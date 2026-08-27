@@ -1,0 +1,129 @@
+{
+  "name": "DispatchAssignment",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "load_id": {
+      "type": "string"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offered",
+        "accepted",
+        "en_route_pickup",
+        "picked_up",
+        "in_transit",
+        "delivered",
+        "canceled"
+      ],
+      "default": "offered"
+    },
+    "decision_score": {
+      "type": "number"
+    },
+    "expected_rate_per_mile": {
+      "type": "number"
+    },
+    "expected_net": {
+      "type": "number"
+    },
+    "expected_net_per_hour": {
+      "type": "number"
+    },
+    "total_miles": {
+      "type": "number"
+    },
+    "deadhead_miles": {
+      "type": "number"
+    },
+    "estimated_drive_minutes": {
+      "type": "number"
+    },
+    "estimated_service_minutes": {
+      "type": "number"
+    },
+    "hos_feasible": {
+      "type": "boolean"
+    },
+    "hos_source": {
+      "type": "string"
+    },
+    "driver_confirmation_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "picked_up_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "load_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
