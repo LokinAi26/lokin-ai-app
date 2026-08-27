@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   BrainCircuit,
-  CheckCircle2,
   Clock3,
   DollarSign,
-  Gauge,
   LockKeyhole,
   MapPin,
   Navigation,
