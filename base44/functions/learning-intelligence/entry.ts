@@ -12,21 +12,6 @@ function confidenceFor(positive:number, negative:number, evidence:number) {
   return Math.max(0.2, Math.min(0.98, 0.45 + agreement * 0.35 + evidenceWeight * 0.18));
 }
 
-function dayPart(date = new Date()) {
-  const h = date.getHours();
-  if (h < 10) return "morning";
-  if (h < 14) return "lunch";
-  if (h < 17) return "afternoon";
-  if (h < 22) return "dinner";
-  return "late_night";
-}
-
-function scoreOutcome({ netPerHour, dollarsPerMile, targetPerHour, minPerMile }) {
-  const hourly = targetPerHour > 0 ? Math.min(1.5, netPerHour / targetPerHour) : 1;
-  const mileage = minPerMile > 0 ? Math.min(1.5, dollarsPerMile / minPerMile) : 1;
-  return Math.max(0, Math.min(100, Math.round((hourly * 0.65 + mileage * 0.35) * 70)));
-}
-
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -38,7 +23,6 @@ export default async function(req) {
     const memoriesApi = base44.asServiceRole.entities.LokinLearningMemory;
     const eventsApi = base44.asServiceRole.entities.LokinLearningEvent;
     const profilesApi = base44.asServiceRole.entities.LokinLearningProfile;
-    const outcomesApi = base44.asServiceRole.entities.LokinOutcomeLearning;
     const strategiesApi = base44.asServiceRole.entities.LokinStrategyPerformance;
 
     let profiles = await profilesApi.filter({ user_id: userId }, "-updated_date", 1);
