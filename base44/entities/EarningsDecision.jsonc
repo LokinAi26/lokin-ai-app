@@ -1,0 +1,140 @@
+{
+  "name": "EarningsDecision",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "decision_key": {
+      "type": "string",
+      "description": "Idempotency key for one earnings-intelligence evaluation."
+    },
+    "offer_id": {
+      "type": "string"
+    },
+    "merchant": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "TAKE",
+        "CONSIDER",
+        "PASS"
+      ]
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "projected_net": {
+      "type": "number"
+    },
+    "projected_net_per_hour": {
+      "type": "number"
+    },
+    "projected_net_per_mile": {
+      "type": "number"
+    },
+    "earnings_velocity": {
+      "type": "number",
+      "description": "Projected net dollars over the next 60 minutes using the current offer plus verified follow-on opportunity value."
+    },
+    "destination_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "sequence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "friction_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "goal_remaining": {
+      "type": "number"
+    },
+    "projected_minutes_to_goal": {
+      "type": "number"
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "decision_snapshot": {
+      "type": "object"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "driver_confirmation_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "automatic_platform_action": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_at_external": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "decision_key",
+    "offer_id",
+    "action",
+    "score",
+    "engine_version",
+    "policy_version"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
