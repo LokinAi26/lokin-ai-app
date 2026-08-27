@@ -49,10 +49,10 @@ export default function DriverDispatch() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [routeResult, setRouteResult] = useState(null);
-  const [profileForm, setProfileForm] = useState({});
-  const [vehicleForm, setVehicleForm] = useState({});
-  const [hosForm, setHosForm] = useState({});
-  const [loadForm, setLoadForm] = useState({ equipment_type: "dry_van" });
+  const [profileForm, setProfileForm] = useState(/** @type {any} */ ({}));
+  const [vehicleForm, setVehicleForm] = useState(/** @type {any} */ ({}));
+  const [hosForm, setHosForm] = useState(/** @type {any} */ ({}));
+  const [loadForm, setLoadForm] = useState(/** @type {any} */ ({ equipment_type: "dry_van" }));
   const navigate = useNavigate();
 
   async function loadFreight(silent = false) {
