@@ -197,8 +197,8 @@ export default function EarningsIntelligence() {
           <Link to="/route" className="flex items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-primary/[0.055] px-3 py-3 text-xs font-black text-primary">
             <Route className="h-4 w-4" /> ROUTE OPTIMIZER
           </Link>
-          <Link to="/hotspots" className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 text-xs font-black text-white/75">
-            <MapPinned className="h-4 w-4 text-primary" /> HOTSPOTS
+          <Link to="/route" className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 text-xs font-black text-white/75">
+            <MapPinned className="h-4 w-4 text-primary" /> VERIFIED FEED
           </Link>
         </div>
 
