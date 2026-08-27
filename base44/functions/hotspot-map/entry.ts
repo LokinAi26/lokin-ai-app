@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk";
 import { filterAndRank, rankByMode, trueEarningRate, OPTIMIZATION_MODES } from "../../shared/delivery.js";
 import { buildSealSummary, evaluateOffersWithSeal } from "../../shared/seal.js";
+import { filterOffersForUser } from "../../shared/offerAccess.js";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
 const MAX_OFFERS = 30;
@@ -177,6 +178,8 @@ export default async function hotspotMap(req: Request) {
       base44.entities.AvoidPlace.filter({}),
     ]);
 
+    const visibleOffers = filterOffersForUser(allOffers, String(user.id));
+
     const preferences = preferenceRows[0] || {
       accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
       min_payout: 6,
@@ -187,8 +190,8 @@ export default async function hotspotMap(req: Request) {
       mileage_cost: 0.67,
     };
 
-    const currentOffers = allOffers.filter((offer: any) => isCurrentTrustedOffer(offer, marketState));
-    const sealDecisions = evaluateOffersWithSeal(allOffers, preferences, {
+    const currentOffers = visibleOffers.filter((offer: any) => isCurrentTrustedOffer(offer, marketState));
+    const sealDecisions = evaluateOffersWithSeal(visibleOffers, preferences, {
       blocked,
       avoidPlaces,
       mode,
@@ -317,7 +320,8 @@ export default async function hotspotMap(req: Request) {
         newest_offer_at: newestUpdate,
         market_state: marketState || "CURRENT_LOCATION",
         active_verified_offers: currentOffers.length,
-        excluded_untrusted_or_expired: Math.max(0, allOffers.length - currentOffers.length),
+        excluded_untrusted_or_expired: Math.max(0, visibleOffers.length - currentOffers.length),
+        excluded_not_visible_to_driver: Math.max(0, allOffers.length - visibleOffers.length),
         eligible_offers: eligible.length,
         located_offers: located.length,
         skipped_unlocated: Math.max(0, ranked.length - located.length),
