@@ -1,0 +1,78 @@
+{
+  "name": "EcosystemWorkloadDecision",
+  "type": "object",
+  "properties": {
+    "workload_id": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "source_app": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "workload_type": {
+      "type": "string"
+    },
+    "engine_id": {
+      "type": "string",
+      "enum": [
+        "pulse",
+        "forge",
+        "atlas",
+        "sentinel",
+        "governor"
+      ]
+    },
+    "engine_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "admitted",
+        "admitted_failover",
+        "deferred",
+        "duplicate"
+      ]
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "priority": {
+      "type": "number"
+    },
+    "score": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "lease_ms": {
+      "type": "number"
+    },
+    "retry_after_ms": {
+      "type": "number"
+    },
+    "decision_version": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "workload_id",
+    "idempotency_key",
+    "source_app",
+    "status",
+    "accepted",
+    "reason",
+    "decision_version",
+    "decided_at"
+  ]
+}
