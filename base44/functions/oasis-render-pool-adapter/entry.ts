@@ -45,7 +45,7 @@ export default async function(req:Request) {
     }
 
     if (action === "control_health") {
-      const result = await bridge("control_health", { namespace:clean(body.namespace || "lokin",100) });
+      const result = await bridge("control_health", { namespace:clean(body.namespace || "lokin.production",100) });
       return Response.json({ configured:result.status !== 503, healthy:result.ok && result.data?.control_plane?.status !== "action_required", control_plane_version:CONTROL_PLANE_VERSION, remote:result.data }, { status:result.ok ? 200 : result.status });
     }
 
