@@ -2,6 +2,7 @@ import { secrets } from "base44:runtime";
 import { getShopifyAdminToken, getShopifyTokenDiagnostics, normalizeShopifyDomain } from "../../shared/shopifyAuth.ts";
 import { shopifyAdminBase, shoGet } from "../../shared/shopifyReads.ts";
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { fetchWithAdmission } from "../../shared/ecosystemAdmission.js";
 
 /**
  * commerce-reliability — READ-ONLY Commerce Reliability Layer.
@@ -41,11 +42,11 @@ function cleanToken(v: unknown): string {
     .trim();
 }
 
-async function pfGet(path: string, token: string, storeId: string) {
+async function pfGet(base44: any, path: string, token: string, storeId: string) {
   try {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
     if (storeId) headers["X-PF-Store-Id"] = storeId;
-    const r = await fetch(`${PRINTFUL_API}${path}`, { headers });
+    const r = await fetchWithAdmission(base44, `${PRINTFUL_API}${path}`, { headers }, { sourceApp:'LOKIN AI', domain:'commerce', type:'provider_sync', provider:'api.printful.com', background:true, priority:35 });
     let data: any = null;
     try { data = await r.json(); } catch { data = null; }
     return { ok: r.ok, status: r.status, data };
@@ -100,6 +101,7 @@ const REMEDIATION: Record<string, string> = {
 };
 
 export default async function (req: Request): Promise<Response> {
+  const base44 = createClientFromRequest(req);
   const checks: any[] = [];
   const checkedAt = new Date().toISOString();
 
@@ -184,7 +186,7 @@ export default async function (req: Request): Promise<Response> {
   let pfStores: any[] = [];
   let pfError: string | null = null;
   if (pfToken) {
-    const r = await pfGet("/stores", pfToken, "");
+    const r = await pfGet(base44, "/stores", pfToken, "");
     if (r.ok && Array.isArray(r.data?.result)) pfStores = r.data.result;
     else pfError = r.data?.error?.message || r.data?.error?.reason || (typeof r.data?.result === "string" ? r.data.result : null) || `Printful /stores failed (HTTP ${r.status}).`;
   }
@@ -372,7 +374,7 @@ export default async function (req: Request): Promise<Response> {
 
   // ---- Printful Store API compatibility (Shopify-platform 400 is EXPECTED, not auth failure) ----
   if (pfStore) {
-    const r = await pfGet("/store/products?limit=1", pfToken, String(pfStore.id));
+    const r = await pfGet(base44, "/store/products?limit=1", pfToken, String(pfStore.id));
     const msg = r.data?.error?.message || (typeof r.data?.result === "string" ? r.data.result : null);
     const expectedCompat = r.status === 400 && Boolean(msg) && /Manual Order|API platform/i.test(msg);
     checks.push({
