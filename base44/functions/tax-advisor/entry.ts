@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
 // LOKIN AI Tax Advisor & Credit Engine.
@@ -112,14 +113,14 @@ export default async function (req) {
 
     if (mode === "credit") {
       const g = (goals || [])[0] || {};
-      const llm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const llm = await invokeLLMWithAdmission(base44, {
         prompt: buildCreditPrompt(g, income, netIncome),
         response_json_schema: creditSchema(),
       });
       return Response.json({ credit: llm, profile: g });
     }
 
-    const llm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const llm = await invokeLLMWithAdmission(base44, {
       prompt: buildTaxPrompt({ ...summary }),
       response_json_schema: taxSchema(),
     });

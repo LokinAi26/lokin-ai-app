@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 export default async function(req) {
@@ -8,7 +9,7 @@ export default async function(req) {
     const location = (body.location || "").trim();
     if (!location) return Response.json({ error: "Location is required" }, { status: 400 });
 
-    const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const res = await invokeLLMWithAdmission(base44, {
       prompt: `Find up to 5 auto repair shops, mechanics, and roadside assistance services near "${location}". For each, provide the business name, full street address, phone number, main services offered, Google rating as a number from 0 to 5, whether they offer roadside assistance or towing as a boolean, and a Google Maps directions URL. Only include real businesses that actually exist.`,
       add_context_from_internet: true,
       model: "gemini_3_flash",

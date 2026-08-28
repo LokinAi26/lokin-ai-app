@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 // LOKIN Live Opportunity Engine
 // Live-only discovery for driver jobs, mystery shopping, food review, product testing,
 // and paid field/research work. Results are persisted only after their public URLs
@@ -170,7 +171,7 @@ export default async function(req: Request) {
 
     const region = String(body?.region || DEFAULT_REGION).trim().slice(0, 160) || DEFAULT_REGION;
     const allowed = categoriesFor(mode);
-    const llm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const llm = await invokeLLMWithAdmission(base44, {
       prompt: buildPrompt(region, mode),
       add_context_from_internet: true,
       model: "gemini_3_flash",

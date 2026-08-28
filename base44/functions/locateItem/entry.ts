@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 // AI item locator: given a barcode, item code, or product name, find the best
@@ -30,7 +31,7 @@ export default async function(req) {
     let fuzzy = null;
     if (!match) {
       // 2) fuzzy via LLM
-      const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const res = await invokeLLMWithAdmission(base44, {
         prompt: [
           `A delivery driver is looking for an item in a store.`,
           `Search query: "${query}".`,

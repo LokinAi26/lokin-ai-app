@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 export default async function(req) {
@@ -28,7 +29,7 @@ export default async function(req) {
         ? "RV parks and campgrounds"
         : "truck stops, weigh stations, rest areas, and RV parks";
 
-    const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const res = await invokeLLMWithAdmission(base44, {
       prompt: `Find up to 8 real ${categoryClause} ${where}. For each, return the business/site name, its type (one of: truck_stop, weigh_station, rest_area, rv_park), full street address, key amenities (diesel, truck parking, showers, food, dump station, etc.) as a short string, Google rating as a number from 0 to 5 (use 0 if unknown), and a Google Maps directions URL. Only include real places that actually exist.`,
       add_context_from_internet: true,
       model: "gemini_3_flash",

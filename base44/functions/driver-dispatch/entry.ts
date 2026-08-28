@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
 const FREIGHT_SOURCES = new Set(["manual", "official_api", "carrier_feed", "broker_feed"]);
@@ -270,7 +271,7 @@ async function handleFreight(base44, user, body, action) {
     if (!candidates.length) {
       return Response.json({ briefing: "No current freight loads are available to rank. Add a private load or connect an authorized freight feed." });
     }
-    const briefing = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const briefing = await invokeLLMWithAdmission(base44, {
       prompt: [
         "You are LOKIN AI Dispatch, a commercial-truck decision assistant.",
         "Advise only; never claim to accept, book, negotiate, or dispatch a load automatically.",

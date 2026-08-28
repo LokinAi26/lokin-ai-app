@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 // LOKIN AI voice assistant — "Hey LOKIN…"
@@ -18,7 +19,7 @@ export default async function(req) {
 
     const remaining = Math.max(0, Number(ctx.dailyGoal || 150) - Number(ctx.todayEarnings || 0));
 
-    const reply = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const reply = await invokeLLMWithAdmission(base44, {
       prompt: [
         `You are LOKIN AI, a calm, concise voice assistant for a gig delivery driver.`,
         `Speak in short, natural sentences a driver can hear while driving — max 2 sentences unless drafting a message.`,

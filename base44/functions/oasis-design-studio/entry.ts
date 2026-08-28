@@ -1,3 +1,4 @@
+import { generateImageWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
 
 const STUDIES = {
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
       "Show only a concept visualization. Do not include claims that it is available, manufactured, tested, certified, or approved.",
     ].join("\n");
 
-    const generated = await base44.integrations.Core.GenerateImage({ prompt });
+    const generated = await generateImageWithAdmission(base44, { prompt });
     const fileUrl = generated?.url;
     if (!fileUrl) return Response.json({ error: "Image provider returned no asset" }, { status: 502 });
 

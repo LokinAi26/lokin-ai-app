@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 // LOKIN AI Customer Support Rep — in-app AI help desk.
@@ -21,7 +22,7 @@ export default async function(req) {
       .map((m) => `${m.role === "user" ? "Driver" : "LOKIN Support"}: ${m.content}`)
       .join("\n");
 
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const result = await invokeLLMWithAdmission(base44, {
       prompt: [
         `You are LOKIN Support, the in-app AI customer service rep for LOKIN AI — a gig-economy operating system for delivery drivers.`,
         `Be warm, concise, and helpful. Answer in 1-3 short sentences. Use plain, friendly language (no jargon).`,

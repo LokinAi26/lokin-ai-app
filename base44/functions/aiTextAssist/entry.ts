@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 // AI text assistant — Grammarly-style typing help for the LOKIN AI app.
@@ -58,7 +59,7 @@ export default async function(req) {
       };
     }
 
-    const out = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const out = await invokeLLMWithAdmission(base44, {
       prompt,
       response_json_schema: schema,
       model: "gpt_5_mini",

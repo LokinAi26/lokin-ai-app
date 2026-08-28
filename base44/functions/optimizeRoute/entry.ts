@@ -1,3 +1,4 @@
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import {
   filterAndRank,
@@ -131,7 +132,7 @@ export default async function(req) {
       });
     }
 
-    const briefing = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const briefing = await invokeLLMWithAdmission(base44, {
       prompt: [
         `You are LOKIN AI, a gig-driver earnings optimizer. Be concise and direct.`,
         `Optimization mode: ${modeLabel}. Origin: "${originAddress || "unknown"}".`,
