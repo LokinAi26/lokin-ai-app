@@ -17,6 +17,12 @@
     "workload_type": {
       "type": "string"
     },
+    "operation": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
     "engine_id": {
       "type": "string",
       "enum": [
@@ -35,6 +41,10 @@
       "enum": [
         "admitted",
         "admitted_failover",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
         "deferred",
         "duplicate"
       ]
@@ -54,13 +64,27 @@
     "lease_ms": {
       "type": "number"
     },
+    "lease_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "retry_after_ms": {
       "type": "number"
+    },
+    "actual_cost": {
+      "type": "number"
+    },
+    "error": {
+      "type": "string"
     },
     "decision_version": {
       "type": "string"
     },
     "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
       "type": "string",
       "format": "date-time"
     }
