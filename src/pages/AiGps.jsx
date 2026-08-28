@@ -121,6 +121,7 @@ export default function AiGps() {
         loadingStops={loadingStops}
         destinationAddresses={destinationAddresses}
         onOpenAppFreeRoam={openAppFreeRoam}
+        onExit={() => navigate("/", { replace: true })}
       />
     );
   }
@@ -325,7 +326,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses, onOpenAppFreeRoam }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -355,8 +356,18 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center justify-between gap-2 px-2 pt-[calc(0.45rem+env(safe-area-inset-top))]">
-        <div className="rounded-full border border-primary/25 bg-black/70 px-2.5 py-1.5 text-[9px] font-extrabold tracking-[0.08em] text-primary backdrop-blur">
-          ● HEY LOKIN
+        <div className="pointer-events-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onExit}
+            className="min-h-[44px] rounded-full border border-white/15 bg-black/85 px-4 py-2 text-[11px] font-extrabold tracking-[0.06em] text-white shadow-lg active:scale-95"
+            aria-label="Back to LOKIN home"
+          >
+            ‹ BACK
+          </button>
+          <div className="rounded-full border border-primary/25 bg-black/70 px-2.5 py-1.5 text-[9px] font-extrabold tracking-[0.08em] text-primary backdrop-blur">
+            ● HEY LOKIN
+          </div>
         </div>
 
         {nav.route ? (
