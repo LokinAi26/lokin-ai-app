@@ -1,0 +1,17 @@
+{
+  "name": "LOKIN Legacy Deck",
+  "short_name": "LOKIN Deck",
+  "description": "Lightweight LOKIN control surface for legacy iPad hardware.",
+  "start_url": "/legacy.html",
+  "display": "standalone",
+  "background_color": "#050705",
+  "theme_color": "#050705",
+  "icons": [
+    {
+      "src": "/lokin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
