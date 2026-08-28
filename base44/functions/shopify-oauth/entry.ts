@@ -1,4 +1,6 @@
 import { secrets } from "base44:runtime";
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { fetchWithAdmission } from "../../shared/ecosystemAdmission.js";
 import { normalizeShopifyDomain } from "../../shared/shopifyAuth.ts";
 import { verifyShopifyHmac } from "../../shared/shopifyHmac.ts";
 
@@ -23,6 +25,7 @@ function clean(v: unknown): string {
 
 export default async function (req: Request): Promise<Response> {
   try {
+    const base44 = createClientFromRequest(req);
     const payload = await req.json().catch(() => ({}));
     const params = payload.params && typeof payload.params === "object" ? payload.params : {};
     const shop = normalizeShopifyDomain(params.shop);
@@ -47,7 +50,7 @@ export default async function (req: Request): Promise<Response> {
 
     // Exchange the authorization code for a store access token.
     const body = new URLSearchParams({ client_id: clientId, client_secret: clientSecret, code });
-    const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    const res = await fetchWithAdmission(base44, `https://${shop}/admin/oauth/access_token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
       body,
