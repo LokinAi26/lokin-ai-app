@@ -129,7 +129,7 @@ export async function invokeLLMWithAdmission(base44, args, meta = {}) {
   return withEcosystemAdmission(base44, {
     sourceApp: meta.sourceApp || 'LOKIN AI', domain: meta.domain || 'ai', type:'ai_inference', operation:'InvokeLLM', provider:'base44_core_llm',
     priority: n(meta.priority, 55), estimatedMs:n(meta.estimatedMs, 8_000), estimatedCost:n(meta.estimatedCost, 1), tags:['credits','ai', ...(meta.tags || [])],
-    idempotencyKey: meta.idempotencyKey,
+    idempotencyKey: meta.idempotencyKey || `llm:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
   }, () => base44.asServiceRole.integrations.Core.InvokeLLM(args));
 }
 
@@ -137,7 +137,7 @@ export async function generateImageWithAdmission(base44, args, meta = {}) {
   return withEcosystemAdmission(base44, {
     sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'production', type:'image_generation', operation:'GenerateImage', provider:'base44_core_image',
     priority:n(meta.priority, 60), estimatedMs:n(meta.estimatedMs, 30_000), estimatedCost:n(meta.estimatedCost, 1), background:meta.background === true, tags:['credits','production','media', ...(meta.tags || [])],
-    idempotencyKey: meta.idempotencyKey,
+    idempotencyKey: meta.idempotencyKey || `image:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
   }, () => base44.asServiceRole.integrations.Core.GenerateImage(args));
 }
 
@@ -145,7 +145,7 @@ export async function generateSpeechWithAdmission(base44, args, meta = {}) {
   return withEcosystemAdmission(base44, {
     sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'voice', type:'speech_generation', operation:'GenerateSpeech', provider:'base44_core_tts',
     priority:n(meta.priority, 70), estimatedMs:n(meta.estimatedMs, 12_000), estimatedCost:n(meta.estimatedCost, 1), realtime:meta.realtime === true, tags:['credits','voice', ...(meta.tags || [])],
-    idempotencyKey: meta.idempotencyKey,
+    idempotencyKey: meta.idempotencyKey || `speech:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
   }, () => base44.asServiceRole.integrations.Core.GenerateSpeech(args));
 }
 
@@ -161,6 +161,7 @@ function classifyFetch(url, init = {}, meta = {}) {
     priority:n(meta.priority, realtime ? 90 : heavy ? 65 : 45), estimatedMs:n(meta.estimatedMs, realtime ? 4_000 : heavy ? 90_000 : 15_000), estimatedCost:n(meta.estimatedCost, 0), realtime, background:meta.background === true || sync,
     tags:[realtime ? 'realtime' : '', heavy ? 'production' : '', sync ? 'scheduled' : '', ...(meta.tags || [])].filter(Boolean),
     dedupeWindowMs: method === 'GET' ? 1_000 : 30_000,
+    requestFingerprint: stableHash({ url:String(url), method, body:String(init?.body || '') }),
   };
 }
 
