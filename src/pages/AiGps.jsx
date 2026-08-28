@@ -51,14 +51,18 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+  // A nav=1 URL without a resolved destination used to enter the locked GPS
+  // surface with no destination field or escape control, which looked frozen.
+  // Only activate the locked navigation surface after a real target exists.
+  const activeNavigationSession = navigationSession && destinationAddresses.length > 0;
 
   useEffect(() => {
-    if (!navigationSession || !nav.route || !mapSectionRef.current) return;
+    if (!activeNavigationSession || !nav.route || !mapSectionRef.current) return;
     const timer = window.setTimeout(() => {
       mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [navigationSession, nav.route?.generated_at]);
+  }, [activeNavigationSession, nav.route?.generated_at]);
 
   const gpsAccuracy = nav.rawPosition?.accuracy_m;
   const providerReady = nav.providerConfigured !== false;
@@ -107,7 +111,7 @@ export default function AiGps() {
     navigate("/", { replace: true });
   }
 
-  if (navigationSession) {
+  if (activeNavigationSession) {
     return (
       <LockedGpsSurface
         nav={nav}
@@ -144,7 +148,7 @@ export default function AiGps() {
         </div>
       )}
 
-      {!navigationSession && nav.providerConfigured === true && (
+      {!activeNavigationSession && nav.providerConfigured === true && (
         <div className={`rounded-2xl border p-3 ${nav.providerVerified === true ? "border-primary/30 bg-primary/[0.06]" : "border-white/10 bg-white/[0.025]"}`}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
@@ -162,7 +166,7 @@ export default function AiGps() {
         </div>
       )}
 
-      {!navigationSession && (locked ? (
+      {!activeNavigationSession && (locked ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full border border-primary/40 bg-primary/10 flex items-center justify-center glow-primary"><Lock className="h-4 w-4 text-primary" /></div>
           <div className="flex-1 min-w-0">
@@ -178,7 +182,7 @@ export default function AiGps() {
         </div>
       ))}
 
-      {!navigationSession && <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
+      {!activeNavigationSession && <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
             <div className="text-[10px] tracking-[0.2em] text-accent/75 font-display">LIVE ROAD TEST</div>
