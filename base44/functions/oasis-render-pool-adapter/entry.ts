@@ -1,5 +1,6 @@
 import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
+import { CONTROL_PLANE_VERSION, exportControlEnvelope } from "../../shared/unifiedControlPlane.js";
 
 const clean = (value:any, max=4000) => String(value ?? "").replace(/[\u0000-\u001f]+/g, " ").trim().slice(0, max);
 
@@ -38,8 +39,31 @@ export default async function(req:Request) {
         healthy: result.ok && result.data?.status === "healthy",
         status: result.ok ? result.data?.status : "setup_required",
         render_pool: result.data,
+        control_plane_version:CONTROL_PLANE_VERSION,
         zero_spend_probe: true,
       }, { status: result.ok ? 200 : result.status });
+    }
+
+    if (action === "control_health") {
+      const result = await bridge("control_health", { namespace:clean(body.namespace || "lokin",100) });
+      return Response.json({ configured:result.status !== 503, healthy:result.ok && result.data?.control_plane?.status !== "action_required", control_plane_version:CONTROL_PLANE_VERSION, remote:result.data }, { status:result.ok ? 200 : result.status });
+    }
+
+    if (action === "control_resolve") {
+      if (!body.canonical_key) return Response.json({ error:"canonical_key is required" }, { status:400 });
+      const result = await bridge("control_resolve", { canonical_key:clean(body.canonical_key,320), namespace:clean(body.namespace || "lokin",100), scope_chain:Array.isArray(body.scope_chain) ? body.scope_chain : [] });
+      return Response.json({ control_plane_version:CONTROL_PLANE_VERSION, remote:result.data }, { status:result.status });
+    }
+
+    if (action === "control_sync") {
+      const stateId = clean(body.state_id,180);
+      if (!stateId) return Response.json({ error:"state_id is required" }, { status:400 });
+      const state = await base44.asServiceRole.entities.LokinControlState.get(stateId).catch(() => null);
+      if (!state) return Response.json({ error:"CONTROL_STATE_NOT_FOUND" }, { status:404 });
+      if (state.owner_user_id && state.owner_user_id !== user.id && user.role !== "admin") return Response.json({ error:"Forbidden" }, { status:403 });
+      const envelope = exportControlEnvelope(state);
+      const result = await bridge("control_sync", { envelope });
+      return Response.json({ synced:result.ok, control_plane_version:CONTROL_PLANE_VERSION, local_state_id:state.id, remote:result.data }, { status:result.status });
     }
 
     if (action !== "plan") return Response.json({ error:"Unsupported action" }, { status:400 });
