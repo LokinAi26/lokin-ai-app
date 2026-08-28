@@ -1,6 +1,8 @@
 import base44 from "@base44/vite-plugin"
+import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { resolve } from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,5 +17,18 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
-  ]
+    legacy({
+      targets: ['iOS >= 12'],
+      renderLegacyChunks: true,
+      modernPolyfills: false,
+    }),
+  ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(process.cwd(), 'index.html'),
+        legacy: resolve(process.cwd(), 'legacy.html'),
+      },
+    },
+  },
 });
