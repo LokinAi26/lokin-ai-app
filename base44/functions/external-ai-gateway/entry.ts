@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
+import { withEcosystemAdmission } from "../../shared/ecosystemAdmission.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 
@@ -241,13 +242,23 @@ export default async function(req) {
     }
 
     const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
-    const r = await jsonRequest({
+    const price = MODEL_PRICING[model] || {};
+    const estimatedInputTokens = Math.max(1, Math.ceil(prompt.length / 4));
+    const estimatedCostUsd = Math.max(0.001,
+      (estimatedInputTokens / 1_000_000) * Number(price.input || guardianConfig?.input_rate_per_million || 0)
+      + (1000 / 1_000_000) * Number(price.output || guardianConfig?.output_rate_per_million || 0));
+    const r = await withEcosystemAdmission(base44, {
+      sourceApp:"LOKIN AI", domain:"ai", type:"external_ai_inference", operation:`openai_${mode}`,
+      provider:"openai", priority:mode === "support" ? 80 : 55, estimatedMs:20000,
+      estimatedCost:estimatedCostUsd, realtime:mode === "support",
+      tags:["credits","ai", mode],
+    }, () => jsonRequest({
       url: OPENAI_URL,
       method: "POST",
       timeoutMs: 20000,
       headers: { Authorization: `Bearer ${apiKey}` },
       body: { model, input: prompt },
-    });
+    }));
     if (!r.ok) {
       try {
         await base44.asServiceRole.entities.OpenAIUsageEvent.create({
