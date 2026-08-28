@@ -73,14 +73,14 @@ export default async function(req:Request) {
         device_type:deviceType,
         platform:clean(body.platform, 80),
         status:validStatuses.has(clean(body.status, 40)) ? clean(body.status, 40) : "online",
-        battery_percent:Math.max(0, Math.min(100, num(body.battery_percent))),
-        temperature_c:num(body.temperature_c),
-        wear_detected:body.wear_detected === true,
         navigation_state:clean(body.navigation_state, 120),
         firmware_version:clean(body.firmware_version, 80),
         last_seen_at:now(),
         metadata:body.metadata && typeof body.metadata === "object" ? body.metadata : {},
       };
+      if (body.battery_percent !== undefined && body.battery_percent !== null && Number.isFinite(Number(body.battery_percent))) payload.battery_percent = Math.max(0, Math.min(100, Number(body.battery_percent)));
+      if (body.temperature_c !== undefined && body.temperature_c !== null && Number.isFinite(Number(body.temperature_c))) payload.temperature_c = Number(body.temperature_c);
+      if (typeof body.wear_detected === "boolean") payload.wear_detected = body.wear_detected;
       const record = rows?.[0]
         ? await base44.asServiceRole.entities.LokinVisionTelemetry.update(rows[0].id, payload)
         : await base44.asServiceRole.entities.LokinVisionTelemetry.create(payload);
