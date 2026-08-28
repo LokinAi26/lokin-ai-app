@@ -1,0 +1,81 @@
+{
+  "name": "LokinVisionTelemetry",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "device_id": {
+      "type": "string"
+    },
+    "device_type": {
+      "type": "string",
+      "enum": [
+        "simulator",
+        "developer_glasses",
+        "production_glasses",
+        "phone_bridge"
+      ]
+    },
+    "platform": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "online",
+        "idle",
+        "navigating",
+        "sleeping",
+        "offline",
+        "error"
+      ],
+      "default": "online"
+    },
+    "battery_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "temperature_c": {
+      "type": "number"
+    },
+    "wear_detected": {
+      "type": "boolean"
+    },
+    "navigation_state": {
+      "type": "string"
+    },
+    "firmware_version": {
+      "type": "string"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "user_id",
+    "device_id",
+    "device_type",
+    "status",
+    "last_seen_at"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}
