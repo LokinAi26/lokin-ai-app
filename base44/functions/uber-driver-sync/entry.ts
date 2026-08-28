@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { secrets } from "base44:runtime";
 import { recordMeasuredOutcome } from "../../shared/outcomeLearning.js";
@@ -138,6 +139,7 @@ export default async function uberDriverSync(req: Request) {
   try {
     user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'uber_driver_sync', priority:55, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
     const body = await req.json().catch(() => ({}));
     const days = Math.min(90, Math.max(1, Math.round(number(body?.days, 30))));
     const toTime = Math.floor(Date.now() / 1000);

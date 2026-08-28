@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { shopifyDemo } from "../../shared/demoCatalog.ts";
 import { getShopifyAdminToken } from "../../shared/shopifyAuth.ts";
@@ -45,6 +46,7 @@ export default async function (req: Request): Promise<Response> {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'shopify_catalog_provider', priority:50, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
 
     const payload = await req.json().catch(() => ({}));
     const action = String(payload.action || "").toLowerCase();

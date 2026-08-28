@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
 
 const clean = (value:any, max=2000) => String(value ?? "").replace(/[\u0000-\u001f]+/g, " ").trim().slice(0, max);
@@ -75,6 +76,7 @@ export default async function(req:Request) {
   try {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'oasis_provider_health', priority:35, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
     const now = new Date().toISOString();
     const organizationId = user.organization_id || user.id;
 

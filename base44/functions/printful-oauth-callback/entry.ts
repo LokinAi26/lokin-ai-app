@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { verifyState, getPrintfulConnection } from "../../shared/printfulOAuth.ts";
@@ -28,6 +29,7 @@ export default async function (req: Request): Promise<Response> {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'printful_oauth_exchange', priority:60, estimatedMs:5000, realtime:false, background:false, tags:['provider'] });
 
     const payload = await req.json().catch(() => ({}));
     const code = String(payload.code || "");

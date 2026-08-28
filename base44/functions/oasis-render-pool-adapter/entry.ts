@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
 
 const clean = (value:any, max=4000) => String(value ?? "").replace(/[\u0000-\u001f]+/g, " ").trim().slice(0, max);
@@ -26,6 +27,7 @@ export default async function(req:Request) {
     if (req.method !== "POST") return Response.json({ error:"Method not allowed" }, { status:405 });
     const user = await base44.auth.me();
     if (!user) return Response.json({ error:"Unauthorized" }, { status:401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'oasis_render_pool_bridge', priority:65, estimatedMs:5000, realtime:false, background:false, tags:['provider'] });
     const body = await req.json().catch(()=>({}));
     const action = clean(body.action || "health", 40);
 

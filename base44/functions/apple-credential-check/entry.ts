@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 // Apple App Store Connect credential validation.
 // Reads APPLE_ISSUER_ID / APPLE_KEY_ID / APPLE_PRIVATE_KEY from app secrets,
 // builds an ES256 JWT, and authenticates against the App Store Connect API.
@@ -53,6 +54,7 @@ export default async function(req) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ ok: false, component: 'AUTH', message: 'Not signed in' }, { status: 401 });
     if (user.role !== 'admin') return Response.json({ ok: false, component: 'AUTH', message: 'Admin only' }, { status: 403 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'apple_credential_probe', priority:40, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
 
     const issuerId = secrets.get('APPLE_ISSUER_ID');
     const keyId = secrets.get('APPLE_KEY_ID');

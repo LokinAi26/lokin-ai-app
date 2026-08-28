@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.43";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
@@ -396,6 +397,7 @@ export default async function navigationEngine(req: Request) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return json({ error: "Unauthorized" }, 401);
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'navigation_provider', priority:95, estimatedMs:5000, realtime:true, background:false, tags:['provider','realtime'] });
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || "status");

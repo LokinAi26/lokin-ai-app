@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { secrets } from "base44:runtime";
 import {
@@ -29,6 +30,7 @@ export default async function uberDriverOauthCallback(req: Request) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'uber_oauth_exchange', priority:60, estimatedMs:5000, realtime:false, background:false, tags:['provider'] });
     if (!uberOAuthConfigured(secrets)) {
       return Response.json({ error: "Uber OAuth is not configured", missing_secrets: uberOAuthMissingSecrets(secrets) }, { status: 503 });
     }

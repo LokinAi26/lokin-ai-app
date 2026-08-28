@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 export default async function(req) {
@@ -5,6 +6,7 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'calendar_sync', priority:55, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
 
     // Shared Google Calendar connector (builder's account).
     // Throws when the connector isn't authorized yet — surface that to the UI.

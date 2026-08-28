@@ -1,3 +1,4 @@
+import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
 import { offerVisibleToUser, privateOfferScope } from "../../shared/offerAccess.js";
 
@@ -95,6 +96,7 @@ export default async function ingestLocalOffer(req: Request) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'local_offer_geocode', priority:80, estimatedMs:5000, realtime:true, background:false, tags:['provider','realtime'] });
 
     const accessToken = token();
     if (!accessToken) {
