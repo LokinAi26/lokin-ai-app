@@ -4,6 +4,7 @@ import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 // and paid field/research work. Results are persisted only after their public URLs
 // are reachable during the current scan. The UI separately enforces a freshness TTL.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { admitEcosystemOperation } from "../../shared/ecosystemAdmission.js";
 
 const DEFAULT_REGION = "Hampton Roads, Virginia";
 const MAX_RESULTS = 30;
@@ -168,6 +169,7 @@ export default async function(req: Request) {
     const body = await req.json().catch(() => ({}));
     const mode = cleanMode(body?.mode);
     if (!user && body?.scheduled !== true) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'opportunities', type:'provider_sync', operation:'opportunity_source_scan', priority:45, estimatedMs:15000, background:body?.scheduled === true, tags:['provider','scheduled','ingestion'] });
 
     const region = String(body?.region || DEFAULT_REGION).trim().slice(0, 160) || DEFAULT_REGION;
     const allowed = categoriesFor(mode);
