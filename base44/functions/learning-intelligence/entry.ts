@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { recordMeasuredOutcome } from "../../shared/outcomeLearning.js";
+import { putControlState } from "../../shared/unifiedControlPlane.js";
 
 const now = () => new Date().toISOString();
 const clean = (value, max = 2000) => String(value || "").trim().slice(0, max);
@@ -30,11 +31,22 @@ export default async function(req) {
     if (!profile) profile = await profilesApi.create({ user_id:userId, version:1, learning_enabled:true, preferred_response_style:"concise, practical, driver-safe", strategy_summary:"Learn only from this user's interactions, feedback, corrections, and measured outcomes.", confidence:0.5, total_events:0, last_learned_at:now() });
 
     if (action === "context") {
-      const [memories, strategies] = await Promise.all([
-        memoriesApi.filter({ user_id:userId, active:true }, "-updated_date", 20),
+      const [memories, strategies, controlMemories] = await Promise.all([
+        memoriesApi.filter({ user_id:userId, active:true }, "-updated_date", 50),
         strategiesApi.filter({ user_id:userId, active:true }, "-rank_score", 10),
+        base44.asServiceRole.entities.LokinControlState.filter({ owner_user_id:userId, namespace:"lokin.ai", state_type:"MEMORY", status:"ACTIVE" }, "-updated_date", 50).catch(() => []),
       ]);
-      return Response.json({ profile, memories, strategies, learning_enabled: profile.learning_enabled !== false, engine_version: 3 });
+      const queryTerms = clean(body.query_text, 1000).toLowerCase().split(/[^a-z0-9]+/).filter((x) => x.length > 2);
+      const scored = memories.map((memory:any) => {
+        const haystack = `${memory.topic || ""} ${memory.summary || ""}`.toLowerCase();
+        const lexical = queryTerms.length ? queryTerms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0) / queryTerms.length : 0;
+        const confidence = Math.max(0, Math.min(1, n(memory.confidence, 0.5)));
+        const evidence = Math.min(1, n(memory.evidence_count, 1) / 8);
+        const ageDays = Math.max(0, (Date.now() - Date.parse(memory.updated_date || memory.last_evidence_at || now())) / 86400000);
+        const recency = 1 / (1 + ageDays / 30);
+        return { memory, score: lexical * 0.55 + confidence * 0.25 + evidence * 0.10 + recency * 0.10 };
+      }).sort((a:any,b:any) => b.score - a.score).slice(0, 20);
+      return Response.json({ profile, memories:scored.map((x:any) => x.memory), memory_scores:scored.map((x:any) => ({ id:x.memory.id, score:Number(x.score.toFixed(4)) })), strategies, control_memories:controlMemories.slice(0,20), learning_enabled: profile.learning_enabled !== false, engine_version: 4 });
     }
 
     if (action === "feedback") {
@@ -52,8 +64,23 @@ export default async function(req) {
       const evidence = n(memory?.evidence_count) + 1;
       const record = { user_id:userId, memory_type:rating > 0 ? "strategy" : "correction", topic, summary: rating > 0 ? `The user found this ${feature} response approach helpful. Prefer similar clarity and decision support when relevant.` : `The user found this ${feature} response approach unhelpful. Avoid repeating the same approach and favor alternatives supported by future outcomes.`, confidence:confidenceFor(positive, negative, evidence), evidence_count:evidence, positive_count:positive, negative_count:negative, last_evidence_at:occurredAt, source:"feedback", active:true };
       const saved = memory ? await memoriesApi.update(memory.id, record) : await memoriesApi.create(record);
+      await putControlState(base44, {
+        canonical_key:`memory:${topic}`,
+        namespace:"lokin.ai",
+        scope:"USER",
+        scope_id:userId,
+        state_type:"MEMORY",
+        source_app:"LOKIN AI",
+        owner_user_id:userId,
+        resource_type:"LokinLearningMemory",
+        resource_id:saved.id,
+        content:{ memory_id:saved.id, memory_type:record.memory_type, topic, summary:record.summary, confidence:record.confidence, evidence_count:evidence },
+        confidence:record.confidence,
+        evidence_count:evidence,
+        provenance:{ learning_engine_version:4, source:"feedback" },
+      }, { userId, role:user.role }).catch(() => null);
       profile = await profilesApi.update(profile.id, { total_events:n(profile.total_events)+1, last_learned_at:occurredAt, version:n(profile.version,1)+1 });
-      return Response.json({ ok:true, learned:true, memory:saved, profile, engine_version:3 });
+      return Response.json({ ok:true, learned:true, memory:saved, profile, engine_version:4 });
     }
 
     if (action === "outcome") {
@@ -64,7 +91,22 @@ export default async function(req) {
         profile,
         preferences: prefs?.[0] || {},
       });
-      return Response.json(result);
+      if (result?.strategy) await putControlState(base44, {
+        canonical_key:`memory:outcome:${strategyKey}`,
+        namespace:"lokin.ai",
+        scope:"USER",
+        scope_id:userId,
+        state_type:"MEMORY",
+        source_app:"LOKIN AI",
+        owner_user_id:userId,
+        resource_type:"LokinStrategyPerformance",
+        resource_id:result.strategy.id,
+        content:{ strategy_key:strategyKey, summary:result.strategy.summary, rank_score:result.strategy.rank_score, confidence:result.strategy.confidence, sample_count:result.strategy.sample_count },
+        confidence:n(result.strategy.confidence,0.5),
+        evidence_count:n(result.strategy.sample_count,1),
+        provenance:{ learning_engine_version:4, source:"measured_outcome" },
+      }, { userId, role:user.role }).catch(() => null);
+      return Response.json({ ...result, engine_version:4 });
     }
 
     if (action === "rank-strategies") {
@@ -80,8 +122,25 @@ export default async function(req) {
       const current = existing?.[0]; const evidence = n(current?.evidence_count)+1;
       const record = { user_id:userId, memory_type:memoryType, topic, summary, confidence:Math.min(0.98,n(body.confidence,current?.confidence||0.65)+Math.min(0.2,evidence*0.02)), evidence_count:evidence, positive_count:n(current?.positive_count), negative_count:n(current?.negative_count), last_evidence_at:now(), source:body.source === "explicit" ? "explicit" : "interaction", active:true };
       const saved = current ? await memoriesApi.update(current.id,record) : await memoriesApi.create(record);
+      await putControlState(base44, {
+        canonical_key:`memory:${topic}`,
+        namespace:"lokin.ai",
+        scope:"USER",
+        scope_id:userId,
+        state_type:"MEMORY",
+        source_app:"LOKIN AI",
+        owner_user_id:userId,
+        resource_type:"LokinLearningMemory",
+        resource_id:saved.id,
+        content:{ memory_id:saved.id, memory_type:memoryType, topic, summary, confidence:record.confidence, evidence_count:evidence },
+        confidence:record.confidence,
+        evidence_count:evidence,
+        immutable:body.lock === true,
+        lock_mode:body.lock === true ? "APPROVED" : "NONE",
+        provenance:{ learning_engine_version:4, source:record.source },
+      }, { userId, role:user.role }).catch(() => null);
       profile = await profilesApi.update(profile.id,{ last_learned_at:now(), version:n(profile.version,1)+1 });
-      return Response.json({ ok:true, memory:saved, profile, engine_version:3 });
+      return Response.json({ ok:true, memory:saved, profile, engine_version:4 });
     }
 
     if (action === "set-enabled") {
