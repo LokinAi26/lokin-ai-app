@@ -15,6 +15,7 @@
 // (order.checkoutId === checkoutSession.id). Skipping this write makes fulfillment impossible.
 
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.31";
+import { fetchWithAdmission } from "../../shared/ecosystemAdmission.js";
 
 const CONSTRUCT_URL = "https://www.wixapis.com/payments/platform/v1/checkout-sessions/construct";
 
@@ -177,7 +178,7 @@ Deno.serve(async (req: Request) => {
       },
     };
 
-    const wixRes = await fetch(CONSTRUCT_URL, {
+    const wixRes = await fetchWithAdmission(base44, CONSTRUCT_URL, {
       method: "POST",
       headers: {
         "Authorization": WIX_API_KEY,
