@@ -28,8 +28,8 @@ function compactStatus(value) {
 
 function statusTone(value) {
   var s = String(value || '').toLowerCase();
-  if (['online','healthy','ok','ready','active','completed','running','accepted','admitted','admitted_failover','available'].indexOf(s) >= 0) return 'ok';
-  if (['degraded','warning','queued','qc','awaiting_approval','setup_required','paused','no_signal','not_configured'].indexOf(s) >= 0) return 'warn';
+  if (['online','healthy','ok','ready','active','completed','running','accepted','admitted','admitted_failover','available','working','connected','idle'].indexOf(s) >= 0) return 'ok';
+  if (['degraded','warning','queued','qc','awaiting_approval','setup_required','paused','waiting_device','stale','attention'].indexOf(s) >= 0) return 'warn';
   if (['failed','blocked','cancelled','offline','error'].indexOf(s) >= 0) return 'bad';
   return 'muted';
 }
@@ -98,7 +98,8 @@ function renderAlerts(alerts) {
 
 function renderEngines(engines) {
   return (engines || []).map(function(e) {
-    return '<div class="engine"><div class="engine-name"><span class="dot ' + dotTone(e.status) + '"></span>' + esc(String(e.name || e.id).toUpperCase()) + '</div><div class="engine-status">' + esc(compactStatus(e.status)) + '</div></div>';
+    var detail = e.detail || (e.registered ? 'Registered' : 'No runtime registration');
+    return '<div class="engine"><div class="engine-name"><span class="dot ' + dotTone(e.status) + '"></span>' + esc(String(e.name || e.id).toUpperCase()) + '</div><div class="engine-status ' + statusTone(e.status) + '">' + esc(compactStatus(e.status)) + '</div><div class="engine-detail">' + esc(detail) + '</div></div>';
   }).join('');
 }
 
@@ -128,10 +129,10 @@ function render(data, stale) {
         '<button id="logout-btn" class="btn">LOG OUT</button>' +
       '</div>' +
       '<div class="grid">' +
-        '<section class="card"><h2>Driver</h2><div class="metric-small ' + statusTone(driver.status) + '">' + esc(compactStatus(driver.status)) + '</div><div class="divider"></div><div class="row small"><span class="muted">Active assignments</span><strong>' + esc(driver.active_assignments || 0) + '</strong></div></section>' +
+        '<section class="card"><h2>Driver</h2><div class="metric-small ' + statusTone(driver.status) + '">' + esc(compactStatus(driver.status)) + '</div><div class="divider"></div><div class="row small"><span class="muted">Active assignments</span><strong>' + esc(driver.active_assignments || 0) + '</strong></div><div class="row tiny"><span>Platforms</span><span>' + esc(driver.connected_platforms || 0) + '</span></div><div class="card-detail">' + esc(driver.detail || '') + '</div></section>' +
         '<section class="card"><h2>Latest Earnings</h2><div class="metric">' + esc(money(earnings.amount)) + '</div><div class="divider"></div><div class="row tiny"><span>' + esc(latestDate) + '</span><span>' + esc(earnings.trips || 0) + ' trips</span></div></section>' +
-        '<section class="card"><h2>Productions</h2><div class="metric-small ' + (prod.failed ? 'bad' : 'ok') + '">' + esc(prod.active || 0) + ' ACTIVE</div><div class="divider"></div><div class="row small"><span class="muted">QC</span><strong>' + esc(prod.qc || 0) + '</strong></div><div class="row small"><span class="muted">Failed / blocked</span><strong class="' + (prod.failed ? 'bad' : '') + '">' + esc(prod.failed || 0) + '</strong></div></section>' +
-        '<section class="card"><h2>LOKIN Vision</h2><div class="metric-small ' + statusTone(vision.status) + '">' + esc(compactStatus(vision.status)) + '</div><div class="divider"></div><div class="tiny">' + esc(vision.detail || 'No telemetry available.') + '</div></section>' +
+        '<section class="card"><h2>Productions</h2><div class="metric-small ' + statusTone(prod.status) + '">' + esc(compactStatus(prod.status || 'ready')) + '</div><div class="divider"></div><div class="row small"><span class="muted">Active / QC</span><strong>' + esc(prod.active || 0) + ' / ' + esc(prod.qc || 0) + '</strong></div><div class="row small"><span class="muted">Failed / blocked</span><strong class="' + (prod.failed ? 'bad' : '') + '">' + esc(prod.failed || 0) + '</strong></div><div class="card-detail">' + esc(prod.latest_status ? ('Latest: ' + compactStatus(prod.latest_status) + (prod.latest_capability ? ' · ' + prod.latest_capability : '')) : 'Production telemetry live · no recent jobs') + '</div></section>' +
+        '<section class="card"><h2>LOKIN Vision</h2><div class="metric-small ' + statusTone(vision.status) + '">' + esc(compactStatus(vision.status)) + '</div><div class="divider"></div>' + (vision.battery_percent != null ? '<div class="row tiny"><span>Battery</span><span>' + esc(vision.battery_percent) + '%</span></div>' : '') + '<div class="card-detail">' + esc(vision.detail || 'No telemetry available.') + '</div></section>' +
         '<section class="card card-wide"><h2>AI Workload Engines</h2><div class="engine-list">' + renderEngines(data.engines) + '</div></section>' +
         '<section class="card card-wide"><h2>Alerts · ' + esc(sys.alert_count || 0) + '</h2><div class="alerts">' + renderAlerts(data.alerts) + '</div></section>' +
         '<section class="card card-wide"><h2>Quick Actions</h2><div class="quick">' +
