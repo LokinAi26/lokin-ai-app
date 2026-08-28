@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Shield, Cpu, BadgeDollarSign } from "lucide-react";
+import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Shield, Cpu, BadgeDollarSign, Glasses } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
@@ -77,6 +77,7 @@ const SECTIONS = [
       { to: "/insurance-admin", icon: ShieldCheck, title: "Cover Admin", desc: "Bind insurance apps" },
       { to: "/printful-connect", icon: Link2, title: "Printful Connect", desc: "OAuth account tools" },
       { to: "/showcase", icon: Smartphone, title: "App Showcase", desc: "The LOKIN vision" },
+      { to: "/vision-bridge", icon: Glasses, title: "LOKIN Vision Bridge", desc: "Live simulator / glasses heartbeat" },
       { to: "/funding-command", icon: BadgeDollarSign, title: "Funding Command", desc: "Virginia grants, contracts & readiness", requires: "admin" },
     ],
   },
