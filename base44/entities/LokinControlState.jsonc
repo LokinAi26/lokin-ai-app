@@ -1,0 +1,171 @@
+{
+  "name": "LokinControlState",
+  "type": "object",
+  "properties": {
+    "canonical_key": {
+      "type": "string"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "ECOSYSTEM",
+        "APP",
+        "WORKSPACE",
+        "PROJECT",
+        "PRODUCTION",
+        "SHOT",
+        "USER"
+      ]
+    },
+    "scope_id": {
+      "type": "string"
+    },
+    "state_type": {
+      "type": "string",
+      "enum": [
+        "MEMORY",
+        "DECISION",
+        "REFERENCE",
+        "ASSET_LOCK",
+        "WORKFLOW",
+        "CHECKPOINT",
+        "POLICY",
+        "HEALTH",
+        "CONFIG"
+      ]
+    },
+    "source_app": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "resource_type": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "SUPERSEDED",
+        "REVOKED",
+        "CONFLICT"
+      ]
+    },
+    "immutable": {
+      "type": "boolean",
+      "default": false
+    },
+    "lock_mode": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "APPROVED",
+        "EXACT_HASH"
+      ],
+      "default": "NONE"
+    },
+    "content": {
+      "type": "object"
+    },
+    "content_sha256": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parent_state_id": {
+      "type": "string"
+    },
+    "supersedes_state_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "activated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "canonical_key",
+    "namespace",
+    "scope",
+    "state_type",
+    "source_app",
+    "version",
+    "status",
+    "content_sha256",
+    "activated_at"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

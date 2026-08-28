@@ -1,0 +1,99 @@
+{
+  "name": "LokinControlEvent",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "canonical_key": {
+      "type": "string"
+    },
+    "state_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "PUT",
+        "RESOLVE",
+        "SUPERSEDE",
+        "REVOKE",
+        "CONFLICT",
+        "CHECKPOINT",
+        "HEALTH",
+        "SYNC"
+      ]
+    },
+    "source_app": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "content_sha256": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "source_app",
+    "result",
+    "occurred_at"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
