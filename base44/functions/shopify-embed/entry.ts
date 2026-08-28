@@ -5,6 +5,7 @@ import { verifyShopifySession } from "../../shared/shopifyJwt.ts";
 import { shopifyAdminBase, shoGet, mapStorefront, mapOrdersRich, mapDrafts } from "../../shared/shopifyReads.ts";
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { guardedIdempotentWrite } from "../../shared/commerceIdempotency.ts";
+import { admitEcosystemOperation } from "../../shared/ecosystemAdmission.js";
 
 /**
  * shopify-embed — Public, iframe-safe Shopify storefront for the LOKIN Commerce
@@ -275,6 +276,13 @@ export default async function (req: Request): Promise<Response> {
         : !shopMatches
           ? `Shop mismatch (${sessionShop || "unknown"} != ${requestedShop || "unknown"}).`
           : "Shopify session rejected.";
+
+    await admitEcosystemOperation(base44Client, {
+      sourceApp:'LOKIN AI', domain:'commerce', type:'provider_request', operation:`shopify_embed_${action}`,
+      provider:'shopify', priority:action === 'health' ? 30 : 55, estimatedMs:10000,
+      background:['health','storefront','orders','order','drafts','draft','intelligence'].includes(action),
+      tags:['provider','commerce', authenticated ? 'authenticated' : 'public_embed'],
+    });
 
     const base = shopifyAdminBase(auth.domain);
     const token = auth.token;
