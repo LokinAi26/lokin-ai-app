@@ -182,6 +182,28 @@ export default function VisionBridge() {
         </div>
       </div>
 
+      {nativeXrAvailable && (
+        <div className="rounded-3xl border border-primary/25 bg-primary/[0.04] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-display tracking-[0.18em] text-primary/80">ANDROID XR NATIVE RUNTIME</div>
+              <div className="mt-1 text-xs font-bold text-white/80">{nativeXr?.projected_connected ? "Display Glasses connected" : "Phone host ready"}</div>
+            </div>
+            <div className={`rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${nativeXr?.projected_connected ? "border-primary/40 bg-primary/10 text-primary" : "border-white/10 text-white/45"}`}>
+              {(nativeXr?.projected_state || "waiting_device").replace(/_/g, " ").toUpperCase()}
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <Metric label="Runtime" value={nativeXr?.runtime || "android jetpack xr"} icon={Glasses} />
+            <Metric label="compileSdk" value={nativeXr?.compile_sdk || 37} icon={Smartphone} />
+          </div>
+          <button type="button" onClick={launchNativeVisionXr} className="mt-3 min-h-12 w-full rounded-2xl bg-primary px-4 text-xs font-extrabold text-black">
+            LAUNCH DISPLAY GLASSES
+          </button>
+          {nativeXr?.last_error && <div className="mt-2 rounded-xl border border-red-500/25 bg-red-500/10 p-2 text-[10px] text-red-200">{nativeXr.last_error}</div>}
+        </div>
+      )}
+
       <div className="rounded-3xl border border-white/10 bg-white/[0.025] p-4">
         <div className="text-[10px] font-display tracking-[0.18em] text-white/45">DEVICE MODE</div>
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -211,7 +233,7 @@ export default function VisionBridge() {
 
       <div className="rounded-2xl border border-white/8 bg-black/50 p-3 text-[10px] leading-relaxed text-white/40">
         <div>Device ID: <span className="font-mono text-white/60">{deviceId}</span></div>
-        <div>Platform: {platform}</div>
+        <div>Platform: {nativeXrAvailable ? "Android Jetpack XR Host" : platform}</div>
         <div>Heartbeat: every 30 seconds while this page is visible.</div>
         <div>Last acknowledged: {lastSeen ? new Date(lastSeen).toLocaleTimeString() : "not yet"}</div>
         <div className="mt-2 text-primary/75">The Legacy Deck should report CONNECTED within its next 10-second refresh after a successful heartbeat.</div>
