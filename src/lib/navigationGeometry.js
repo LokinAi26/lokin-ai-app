@@ -195,7 +195,7 @@ export function prepareManeuvers(route) {
 export function nextManeuverForSnap(maneuvers = [], snap, geometry = []) {
   if (!maneuvers.length || !snap) return null;
   const currentAlongM = Number(snap.along_route_m || 0);
-  const passedToleranceM = 12;
+  const passedToleranceM = 5;
   const next = maneuvers.find((m) => Number(m.along_route_m || 0) >= currentAlongM - passedToleranceM) || maneuvers[maneuvers.length - 1];
   const maneuverAlongM = Number(next?.along_route_m || 0);
   const routeDistanceM = Math.max(0, maneuverAlongM - currentAlongM);
