@@ -146,7 +146,7 @@ function render(data, stale) {
       '<div class="footer">Operator: ' + esc((data.user && (data.user.name || data.user.email)) || 'LOKIN User') + ' · Updated ' + esc(data.generated_at || '') + '<br>Auto-refresh: 10 seconds while visible.</div>' +
     '</div>';
 
-  document.getElementById('refresh-btn').onclick = function() { loadSnapshot(true); };
+  document.getElementById('refresh-btn').onclick = function() { loadSnapshot(false, true); };
   document.getElementById('logout-btn').onclick = function() {
     try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
     base44.auth.logout('/legacy.html');
@@ -178,12 +178,31 @@ function readCache() {
   } catch (e) { return null; }
 }
 
-function loadSnapshot(showSpinner) {
+function loadSnapshot(showSpinner, manualRefresh) {
+  var refreshButton = document.getElementById('refresh-btn');
+  if (manualRefresh && refreshButton) {
+    refreshButton.disabled = true;
+    refreshButton.textContent = 'REFRESHING…';
+  }
   if (showSpinner && !snapshot) loading('Loading LOKIN system state…');
   return request('snapshot')
     .then(function(data) {
       saveCache(data);
       render(data, false);
+      if (manualRefresh) {
+        var updatedButton = document.getElementById('refresh-btn');
+        if (updatedButton) {
+          updatedButton.disabled = true;
+          updatedButton.textContent = 'UPDATED ✓';
+          setTimeout(function() {
+            var button = document.getElementById('refresh-btn');
+            if (button) {
+              button.disabled = false;
+              button.textContent = 'REFRESH';
+            }
+          }, 1400);
+        }
+      }
       return data;
     })
     .catch(function(err) {
@@ -195,10 +214,24 @@ function loadSnapshot(showSpinner) {
       var cached = readCache();
       if (cached) {
         render(cached, true);
+        if (manualRefresh) {
+          var failedButton = document.getElementById('refresh-btn');
+          if (failedButton) {
+            failedButton.disabled = true;
+            failedButton.textContent = 'OFFLINE / CACHED';
+            setTimeout(function() {
+              var button = document.getElementById('refresh-btn');
+              if (button) {
+                button.disabled = false;
+                button.textContent = 'REFRESH';
+              }
+            }, 1800);
+          }
+        }
         return cached;
       }
       root.innerHTML = '<div class="login-wrap"><div class="login-card"><h1>Deck unavailable</h1><div class="error">' + esc(msg) + '</div><button id="retry" class="btn btn-primary" style="width:100%">RETRY</button></div></div>';
-      document.getElementById('retry').onclick = function() { loadSnapshot(true); };
+      document.getElementById('retry').onclick = function() { loadSnapshot(true, false); };
       return null;
     });
 }
@@ -207,14 +240,14 @@ function runDriverAction(action) {
   var button = document.getElementById('driver-toggle');
   if (button) { button.disabled = true; button.textContent = 'UPDATING…'; }
   request(action)
-    .then(function() { return loadSnapshot(false); })
-    .catch(function(err) { window.alert(errorMessage(err)); return loadSnapshot(false); });
+    .then(function() { return loadSnapshot(false, false); })
+    .catch(function(err) { window.alert(errorMessage(err)); return loadSnapshot(false, false); });
 }
 
 function startRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(function() {
-    if (document.hidden !== true) loadSnapshot(false);
+    if (document.hidden !== true) loadSnapshot(false, false);
   }, 10000);
 }
 
@@ -222,7 +255,7 @@ loading('Starting LOKIN Legacy Deck…');
 base44.auth.isAuthenticated()
   .then(function(ok) {
     if (!ok) { showLogin('Sign in to access the LOKIN Legacy Deck.'); return; }
-    loadSnapshot(true);
+    loadSnapshot(true, false);
     startRefresh();
   })
   .catch(function() { showLogin('Sign in to access the LOKIN Legacy Deck.'); });
