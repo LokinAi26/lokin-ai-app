@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { bearingDegrees, formatDuration } from "@/lib/navigationGeometry";
+import { bearingDegrees, formatDuration, haversineMeters } from "@/lib/navigationGeometry";
 
 const MAP_W = 640;
 const MAP_H = 420;
@@ -56,6 +56,29 @@ function fitViewport(coords = [], width = MAP_W, height = MAP_H) {
 
 function bucketCoord(value, step = 0.0025) {
   return Math.round(Number(value || 0) / step) * step;
+}
+
+function interpolateCoord(a, b, t) {
+  const clamped = Math.max(0, Math.min(1, Number(t || 0)));
+  return [
+    Number(a?.[0] || 0) + (Number(b?.[0] || 0) - Number(a?.[0] || 0)) * clamped,
+    Number(a?.[1] || 0) + (Number(b?.[1] || 0) - Number(a?.[1] || 0)) * clamped,
+  ];
+}
+
+function pointAheadOnRoute(routeCoords = [], distanceM = 0) {
+  if (!Array.isArray(routeCoords) || !routeCoords.length) return null;
+  if (routeCoords.length === 1 || distanceM <= 0) return routeCoords[0];
+  let remaining = Number(distanceM || 0);
+  for (let i = 0; i < routeCoords.length - 1; i += 1) {
+    const a = routeCoords[i];
+    const b = routeCoords[i + 1];
+    const segmentM = haversineMeters(a, b);
+    if (!Number.isFinite(segmentM) || segmentM <= 0) continue;
+    if (remaining <= segmentM) return interpolateCoord(a, b, remaining / segmentM);
+    remaining -= segmentM;
+  }
+  return routeCoords[routeCoords.length - 1];
 }
 
 function project(coord, viewport, width = MAP_W, height = MAP_H) {
@@ -116,6 +139,14 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     : Number.isFinite(snappedPosition?.heading)
       ? snappedPosition.heading
       : 0;
+  const speedMps = Math.max(0, Number(snappedPosition?.speed_mps ?? snappedPosition?.speed ?? 0));
+  const lookAheadM = perspective
+    ? Math.max(85, Math.min(220, 90 + speedMps * 5.2))
+    : Math.max(55, Math.min(155, 55 + speedMps * 4.0));
+  const followCenter = useMemo(
+    () => pointAheadOnRoute(activeCoords, lookAheadM) || snappedPosition?.coordinate || null,
+    [activeRouteGeometry, lookAheadM, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]],
+  );
 
   useEffect(() => {
     setStyle(defaultStyle);
@@ -130,12 +161,17 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     const snap = snappedPosition?.coordinate;
     const cameraBearing = (perspective || headingForward) ? Math.round(heading / 5) * 5 : 0;
     if (followDriver && snap) {
-      const autoLongitude = bucketCoord(snap[0], perspective ? 0.00015 : 0.00035);
-      const autoLatitude = bucketCoord(snap[1], perspective ? 0.00015 : 0.00035);
+      const anchor = followCenter || snap;
+      // Keep the driver in the lower navigation field while reserving the upper
+      // field for the road ahead. A fine bucket limits Static Images requests
+      // without the 15–40 m camera jumps produced by the old coarse grid.
+      const cameraStep = perspective ? 0.00004 : 0.00005;
+      const autoLongitude = bucketCoord(anchor[0], cameraStep);
+      const autoLatitude = bucketCoord(anchor[1], cameraStep);
       return {
         longitude: Number(manualCenter?.longitude ?? autoLongitude),
         latitude: Number(manualCenter?.latitude ?? autoLatitude),
-        zoom: Math.max(13.5, Math.min(18.5, (perspective ? 17.8 : 16.6) + zoomOffset)),
+        zoom: Math.max(13.5, Math.min(18.5, (perspective ? 18.0 : 16.9) + zoomOffset)),
         bearing: cameraBearing,
         pitch: perspective ? 58 : 0,
       };
@@ -150,7 +186,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       bearing: cameraBearing,
       pitch: perspective ? 50 : 0,
     };
-  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
@@ -168,6 +204,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         style,
         retina: true,
         route_geometry: perspective ? activeRouteGeometry : null,
+        driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
       },
     }).then((response) => {
       if (!alive) return;
@@ -190,15 +227,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       .join(" ");
   }, [activeRouteGeometry, viewportKey]);
 
-  // In normal follow mode the pitched camera is centered on the snapped GPS
-  // coordinate. During 4D free-look we intentionally hide the local marker
-  // rather than draw it at a false screen position without a full pitch matrix.
-  const driverPoint = perspective && !manualCenter
-    ? { x: renderW / 2, y: renderH / 2 }
-    : perspective && manualCenter
-      ? null
-      : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
-  const markerRotation = perspective ? 0 : heading - Number(viewport?.bearing || 0);
+  // Flat MAP mode uses the local SVG projection. 4D uses a Mapbox-native
+  // marker embedded in the same pitched static image as the route, eliminating
+  // the detached/hidden driver marker seen when the 4D camera was panned.
+  const driverPoint = perspective
+    ? null
+    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
+  const markerRotation = heading - Number(viewport?.bearing || 0);
 
   function touchDistance(touches) {
     if (!touches || touches.length < 2) return 0;
