@@ -108,10 +108,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }, [routeGeometry, followDriver, snappedPosition?.segment_index, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const activeRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: activeCoords }), [activeCoords]);
-  const heading = Number.isFinite(snappedPosition?.heading)
-    ? snappedPosition.heading
-    : snappedPosition?.coordinate && nextPoint
-      ? bearingDegrees(snappedPosition.coordinate, nextPoint)
+  // Navigation orientation follows the matched road segment first. Raw device
+  // heading can be noisy or briefly reversed at low speed, which made the map
+  // appear to show the route behind the driver even though geometry was valid.
+  const heading = snappedPosition?.coordinate && nextPoint
+    ? bearingDegrees(snappedPosition.coordinate, nextPoint)
+    : Number.isFinite(snappedPosition?.heading)
+      ? snappedPosition.heading
       : 0;
 
   useEffect(() => {
