@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Battery, Eye, Glasses, Navigation, Power, Radio, RefreshCw, Smartphone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import {
+  launchNativeVisionXr,
+  nativeVisionXrAvailable,
+  readNativeVisionXrState,
+  requestNativeVisionXrStatus,
+  subscribeNativeVisionXrState,
+} from "@/lib/nativeVisionXrBridge";
 
 const HEARTBEAT_MS = 30000;
 
@@ -41,7 +48,10 @@ export default function VisionBridge() {
   const [lastSeen, setLastSeen] = useState(null);
   const [error, setError] = useState("");
   const [battery, setBattery] = useState(null);
+  const nativeXrAvailable = useMemo(() => nativeVisionXrAvailable(), []);
+  const [nativeXr, setNativeXr] = useState(() => readNativeVisionXrState());
   const timerRef = useRef(null);
+  const nativeSyncRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -56,6 +66,17 @@ export default function VisionBridge() {
     return () => { alive = false; };
   }, []);
 
+  useEffect(() => {
+    if (!nativeXrAvailable) return undefined;
+    setDeviceType("phone_bridge");
+    const initial = readNativeVisionXrState();
+    if (initial) setNativeXr(initial);
+    requestNativeVisionXrStatus();
+    return subscribeNativeVisionXrState((next) => {
+      if (next) setNativeXr(next);
+    });
+  }, [nativeXrAvailable]);
+
   const sendHeartbeat = useCallback(async (override = {}) => {
     setSending(true);
     setError("");
@@ -63,15 +84,16 @@ export default function VisionBridge() {
       const payload = {
         action: "vision_heartbeat",
         device_id: deviceId,
-        device_type: override.deviceType || deviceType,
-        platform,
+        device_type: override.deviceType || (nativeXr?.projected_connected ? "developer_glasses" : nativeXrAvailable ? "phone_bridge" : deviceType),
+        platform: nativeXrAvailable ? "Android Jetpack XR Host" : platform,
         status: override.status || status,
         navigation_state: override.navigationState || navigationState,
-        firmware_version: "LOKIN Vision Web Bridge 1.0",
+        firmware_version: nativeXrAvailable ? "LOKIN Vision Android XR Bridge 1.0" : "LOKIN Vision Web Bridge 1.0",
         metadata: {
-          source: "vision_bridge_page",
+          source: nativeXrAvailable ? "android_xr_native_bridge" : "vision_bridge_page",
           heartbeat_interval_ms: HEARTBEAT_MS,
           user_agent_class: platform,
+          native_xr: nativeXr || null,
         },
       };
       if (battery != null) payload.battery_percent = battery;
@@ -87,7 +109,17 @@ export default function VisionBridge() {
     } finally {
       setSending(false);
     }
-  }, [battery, deviceId, deviceType, navigationState, platform, status]);
+  }, [battery, deviceId, deviceType, nativeXr, nativeXrAvailable, navigationState, platform, status]);
+
+  useEffect(() => {
+    if (!nativeXrAvailable || !nativeXr) return;
+    const stamp = nativeXr.updated_at_ms || JSON.stringify(nativeXr);
+    if (nativeSyncRef.current === stamp) return;
+    nativeSyncRef.current = stamp;
+    const nextDeviceType = nativeXr.projected_connected ? "developer_glasses" : "phone_bridge";
+    setDeviceType(nextDeviceType);
+    sendHeartbeat({ deviceType: nextDeviceType });
+  }, [nativeXr, nativeXrAvailable, sendHeartbeat]);
 
   const startLink = useCallback(async () => {
     const ok = await sendHeartbeat({ status: status === "offline" ? "online" : status });
