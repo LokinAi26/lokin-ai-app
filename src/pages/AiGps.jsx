@@ -358,25 +358,24 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex min-w-0 items-center gap-1.5 overflow-hidden pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[calc(0.45rem+env(safe-area-inset-top))]">
-        <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-          <button
-            type="button"
-            onClick={onExit}
-            className="min-h-[44px] shrink-0 rounded-full border border-white/15 bg-black/85 px-3 py-2 text-[10px] font-extrabold tracking-[0.04em] text-white shadow-lg active:scale-95"
-            aria-label="Back to LOKIN home"
-          >
-            ‹<span className="hidden min-[350px]:inline"> BACK</span>
-          </button>
-          <div className="min-w-0 flex-1 truncate rounded-full border border-primary/25 bg-black/70 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.05em] text-primary backdrop-blur">
-            ● <span className="hidden min-[380px]:inline">HEY </span>LOKIN
-          </div>
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
+        <button
+          type="button"
+          onClick={onExit}
+          className="pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/85 px-2.5 text-[10px] font-extrabold tracking-[0.02em] text-white shadow-lg active:scale-95"
+          aria-label="Back to LOKIN home"
+        >
+          ‹<span className="hidden min-[390px]:inline"> BACK</span>
+        </button>
+
+        <div className="pointer-events-auto min-w-0 truncate rounded-full border border-primary/25 bg-black/72 px-2.5 py-2 text-[8px] font-extrabold tracking-[0.04em] text-primary backdrop-blur">
+          ● <span className="hidden min-[410px]:inline">HEY </span>LOKIN
         </div>
 
         {nav.route ? (
-          <div className="pointer-events-auto shrink-0 rounded-full border border-white/10 bg-black/75 p-0.5 shadow-lg backdrop-blur">
-            <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-2.5 py-1.5 text-[8px] font-extrabold tracking-[0.06em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
-            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-2.5 py-1.5 text-[8px] font-extrabold tracking-[0.06em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
+          <div className="pointer-events-auto flex shrink-0 rounded-full border border-white/10 bg-black/78 p-0.5 shadow-lg backdrop-blur">
+            <button type="button" onClick={() => setMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
+            <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
         ) : <span />}
 
@@ -384,11 +383,12 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           <button
             type="button"
             onClick={onOpenAppFreeRoam}
-            className="pointer-events-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/12 bg-black/65 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.04em] text-white/65 shadow-md backdrop-blur active:scale-95"
+            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/72 text-white/65 shadow-md backdrop-blur active:scale-95"
+            aria-label="Free roam"
           >
-            <Move className="h-3 w-3" /><span className="hidden min-[430px]:inline">ROAM</span>
+            <Move className="h-4 w-4" />
           </button>
-        ) : <span className="w-8" />}
+        ) : <span className="w-10" />}
       </div>
 
       {error && !nav.route && (
