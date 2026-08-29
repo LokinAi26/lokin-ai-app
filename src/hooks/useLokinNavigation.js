@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import {
+  haversineMeters,
   nearestGeometryIndex,
   nextManeuverForSnap,
   prepareManeuvers,
@@ -280,6 +281,18 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setSnapped(enrichedSnap);
     const next = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
     setManeuver(next);
+
+    const finalDestination = geocodedRef.current?.[geocodedRef.current.length - 1];
+    const arrivalThresholdM = Math.max(20, Math.min(55, Math.max(1, Number(sample.accuracy_m) || 15) * 1.5));
+    const finalDistanceM = finalDestination
+      ? haversineMeters(coord, [Number(finalDestination.longitude), Number(finalDestination.latitude)])
+      : Infinity;
+    if (Number(snap.progress || 0) >= 0.985 && finalDistanceM <= arrivalThresholdM) {
+      offRouteSamplesRef.current = 0;
+      setManeuver(null);
+      setStatus("arrived");
+      return;
+    }
 
     const policy = reroutePolicy(sample, snap);
     if (sample.dead_reckoned === true) {
