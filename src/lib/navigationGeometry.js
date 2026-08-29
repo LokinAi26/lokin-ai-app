@@ -216,7 +216,9 @@ export function formatDistance(meters) {
 }
 
 export function formatDuration(seconds) {
-  const min = Math.max(0, Math.round(Number(seconds || 0) / 60));
+  const value = Math.max(0, Number(seconds || 0));
+  if (value > 0 && value < 60) return "<1 min";
+  const min = Math.max(0, Math.round(value / 60));
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60), r = min % 60;
   return r ? `${h}h ${r}m` : `${h}h`;
