@@ -7,6 +7,16 @@ const MAP_W = 640;
 const MAP_H = 420;
 const TILE_SIZE = 512;
 
+function formatCompactDuration(seconds) {
+  const value = Math.max(0, Number(seconds || 0));
+  if (value > 0 && value < 60) return "<1m";
+  const minutes = Math.max(0, Math.round(value / 60));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours}h${remainder}m` : `${hours}h`;
+}
+
 function mercator(coord, zoom) {
   const lon = Number(coord?.[0] || 0);
   const lat = Math.max(-85.05112878, Math.min(85.05112878, Number(coord?.[1] || 0)));
@@ -256,9 +266,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             <div className="truncate text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
             <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
           </div>
-          <div className={`w-[clamp(68px,21vw,82px)] shrink-0 overflow-hidden rounded-2xl border bg-black/84 px-2 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
-            <div className="truncate text-[7px] tracking-[0.06em] text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
-            <div className={`truncate font-display font-black ${arrived ? "text-sm text-primary" : "text-[clamp(1rem,5vw,1.35rem)] text-accent"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
+          <div className={`w-[clamp(76px,23vw,96px)] shrink-0 overflow-hidden rounded-2xl border bg-black/84 px-2.5 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
+            <div className="truncate text-[7px] tracking-[0.06em] text-white/45">{arrived ? "STATUS" : fullscreen && etaLiveTraffic ? "LIVE" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
+            <div className={`truncate font-display font-black ${arrived ? "text-sm text-primary" : "text-[clamp(1rem,5vw,1.35rem)] text-accent"}`}>{arrived ? "DONE" : fullscreen ? formatCompactDuration(remainingDurationS) : formatDuration(remainingDurationS)}</div>
           </div>
         </div>
 
