@@ -28,6 +28,16 @@ function mercator(coord, zoom) {
   ];
 }
 
+function unmercator(point, zoom) {
+  const scale = TILE_SIZE * (2 ** zoom);
+  const x = Number(point?.[0] || 0);
+  const y = Number(point?.[1] || 0);
+  const longitude = (x / scale) * 360 - 180;
+  const n = Math.PI - (2 * Math.PI * y) / scale;
+  const latitude = (180 / Math.PI) * Math.atan(Math.sinh(n));
+  return [longitude, Math.max(-85.05112878, Math.min(85.05112878, latitude))];
+}
+
 function fitViewport(coords = [], width = MAP_W, height = MAP_H) {
   if (!coords.length) return null;
   const lons = coords.map((c) => Number(c[0]));
@@ -56,7 +66,15 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   let dx = point[0] - center[0];
   if (dx > world / 2) dx -= world;
   if (dx < -world / 2) dx += world;
-  return { x: width / 2 + dx, y: height / 2 + (point[1] - center[1]) };
+  const dy = point[1] - center[1];
+  const bearingRad = (Number(viewport.bearing || 0) * Math.PI) / 180;
+  const cos = Math.cos(bearingRad);
+  const sin = Math.sin(bearingRad);
+  // Mapbox bearing rotates the map clockwise. Rotate world-space offsets by the
+  // inverse camera bearing so our SVG route/driver overlay stays road-aligned.
+  const screenDx = dx * cos + dy * sin;
+  const screenDy = -dx * sin + dy * cos;
+  return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
 export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
@@ -68,12 +86,16 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [error, setError] = useState("");
   const [zoomOffset, setZoomOffset] = useState(0);
   const [gestureScale, setGestureScale] = useState(1);
+  const [manualCenter, setManualCenter] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const pinchRef = useRef({ distance: 0, scale: 1 });
+  const dragRef = useRef({ active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null });
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
   const hudSafeX = fullscreen ? "max(0.65rem, env(safe-area-inset-left))" : "0.5rem";
   const arrived = navigationStatus === "arrived";
   const rerouting = navigationStatus === "rerouting";
+  const headingForward = fullscreen && followDriver;
 
   const nextPoint = snappedPosition?.segment_index != null && coords.length
     ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
@@ -95,23 +117,37 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   useEffect(() => {
     setStyle(defaultStyle);
     setZoomOffset(0);
+    setManualCenter(null);
+    setDragOffset({ x: 0, y: 0 });
+    dragRef.current = { active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null };
   }, [perspective]);
 
   const viewport = useMemo(() => {
     if (!Array.isArray(coords) || coords.length < 2) return null;
     const snap = snappedPosition?.coordinate;
+    const cameraBearing = (perspective || headingForward) ? Math.round(heading / 5) * 5 : 0;
     if (followDriver && snap) {
+      const autoLongitude = bucketCoord(snap[0], perspective ? 0.00015 : 0.00035);
+      const autoLatitude = bucketCoord(snap[1], perspective ? 0.00015 : 0.00035);
       return {
-        longitude: bucketCoord(snap[0], perspective ? 0.00015 : 0.00035),
-        latitude: bucketCoord(snap[1], perspective ? 0.00015 : 0.00035),
+        longitude: Number(manualCenter?.longitude ?? autoLongitude),
+        latitude: Number(manualCenter?.latitude ?? autoLatitude),
         zoom: Math.max(13.5, Math.min(18.5, (perspective ? 17.8 : 16.6) + zoomOffset)),
-        bearing: perspective ? Math.round(heading / 5) * 5 : 0,
+        bearing: cameraBearing,
         pitch: perspective ? 58 : 0,
       };
     }
     const fitted = fitViewport(coords, renderW, renderH);
-    return fitted ? { ...fitted, zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)), bearing: perspective ? Math.round(heading / 5) * 5 : 0, pitch: perspective ? 50 : 0 } : null;
-  }, [routeGeometry, followDriver, perspective, heading, zoomOffset, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+    if (!fitted) return null;
+    return {
+      ...fitted,
+      longitude: Number(manualCenter?.longitude ?? fitted.longitude),
+      latitude: Number(manualCenter?.latitude ?? fitted.latitude),
+      zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)),
+      bearing: cameraBearing,
+      pitch: perspective ? 50 : 0,
+    };
+  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
@@ -151,12 +187,15 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       .join(" ");
   }, [activeRouteGeometry, viewportKey]);
 
-  // The static Mapbox camera is centered on the snapped GPS coordinate. In the
-  // pitched view the driver marker must use that same center projection instead
-  // of an invented lower-screen position, otherwise it visibly drifts off-road.
-  const driverPoint = perspective
+  // In normal follow mode the pitched camera is centered on the snapped GPS
+  // coordinate. During 4D free-look we intentionally hide the local marker
+  // rather than draw it at a false screen position without a full pitch matrix.
+  const driverPoint = perspective && !manualCenter
     ? { x: renderW / 2, y: renderH / 2 }
-    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
+    : perspective && manualCenter
+      ? null
+      : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
+  const markerRotation = perspective ? 0 : heading - Number(viewport?.bearing || 0);
 
   function touchDistance(touches) {
     if (!touches || touches.length < 2) return 0;
@@ -166,17 +205,43 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }
 
   function onTouchStart(e) {
-    if (e.touches?.length !== 2) return;
-    const distance = touchDistance(e.touches);
-    pinchRef.current = { distance, scale: 1 };
+    if (e.touches?.length === 2) {
+      dragRef.current.active = false;
+      setDragOffset({ x: 0, y: 0 });
+      const distance = touchDistance(e.touches);
+      pinchRef.current = { distance, scale: 1 };
+      return;
+    }
+    if (e.touches?.length !== 1 || !viewport) return;
+    const touch = e.touches[0];
+    dragRef.current = {
+      active: true,
+      moved: false,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      dx: 0,
+      dy: 0,
+      viewport: { ...viewport },
+    };
   }
 
   function onTouchMove(e) {
-    if (e.touches?.length !== 2 || !pinchRef.current.distance) return;
+    if (e.touches?.length === 2 && pinchRef.current.distance) {
+      e.preventDefault();
+      const scale = Math.max(0.62, Math.min(1.7, touchDistance(e.touches) / pinchRef.current.distance));
+      pinchRef.current.scale = scale;
+      setGestureScale(scale);
+      return;
+    }
+    if (e.touches?.length !== 1 || !dragRef.current.active) return;
     e.preventDefault();
-    const scale = Math.max(0.62, Math.min(1.7, touchDistance(e.touches) / pinchRef.current.distance));
-    pinchRef.current.scale = scale;
-    setGestureScale(scale);
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragRef.current.startX;
+    const dy = touch.clientY - dragRef.current.startY;
+    dragRef.current.dx = dx;
+    dragRef.current.dy = dy;
+    if (Math.hypot(dx, dy) >= 4) dragRef.current.moved = true;
+    setDragOffset({ x: dx, y: dy });
   }
 
   function finishPinch() {
@@ -190,6 +255,38 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     setGestureScale(1);
   }
 
+  function finishPan() {
+    const drag = dragRef.current;
+    if (!drag.active) return;
+    dragRef.current.active = false;
+    setDragOffset({ x: 0, y: 0 });
+    if (!drag.moved || !drag.viewport) return;
+    const startCenter = mercator([drag.viewport.longitude, drag.viewport.latitude], drag.viewport.zoom);
+    const bearingRad = (Number(drag.viewport.bearing || 0) * Math.PI) / 180;
+    const cos = Math.cos(bearingRad);
+    const sin = Math.sin(bearingRad);
+    const worldDx = drag.dx * cos - drag.dy * sin;
+    const worldDy = drag.dx * sin + drag.dy * cos;
+    const nextCenter = unmercator([startCenter[0] - worldDx, startCenter[1] - worldDy], drag.viewport.zoom);
+    setManualCenter({ longitude: nextCenter[0], latitude: nextCenter[1] });
+  }
+
+  function finishGesture() {
+    finishPan();
+    finishPinch();
+  }
+
+  function resetView() {
+    setManualCenter(null);
+    setDragOffset({ x: 0, y: 0 });
+    setZoomOffset(0);
+    setGestureScale(1);
+    pinchRef.current = { distance: 0, scale: 1 };
+    dragRef.current = { active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null };
+    setStyle(defaultStyle);
+    onResetFollow?.();
+  }
+
   if (!viewport) return null;
 
   return (
@@ -199,12 +296,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         style={{ touchAction: "none" }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        onTouchEnd={finishPinch}
-        onTouchCancel={finishPinch}
+        onTouchEnd={finishGesture}
+        onTouchCancel={finishGesture}
       >
         <div
           className="absolute inset-0 will-change-transform"
-          style={{ transform: `scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 ? "transform 160ms ease-out" : "none" }}
+          style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 && dragOffset.x === 0 && dragOffset.y === 0 ? "transform 160ms ease-out" : "none" }}
         >
           {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
           <div className="absolute inset-0 bg-black/10 pointer-events-none" />
@@ -214,7 +311,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
               {driverPoint && (
-                <g transform={`translate(${driverPoint.x} ${driverPoint.y}) rotate(${perspective ? 0 : heading})`}>
+                <g transform={`translate(${driverPoint.x} ${driverPoint.y}) rotate(${markerRotation})`}>
                   <circle r="22" fill="rgba(0,229,255,.18)" stroke="rgba(0,229,255,.62)" strokeWidth="3" />
                   <path d="M0 -18 L11 13 L0 8 L-11 13 Z" fill="#B7FF42" stroke="#071009" strokeWidth="3" style={{ filter: "drop-shadow(0 0 5px rgba(168,255,0,.9))" }} />
                 </g>
