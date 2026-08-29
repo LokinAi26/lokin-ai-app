@@ -181,20 +181,30 @@ export function nearestGeometryIndex(coord, geometry = []) {
 
 export function prepareManeuvers(route) {
   const geometry = route?.geometry?.coordinates || [];
-  return (route?.maneuvers || []).map((m) => ({
-    ...m,
-    geometry_index: m?.maneuver?.location ? nearestGeometryIndex(m.maneuver.location, geometry) : 0,
-  })).sort((a, b) => a.geometry_index - b.geometry_index);
+  const cumulative = routeCumulativeDistances(geometry);
+  return (route?.maneuvers || []).map((m) => {
+    const geometryIndex = m?.maneuver?.location ? nearestGeometryIndex(m.maneuver.location, geometry) : 0;
+    return {
+      ...m,
+      geometry_index: geometryIndex,
+      along_route_m: Number(cumulative?.[geometryIndex] || 0),
+    };
+  }).sort((a, b) => Number(a.along_route_m || 0) - Number(b.along_route_m || 0));
 }
 
 export function nextManeuverForSnap(maneuvers = [], snap, geometry = []) {
   if (!maneuvers.length || !snap) return null;
-  const currentIndex = snap.segment_index || 0;
-  const next = maneuvers.find((m) => Number(m.geometry_index || 0) >= currentIndex) || maneuvers[maneuvers.length - 1];
+  const currentAlongM = Number(snap.along_route_m || 0);
+  const passedToleranceM = 12;
+  const next = maneuvers.find((m) => Number(m.along_route_m || 0) >= currentAlongM - passedToleranceM) || maneuvers[maneuvers.length - 1];
+  const maneuverAlongM = Number(next?.along_route_m || 0);
+  const routeDistanceM = Math.max(0, maneuverAlongM - currentAlongM);
   const location = next?.maneuver?.location;
   return {
     ...next,
-    distance_from_driver_m: location ? haversineMeters(snap.coordinate, location) : null,
+    distance_from_driver_m: Number.isFinite(routeDistanceM)
+      ? routeDistanceM
+      : location ? haversineMeters(snap.coordinate, location) : null,
   };
 }
 
