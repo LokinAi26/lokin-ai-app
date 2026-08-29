@@ -162,10 +162,12 @@ export default async function(req:Request) {
     const visionAge = ageMs(visionRecord?.last_seen_at);
     const visionLive = Boolean(visionRecord && visionAge <= VISION_LIVE_MS && !["offline", "error"].includes(clean(visionRecord.status, 40)));
     const visionStatus = visionLive ? "connected" : visionRecord ? "stale" : "waiting_device";
+    const visionMetadata:any = visionRecord?.metadata && typeof visionRecord.metadata === "object" ? visionRecord.metadata : {};
+    const nativeXr:any = visionMetadata?.native_xr && typeof visionMetadata.native_xr === "object" ? visionMetadata.native_xr : null;
 
     return Response.json({
       ok:true,
-      deck_version:"1.0.0",
+      deck_version:"1.1.0",
       generated_at:now(),
       user:{ name:user.full_name || user.name || user.email || "LOKIN Operator", email:user.email || "", role:user.role || "user" },
       system:{ status:systemStatus, components:componentHealth, alert_count:alerts.length },
@@ -203,10 +205,19 @@ export default async function(req:Request) {
         wear_detected:visionRecord?.wear_detected ?? null,
         navigation_state:visionRecord?.navigation_state || null,
         last_seen_at:visionRecord?.last_seen_at || null,
-        detail:visionLive ? `${visionRecord.device_type} heartbeat live.` : visionRecord ? "Vision telemetry heartbeat is stale; waiting for the device to report again." : "Vision telemetry endpoint is wired; waiting for the first simulator/glasses heartbeat."
+        xr_runtime:nativeXr?.runtime || null,
+        xr_bridge_version:nativeXr?.bridge_version || null,
+        xr_compile_sdk:nativeXr?.compile_sdk ?? null,
+        projected_connected:nativeXr?.projected_connected === true,
+        projected_state:nativeXr?.projected_state || null,
+        display_category:nativeXr?.display_category || null,
+        xr_last_error:nativeXr?.last_error || null,
+        detail:visionLive
+          ? (nativeXr ? `${visionRecord.device_type} heartbeat live · ${nativeXr.projected_connected ? "projected glasses active" : "Android XR phone host active"}.` : `${visionRecord.device_type} heartbeat live.`)
+          : visionRecord ? "Vision telemetry heartbeat is stale; waiting for the device to report again." : "Vision telemetry endpoint is wired; waiting for the first simulator/glasses heartbeat."
       },
       alerts:alerts.slice(0, 12),
-      capabilities:{ driver_pause_resume:Boolean(driverProfile || latestSession), production_control:false, engine_control:false, vision_heartbeat:true }
+      capabilities:{ driver_pause_resume:Boolean(driverProfile || latestSession), production_control:false, engine_control:false, vision_heartbeat:true, vision_xr_bridge:true }
     });
   } catch (error:any) {
     console.error("legacy-deck", error?.message || error);
