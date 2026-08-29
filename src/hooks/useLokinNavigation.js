@@ -433,11 +433,20 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
   const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
   const fallbackRemainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);
-  const remainingDistanceM = Number.isFinite(Number(trafficEta?.distance_m)) ? Number(trafficEta.distance_m) : fallbackRemainingDistanceM;
-  const etaElapsedS = trafficEta?.received_at_ms ? Math.max(0, (Date.now() - Number(trafficEta.received_at_ms)) / 1000) : 0;
-  const remainingDurationS = Number.isFinite(Number(trafficEta?.duration_s))
+  const etaAgeMs = trafficEta?.received_at_ms ? Math.max(0, Date.now() - Number(trafficEta.received_at_ms)) : Infinity;
+  const etaFresh = etaAgeMs <= 45_000;
+  const remainingDistanceM = etaFresh && Number.isFinite(Number(trafficEta?.distance_m))
+    ? Number(trafficEta.distance_m)
+    : fallbackRemainingDistanceM;
+  const etaElapsedS = etaFresh ? etaAgeMs / 1000 : 0;
+  const trafficRemainingDurationS = etaFresh && Number.isFinite(Number(trafficEta?.duration_s))
     ? Math.max(0, Number(trafficEta.duration_s) - etaElapsedS)
-    : fallbackRemainingDurationS;
+    : null;
+  // A stale traffic snapshot must never count down to a false 0-minute arrival.
+  // Once it ages out, fall back to route progress until the next provider refresh.
+  const remainingDurationS = trafficRemainingDurationS != null
+    ? (status === "arrived" ? 0 : Math.max(1, trafficRemainingDurationS))
+    : (status === "arrived" ? 0 : Math.max(1, fallbackRemainingDurationS));
 
   return {
     route,
