@@ -28,6 +28,7 @@ export default defineConfig({
       input: {
         main: resolve(process.cwd(), 'index.html'),
         legacy: resolve(process.cwd(), 'legacy.html'),
+        legacyXr: resolve(process.cwd(), 'legacy-xr.html'),
       },
     },
   },
