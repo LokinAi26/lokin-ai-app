@@ -183,7 +183,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   if (!viewport) return null;
 
   return (
-    <div className={`relative overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-[100vw] max-w-[100vw] rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+    <div className={`relative box-border overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-full max-w-full rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
       <div
         className={`relative w-full max-w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
         style={{ touchAction: "none" }}
