@@ -393,19 +393,34 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           </div>
         )}
 
-        <div
-          className={`absolute z-30 flex min-w-0 items-end gap-2 ${fullscreen ? "bottom-[calc(0.75rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}
-          style={fullscreen ? { left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))" } : { left: "0.5rem", right: "0.5rem" }}
-        >
-          <div className={`min-w-0 flex-1 overflow-hidden rounded-2xl border bg-black/84 px-3 py-2 backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
-            <div className="truncate text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-            <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+        {fullscreen ? (
+          <div
+            className="absolute z-30"
+            style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
+          >
+            <div className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3 overflow-hidden rounded-[1.35rem] border bg-black/84 px-3.5 py-3 shadow-lg backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
+              <div className="min-w-0 overflow-hidden">
+                <div className="truncate text-[8px] font-semibold tracking-[0.14em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
+                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+              </div>
+              <div className={`min-w-[58px] shrink-0 border-l pl-3 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
+                <div className="truncate text-[7px] font-semibold tracking-[0.05em] text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
+                <div className={`mt-0.5 whitespace-nowrap font-display font-black leading-none ${arrived ? "text-sm text-primary" : "text-[clamp(1.05rem,5vw,1.3rem)] text-accent"}`}>{arrived ? "DONE" : formatCompactDuration(remainingDurationS)}</div>
+              </div>
+            </div>
           </div>
-          <div className={`w-[clamp(76px,23vw,96px)] shrink-0 overflow-hidden rounded-2xl border bg-black/84 px-2.5 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
-            <div className="truncate text-[7px] tracking-[0.06em] text-white/45">{arrived ? "STATUS" : fullscreen && etaLiveTraffic ? "LIVE" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
-            <div className={`truncate font-display font-black ${arrived ? "text-sm text-primary" : "text-[clamp(1rem,5vw,1.35rem)] text-accent"}`}>{arrived ? "DONE" : fullscreen ? formatCompactDuration(remainingDurationS) : formatDuration(remainingDurationS)}</div>
+        ) : (
+          <div className="absolute bottom-3 left-2 right-2 z-30 flex min-w-0 items-end gap-2">
+            <div className={`min-w-0 flex-1 overflow-hidden rounded-2xl border bg-black/84 px-3 py-2 backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
+              <div className="truncate text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
+              <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+            </div>
+            <div className={`w-[clamp(76px,23vw,96px)] shrink-0 overflow-hidden rounded-2xl border bg-black/84 px-2.5 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
+              <div className="truncate text-[7px] tracking-[0.06em] text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
+              <div className={`truncate font-display font-black ${arrived ? "text-sm text-primary" : "text-[clamp(1rem,5vw,1.35rem)] text-accent"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {!image && (loading || error) && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#111820]/85 px-6 text-center backdrop-blur-sm">
