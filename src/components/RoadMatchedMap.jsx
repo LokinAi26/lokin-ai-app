@@ -49,7 +49,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + dx, y: height / 2 + (point[1] - center[1]) };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, etaLiveTraffic = false }) {
+export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   const defaultStyle = perspective ? "satellite-streets-v12" : "dark-v11";
   const [style, setStyle] = useState(defaultStyle);
@@ -61,6 +61,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const pinchRef = useRef({ distance: 0, scale: 1 });
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
+  const arrived = navigationStatus === "arrived";
+  const rerouting = navigationStatus === "rerouting";
 
   const nextPoint = snappedPosition?.segment_index != null && coords.length
     ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
@@ -239,13 +241,21 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           <button type="button" aria-label="Reset zoom and follow driver" onClick={() => { setZoomOffset(0); setGestureScale(1); pinchRef.current = { distance: 0, scale: 1 }; setStyle(defaultStyle); onResetFollow?.(); }} className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-black/70 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
         )}
 
-        <div className={`absolute left-3 max-w-[70%] rounded-2xl border border-primary/25 bg-black/80 px-3 py-2 backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
-          <div className="text-[9px] tracking-[0.16em] text-primary/75">NEXT MANEUVER</div>
-          <div className="mt-0.5 line-clamp-2 text-sm font-extrabold text-white">{maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
-        </div>
-        <div className={`absolute right-3 rounded-2xl border border-accent/20 bg-black/80 px-3 py-2 text-right backdrop-blur ${fullscreen ? "bottom-[calc(1rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
-          <div className="text-[9px] tracking-wider text-white/45">{etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
-          <div className="font-display text-lg font-black text-accent">{formatDuration(remainingDurationS)}</div>
+        {rerouting && (
+          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(4.9rem+env(safe-area-inset-top))]" : "top-14"}`}>
+            REROUTING · CONFIRMING ROAD
+          </div>
+        )}
+
+        <div className={`absolute inset-x-2 z-30 flex items-end gap-2 ${fullscreen ? "bottom-[calc(0.75rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
+          <div className={`min-w-0 flex-1 rounded-2xl border bg-black/84 px-3 py-2 backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
+            <div className="text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
+            <div className="mt-0.5 line-clamp-2 text-sm font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+          </div>
+          <div className={`w-[82px] shrink-0 rounded-2xl border bg-black/84 px-2.5 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
+            <div className="truncate text-[8px] tracking-wider text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
+            <div className={`truncate font-display font-black ${arrived ? "text-base text-primary" : "text-lg text-accent"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
+          </div>
         </div>
 
         {!image && (loading || error) && (
