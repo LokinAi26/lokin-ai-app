@@ -258,6 +258,7 @@ export default function AiGps() {
               maneuver={nav.maneuver}
               remainingDurationS={nav.remainingDurationS}
               followDriver={locked}
+              navigationStatus={nav.status}
             />
           ) : (
             <RoadMatchedMap
@@ -267,6 +268,7 @@ export default function AiGps() {
               remainingDurationS={nav.remainingDurationS}
               followDriver={locked}
               perspective
+              navigationStatus={nav.status}
             />
           )}
         </div>
@@ -342,6 +344,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           perspective={mapView === "4d"}
           fullscreen
           etaLiveTraffic={nav.etaLiveTraffic}
+          navigationStatus={nav.status}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
@@ -355,25 +358,25 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center justify-between gap-2 px-2 pt-[calc(0.45rem+env(safe-area-inset-top))]">
-        <div className="pointer-events-auto flex items-center gap-2">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 px-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[calc(0.45rem+env(safe-area-inset-top))]">
+        <div className="pointer-events-auto flex min-w-0 items-center gap-1.5">
           <button
             type="button"
             onClick={onExit}
-            className="min-h-[44px] rounded-full border border-white/15 bg-black/85 px-4 py-2 text-[11px] font-extrabold tracking-[0.06em] text-white shadow-lg active:scale-95"
+            className="min-h-[44px] shrink-0 rounded-full border border-white/15 bg-black/85 px-3 py-2 text-[10px] font-extrabold tracking-[0.04em] text-white shadow-lg active:scale-95"
             aria-label="Back to LOKIN home"
           >
-            ‹ BACK
+            ‹<span className="hidden min-[350px]:inline"> BACK</span>
           </button>
-          <div className="rounded-full border border-primary/25 bg-black/70 px-2.5 py-1.5 text-[9px] font-extrabold tracking-[0.08em] text-primary backdrop-blur">
-            ● HEY LOKIN
+          <div className="min-w-0 truncate rounded-full border border-primary/25 bg-black/70 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.05em] text-primary backdrop-blur">
+            ● <span className="hidden min-[380px]:inline">HEY </span>LOKIN
           </div>
         </div>
 
         {nav.route ? (
-          <div className="pointer-events-auto rounded-full border border-white/10 bg-black/75 p-0.5 shadow-lg backdrop-blur">
-            <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
-            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
+          <div className="pointer-events-auto shrink-0 rounded-full border border-white/10 bg-black/75 p-0.5 shadow-lg backdrop-blur">
+            <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-2.5 py-1.5 text-[8px] font-extrabold tracking-[0.06em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
+            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-2.5 py-1.5 text-[8px] font-extrabold tracking-[0.06em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
         ) : <span />}
 
@@ -381,11 +384,11 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           <button
             type="button"
             onClick={onOpenAppFreeRoam}
-            className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-white/12 bg-black/65 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.05em] text-white/65 shadow-md backdrop-blur active:scale-95"
+            className="pointer-events-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/12 bg-black/65 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.04em] text-white/65 shadow-md backdrop-blur active:scale-95"
           >
-            <Move className="h-3 w-3" /> ROAM
+            <Move className="h-3 w-3" /><span className="hidden min-[360px]:inline">ROAM</span>
           </button>
-        ) : <span className="w-12" />}
+        ) : <span className="w-8" />}
       </div>
 
       {error && !nav.route && (
