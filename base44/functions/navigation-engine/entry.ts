@@ -144,7 +144,22 @@ function staticRouteOverlay(routeGeometry: any) {
   const coords = simplifyStaticRoute(routeGeometry?.coordinates || routeGeometry || [], 240);
   if (coords.length < 2) return "";
   const polyline = encodeURIComponent(encodePolyline5(coords));
-  return `path-7+A8FF00-1(${polyline})/`;
+  return `path-7+A8FF00-1(${polyline})`;
+}
+
+function staticDriverOverlay(driverCoordinate: any) {
+  const coord = Array.isArray(driverCoordinate)
+    ? driverCoordinate
+    : driverCoordinate && Number.isFinite(Number(driverCoordinate.longitude)) && Number.isFinite(Number(driverCoordinate.latitude))
+      ? [Number(driverCoordinate.longitude), Number(driverCoordinate.latitude)]
+      : null;
+  if (!coord || coord.length < 2) return "";
+  const longitude = Number(coord[0]);
+  const latitude = Number(coord[1]);
+  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return "";
+  // Map-native marker is projected by the same pitched/bearing camera as the
+  // 4D route, preventing the current-position marker from drifting or vanishing.
+  return `pin-l+00E5FF(${longitude.toFixed(6)},${latitude.toFixed(6)})`;
 }
 
 async function fetchStaticMap(accessToken: string, viewport: any = {}) {
@@ -159,12 +174,15 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const style = ["dark-v11", "streets-v12", "satellite-streets-v12"].includes(String(viewport?.style))
     ? String(viewport.style)
     : "dark-v11";
-  const overlay = staticRouteOverlay(viewport?.route_geometry);
+  const routeOverlay = staticRouteOverlay(viewport?.route_geometry);
+  const driverOverlay = staticDriverOverlay(viewport?.driver_coordinate);
+  const overlays = [routeOverlay, driverOverlay].filter(Boolean).join(",");
+  const overlayPrefix = overlays ? `${overlays}/` : "";
 
   if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error("Valid map viewport coordinates are required");
   const params = new URLSearchParams({ access_token: accessToken, attribution: "true", logo: "true" });
   const densitySuffix = retina ? "@2x" : "";
-  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}${densitySuffix}?${params.toString()}`;
+  const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlayPrefix}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}${densitySuffix}?${params.toString()}`;
   if (url.length > 8100) throw new Error("Static map route overlay is too large; reduce route detail");
   const response = await fetch(url);
   if (!response.ok) {
@@ -176,7 +194,8 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   return {
     data_url: `data:${contentType};base64,${bytesToBase64(bytes)}`,
     viewport: { longitude, latitude, zoom, width, height, style, bearing, pitch, retina },
-    route_overlay: Boolean(overlay),
+    route_overlay: Boolean(routeOverlay),
+    driver_overlay: Boolean(driverOverlay),
   };
 }
 
