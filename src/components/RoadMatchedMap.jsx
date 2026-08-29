@@ -61,6 +61,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const pinchRef = useRef({ distance: 0, scale: 1 });
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
+  const hudSafeX = fullscreen ? "max(0.65rem, env(safe-area-inset-left))" : "0.5rem";
   const arrived = navigationStatus === "arrived";
   const rerouting = navigationStatus === "rerouting";
 
@@ -182,9 +183,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   if (!viewport) return null;
 
   return (
-    <div className={`relative overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+    <div className={`relative overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-[100vw] max-w-[100vw] rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
       <div
-        className={`relative w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
+        className={`relative w-full max-w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
         style={{ touchAction: "none" }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -247,14 +248,17 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           </div>
         )}
 
-        <div className={`absolute inset-x-2 z-30 flex items-end gap-2 ${fullscreen ? "bottom-[calc(0.75rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}>
-          <div className={`min-w-0 flex-1 rounded-2xl border bg-black/84 px-3 py-2 backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
-            <div className="text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-            <div className="mt-0.5 line-clamp-2 text-sm font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+        <div
+          className={`absolute z-30 flex min-w-0 items-end gap-2 ${fullscreen ? "bottom-[calc(0.75rem+env(safe-area-inset-bottom))]" : "bottom-3"}`}
+          style={fullscreen ? { left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))" } : { left: "0.5rem", right: "0.5rem" }}
+        >
+          <div className={`min-w-0 flex-1 overflow-hidden rounded-2xl border bg-black/84 px-3 py-2 backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
+            <div className="truncate text-[9px] tracking-[0.16em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
+            <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
           </div>
-          <div className={`w-[82px] shrink-0 rounded-2xl border bg-black/84 px-2.5 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
-            <div className="truncate text-[8px] tracking-wider text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
-            <div className={`truncate font-display font-black ${arrived ? "text-base text-primary" : "text-lg text-accent"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
+          <div className={`w-[clamp(68px,21vw,82px)] shrink-0 overflow-hidden rounded-2xl border bg-black/84 px-2 py-2 text-right backdrop-blur ${arrived ? "border-primary/30" : "border-accent/20"}`}>
+            <div className="truncate text-[7px] tracking-[0.06em] text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
+            <div className={`truncate font-display font-black ${arrived ? "text-sm text-primary" : "text-[clamp(1rem,5vw,1.35rem)] text-accent"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
           </div>
         </div>
 
