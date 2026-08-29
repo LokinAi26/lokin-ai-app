@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:label="LOKIN Vision XR"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.LOKINVisionXR"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".ProjectedMainActivity"
+            android:exported="true"
+            android:requiredDisplayCategory="android.hardware.display.category.XR_PROJECTED"
+            android:label="LOKIN Vision Display Glasses">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.XR_PROJECTED_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="LOKIN Vision XR">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>
