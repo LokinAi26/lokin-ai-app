@@ -333,7 +333,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
   return (
-    <div className="fixed inset-0 z-20 overflow-hidden bg-black text-white">
+    <div className="fixed inset-0 z-20 h-[100dvh] w-[100vw] max-w-[100vw] overflow-hidden bg-black text-white">
       {nav.route ? (
         <RoadMatchedMap
           routeGeometry={nav.route.geometry}
@@ -358,8 +358,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 px-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[calc(0.45rem+env(safe-area-inset-top))]">
-        <div className="pointer-events-auto flex min-w-0 items-center gap-1.5">
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex min-w-0 items-center gap-1.5 overflow-hidden pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[calc(0.45rem+env(safe-area-inset-top))]">
+        <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
           <button
             type="button"
             onClick={onExit}
@@ -368,7 +368,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           >
             ‹<span className="hidden min-[350px]:inline"> BACK</span>
           </button>
-          <div className="min-w-0 truncate rounded-full border border-primary/25 bg-black/70 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.05em] text-primary backdrop-blur">
+          <div className="min-w-0 flex-1 truncate rounded-full border border-primary/25 bg-black/70 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.05em] text-primary backdrop-blur">
             ● <span className="hidden min-[380px]:inline">HEY </span>LOKIN
           </div>
         </div>
