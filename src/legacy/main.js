@@ -132,7 +132,7 @@ function render(data, stale) {
         '<section class="card"><h2>Driver</h2><div class="metric-small ' + statusTone(driver.status) + '">' + esc(compactStatus(driver.status)) + '</div><div class="divider"></div><div class="row small"><span class="muted">Active assignments</span><strong>' + esc(driver.active_assignments || 0) + '</strong></div><div class="row tiny"><span>Platforms</span><span>' + esc(driver.connected_platforms || 0) + '</span></div><div class="card-detail">' + esc(driver.detail || '') + '</div></section>' +
         '<section class="card"><h2>Latest Earnings</h2><div class="metric">' + esc(money(earnings.amount)) + '</div><div class="divider"></div><div class="row tiny"><span>' + esc(latestDate) + '</span><span>' + esc(earnings.trips || 0) + ' trips</span></div></section>' +
         '<section class="card"><h2>Productions</h2><div class="metric-small ' + statusTone(prod.status) + '">' + esc(compactStatus(prod.status || 'ready')) + '</div><div class="divider"></div><div class="row small"><span class="muted">Active / QC</span><strong>' + esc(prod.active || 0) + ' / ' + esc(prod.qc || 0) + '</strong></div><div class="row small"><span class="muted">Failed / blocked</span><strong class="' + (prod.failed ? 'bad' : '') + '">' + esc(prod.failed || 0) + '</strong></div><div class="card-detail">' + esc(prod.latest_status ? ('Latest: ' + compactStatus(prod.latest_status) + (prod.latest_capability ? ' · ' + prod.latest_capability : '')) : 'Production telemetry live · no recent jobs') + '</div></section>' +
-        '<section class="card"><h2>LOKIN Vision</h2><div class="metric-small ' + statusTone(vision.status) + '">' + esc(compactStatus(vision.status)) + '</div><div class="divider"></div>' + (vision.battery_percent != null ? '<div class="row tiny"><span>Battery</span><span>' + esc(vision.battery_percent) + '%</span></div>' : '') + '<div class="card-detail">' + esc(vision.detail || 'No telemetry available.') + '</div></section>' +
+        '<section class="card"><h2>LOKIN Vision</h2><div class="metric-small ' + statusTone(vision.status) + '">' + esc(compactStatus(vision.status)) + '</div><div class="divider"></div>' + (vision.battery_percent != null ? '<div class="row tiny"><span>Battery</span><span>' + esc(vision.battery_percent) + '%</span></div>' : '') + (vision.platform ? '<div class="row tiny"><span>Host</span><span>' + esc(vision.platform) + '</span></div>' : '') + (vision.projected_state ? '<div class="row tiny"><span>Projected</span><span class="' + statusTone(vision.projected_connected ? 'connected' : vision.projected_state) + '">' + esc(vision.projected_connected ? 'CONNECTED' : compactStatus(vision.projected_state)) + '</span></div>' : '') + (vision.xr_compile_sdk != null ? '<div class="row tiny"><span>Android XR</span><span>SDK ' + esc(vision.xr_compile_sdk) + '</span></div>' : '') + '<div class="card-detail">' + esc(vision.detail || 'No telemetry available.') + '</div>' + (vision.xr_last_error ? '<div class="card-detail bad">XR: ' + esc(vision.xr_last_error) + '</div>' : '') + '</section>' +
         '<section class="card card-wide"><h2>AI Workload Engines</h2><div class="engine-list">' + renderEngines(data.engines) + '</div></section>' +
         '<section class="card card-wide"><h2>Alerts · ' + esc(sys.alert_count || 0) + '</h2><div class="alerts">' + renderAlerts(data.alerts) + '</div></section>' +
         '<section class="card card-wide"><h2>Quick Actions</h2><div class="quick">' +
@@ -140,6 +140,7 @@ function render(data, stale) {
           '<button id="dispatch-btn" class="btn">OPEN DISPATCH</button>' +
           '<button id="production-btn" class="btn">OPEN PRODUCTIONS</button>' +
           '<button id="earnings-btn" class="btn">OPEN EARNINGS</button>' +
+          '<button id="vision-btn" class="btn">OPEN VISION XR</button>' +
         '</div><div class="footer">Production and AI-engine controls are intentionally read-only until their backend control contracts are explicitly wired. No fake controls are exposed.</div></section>' +
       '</div>' +
       '<div class="footer">Operator: ' + esc((data.user && (data.user.name || data.user.email)) || 'LOKIN User') + ' · Updated ' + esc(data.generated_at || '') + '<br>Auto-refresh: 10 seconds while visible.</div>' +
@@ -153,6 +154,7 @@ function render(data, stale) {
   document.getElementById('dispatch-btn').onclick = function() { window.location.href = '/driver-dispatch'; };
   document.getElementById('production-btn').onclick = function() { window.location.href = '/oasis'; };
   document.getElementById('earnings-btn').onclick = function() { window.location.href = '/earnings'; };
+  document.getElementById('vision-btn').onclick = function() { window.location.href = '/vision-bridge'; };
   document.getElementById('driver-toggle').onclick = function() {
     if (!cap.driver_pause_resume) return;
     var desired = isPaused ? 'resume' : 'pause';
