@@ -14,6 +14,7 @@
     "verify:uber-driver": "node scripts/verify-uber-driver-integration.mjs",
     "verify:sensor-fusion": "node scripts/verify-sensor-fusion-v21.mjs",
     "verify:native-location": "node scripts/verify-native-location-packaging.mjs",
+    "verify:vision-xr": "node scripts/verify-vision-xr-packaging.mjs",
     "verify:control-plane": "node scripts/verify-control-plane.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
