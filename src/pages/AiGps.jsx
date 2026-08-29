@@ -333,7 +333,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
   return (
-    <div className="fixed inset-0 z-20 h-[100dvh] w-[100vw] max-w-[100vw] overflow-hidden bg-black text-white">
+    <div className="fixed inset-0 z-20 box-border h-[100dvh] w-full max-w-full overflow-hidden bg-black text-white">
       {nav.route ? (
         <RoadMatchedMap
           routeGeometry={nav.route.geometry}
@@ -386,7 +386,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             onClick={onOpenAppFreeRoam}
             className="pointer-events-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/12 bg-black/65 px-2 py-1.5 text-[8px] font-extrabold tracking-[0.04em] text-white/65 shadow-md backdrop-blur active:scale-95"
           >
-            <Move className="h-3 w-3" /><span className="hidden min-[360px]:inline">ROAM</span>
+            <Move className="h-3 w-3" /><span className="hidden min-[430px]:inline">ROAM</span>
           </button>
         ) : <span className="w-8" />}
       </div>
