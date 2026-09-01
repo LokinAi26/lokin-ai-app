@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Radar, Store } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Store } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
@@ -9,8 +9,10 @@ import RouteHeatMap from "@/components/RouteHeatMap";
 import LocalOfferCapture from "@/components/LocalOfferCapture";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { saveOptimizedRouteSession } from "@/lib/optimizedRouteSession";
 
 export default function RoutePlanner() {
+  const navigate = useNavigate();
   const [origin, setOrigin] = useState("");
   const [mode, setMode] = useState("most_profit");
   const [loading, setLoading] = useState(false);
@@ -26,14 +28,42 @@ export default function RoutePlanner() {
     });
   }, []);
 
-  async function optimize() {
-    setLoading(true); setError(""); setData(null);
+  async function optimizeAndLaunchGps() {
+    setLoading(true);
+    setError("");
+    setData(null);
     try {
-      const res = await guardedInvoke(base44, "optimizeRoute", { originAddress: origin, mode }, { force: true, userInitiated: true });
-      setData(res.data);
-      if (prefs?.id) base44.entities.DriverPreference.update(prefs.id, { optimization_mode: mode });
+      const res = await guardedInvoke(
+        base44,
+        "optimizeRoute",
+        { originAddress: origin, mode },
+        { force: true, userInitiated: true },
+      );
+      const optimized = res.data || {};
+      const sequenced = Array.isArray(optimized.sequenced) ? optimized.sequenced : [];
+      setData(optimized);
+
+      if (!sequenced.length) {
+        setError(optimized.briefing || "No current verified offers are available to launch in GPS. Add or refresh an eligible offer, then try again.");
+        return;
+      }
+
+      const handoffSaved = saveOptimizedRouteSession({
+        stops: sequenced,
+        mode: optimized.mode || mode,
+        originAddress: origin,
+      });
+      if (!handoffSaved) {
+        setError("LOKIN optimized the route but could not transfer it to GPS. Keep this screen open and try again.");
+        return;
+      }
+
+      if (prefs?.id) {
+        await base44.entities.DriverPreference.update(prefs.id, { optimization_mode: mode }).catch(() => null);
+      }
+      navigate("/ai-gps?focus=locked&nav=1&view=real&source=optimizer");
     } catch (e) {
-      setError(e.message);
+      setError(e?.message || "LOKIN could not optimize and launch this route.");
     } finally {
       setLoading(false);
     }
@@ -70,16 +100,11 @@ export default function RoutePlanner() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <RouteIcon className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
-        </div>
-        <Link to="/ai-gps?focus=locked&nav=1&view=real" className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent glow-cyan">
-          <Radar className="h-3.5 w-3.5" /> AI GPS
-        </Link>
+      <div className="flex items-center gap-2">
+        <RouteIcon className="h-5 w-5 text-primary" />
+        <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
       </div>
-      <p className="text-sm text-white/45 -mt-2">Pick a mode — LOKIN ranks offers for that goal and sequences them by zone.</p>
+      <p className="text-sm text-white/45 -mt-2">Pick a mode — one tap optimizes your eligible stops and launches them in LOKIN GPS.</p>
 
       <RouteHeatMap
         mode={mode}
@@ -104,11 +129,11 @@ export default function RoutePlanner() {
         ))}
       </div>
 
-      <div className="flex gap-2">
+      <div className="grid gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
         <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Start address / zip"
-          className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
-        <button onClick={optimize} disabled={loading} className="rounded-xl bg-primary text-primary-foreground px-5 text-sm font-bold glow-primary disabled:opacity-60">
-          {loading ? "…" : "Optimize"}
+          className="min-h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
+        <button onClick={optimizeAndLaunchGps} disabled={loading} className="min-h-12 w-full rounded-xl bg-primary px-5 text-sm font-extrabold text-primary-foreground glow-primary disabled:opacity-60 min-[480px]:w-auto">
+          {loading ? "OPTIMIZING ROUTE…" : "OPTIMIZE + LAUNCH GPS"}
         </button>
       </div>
 
@@ -126,7 +151,7 @@ export default function RoutePlanner() {
       {!data && !loading && !error && (
         <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
           <RouteIcon className="h-6 w-6 text-primary mx-auto mb-2" />
-          <div className="text-sm text-white/70">Pick a mode and tap <span className="text-primary font-bold">Optimize</span> to sequence your offers into one efficient route.</div>
+          <div className="text-sm text-white/70">Pick a mode and tap <span className="text-primary font-bold">Optimize + Launch GPS</span> to sequence your offers and begin navigation.</div>
         </div>
       )}
 
