@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { bearingDegrees, formatDuration, haversineMeters } from "@/lib/navigationGeometry";
+import { formatDuration, haversineMeters } from "@/lib/navigationGeometry";
 
 const MAP_W = 640;
 const MAP_H = 420;
 const TILE_SIZE = 512;
+const MAP_REFRESH_MIN_MS = 850;
+const MAP_REFRESH_DEBOUNCE_MS = 120;
 
 function formatCompactDuration(seconds) {
   const value = Math.max(0, Number(seconds || 0));
@@ -113,16 +115,16 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const pinchRef = useRef({ distance: 0, scale: 1 });
   const dragRef = useRef({ active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null });
+  const gestureFrameRef = useRef(null);
+  const pendingGestureRef = useRef({ offset: { x: 0, y: 0 }, scale: 1 });
+  const mapRequestRef = useRef(0);
+  const lastMapRequestAtRef = useRef(0);
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
   const hudSafeX = fullscreen ? "max(0.65rem, env(safe-area-inset-left))" : "0.5rem";
   const arrived = navigationStatus === "arrived";
   const rerouting = navigationStatus === "rerouting";
   const headingForward = fullscreen && followDriver;
-
-  const nextPoint = snappedPosition?.segment_index != null && coords.length
-    ? coords[Math.min(coords.length - 1, Number(snappedPosition.segment_index) + 1)]
-    : null;
 
   const activeCoords = useMemo(() => {
     if (!followDriver || !snappedPosition?.coordinate || !coords.length) return coords;
@@ -131,11 +133,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }, [routeGeometry, followDriver, snappedPosition?.segment_index, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const activeRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: activeCoords }), [activeCoords]);
-  // Navigation orientation follows the matched road segment first. Raw device
-  // heading can be noisy or briefly reversed at low speed, which made the map
-  // appear to show the route behind the driver even though geometry was valid.
-  const heading = snappedPosition?.coordinate && nextPoint
-    ? bearingDegrees(snappedPosition.coordinate, nextPoint)
+  const staticRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: coords }), [routeGeometry]);
+  // The matcher already resolves the directionally correct road segment.
+  // Prefer that bearing over raw compass data so a noisy/low-speed heading
+  // cannot flip the camera and make the route appear to run backward.
+  const matchedRoadHeading = Number(snappedPosition?.segment_heading_deg);
+  const heading = Number.isFinite(matchedRoadHeading)
+    ? matchedRoadHeading
     : Number.isFinite(snappedPosition?.heading)
       ? snappedPosition.heading
       : 0;
@@ -191,32 +195,48 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
   useEffect(() => {
-    let alive = true;
-    if (!viewport) { setImage(""); return; }
-    setLoading(true);
-    setError("");
-    base44.functions.invoke("navigation-engine", {
-      action: "static_map",
-      viewport: {
-        ...viewport,
-        width: renderW,
-        height: fullscreen ? renderH : perspective ? 700 : MAP_H,
-        style,
-        retina: true,
-        route_geometry: perspective ? activeRouteGeometry : null,
-        driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
-      },
-    }).then((response) => {
-      if (!alive) return;
-      const dataUrl = response.data?.map?.data_url || "";
-      if (!dataUrl) throw new Error("Map provider returned no basemap image");
-      setImage(dataUrl);
-    }).catch((e) => {
-      if (!alive) return;
-      setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
-    }).finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-  }, [viewportKey, perspective, activeRouteGeometry]);
+    if (!viewport) {
+      mapRequestRef.current += 1;
+      setImage("");
+      setLoading(false);
+      return undefined;
+    }
+
+    const requestId = ++mapRequestRef.current;
+    const elapsed = Date.now() - lastMapRequestAtRef.current;
+    const delay = Math.max(MAP_REFRESH_DEBOUNCE_MS, MAP_REFRESH_MIN_MS - elapsed);
+    const timer = window.setTimeout(() => {
+      lastMapRequestAtRef.current = Date.now();
+      setLoading(true);
+      setError("");
+      base44.functions.invoke("navigation-engine", {
+        action: "static_map",
+        viewport: {
+          ...viewport,
+          width: renderW,
+          height: fullscreen ? renderH : perspective ? 700 : MAP_H,
+          style,
+          retina: true,
+          // Keep provider-rendered geometry stable so GPS samples do not
+          // trigger a new Static Maps request before the camera actually moves.
+          route_geometry: perspective ? staticRouteGeometry : null,
+          driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
+        },
+      }).then((response) => {
+        if (requestId !== mapRequestRef.current) return;
+        const dataUrl = response.data?.map?.data_url || "";
+        if (!dataUrl) throw new Error("Map provider returned no basemap image");
+        setImage(dataUrl);
+      }).catch((e) => {
+        if (requestId !== mapRequestRef.current) return;
+        setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
+      }).finally(() => {
+        if (requestId === mapRequestRef.current) setLoading(false);
+      });
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [viewportKey, perspective, staticRouteGeometry]);
 
   const routePoints = useMemo(() => {
     if (!viewport || !Array.isArray(activeCoords)) return "";
@@ -263,12 +283,23 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     };
   }
 
+  function scheduleGestureVisual(offset, scale) {
+    pendingGestureRef.current = { offset, scale };
+    if (gestureFrameRef.current != null) return;
+    gestureFrameRef.current = window.requestAnimationFrame(() => {
+      gestureFrameRef.current = null;
+      const pending = pendingGestureRef.current;
+      setDragOffset(pending.offset);
+      setGestureScale(pending.scale);
+    });
+  }
+
   function onTouchMove(e) {
     if (e.touches?.length === 2 && pinchRef.current.distance) {
       e.preventDefault();
       const scale = Math.max(0.62, Math.min(1.7, touchDistance(e.touches) / pinchRef.current.distance));
       pinchRef.current.scale = scale;
-      setGestureScale(scale);
+      scheduleGestureVisual({ x: 0, y: 0 }, scale);
       return;
     }
     if (e.touches?.length !== 1 || !dragRef.current.active) return;
@@ -279,7 +310,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     dragRef.current.dx = dx;
     dragRef.current.dy = dy;
     if (Math.hypot(dx, dy) >= 4) dragRef.current.moved = true;
-    setDragOffset({ x: dx, y: dy });
+    scheduleGestureVisual({ x: dx, y: dy }, 1);
   }
 
   function finishPinch() {
@@ -310,11 +341,19 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }
 
   function finishGesture() {
+    if (gestureFrameRef.current != null) {
+      window.cancelAnimationFrame(gestureFrameRef.current);
+      gestureFrameRef.current = null;
+    }
     finishPan();
     finishPinch();
   }
 
   function resetView() {
+    if (gestureFrameRef.current != null) {
+      window.cancelAnimationFrame(gestureFrameRef.current);
+      gestureFrameRef.current = null;
+    }
     setManualCenter(null);
     setDragOffset({ x: 0, y: 0 });
     setZoomOffset(0);
@@ -339,7 +378,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       >
         <div
           className="absolute inset-0 will-change-transform"
-          style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 && dragOffset.x === 0 && dragOffset.y === 0 ? "transform 160ms ease-out" : "none" }}
+          style={{ transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 && dragOffset.x === 0 && dragOffset.y === 0 ? "transform 160ms ease-out" : "none" }}
         >
           {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
           <div className="absolute inset-0 bg-black/10 pointer-events-none" />
@@ -349,9 +388,17 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
               {driverPoint && (
-                <g transform={`translate(${driverPoint.x} ${driverPoint.y}) rotate(${markerRotation})`}>
-                  <circle r="22" fill="rgba(0,229,255,.18)" stroke="rgba(0,229,255,.62)" strokeWidth="3" />
-                  <path d="M0 -18 L11 13 L0 8 L-11 13 Z" fill="#B7FF42" stroke="#071009" strokeWidth="3" style={{ filter: "drop-shadow(0 0 5px rgba(168,255,0,.9))" }} />
+                <g
+                  style={{
+                    transform: `translate(${driverPoint.x}px, ${driverPoint.y}px)`,
+                    transformOrigin: "0 0",
+                    transition: "transform 650ms linear",
+                  }}
+                >
+                  <g transform={`rotate(${markerRotation})`}>
+                    <circle r="22" fill="rgba(0,229,255,.18)" stroke="rgba(0,229,255,.62)" strokeWidth="3" />
+                    <path d="M0 -18 L11 13 L0 8 L-11 13 Z" fill="#B7FF42" stroke="#071009" strokeWidth="3" style={{ filter: "drop-shadow(0 0 5px rgba(168,255,0,.9))" }} />
+                  </g>
                 </g>
               )}
             </svg>
