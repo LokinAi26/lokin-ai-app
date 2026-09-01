@@ -8,6 +8,7 @@ import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
 import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
+import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -29,6 +30,21 @@ export default function AiGps() {
 
   useEffect(() => {
     let alive = true;
+    setRouteLoadError("");
+
+    if (explicitDestination.trim()) {
+      setStops([]);
+      setLoadingStops(false);
+      return () => { alive = false; };
+    }
+
+    const optimizedSession = loadOptimizedRouteSession();
+    if (optimizedSession?.stops?.length) {
+      setStops(optimizedSession.stops);
+      setLoadingStops(false);
+      return () => { alive = false; };
+    }
+
     setLoadingStops(true);
     guardedInvoke(base44, "optimizeRoute", { mode: "most_profit" })
       .then((res) => {
@@ -39,7 +55,7 @@ export default function AiGps() {
       .catch((e) => alive && setRouteLoadError(e?.message || "Could not load the optimized delivery route."))
       .finally(() => alive && setLoadingStops(false));
     return () => { alive = false; };
-  }, []);
+  }, [explicitDestination]);
 
   const destinationAddresses = useMemo(() => {
     if (explicitDestination.trim()) return [explicitDestination.trim()];
