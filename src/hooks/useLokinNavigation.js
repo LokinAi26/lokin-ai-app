@@ -9,6 +9,7 @@ import {
   matchToRouteHMM,
 } from "@/lib/navigationGeometry";
 import {
+  drainNativeLocationQueue,
   nativeLocationAvailable,
   normalizeNativeLocationSample,
   requestNativeWhenInUse,
@@ -17,6 +18,7 @@ import {
   subscribeNativeLocation,
   subscribeNativeLocationAuthorization,
   subscribeNativeLocationError,
+  subscribeNativeLocationQueue,
 } from "@/lib/nativeLocationBridge";
 import { reroutePolicy } from "@/lib/navigationQuality";
 
@@ -352,6 +354,21 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setStatus("error");
       setError(nativeError?.message || "LOKIN native location engine reported an error.");
     });
+    const unsubscribeQueue = subscribeNativeLocationQueue((payload) => {
+      const points = Array.isArray(payload?.points) ? payload.points : [];
+      const latest = points
+        .map(normalizeNativeLocationSample)
+        .filter(Boolean)
+        .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
+      const ageMs = latest ? Math.max(0, Date.now() - Number(latest.timestamp || 0)) : Infinity;
+      if (latest && ageMs <= 45_000 && Number(latest.accuracy_m || 0) <= 100) {
+        processLocationSample({ ...latest, source: "native-warm-start" }, "native");
+      }
+    });
+
+    // Start routing immediately from a recent trusted native fix while the OS
+    // acquires a fresh navigation-grade anchor.
+    drainNativeLocationQueue(12);
 
     // Native engines start only after the OS confirms permission. This avoids
     // racing Android's permission dialog and prevents a foreground service from
@@ -362,6 +379,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       unsubscribeLocation();
       unsubscribeAuthorization();
       unsubscribeError();
+      unsubscribeQueue();
       if (nativeStartedRef.current) stopNativeLocation();
       nativeStartedRef.current = false;
     };
@@ -399,7 +417,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
           : geoError?.message || "LOKIN could not read the current GPS position.";
         setError(message);
       },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
