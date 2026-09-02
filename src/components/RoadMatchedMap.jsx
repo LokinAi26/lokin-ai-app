@@ -6,8 +6,8 @@ import { formatDuration, haversineMeters } from "@/lib/navigationGeometry";
 const MAP_W = 640;
 const MAP_H = 420;
 const TILE_SIZE = 512;
-const MAP_REFRESH_MIN_MS = 850;
-const MAP_REFRESH_DEBOUNCE_MS = 120;
+const MAP_REFRESH_MIN_MS = 650;
+const MAP_REFRESH_DEBOUNCE_MS = 80;
 
 function formatCompactDuration(seconds) {
   const value = Math.max(0, Number(seconds || 0));
@@ -118,6 +118,10 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const gestureFrameRef = useRef(null);
   const pendingGestureRef = useRef({ offset: { x: 0, y: 0 }, scale: 1 });
   const mapRequestRef = useRef(0);
+  const mapInFlightRef = useRef(false);
+  const pendingMapRefreshRef = useRef(false);
+  const desiredViewportKeyRef = useRef("");
+  const [mapRefreshNonce, setMapRefreshNonce] = useState(0);
   const lastMapRequestAtRef = useRef(0);
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
@@ -195,17 +199,24 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
   useEffect(() => {
+    desiredViewportKeyRef.current = viewportKey;
     if (!viewport) {
       mapRequestRef.current += 1;
       setImage("");
       setLoading(false);
       return undefined;
     }
+    if (mapInFlightRef.current) {
+      pendingMapRefreshRef.current = true;
+      return undefined;
+    }
 
-    const requestId = ++mapRequestRef.current;
     const elapsed = Date.now() - lastMapRequestAtRef.current;
     const delay = Math.max(MAP_REFRESH_DEBOUNCE_MS, MAP_REFRESH_MIN_MS - elapsed);
     const timer = window.setTimeout(() => {
+      if (desiredViewportKeyRef.current !== viewportKey) return;
+      const requestId = ++mapRequestRef.current;
+      mapInFlightRef.current = true;
       lastMapRequestAtRef.current = Date.now();
       setLoading(true);
       setError("");
@@ -216,27 +227,32 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           width: renderW,
           height: fullscreen ? renderH : perspective ? 700 : MAP_H,
           style,
-          retina: true,
-          // Keep provider-rendered geometry stable so GPS samples do not
-          // trigger a new Static Maps request before the camera actually moves.
+          // Fullscreen navigation favors low-latency redraws. The 640×960
+          // source remains screen-sharp without transferring a 2× image each fix.
+          retina: !fullscreen,
           route_geometry: perspective ? staticRouteGeometry : null,
           driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
         },
       }).then((response) => {
-        if (requestId !== mapRequestRef.current) return;
+        if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         const dataUrl = response.data?.map?.data_url || "";
         if (!dataUrl) throw new Error("Map provider returned no basemap image");
         setImage(dataUrl);
       }).catch((e) => {
-        if (requestId !== mapRequestRef.current) return;
+        if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
       }).finally(() => {
+        mapInFlightRef.current = false;
         if (requestId === mapRequestRef.current) setLoading(false);
+        if (pendingMapRefreshRef.current) {
+          pendingMapRefreshRef.current = false;
+          setMapRefreshNonce((value) => value + 1);
+        }
       });
     }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [viewportKey, perspective, staticRouteGeometry]);
+  }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce]);
 
   const routePoints = useMemo(() => {
     if (!viewport || !Array.isArray(activeCoords)) return "";
@@ -392,7 +408,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
                   style={{
                     transform: `translate(${driverPoint.x}px, ${driverPoint.y}px)`,
                     transformOrigin: "0 0",
-                    transition: "transform 650ms linear",
+                    transition: "transform 220ms linear",
                   }}
                 >
                   <g transform={`rotate(${markerRotation})`}>
