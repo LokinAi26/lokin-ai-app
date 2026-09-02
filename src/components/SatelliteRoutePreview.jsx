@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Satellite } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { base44LiveFunctions } from "@/api/base44Client";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
 
 function currentPosition(options = {}) {
@@ -34,7 +34,7 @@ export default function SatelliteRoutePreview({ stops = [], destinationAddress =
       .then((position) => {
         const coordinate = [Number(position.coords.longitude), Number(position.coords.latitude)];
         if (alive) setOrigin({ coordinate, accuracy_m: Number(position.coords.accuracy || 0), heading: Number.isFinite(position.coords.heading) ? position.coords.heading : null });
-        return base44.functions.invoke("navigation-engine", {
+        return base44LiveFunctions.functions.invoke("navigation-engine", {
           action: "route_addresses",
           origin: { longitude: coordinate[0], latitude: coordinate[1] },
           destination_addresses: addresses,
