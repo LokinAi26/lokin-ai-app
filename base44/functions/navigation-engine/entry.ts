@@ -200,6 +200,29 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   };
 }
 
+function locationQueryVariants(input: string) {
+  const original = String(input || "").trim().replace(/\s+/g, " ");
+  if (!original) return [];
+
+  // Speech recognition commonly omits punctuation and inserts “on/at” before
+  // a street. Generate a cleaner provider query without changing what the user
+  // sees or requiring them to dictate commas.
+  const roadSuffix = "(?:rd|road|st|street|ave|avenue|blvd|boulevard|dr|drive|ln|lane|way|pkwy|parkway|hwy|highway)";
+  const spoken = original.replace(
+    new RegExp(`\\s+(?:on|at)\\s+(?=[^,]*\\b${roadSuffix}\\b)`, "i"),
+    ", ",
+  );
+  const roadDelimited = spoken.replace(
+    new RegExp(`\\b(${roadSuffix})\\s+(?=[A-Za-z .'-]+\\s+[A-Za-z]{2}$)`, "i"),
+    "$1, ",
+  );
+  const localityDelimited = roadDelimited.replace(
+    /,\s*([A-Za-z .'-]{2,})\s+([A-Za-z]{2})$/i,
+    (_, city, state) => `, ${String(city).trim()}, ${String(state).toUpperCase()}`,
+  );
+  return [...new Set([original, spoken, roadDelimited, localityDelimited].filter(Boolean))];
+}
+
 async function geocodeAddress(address: string, accessToken: string, proximity?: { longitude: number; latitude: number } | null) {
   const q = String(address || "").trim();
   if (!q) throw new Error("A store, business, place, or address is required");
@@ -212,7 +235,7 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
     language: "en",
     country: "US",
     types: "poi,address",
-    auto_complete: "false",
+    auto_complete: "true",
     show_closed_pois: "false",
   });
   if (proximity) {
@@ -224,7 +247,12 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
     params.set("bbox", localSearchBBox(proximity).join(","));
   }
 
-  const data = await fetchJson(`${MAPBOX_SEARCH}/forward?${params.toString()}`);
+  let data: any = null;
+  for (const query of locationQueryVariants(q)) {
+    params.set("q", query);
+    data = await fetchJson(`${MAPBOX_SEARCH}/forward?${params.toString()}`);
+    if (Array.isArray(data?.features) && data.features.length) break;
+  }
   const candidates = (data?.features || [])
     .map((feature: any) => {
       const geometry = feature?.geometry?.coordinates;
@@ -440,6 +468,7 @@ export default async function navigationEngine(req: Request) {
       return json({
         ok: true,
         provider: "mapbox",
+        engine_version: "2026.09.02-poi-voice-v2",
         configured: Boolean(accessToken),
         capabilities: ["business_and_place_search", "forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
         max_destinations: MAX_COORDINATES - 1,
@@ -525,7 +554,7 @@ export default async function navigationEngine(req: Request) {
       );
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
-      return json({ ok: true, geocoded_destinations: geocoded, route });
+      return json({ ok: true, engine_version: "2026.09.02-poi-voice-v2", geocoded_destinations: geocoded, route });
     }
 
     return json({ error: `Unsupported navigation action: ${action}` }, 400);
