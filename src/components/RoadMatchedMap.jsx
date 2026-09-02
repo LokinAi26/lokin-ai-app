@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters } from "@/lib/navigationGeometry";
 
 const MAP_W = 640;
@@ -220,7 +220,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       lastMapRequestAtRef.current = Date.now();
       setLoading(true);
       setError("");
-      base44.functions.invoke("navigation-engine", {
+      base44LiveFunctions.functions.invoke("navigation-engine", {
         action: "static_map",
         viewport: {
           ...viewport,
