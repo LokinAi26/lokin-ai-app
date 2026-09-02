@@ -1,0 +1,44 @@
+{
+  "name": "DynamicEvaluationRun",
+  "type": "object",
+  "properties": {
+    "suite_id": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "GENERATED",
+        "RUNNING",
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "tasks": {
+      "type": "object"
+    },
+    "summary": {
+      "type": "object"
+    },
+    "version": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "suite_id",
+    "domain",
+    "status",
+    "version",
+    "created_at"
+  ]
+}
