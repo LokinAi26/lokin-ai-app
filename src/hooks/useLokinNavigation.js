@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44LiveFunctions } from "@/api/base44Client";
 import {
   haversineMeters,
   nearestGeometryIndex,
@@ -119,7 +119,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setStatus(reason === "initial" ? "routing" : "rerouting");
     setError("");
     try {
-      const response = await base44.functions.invoke("navigation-engine", {
+      const response = await base44LiveFunctions.functions.invoke("navigation-engine", {
         action: "route_addresses",
         origin: { longitude: originCoord[0], latitude: originCoord[1] },
         destination_addresses: addresses,
@@ -199,7 +199,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     ];
     const requestId = ++etaRequestRef.current;
     try {
-      const response = await base44.functions.invoke("navigation-engine", { action: "traffic_eta", coordinates });
+      const response = await base44LiveFunctions.functions.invoke("navigation-engine", { action: "traffic_eta", coordinates });
       if (requestId !== etaRequestRef.current) return null;
       const eta = response.data?.eta;
       if (!eta || !Number.isFinite(Number(eta.duration_s))) return null;
@@ -220,7 +220,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
   useEffect(() => {
     if (!enabled) setStatus("idle");
-    base44.functions.invoke("navigation-engine", { action: "status" })
+    base44LiveFunctions.functions.invoke("navigation-engine", { action: "status" })
       .then((r) => setProviderConfigured(Boolean(r.data?.configured)))
       .catch(() => setProviderConfigured(false));
   }, [enabled]);
@@ -229,7 +229,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setProviderProbeError("");
     setProviderVerified(null);
     try {
-      const response = await base44.functions.invoke("navigation-engine", { action: "provider_probe" });
+      const response = await base44LiveFunctions.functions.invoke("navigation-engine", { action: "provider_probe" });
       const verified = Boolean(response.data?.verified);
       setProviderConfigured(Boolean(response.data?.configured));
       setProviderVerified(verified);
