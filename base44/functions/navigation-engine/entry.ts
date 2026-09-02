@@ -518,10 +518,11 @@ export default async function navigationEngine(req: Request) {
       if (!origin) return json({ error: "Current GPS origin or origin address is required" }, 400);
       if (!destinationAddresses.length) return json({ error: "At least one store, business, place, or address is required" }, 400);
 
-      const geocoded = [];
-      for (const address of destinationAddresses) {
-        geocoded.push(await geocodeAddress(address, accessToken, origin));
-      }
+      // Geocoding independent stops concurrently removes the previous
+      // per-stop network waterfall before the directions request.
+      const geocoded = await Promise.all(
+        destinationAddresses.map((address) => geocodeAddress(address, accessToken, origin)),
+      );
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
       return json({ ok: true, geocoded_destinations: geocoded, route });
