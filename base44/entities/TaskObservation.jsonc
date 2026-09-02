@@ -1,0 +1,64 @@
+{
+  "name": "TaskObservation",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "CORRECTION",
+        "GAP",
+        "PATTERN",
+        "BLIND_SPOT",
+        "TASK_STARTED",
+        "TASK_COMPLETED",
+        "TOOL_FAILURE",
+        "POLICY_BLOCK"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OBSERVED",
+        "PROPOSED",
+        "APPROVED",
+        "APPLIED",
+        "REJECTED"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "affected_components": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "details": {
+      "type": "object"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "source",
+    "event_type",
+    "status",
+    "summary",
+    "occurred_at"
+  ]
+}
