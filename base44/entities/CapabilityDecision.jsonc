@@ -1,0 +1,49 @@
+{
+  "name": "CapabilityDecision",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "DENY",
+        "REQUIRE_APPROVAL"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "risk": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "request_id",
+    "capability",
+    "decision",
+    "reason",
+    "occurred_at"
+  ]
+}
