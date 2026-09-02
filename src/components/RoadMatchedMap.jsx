@@ -383,7 +383,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   if (!viewport) return null;
 
   return (
-    <div className={`relative box-border overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-full max-w-full rounded-none border-0 shadow-none" : "rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+    <div className={`relative box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-screen max-w-[100vw] rounded-none border-0 shadow-none" : "w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
       <div
         className={`relative w-full max-w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
         style={{ touchAction: "none" }}
@@ -461,12 +461,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             className="absolute z-30"
             style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
           >
-            <div className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3 overflow-hidden rounded-[1.35rem] border bg-black/84 px-3.5 py-3 shadow-lg backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
+            <div className={`grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(52px,72px)] items-end gap-2 overflow-hidden rounded-[1.35rem] border bg-black/84 px-3 py-3 shadow-lg backdrop-blur ${arrived ? "border-primary/45" : "border-primary/25"}`}>
               <div className="min-w-0 overflow-hidden">
                 <div className="truncate text-[8px] font-semibold tracking-[0.14em] text-primary/75">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
                 <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
               </div>
-              <div className={`min-w-[58px] shrink-0 border-l pl-3 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
+              <div className={`min-w-0 overflow-hidden border-l pl-2 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
                 <div className="truncate text-[7px] font-semibold tracking-[0.05em] text-white/45">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
                 <div className={`mt-0.5 whitespace-nowrap font-display font-black leading-none ${arrived ? "text-sm text-primary" : "text-[clamp(1.05rem,5vw,1.3rem)] text-accent"}`}>{arrived ? "DONE" : formatCompactDuration(remainingDurationS)}</div>
               </div>
