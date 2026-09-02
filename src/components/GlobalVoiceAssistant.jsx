@@ -53,6 +53,23 @@ function matchCommand(text) {
   return null;
 }
 
+function extractNavigationDestination(raw) {
+  const text = String(raw || "").trim();
+  const patterns = [
+    { pattern: /^(?:navigate|drive|route|go|head)\s+(?:me\s+)?to\s+(.+)$/i, explicit: true },
+    { pattern: /^(?:take|bring)\s+me\s+to\s+(.+)$/i, explicit: true },
+    { pattern: /^(?:get|give)\s+me\s+directions\s+to\s+(.+)$/i, explicit: true },
+    { pattern: /^(?:directions|navigation)\s+to\s+(.+)$/i, explicit: true },
+    { pattern: /^(?:i\s+(?:need|want)\s+to\s+go\s+to)\s+(.+)$/i, explicit: true },
+    { pattern: /^(?:find|locate|search\s+for)\s+(?:the\s+)?(?:(?:nearest|closest|nearby)\s+)?(.+)$/i, explicit: false },
+  ];
+  for (const candidate of patterns) {
+    const destination = text.match(candidate.pattern)?.[1]?.trim().replace(/[?.!,]+$/, "");
+    if (destination && destination.length >= 2) return { destination, explicit: candidate.explicit };
+  }
+  return null;
+}
+
 function speechRecognitionCtor() {
   if (typeof window === "undefined") return null;
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -165,7 +182,24 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       setBusy(false);
       return;
     }
+    const destinationIntent = extractNavigationDestination(command);
     const nav = matchCommand(command);
+    if (destinationIntent && (destinationIntent.explicit || !nav)) {
+      const destination = destinationIntent.destination;
+      const msg = `Finding the nearest ${destination} and starting navigation.`;
+      speak(msg);
+      setReply(msg);
+      const params = new URLSearchParams({
+        focus: "locked",
+        nav: "1",
+        view: "real",
+        source: "voice",
+        destination,
+      });
+      setTimeout(() => navigate(`/ai-gps?${params.toString()}`), 350);
+      setBusy(false);
+      return;
+    }
     if (nav) {
       speak(nav.label);
       setReply(nav.label);
