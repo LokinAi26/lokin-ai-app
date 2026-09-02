@@ -130,9 +130,9 @@ class LokinLocationService : Service() {
         }
 
         val request = if (mode == LokinTrackingMode.ACTIVE_NAVIGATION) {
-            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1_000L)
-                .setMinUpdateIntervalMillis(500L)
-                .setMinUpdateDistanceMeters(3f)
+            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 500L)
+                .setMinUpdateIntervalMillis(250L)
+                .setMinUpdateDistanceMeters(1f)
                 .build()
         } else {
             LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 15_000L)
