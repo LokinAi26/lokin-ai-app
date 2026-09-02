@@ -1,8 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { secrets } from 'base44:runtime';
 import { createFreshEvaluationSuite } from '../../shared/dynamicEvaluation.js';
 import { evaluateResponse, routeModel, MODEL_ROUTER_VERSION } from '../../shared/modelRouter.js';
 import { chooseSpeechProvider, SPEECH_ROUTER_VERSION } from '../../shared/speechRouter.js';
 import { authorizeCapability, listCapabilityPolicies, CAPABILITY_BROKER_VERSION } from '../../shared/capabilityBroker.js';
+import { adapterStatus, buildGatewayPlan } from '../../shared/externalIntelligenceAdapters.js';
+import { searchMemoryRows, memoryTimeline, getMemoryObservations, MEMORY_RETRIEVAL_VERSION } from '../../shared/memoryRetrieval.js';
 
 const txt=(v:any,n=4000)=>String(v??'').trim().slice(0,n);
 const admin=(u:any)=>String(u?.role||'').toLowerCase()==='admin';
@@ -22,7 +25,12 @@ export default async function(req:Request){
     base44.asServiceRole.entities.AIModelEvaluation.list('-created_at',25).catch(()=>[])
    ]);
    const configured=speech.filter((x:any)=>x.configured===true&&x.enabled!==false);
-   return Response.json({status:'READY',versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
+   const adapters=adapterStatus({
+    omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),
+    headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),
+    claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')
+   });
+   return Response.json({status:'READY',versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION,memory_retrieval:MEMORY_RETRIEVAL_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},external_adapters:adapters,gateway_plan:buildGatewayPlan({omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')},{capability:'ai.infer'}),capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
   }
 
   if(action==='generate_dynamic_suite'){
@@ -44,6 +52,22 @@ export default async function(req:Request){
    const decision=authorizeCapability({capability:body.capability,target_locked:body.target_locked===true,approval_verified:false},{scopes});
    await base44.asServiceRole.entities.CapabilityDecision.create({request_id:crypto.randomUUID(),capability:txt(body.capability,160),actor_user_id:user.id,decision:decision.decision,reason:decision.reason,risk:decision.risk||'UNKNOWN',target_type:txt(body.target_type,100),target_id:txt(body.target_id,180),details:decision,occurred_at:new Date().toISOString()});
    return Response.json(decision,{status:decision.allowed?200:403});
+  }
+
+  if(['memory_search','memory_timeline','memory_get'].includes(action)){
+   const [memories,events]=await Promise.all([
+    base44.asServiceRole.entities.LokinLearningMemory.filter({user_id:user.id,active:true},'-updated_date',200).catch(()=>[]),
+    admin(user)?base44.asServiceRole.entities.LokinControlEvent.list('-occurred_at',200).catch(()=>[]):base44.asServiceRole.entities.LokinControlEvent.filter({owner_user_id:user.id},'-occurred_at',200).catch(()=>[])
+   ]);
+   const rows=[...memories,...events];
+   if(action==='memory_search')return Response.json({version:MEMORY_RETRIEVAL_VERSION,results:searchMemoryRows(rows,body.query,body.limit)});
+   if(action==='memory_timeline')return Response.json({version:MEMORY_RETRIEVAL_VERSION,results:memoryTimeline(rows,txt(body.anchor_id,180),body.radius)});
+   return Response.json({version:MEMORY_RETRIEVAL_VERSION,results:getMemoryObservations(rows,body.ids)});
+  }
+
+  if(action==='list_task_observations'){
+   const rows=admin(user)?await base44.asServiceRole.entities.TaskObservation.list('-occurred_at',100).catch(()=>[]):await base44.asServiceRole.entities.TaskObservation.filter({owner_user_id:user.id},'-occurred_at',100).catch(()=>[]);
+   return Response.json({status:'READY',auto_apply:false,observations:rows});
   }
 
   if(action==='run_model_evaluation'){
