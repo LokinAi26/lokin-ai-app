@@ -1,0 +1,53 @@
+{
+  "name": "AIModelEvaluation",
+  "type": "object",
+  "properties": {
+    "suite_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR"
+      ]
+    },
+    "quality_score": {
+      "type": "number"
+    },
+    "failure_rate": {
+      "type": "number"
+    },
+    "p95_latency_ms": {
+      "type": "number"
+    },
+    "estimated_cost_usd": {
+      "type": "number"
+    },
+    "results": {
+      "type": "object"
+    },
+    "router_version": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "suite_id",
+    "model",
+    "provider",
+    "status",
+    "created_at"
+  ]
+}
