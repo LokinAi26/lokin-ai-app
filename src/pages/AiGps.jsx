@@ -353,7 +353,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
   return (
-    <div className="fixed inset-0 z-20 box-border h-[100dvh] w-full max-w-full overflow-hidden bg-black text-white">
+    <div className="fixed left-0 top-0 z-20 box-border h-[100dvh] w-screen max-w-[100vw] min-w-0 overflow-hidden overscroll-none bg-black text-white">
       {nav.route ? (
         <RoadMatchedMap
           routeGeometry={nav.route.geometry}
