@@ -203,16 +203,16 @@ export default function AiGps() {
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
             <div className="text-[10px] tracking-[0.2em] text-accent/75 font-display">LIVE ROAD TEST</div>
-            <div className="text-[10px] text-white/35">Enter any real destination to prove the production routing path.</div>
+            <div className="text-[10px] text-white/35">Type a store, business, place, or address—or say “Hey LOKIN, navigate to Walmart.”</div>
           </div>
           {explicitDestination && <button type="button" onClick={useDeliveryRoute} className="text-[10px] font-semibold text-white/45">Use delivery route</button>}
         </div>
         <div className="flex gap-2">
           <div className="flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3">
             <MapPin className="h-4 w-4 shrink-0 text-primary" />
-            <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Enter destination address" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/25" />
+            <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Store, business, place, or address" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/25" />
           </div>
-          <button type="submit" disabled={!destinationInput.trim()} className="rounded-2xl bg-primary px-4 text-xs font-extrabold text-black glow-primary disabled:opacity-35">NAVIGATE</button>
+          <button type="submit" disabled={!destinationInput.trim()} className="rounded-2xl bg-primary px-4 text-xs font-extrabold text-black glow-primary disabled:opacity-35">FIND + GO</button>
         </div>
         {explicitDestination && <div className="mt-2 truncate text-[10px] text-primary/70">ACTIVE DESTINATION · {explicitDestination}</div>}
       </form>}
@@ -255,7 +255,11 @@ export default function AiGps() {
           </div>
           {nav.geocodedDestinations?.[0]?.full_address && (
             <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-2 text-[10px] text-white/45">
-              <span className="font-semibold text-primary/75">RESOLVED DESTINATION · </span>{nav.geocodedDestinations[0].full_address}
+              <span className="font-semibold text-primary/75">RESOLVED DESTINATION · </span>
+              {nav.geocodedDestinations[0].name && nav.geocodedDestinations[0].name !== nav.geocodedDestinations[0].full_address
+                ? `${nav.geocodedDestinations[0].name} · `
+                : ""}
+              {nav.geocodedDestinations[0].full_address}
             </div>
           )}
         </div>
