@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, BookOpen, BrainCircuit, Calculator, CheckCircle2, ChevronRight, CircleOff, ClipboardCheck, LockKeyhole, Save, ShieldCheck, TrendingUp } from "lucide-react";
+import { BarChart3, BookOpen, BrainCircuit, Calculator, CheckCircle2, ChevronRight, CircleOff, ClipboardCheck, LockKeyhole, Save, ShieldCheck, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LESSONS, PLAYBOOK_VERSION, SAMPLE_CANDLES, calculatePositionSize, evaluateSetup } from "@/lib/traderPlaybookEngine";
 
