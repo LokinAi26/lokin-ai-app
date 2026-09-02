@@ -1,0 +1,54 @@
+{
+  "name": "SpeechProviderState",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "configured": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "streaming": {
+      "type": "boolean"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "health_score": {
+      "type": "number"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "consecutive_failures": {
+      "type": "number"
+    },
+    "circuit_state": {
+      "type": "string",
+      "enum": [
+        "CLOSED",
+        "OPEN",
+        "HALF_OPEN"
+      ]
+    },
+    "circuit_open_until": {
+      "type": "string"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "provider",
+    "configured",
+    "enabled",
+    "circuit_state"
+  ]
+}
