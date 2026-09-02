@@ -2,6 +2,7 @@ import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.43";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
+const MAPBOX_SEARCH = "https://api.mapbox.com/search/searchbox/v1";
 const MAPBOX_DIRECTIONS = "https://api.mapbox.com/directions/v5/mapbox";
 const MAX_COORDINATES = 25;
 const DEFAULT_PROFILE = "driving-traffic";
@@ -201,28 +202,37 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
 
 async function geocodeAddress(address: string, accessToken: string, proximity?: { longitude: number; latitude: number } | null) {
   const q = String(address || "").trim();
-  if (!q) throw new Error("Address is required");
+  if (!q) throw new Error("A store, business, place, or address is required");
 
   const hasContext = addressHasGeographicContext(q);
   const params = new URLSearchParams({
     q,
     access_token: accessToken,
-    limit: proximity ? "5" : "1",
-    autocomplete: "false",
-    country: "us",
-    permanent: "false",
-    types: "address",
+    limit: proximity ? "10" : "5",
+    language: "en",
+    country: "US",
+    types: "poi,address",
+    auto_complete: "false",
+    show_closed_pois: "false",
   });
-  if (proximity) params.set("proximity", `${proximity.longitude},${proximity.latitude}`);
+  if (proximity) {
+    params.set("proximity", `${proximity.longitude},${proximity.latitude}`);
+    params.set("origin", `${proximity.longitude},${proximity.latitude}`);
+    params.set("rank_strategy", "distance");
+  }
   if (proximity && !hasContext) {
     params.set("bbox", localSearchBBox(proximity).join(","));
   }
 
-  const data = await fetchJson(`${MAPBOX_GEOCODE}/forward?${params.toString()}`);
+  const data = await fetchJson(`${MAPBOX_SEARCH}/forward?${params.toString()}`);
   const candidates = (data?.features || [])
     .map((feature: any) => {
-      const coords = feature?.geometry?.coordinates;
-      if (!Array.isArray(coords) || coords.length < 2) return null;
+      const geometry = feature?.geometry?.coordinates;
+      const routable = feature?.properties?.coordinates?.routable_points?.[0];
+      const coords = routable
+        ? [Number(routable.longitude), Number(routable.latitude)]
+        : geometry;
+      if (!Array.isArray(coords) || coords.length < 2 || !Number.isFinite(Number(coords[0])) || !Number.isFinite(Number(coords[1]))) return null;
       const result = {
         feature,
         longitude: Number(coords[0]),
@@ -239,24 +249,28 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   const selected: any = candidates[0];
   if (!selected) {
     if (proximity && !hasContext) {
-      throw new Error(`Could not find this address near your current location. Add city, state, or ZIP to: ${q}`);
+      throw new Error(`Could not find “${q}” near your current location. Add a city, state, or ZIP and try again.`);
     }
-    throw new Error(`Could not geocode: ${q}`);
+    throw new Error(`Could not find a matching place or address for: ${q}`);
   }
 
   if (proximity && !hasContext && Number(selected.proximity_miles) > 55) {
-    throw new Error(`Address is ambiguous and the nearest local match is ${Math.round(selected.proximity_miles)} miles away. Add city, state, or ZIP to: ${q}`);
+    throw new Error(`The nearest match for “${q}” is ${Math.round(selected.proximity_miles)} miles away. Add a city, state, or ZIP to confirm the destination.`);
   }
 
   const feature = selected.feature;
+  const properties = feature?.properties || {};
   return {
     input: q,
     longitude: selected.longitude,
     latitude: selected.latitude,
-    name: feature?.properties?.name || feature?.text || "",
-    full_address: feature?.properties?.full_address || feature?.place_name || q,
-    feature_type: feature?.properties?.feature_type || feature?.type || "",
-    accuracy: feature?.properties?.coordinates?.accuracy || null,
+    name: properties?.name_preferred || properties?.name || feature?.text || "",
+    full_address: properties?.full_address || properties?.place_formatted || feature?.place_name || q,
+    feature_type: properties?.feature_type || feature?.type || "",
+    categories: properties?.poi_category || [],
+    brand: properties?.brand || [],
+    operational_status: properties?.operational_status || null,
+    accuracy: properties?.coordinates?.accuracy || null,
     proximity_miles: selected.proximity_miles,
   };
 }
@@ -427,7 +441,7 @@ export default async function navigationEngine(req: Request) {
         ok: true,
         provider: "mapbox",
         configured: Boolean(accessToken),
-        capabilities: ["forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
+        capabilities: ["business_and_place_search", "forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
         max_destinations: MAX_COORDINATES - 1,
         storage: "temporary_geocoding_only",
       });
@@ -502,7 +516,7 @@ export default async function navigationEngine(req: Request) {
         origin = { longitude: g.longitude, latitude: g.latitude };
       }
       if (!origin) return json({ error: "Current GPS origin or origin address is required" }, 400);
-      if (!destinationAddresses.length) return json({ error: "At least one destination address is required" }, 400);
+      if (!destinationAddresses.length) return json({ error: "At least one store, business, place, or address is required" }, 400);
 
       const geocoded = [];
       for (const address of destinationAddresses) {
