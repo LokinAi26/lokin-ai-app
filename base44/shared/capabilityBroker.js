@@ -25,11 +25,8 @@ export function authorizeCapability(request = {}, actor = {}) {
   if (request.target_locked === true && capability !== 'data.read' && capability !== 'production.preview') {
     return { allowed: false, decision: 'DENY', reason: 'TARGET_LOCKED', capability, risk: policy.risk, version: CAPABILITY_BROKER_VERSION };
   }
-  if (policy.approval && !request.approval_token) {
-    return { allowed: false, decision: 'REQUIRE_APPROVAL', reason: 'OWNER_APPROVAL_REQUIRED', capability, risk: policy.risk, version: CAPABILITY_BROKER_VERSION };
-  }
-  if (policy.approval && text(request.approval_token).length < 12) {
-    return { allowed: false, decision: 'DENY', reason: 'INVALID_APPROVAL_TOKEN', capability, risk: policy.risk, version: CAPABILITY_BROKER_VERSION };
+  if (policy.approval && request.approval_verified !== true) {
+    return { allowed: false, decision: 'REQUIRE_APPROVAL', reason: 'VERIFIED_OWNER_APPROVAL_REQUIRED', capability, risk: policy.risk, version: CAPABILITY_BROKER_VERSION };
   }
   return {
     allowed: true,
