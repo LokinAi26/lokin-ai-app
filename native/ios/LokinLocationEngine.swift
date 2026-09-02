@@ -59,7 +59,7 @@ final class LokinLocationEngine: NSObject, CLLocationManagerDelegate {
         case .activeNavigation:
             manager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
             manager.activityType = .automotiveNavigation
-            manager.distanceFilter = 3
+            manager.distanceFilter = 1
             manager.pausesLocationUpdatesAutomatically = false
             manager.allowsBackgroundLocationUpdates = true
             manager.showsBackgroundLocationIndicator = true
