@@ -136,12 +136,16 @@ export default function DriverLayout() {
         </div>
       </header>}
 
-      <main className={`flex-1 w-full max-w-md mx-auto px-0 ${lockedGps ? "pb-[env(safe-area-inset-bottom)]" : "pb-[calc(5.75rem+env(safe-area-inset-bottom))]"}`}>
+      <main className={lockedGps
+        ? "flex-1 mx-0 w-screen max-w-none min-w-0 overflow-hidden p-0"
+        : "flex-1 w-full max-w-md mx-auto px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))]"
+      }>
         <motion.div
           key={loc.pathname}
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
+          className={lockedGps ? "h-[100dvh] w-screen max-w-full min-w-0 overflow-hidden" : ""}
+          initial={lockedGps ? false : { opacity: 0, x: 16 }}
+          animate={lockedGps ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          transition={lockedGps ? { duration: 0 } : { duration: 0.22, ease: "easeOut" }}
         >
           <Outlet />
         </motion.div>
