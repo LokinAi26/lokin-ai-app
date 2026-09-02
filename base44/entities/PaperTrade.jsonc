@@ -1,0 +1,125 @@
+{
+  "description": "Simulation-only trade plan; never routes an order or moves money",
+  "name": "PaperTrade",
+  "properties": {
+    "asset_class": {
+      "default": "stock",
+      "enum": [
+        "stock",
+        "etf",
+        "forex",
+        "crypto",
+        "futures",
+        "other"
+      ],
+      "type": "string"
+    },
+    "checklist_score": {
+      "maximum": 100,
+      "minimum": 0,
+      "type": "number"
+    },
+    "closed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "PAPER_TRADE",
+        "NO_TRADE"
+      ],
+      "type": "string"
+    },
+    "direction": {
+      "enum": [
+        "long",
+        "short"
+      ],
+      "type": "string"
+    },
+    "entry_price": {
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "exit_price": {
+      "minimum": 0,
+      "type": "number"
+    },
+    "invalidation": {
+      "type": "string"
+    },
+    "opened_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "pnl": {
+      "type": "number"
+    },
+    "quantity": {
+      "minimum": 0,
+      "type": "number"
+    },
+    "reward_risk_ratio": {
+      "minimum": 0,
+      "type": "number"
+    },
+    "risk_amount": {
+      "minimum": 0,
+      "type": "number"
+    },
+    "setup_name": {
+      "type": "string"
+    },
+    "status": {
+      "default": "planned",
+      "enum": [
+        "planned",
+        "open",
+        "closed",
+        "cancelled"
+      ],
+      "type": "string"
+    },
+    "stop_price": {
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "target_price": {
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "thesis": {
+      "type": "string"
+    },
+    "timeframe": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "symbol",
+    "direction",
+    "entry_price",
+    "stop_price",
+    "target_price",
+    "decision",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}

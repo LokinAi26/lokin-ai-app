@@ -1,0 +1,51 @@
+{
+  "description": "User-owned progress through Trader's Playbook lessons",
+  "name": "TraderLessonProgress",
+  "properties": {
+    "attempts": {
+      "default": 0,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "completed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "lesson_id": {
+      "type": "string"
+    },
+    "quiz_score": {
+      "maximum": 100,
+      "minimum": 0,
+      "type": "number"
+    },
+    "status": {
+      "default": "not_started",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "lesson_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}

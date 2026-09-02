@@ -1,0 +1,71 @@
+{
+  "description": "User-owned post-trade reflection for deliberate practice",
+  "name": "TradeJournalEntry",
+  "properties": {
+    "discipline_grade": {
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "emotion_before": {
+      "enum": [
+        "calm",
+        "focused",
+        "uncertain",
+        "fearful",
+        "excited",
+        "frustrated",
+        "revenge"
+      ],
+      "type": "string"
+    },
+    "followed_plan": {
+      "type": "boolean"
+    },
+    "next_adjustment": {
+      "type": "string"
+    },
+    "paper_trade_id": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "setup_name": {
+      "type": "string"
+    },
+    "what_failed": {
+      "type": "string"
+    },
+    "what_worked": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "emotion_before",
+    "followed_plan",
+    "discipline_grade",
+    "reviewed_at"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}

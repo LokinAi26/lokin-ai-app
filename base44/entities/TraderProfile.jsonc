@@ -1,0 +1,62 @@
+{
+  "description": "User-owned LOKIN Trader's Playbook learning and risk preferences",
+  "name": "TraderProfile",
+  "properties": {
+    "acknowledged_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "daily_loss_limit_pct": {
+      "default": 2,
+      "maximum": 5,
+      "minimum": 0.5,
+      "type": "number"
+    },
+    "education_acknowledged": {
+      "default": false,
+      "type": "boolean"
+    },
+    "experience_level": {
+      "default": "beginner",
+      "enum": [
+        "beginner",
+        "developing",
+        "intermediate",
+        "advanced"
+      ],
+      "type": "string"
+    },
+    "paper_account_size": {
+      "default": 10000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "risk_per_trade_pct": {
+      "default": 0.5,
+      "maximum": 2,
+      "minimum": 0.1,
+      "type": "number"
+    }
+  },
+  "required": [
+    "experience_level",
+    "paper_account_size",
+    "risk_per_trade_pct",
+    "daily_loss_limit_pct"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}
