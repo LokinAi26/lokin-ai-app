@@ -12,3 +12,14 @@ export const base44 = createClient({
   requiresAuth: false,
   appBaseUrl
 });
+
+// Time-sensitive provider functions must not inherit a stale preview/sandbox
+// version pin from localStorage. Omitting Base44-Functions-Version routes these
+// calls to the app's latest deployed backend revision.
+export const base44LiveFunctions = createClient({
+  appId,
+  token,
+  serverUrl: '',
+  requiresAuth: false,
+  appBaseUrl
+});
