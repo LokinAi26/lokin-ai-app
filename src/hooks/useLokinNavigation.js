@@ -49,6 +49,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [rerouteCount, setRerouteCount] = useState(0);
   const [providerConfigured, setProviderConfigured] = useState(null);
   const [providerVerified, setProviderVerified] = useState(null);
+  const [liveVectorConfigured, setLiveVectorConfigured] = useState(null);
   const [providerProbeError, setProviderProbeError] = useState("");
   const [trafficEta, setTrafficEta] = useState(null);
   const routeRef = useRef(null);
@@ -221,8 +222,14 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   useEffect(() => {
     if (!enabled) setStatus("idle");
     base44LiveFunctions.functions.invoke("navigation-engine", { action: "status" })
-      .then((r) => setProviderConfigured(Boolean(r.data?.configured)))
-      .catch(() => setProviderConfigured(false));
+      .then((r) => {
+        setProviderConfigured(Boolean(r.data?.configured));
+        setLiveVectorConfigured(Boolean(r.data?.live_vector_configured));
+      })
+      .catch(() => {
+        setProviderConfigured(false);
+        setLiveVectorConfigured(false);
+      });
   }, [enabled]);
 
   const probeProvider = useCallback(async () => {
@@ -233,6 +240,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       const verified = Boolean(response.data?.verified);
       setProviderConfigured(Boolean(response.data?.configured));
       setProviderVerified(verified);
+      setLiveVectorConfigured(Boolean(response.data?.live_vector_configured));
       if (!verified) setProviderProbeError("Mapbox responded, but the provider check was not verified.");
       return verified;
     } catch (e) {
@@ -478,6 +486,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     rerouteCount,
     providerConfigured,
     providerVerified,
+    liveVectorConfigured,
     providerProbeError,
     probeProvider,
     remainingDistanceM,
