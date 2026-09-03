@@ -7,7 +7,7 @@ import {
   ScanLine,
   ShieldCheck,
 } from "lucide-react";
-import { LokinGlyph, LokinWordmark } from "@/components/Brand";
+import { LokinWordmark } from "@/components/Brand";
 
 const FEATURES = [
   {
