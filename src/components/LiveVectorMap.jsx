@@ -34,6 +34,12 @@ function interpolateCoordinate(from, to, progress) {
   return [lerp(from[0], to[0], progress), lerp(from[1], to[1], progress)];
 }
 
+function driverLockOffset(map, perspective) {
+  if (!perspective) return [0, 0];
+  const viewportHeight = Number(map?.getContainer?.()?.clientHeight || 0);
+  return [0, Math.round(clamp(viewportHeight * 0.17, 72, 140))];
+}
+
 function styleUrl(style) {
   return style === "satellite-streets-v12"
     ? "mapbox://styles/mapbox/standard-satellite"
@@ -148,7 +154,6 @@ export default function LiveVectorMap({
   perspective = false,
   followDriver = true,
   style = "dark-v11",
-  followCenter = null,
   heading = 0,
   speedMps = 0,
   resetRevision = 0,
@@ -356,12 +361,12 @@ export default function LiveVectorMap({
 
     const map = mapRef.current;
     if (map && loadedRef.current && followDriver && !interactingRef.current) {
-      const center = normalizeCoordinate(followCenter) || target;
       const targetZoom = perspective
         ? clamp(18.05 - Math.max(0, Number(speedMps || 0)) * 0.018, 16.9, 18.05)
         : clamp(17.1 - Math.max(0, Number(speedMps || 0)) * 0.015, 16.1, 17.1);
       map.easeTo({
-        center,
+        center: target,
+        offset: driverLockOffset(map, perspective),
         zoom: targetZoom,
         bearing: perspective ? Number(heading || 0) : 0,
         pitch: perspective ? preferredPitchRef.current : 0,
@@ -384,8 +389,6 @@ export default function LiveVectorMap({
     heading,
     perspective,
     followDriver,
-    followCenter?.[0],
-    followCenter?.[1],
     speedMps,
   ]);
 
@@ -398,7 +401,8 @@ export default function LiveVectorMap({
     setCameraPitch(preferredPitchRef.current);
     window.clearTimeout(resumeTimerRef.current);
     map.easeTo({
-      center: normalizeCoordinate(followCenter) || coordinate,
+      center: coordinate,
+      offset: driverLockOffset(map, perspective),
       zoom: perspective ? 18 : 17,
       bearing: perspective ? Number(heading || 0) : 0,
       pitch: perspective ? 58 : 0,
