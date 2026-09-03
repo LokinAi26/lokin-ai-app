@@ -9,6 +9,8 @@ const root = process.cwd();
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const liveMap = fs.readFileSync(path.join(root, "src/components/LiveVectorMap.jsx"), "utf8");
 const roadMap = fs.readFileSync(path.join(root, "src/components/RoadMatchedMap.jsx"), "utf8");
+const aiGps = fs.readFileSync(path.join(root, "src/pages/AiGps.jsx"), "utf8");
+const voiceAssistant = fs.readFileSync(path.join(root, "src/components/GlobalVoiceAssistant.jsx"), "utf8");
 const navigationEngine = fs.readFileSync(path.join(root, "base44/functions/navigation-engine/entry.ts"), "utf8");
 
 assert(packageJson.dependencies?.["mapbox-gl"], "mapbox-gl dependency is missing");
@@ -38,6 +40,13 @@ assert(roadMap.includes("<LiveVectorMap"), "RoadMatchedMap does not mount the li
 assert(navigationEngine.includes('action === "map_config"'), "live map configuration endpoint is missing");
 assert(navigationEngine.includes('startsWith("pk.")'), "public-token boundary is not enforced");
 assert(navigationEngine.includes('fallback: "static_map"'), "truthful static-map fallback contract is missing");
+assert(navigationEngine.includes('"business_and_place_search"'), "business and place-search capability is missing");
+assert(navigationEngine.includes("A store, business, place, or address is required"), "business-aware geocoding input contract is missing");
+assert(aiGps.includes("Store, business, place, or address"), "GPS business-name input is missing");
+assert(aiGps.includes("Hey LOKIN, navigate to Walmart"), "GPS voice-navigation guidance is missing");
+assert(voiceAssistant.includes("extractNavigationDestination"), "voice destination parser is missing");
+assert(voiceAssistant.includes('source: "voice"'), "voice navigation provenance is missing");
+assert(voiceAssistant.includes("new URLSearchParams({"), "voice destination is not encoded for GPS launch");
 
 console.log(JSON.stringify({
   ok: true,
@@ -48,4 +57,6 @@ console.log(JSON.stringify({
   routeDepth: "top-slot-above-3d-scene",
   fallback: "static-map-only-on-live-unavailable",
   publicTokenBoundary: "pk-only",
+  destinationSearch: "business-place-or-address",
+  voiceNavigation: "hands-free-destination-to-gps",
 }, null, 2));
