@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "verify:navigation": "node scripts/verify-navigation-v2.mjs && node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-native-location-packaging.mjs && npm run build && npm run lint",
+    "verify:navigation": "node scripts/verify-navigation-v2.mjs && node scripts/verify-live-vector-navigation.mjs && node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-native-location-packaging.mjs && npm run build && npm run lint",
     "verify:seal": "node scripts/verify-seal.mjs",
     "verify:driver-platforms": "node scripts/verify-driver-platform-ingestion.mjs",
     "verify:uber-driver": "node scripts/verify-uber-driver-integration.mjs",
