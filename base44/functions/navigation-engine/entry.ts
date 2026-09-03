@@ -15,6 +15,13 @@ function token() {
   return (Deno.env.get("MAPBOX_ACCESS_TOKEN") || Deno.env.get("MAPBOX_TOKEN") || "").trim();
 }
 
+function publicMapToken() {
+  const dedicated = (Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "").trim();
+  if (dedicated.startsWith("pk.")) return dedicated;
+  const configured = token();
+  return configured.startsWith("pk.") ? configured : "";
+}
+
 function validCoord(value: any) {
   const longitude = Number(value?.longitude ?? value?.lng ?? value?.lon ?? value?.[0]);
   const latitude = Number(value?.latitude ?? value?.lat ?? value?.[1]);
@@ -468,11 +475,35 @@ export default async function navigationEngine(req: Request) {
       return json({
         ok: true,
         provider: "mapbox",
-        engine_version: "2026.09.02-poi-voice-v2",
+        engine_version: "2026.09.03-live-vector-phase1",
         configured: Boolean(accessToken),
-        capabilities: ["business_and_place_search", "forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
+        live_vector_configured: Boolean(publicMapToken()),
+        capabilities: ["business_and_place_search", "forward_geocoding", "reverse_geocoding", "driving_traffic_directions", "live_traffic_eta_refresh", "turn_by_turn", "road_geometry", "live_route_snapping", "live_vector_rendering", "satellite_aerial_imagery", "retina_static_imagery", "pitched_heading_up_visualization"],
         max_destinations: MAX_COORDINATES - 1,
         storage: "temporary_geocoding_only",
+      });
+    }
+
+    if (action === "map_config") {
+      const publicToken = publicMapToken();
+      if (!publicToken) {
+        return json({
+          error: "Live vector navigation requires a restricted MAPBOX_PUBLIC_TOKEN",
+          code: "MAPBOX_PUBLIC_TOKEN_REQUIRED",
+          fallback: "static_map",
+        }, 503);
+      }
+      return json({
+        ok: true,
+        map_config: {
+          provider: "mapbox",
+          access_token: publicToken,
+          styles: {
+            street: "mapbox://styles/mapbox/dark-v11",
+            satellite: "mapbox://styles/mapbox/satellite-streets-v12",
+          },
+          engine_version: "2026.09.03-live-vector-phase1",
+        },
       });
     }
 
@@ -554,7 +585,7 @@ export default async function navigationEngine(req: Request) {
       );
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
-      return json({ ok: true, engine_version: "2026.09.02-poi-voice-v2", geocoded_destinations: geocoded, route });
+      return json({ ok: true, engine_version: "2026.09.03-live-vector-phase1", geocoded_destinations: geocoded, route });
     }
 
     return json({ error: `Unsupported navigation action: ${action}` }, 400);
