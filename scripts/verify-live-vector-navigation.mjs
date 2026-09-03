@@ -11,6 +11,7 @@ const liveMap = fs.readFileSync(path.join(root, "src/components/LiveVectorMap.js
 const roadMap = fs.readFileSync(path.join(root, "src/components/RoadMatchedMap.jsx"), "utf8");
 const aiGps = fs.readFileSync(path.join(root, "src/pages/AiGps.jsx"), "utf8");
 const voiceAssistant = fs.readFileSync(path.join(root, "src/components/GlobalVoiceAssistant.jsx"), "utf8");
+const routePlanner = fs.readFileSync(path.join(root, "src/pages/RoutePlanner.jsx"), "utf8");
 const navigationEngine = fs.readFileSync(path.join(root, "base44/functions/navigation-engine/entry.ts"), "utf8");
 
 assert(packageJson.dependencies?.["mapbox-gl"], "mapbox-gl dependency is missing");
@@ -47,6 +48,9 @@ assert(aiGps.includes("Hey LOKIN, navigate to Walmart"), "GPS voice-navigation g
 assert(voiceAssistant.includes("extractNavigationDestination"), "voice destination parser is missing");
 assert(voiceAssistant.includes('source: "voice"'), "voice navigation provenance is missing");
 assert(voiceAssistant.includes("new URLSearchParams({"), "voice destination is not encoded for GPS launch");
+assert(routePlanner.includes("const directDestination = origin.trim()"), "Route Planner direct-destination branch is missing");
+assert(routePlanner.includes('source: "route-planner"'), "Route Planner direct GPS launch provenance is missing");
+assert(routePlanner.includes('origin.trim() ? "LAUNCH GPS" : "OPTIMIZE + LAUNCH GPS"'), "Route Planner button is not dual-purpose");
 
 console.log(JSON.stringify({
   ok: true,
