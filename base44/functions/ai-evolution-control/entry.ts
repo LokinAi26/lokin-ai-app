@@ -6,6 +6,7 @@ import { chooseSpeechProvider, SPEECH_ROUTER_VERSION } from '../../shared/speech
 import { authorizeCapability, listCapabilityPolicies, CAPABILITY_BROKER_VERSION } from '../../shared/capabilityBroker.js';
 import { adapterStatus, buildGatewayPlan } from '../../shared/externalIntelligenceAdapters.js';
 import { searchMemoryRows, memoryTimeline, getMemoryObservations, MEMORY_RETRIEVAL_VERSION } from '../../shared/memoryRetrieval.js';
+import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 
 const txt=(v:any,n=4000)=>String(v??'').trim().slice(0,n);
 const admin=(u:any)=>String(u?.role||'').toLowerCase()==='admin';
@@ -80,7 +81,7 @@ export default async function(req:Request){
     for(const task of suite.tasks){
      const started=Date.now();
      try{
-      const response:any=await base44.integrations.Core.InvokeLLM({prompt:task.prompt,model:candidate.model});
+      const response:any=await invokeLLMWithAdmission(base44,{prompt:task.prompt,model:candidate.model},{sourceApp:'LOKIN AI',domain:'evaluation',priority:35,estimatedCost:0,tags:['model-evaluation','owned-gpu']});
       const raw=typeof response==='string'?response:JSON.stringify(response);
       const estimated=(Math.ceil((task.prompt.length+raw.length)/4)/1_000_000)*Math.max(0,candidate.input_rate+candidate.output_rate);
       results.push(evaluateResponse(task,raw,Date.now()-started,estimated,''));
