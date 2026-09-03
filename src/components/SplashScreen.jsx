@@ -213,25 +213,7 @@ export default function SplashScreen() {
           >
             <div className="flex w-full flex-col items-center">
               <motion.div
-                className="relative"
-                initial={{ scale: 0.84, opacity: 0 }}
-                animate={reveal ? { scale: 1, opacity: 1 } : { scale: 0.84, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 150, damping: 18 }}
-              >
-                <motion.div
-                  className="absolute inset-[-26%] -z-10 rounded-full"
-                  animate={{ opacity: [0.38, 0.72, 0.38], scale: [0.96, 1.08, 0.96] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  style={{
-                    background: "radial-gradient(circle, rgba(141,255,0,.32), rgba(141,255,0,.08) 42%, transparent 68%)",
-                    filter: "blur(17px)",
-                  }}
-                />
-                <LokinGlyph size={118} className="h-[clamp(82px,13vh,134px)] w-[clamp(82px,13vh,134px)]" />
-              </motion.div>
-
-              <motion.div
-                className="mt-1 flex flex-col items-center"
+                className="flex flex-col items-center"
                 initial={{ opacity: 0, y: 8 }}
                 animate={reveal ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
                 transition={{ duration: 0.55, delay: 0.1 }}
