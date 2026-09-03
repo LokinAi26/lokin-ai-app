@@ -17,6 +17,9 @@ assert(mapboxMajorMinor && (Number(mapboxMajorMinor[1]) > 3 || (Number(mapboxMaj
 assert(liveMap.includes("new mapboxgl.Map"), "live vector renderer is not initialized");
 assert(liveMap.includes("requestAnimationFrame"), "driver interpolation is not frame-driven");
 assert(liveMap.includes("map.easeTo"), "predictive camera transition is missing");
+assert(liveMap.includes("driverLockOffset"), "neutral driver screen lock is missing");
+assert(liveMap.includes("center: target"), "live camera is not centered on the driver target");
+assert(!liveMap.includes("normalizeCoordinate(followCenter)"), "live camera still follows a drifting look-ahead anchor");
 assert(liveMap.includes("mapbox://styles/mapbox/standard"), "Mapbox Standard 3D style is missing");
 assert(liveMap.includes("standard-satellite"), "Mapbox Standard Satellite style is missing");
 assert(liveMap.includes("show3dBuildings: true"), "3D building contract is missing");
@@ -37,7 +40,7 @@ console.log(JSON.stringify({
   ok: true,
   renderer: "mapbox-gl-persistent-vector",
   motion: "requestAnimationFrame-interpolation",
-  camera: "predictive-ease-plus-pull-horizon",
+  camera: "fixed-driver-lock-plus-pull-horizon",
   environment: "standard-3d-buildings-trees-landmarks-facades",
   routeDepth: "top-slot-above-3d-scene",
   fallback: "static-map-only-on-live-unavailable",
