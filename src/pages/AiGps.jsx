@@ -171,8 +171,8 @@ export default function AiGps() {
             <div className="flex items-center gap-2 min-w-0">
               <CircleCheck className={`h-4 w-4 shrink-0 ${nav.providerVerified === true ? "text-primary" : "text-white/45"}`} />
               <div className="min-w-0">
-                <div className="text-xs font-bold text-white">{nav.providerVerified === true ? "Mapbox API verified" : "Mapbox secret detected"}</div>
-                <div className="text-[10px] text-white/40">{nav.providerVerified === true ? "Geocoding provider answered successfully." : "Run one provider check before the road test."}</div>
+                <div className="text-xs font-bold text-white">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Mapbox live vector GPS verified" : nav.providerVerified === true ? "Mapbox routing verified" : "Mapbox secret detected"}</div>
+                <div className="text-[10px] text-white/40">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Routing, search, and the persistent GPU map are ready." : nav.providerVerified === true ? "Routing works; add MAPBOX_PUBLIC_TOKEN to activate the live vector map." : "Run one provider check before the road test."}</div>
               </div>
             </div>
             <button onClick={verifyProvider} disabled={probingProvider} className="shrink-0 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-[10px] font-bold text-primary disabled:opacity-50">
