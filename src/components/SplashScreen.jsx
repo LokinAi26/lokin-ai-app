@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-const SPLASH_ART = "/lokin-splash-master.avif";
+const SPLASH_SEEN_KEY = "lokin_splash_seen";
+const SPLASH_IMAGE = "/lokin-approved-splash.webp";
 
 export default function SplashScreen() {
   const [done, setDone] = useState(() => {
     try {
-      const alreadyShown = sessionStorage.getItem("lokin_splash_seen") === "1";
-      if (!alreadyShown) sessionStorage.setItem("lokin_splash_seen", "1");
+      const alreadyShown = sessionStorage.getItem(SPLASH_SEEN_KEY) === "1";
+      if (!alreadyShown) sessionStorage.setItem(SPLASH_SEEN_KEY, "1");
       return alreadyShown;
     } catch {
       return false;
@@ -15,54 +16,57 @@ export default function SplashScreen() {
   });
   const [leaving, setLeaving] = useState(false);
   const playedRef = useRef(false);
+  const closeTimerRef = useRef(null);
 
   useEffect(() => {
     if (done) return undefined;
 
-    const onGesture = () => {
+    playChime();
+
+    const retryChime = () => {
       if (!playedRef.current) playChime();
     };
 
-    playChime();
-    window.addEventListener("pointerdown", onGesture, { once: true });
+    window.addEventListener("pointerdown", retryChime, { once: true });
 
     return () => {
-      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("pointerdown", retryChime);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
   }, [done]);
 
   function dismiss() {
     if (done || leaving) return;
     setLeaving(true);
-    window.setTimeout(() => setDone(true), 420);
+    closeTimerRef.current = window.setTimeout(() => setDone(true), 420);
   }
 
   function playChime() {
     if (playedRef.current) return;
 
-    let ctx;
+    let context;
     try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      ctx = new Ctx();
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      context = new AudioContextClass();
+      if (context.state === "suspended") context.resume().catch(() => {});
       playedRef.current = true;
     } catch {
       return;
     }
 
-    const now = ctx.currentTime;
-    const master = ctx.createGain();
-    master.gain.value = 0.27;
-    master.connect(ctx.destination);
+    const now = context.currentTime;
+    const master = context.createGain();
+    master.gain.value = 0.28;
+    master.connect(context.destination);
 
     [523.25, 783.99].forEach((frequency, index) => {
-      const oscillator = ctx.createOscillator();
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = now + 0.08 + index * 0.13;
+
       oscillator.type = "sine";
       oscillator.frequency.value = frequency;
-
-      const gain = ctx.createGain();
-      const start = now + 0.08 + index * 0.13;
       gain.gain.setValueAtTime(0.0001, start);
       gain.gain.linearRampToValueAtTime(0.18, start + 0.035);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.05);
@@ -72,7 +76,7 @@ export default function SplashScreen() {
       oscillator.stop(start + 1.15);
     });
 
-    window.setTimeout(() => ctx.close().catch(() => {}), 2600);
+    window.setTimeout(() => context.close().catch(() => {}), 2600);
   }
 
   if (done) return null;
@@ -81,26 +85,32 @@ export default function SplashScreen() {
     <AnimatePresence>
       {!leaving && (
         <motion.section
-          className="fixed inset-0 z-[100] overflow-hidden bg-black select-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.012, filter: "blur(2px)" }}
-          transition={{ duration: 0.42, ease: "easeInOut" }}
+          className="fixed inset-0 z-[100] isolate overflow-hidden bg-black select-none"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 1.01, transition: { duration: 0.4, ease: "easeInOut" } }}
+          onClick={dismiss}
+          role="dialog"
+          aria-modal="true"
           aria-label="LOKIN AI introduction"
         >
-          <img
-            src={SPLASH_ART}
-            alt="LOKIN AI — Unlock Your Potential. Level Up."
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            draggable="false"
-          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <img
+              src={SPLASH_IMAGE}
+              alt="LOKIN AI — Unlock Your Potential, Level Up"
+              className="block h-full w-full object-contain object-center"
+              draggable="false"
+              fetchPriority="high"
+            />
+          </div>
 
-          {/* Functional hit area positioned over the GET STARTED button already rendered in the artwork. */}
           <button
             type="button"
-            onClick={dismiss}
+            onClick={(event) => {
+              event.stopPropagation();
+              dismiss();
+            }}
+            className="absolute bottom-[4.5%] left-1/2 z-10 h-[10%] w-[82%] -translate-x-1/2 cursor-pointer rounded-[28px] bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[#baff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             aria-label="Get started with LOKIN AI"
-            className="absolute left-[9%] right-[9%] top-[81.2%] h-[8.4%] rounded-[24px] bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[#b9ff20] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           />
         </motion.section>
       )}
