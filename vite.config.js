@@ -18,9 +18,13 @@ export default defineConfig({
     }),
     react(),
     legacy({
-      targets: ['iOS >= 12'],
+      targets: ['iOS >= 12', 'Safari >= 12'],
       renderLegacyChunks: true,
-      modernPolyfills: false,
+      // Safari on iOS 12 supports ES modules, so Vite classifies it as a
+      // "modern" browser. The Base44 SDK still relies on runtime APIs that
+      // are newer than iOS 12, so the modern path must receive polyfills too.
+      modernPolyfills: true,
+      additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
     }),
   ],
   build: {
