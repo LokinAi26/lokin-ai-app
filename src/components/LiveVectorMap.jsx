@@ -7,6 +7,7 @@ import { base44LiveFunctions } from "@/api/base44Client";
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
+const LOKIN_NEON_ROUTE = "#AAFF00";
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
@@ -101,9 +102,11 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": "rgba(168,255,0,0.30)",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 8, 17, 20],
-      "line-blur": 5,
+      "line-color": LOKIN_NEON_ROUTE,
+      "line-opacity": 0.42,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 24],
+      "line-blur": 7,
+      "line-emissive-strength": 2,
     },
   });
   map.addLayer({
@@ -116,9 +119,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": "#A8FF00",
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 4, 17, 9],
-      "line-opacity": 0.98,
+      "line-color": LOKIN_NEON_ROUTE,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 5, 17, 10],
+      "line-opacity": 1,
+      "line-emissive-strength": 2.4,
     },
   });
 }
