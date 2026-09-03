@@ -467,7 +467,7 @@ export default function LiveVectorMap({
         <button
           type="button"
           aria-label="Pull down or push up to adjust the horizon"
-          className="absolute left-1/2 top-14 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary"
+          className="absolute left-1/2 top-24 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary"
           onPointerDown={beginHorizonGesture}
           onPointerMove={moveHorizonGesture}
           onPointerUp={endHorizonGesture}
