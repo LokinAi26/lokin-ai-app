@@ -6,6 +6,7 @@ import { shopifyAdminBase, shoGet, mapStorefront, mapOrdersRich, mapDrafts } fro
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { guardedIdempotentWrite } from "../../shared/commerceIdempotency.ts";
 import { admitEcosystemOperation } from "../../shared/ecosystemAdmission.js";
+import { paidAiFallbackAllowed } from "../../shared/nvidiaInference.js";
 
 /**
  * shopify-embed — Public, iframe-safe Shopify storefront for the LOKIN Commerce
@@ -471,7 +472,7 @@ export default async function (req: Request): Promise<Response> {
       const dr = await shoGet(`${base}/draft_orders/${encodeURIComponent(id)}.json`, token);
       if (!dr.ok) return Response.json({ error: dr.error }, { status: dr.status });
       const draft = draftForAI(dr.data?.draft_order || {});
-      const openaiKey = String(secrets.get("OPENAI_API_KEY") || "").trim();
+      const openaiKey = paidAiFallbackAllowed() ? String(secrets.get("OPENAI_API_KEY") || "").trim() : "";
       const model = String(secrets.get("OPENAI_LOW_COST_MODEL") || secrets.get("OPENAI_MODEL") || "gpt-5.6-luna").trim();
 
       const fallback = () => {
@@ -558,7 +559,7 @@ export default async function (req: Request): Promise<Response> {
         variants: (p.variants || []).map((v: any) => ({ id: v.id, sku: v.sku, price: v.price, available: v.inventory_quantity ?? null })),
       }));
       const agg = buildOrderAggregate(orders, products);
-      const openaiKey = String(secrets.get("OPENAI_API_KEY") || "").trim();
+      const openaiKey = paidAiFallbackAllowed() ? String(secrets.get("OPENAI_API_KEY") || "").trim() : "";
       const model = String(secrets.get("OPENAI_LOW_COST_MODEL") || secrets.get("OPENAI_MODEL") || "gpt-5.6-luna").trim();
       if (!openaiKey) {
         return Response.json({ confirmed: agg, predictions: localIntelligence(agg) });
