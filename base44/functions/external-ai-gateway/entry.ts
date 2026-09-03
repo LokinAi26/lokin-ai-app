@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { jsonRequest } from "../../shared/printRequest.ts";
 import { withEcosystemAdmission } from "../../shared/ecosystemAdmission.js";
+import { nvidiaInvokeLLM, nvidiaInferenceConfig, paidAiFallbackAllowed } from "../../shared/nvidiaInference.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 
@@ -158,7 +159,8 @@ export default async function(req) {
 
     const body = await req.json().catch(() => ({}));
     const mode = ["assistant", "text", "motivation", "support", "oasis"].includes(body.mode) ? body.mode : "assistant";
-    const apiKey = secrets.get("OPENAI_API_KEY");
+    const nvidia = nvidiaInferenceConfig();
+    const apiKey = paidAiFallbackAllowed() ? secrets.get("OPENAI_API_KEY") : "";
     const defaultModel = secrets.get("OPENAI_MODEL") || "gpt-5.6";
     const lowCostModel = secrets.get("OPENAI_LOW_COST_MODEL") || "";
     let model = defaultModel;
@@ -218,7 +220,7 @@ export default async function(req) {
       } : null,
     };
 
-    if (guardianMode === "block") {
+    if (guardianMode === "block" && !nvidia.configured) {
       return Response.json({
         error: "OpenAI monthly budget cap reached",
         provider: "guardian",
@@ -227,7 +229,7 @@ export default async function(req) {
       }, { status: 429 });
     }
 
-    if (!apiKey) {
+    if (!apiKey && !nvidia.configured) {
       if (mode === "text") return Response.json({ result: safe.text, suggestions: [], provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       if (mode === "motivation") return Response.json({ message: "Lock in on the next controllable step. Keep the pace sustainable, protect your energy, and stack one good decision at a time.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
       if (mode === "support") return Response.json({ reply: "External AI is in credit-preservation mode right now. I can still help with core app navigation and known workflows; try a specific feature or troubleshooting question.", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
@@ -242,6 +244,42 @@ export default async function(req) {
     }
 
     const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
+
+    if (nvidia.configured) {
+      try {
+        const local = await withEcosystemAdmission(base44, {
+          sourceApp:"LOKIN AI", domain:"ai", type:"owned_ai_inference", operation:`nvidia_${mode}`,
+          provider:"nvidia_owned_inference", priority:mode === "support" ? 80 : 55, estimatedMs:20000,
+          estimatedCost:0, realtime:mode === "support", tags:["owned-gpu","ai",mode],
+        }, () => nvidiaInvokeLLM({ prompt }, { sourceApp:"LOKIN AI", domain:"ai", mode }));
+        const parsed = typeof local === "string"
+          ? (mode === "motivation" ? { message:local } : mode === "text" ? { result:local, suggestions:[] } : mode === "oasis" ? { analysis_status:"unparsed", director_summary:local } : { reply:local, draftedMessage:"" })
+          : (local || {});
+        try {
+          await base44.asServiceRole.entities.LokinLearningEvent.create({
+            user_id:user.id, event_type:"interaction", feature:mode,
+            input_text:String(safe.command || safe.text || safe.message || "").slice(0,4000),
+            response_text:String(parsed.reply || parsed.result || parsed.message || parsed.director_summary || "").slice(0,4000),
+            rating:0,
+            metadata_json:JSON.stringify({ provider:"nvidia_owned_inference", model:nvidia.llmModel, memory_count:learnedMemories.length }),
+            occurred_at:new Date().toISOString(),
+          });
+          if (profile) await base44.asServiceRole.entities.LokinLearningProfile.update(profile.id, { total_events:Number(profile.total_events || 0) + 1 });
+        } catch (e) { console.warn("local learning telemetry unavailable", e?.message || e); }
+        return Response.json({
+          ...parsed,
+          provider:"nvidia-owned",
+          model:nvidia.llmModel,
+          usage:{ input_tokens:0, output_tokens:0, total_tokens:0, estimated_cost_usd:0 },
+          guardian:{ mode:"owned-compute", api_key_exposed:false, paid_fallback_enabled:paidAiFallbackAllowed() },
+          learning:{ enabled:profile?.learning_enabled !== false, memoryCount:learnedMemories.length, strategyCount:learnedStrategies.length, profileVersion:Number(profile?.version || 1), engineVersion:2 }
+        });
+      } catch (e) {
+        console.warn("NVIDIA owned inference unavailable", e?.message || e);
+        if (!apiKey) throw e;
+      }
+    }
+
     const price = MODEL_PRICING[model] || {};
     const estimatedInputTokens = Math.max(1, Math.ceil(prompt.length / 4));
     const estimatedCostUsd = Math.max(0.001,
