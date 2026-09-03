@@ -9,9 +9,88 @@
   <meta name="theme-color" content="#050705" />
   <link rel="manifest" href="/legacy-manifest.json" />
   <title>LOKIN Legacy Deck</title>
+  <script>
+    (function () {
+      // iOS 12 compatibility layer. This executes before the Base44 SDK module.
+      if (typeof globalThis === 'undefined') window.globalThis = window;
+
+      if (!Object.fromEntries) {
+        Object.fromEntries = function (entries) {
+          var obj = {};
+          for (var i = 0; i < entries.length; i++) obj[entries[i][0]] = entries[i][1];
+          return obj;
+        };
+      }
+
+      if (!Promise.allSettled) {
+        Promise.allSettled = function (items) {
+          return Promise.all(Array.prototype.map.call(items, function (item) {
+            return Promise.resolve(item).then(
+              function (value) { return { status: 'fulfilled', value: value }; },
+              function (reason) { return { status: 'rejected', reason: reason }; }
+            );
+          }));
+        };
+      }
+
+      if (!String.prototype.replaceAll) {
+        String.prototype.replaceAll = function (search, replacement) {
+          return this.split(search).join(replacement);
+        };
+      }
+
+      if (window.crypto && !window.crypto.randomUUID && window.crypto.getRandomValues) {
+        var randomUUID = function () {
+          var bytes = new Uint8Array(16);
+          window.crypto.getRandomValues(bytes);
+          bytes[6] = (bytes[6] & 15) | 64;
+          bytes[8] = (bytes[8] & 63) | 128;
+          var hex = [];
+          for (var i = 0; i < 256; i++) hex[i] = (i + 256).toString(16).slice(1);
+          return hex[bytes[0]] + hex[bytes[1]] + hex[bytes[2]] + hex[bytes[3]] + '-' +
+            hex[bytes[4]] + hex[bytes[5]] + '-' + hex[bytes[6]] + hex[bytes[7]] + '-' +
+            hex[bytes[8]] + hex[bytes[9]] + '-' + hex[bytes[10]] + hex[bytes[11]] +
+            hex[bytes[12]] + hex[bytes[13]] + hex[bytes[14]] + hex[bytes[15]];
+        };
+        try {
+          window.crypto.randomUUID = randomUUID;
+        } catch (e) {
+          try { Object.defineProperty(window.crypto, 'randomUUID', { value: randomUUID }); } catch (ignore) {}
+        }
+      }
+
+      window.__lokinLegacyBootError = '';
+      window.addEventListener('error', function (event) {
+        window.__lokinLegacyBootError = (event && event.message) || 'JavaScript startup error';
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason;
+        window.__lokinLegacyBootError = (reason && reason.message) || String(reason || 'Startup promise rejected');
+      });
+    }());
+  </script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div id="legacy-boot" style="font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;color:#d9ffe2;background:#050705;min-height:100vh;padding:48px 28px;box-sizing:border-box;">
+      <div style="font-size:20px;font-weight:800;letter-spacing:1px;">LOKIN LEGACY DECK</div>
+      <div style="margin-top:10px;color:#8fa699;font-size:13px;letter-spacing:.7px;">BOOTING COMMAND DECK…</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      window.setTimeout(function () {
+        var boot = document.getElementById('legacy-boot');
+        if (!boot) return;
+        var detail = window.__lokinLegacyBootError || 'The application module did not start on this browser.';
+        boot.innerHTML = '<div style="font-size:20px;font-weight:800;letter-spacing:1px;">LOKIN LEGACY DECK</div>' +
+          '<div style="margin-top:14px;color:#ffb35c;font-size:14px;font-weight:700;">STARTUP RECOVERY MODE</div>' +
+          '<div style="margin-top:10px;color:#b8c8bd;font-size:13px;line-height:1.5;">' +
+          String(detail).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+          '</div><div style="margin-top:18px;color:#7f9185;font-size:12px;">Reload once. If this remains visible, use the published LOKIN URL instead of the Base44 editor preview.</div>';
+      }, 8000);
+    }());
+  </script>
   <script type="module" src="/src/legacy/main.js"></script>
 </body>
 </html>
