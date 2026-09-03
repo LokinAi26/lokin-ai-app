@@ -1,4 +1,5 @@
 import { scheduleWorkload, ECOSYSTEM_FABRIC_VERSION } from './ecosystemWorkloadFabric.js';
+import { nvidiaInvokeLLM, nvidiaInferenceConfig, paidAiFallbackAllowed } from './nvidiaInference.js';
 
 const ACTIVE = new Set(['running','admitted','admitted_failover']);
 const TERMINAL_SUCCESS = new Set(['completed']);
@@ -126,11 +127,24 @@ export async function withEcosystemAdmission(base44, workload, operation) {
 }
 
 export async function invokeLLMWithAdmission(base44, args, meta = {}) {
+  const nvidia = nvidiaInferenceConfig();
+  const usePaidFallback = paidAiFallbackAllowed();
+  const provider = nvidia.configured ? 'nvidia_owned_inference' : (usePaidFallback ? 'base44_core_llm' : 'nvidia_required');
   return withEcosystemAdmission(base44, {
-    sourceApp: meta.sourceApp || 'LOKIN AI', domain: meta.domain || 'ai', type:'ai_inference', operation:'InvokeLLM', provider:'base44_core_llm',
-    priority: n(meta.priority, 55), estimatedMs:n(meta.estimatedMs, 8_000), estimatedCost:n(meta.estimatedCost, 1), tags:['credits','ai', ...(meta.tags || [])],
+    sourceApp: meta.sourceApp || 'LOKIN AI', domain: meta.domain || 'ai', type:'ai_inference', operation:'InvokeLLM', provider,
+    priority: n(meta.priority, 55), estimatedMs:n(meta.estimatedMs, nvidia.configured ? 12_000 : 8_000), estimatedCost:nvidia.configured ? 0 : n(meta.estimatedCost, 1),
+    tags:[nvidia.configured ? 'owned-gpu' : 'credits','ai', ...(meta.tags || [])],
     idempotencyKey: meta.idempotencyKey || `llm:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
-  }, () => base44.asServiceRole.integrations.Core.InvokeLLM(args));
+  }, async () => {
+    if (nvidia.configured) {
+      try { return await nvidiaInvokeLLM(args, meta); }
+      catch (error) { if (!usePaidFallback) throw error; }
+    }
+    if (usePaidFallback) return base44.asServiceRole.integrations.Core.InvokeLLM(args);
+    const error = new Error('Paid AI fallback is disabled and the owner-controlled NVIDIA inference endpoint is not configured.');
+    error.code = 'LOKIN_NVIDIA_INFERENCE_REQUIRED';
+    throw error;
+  });
 }
 
 export async function generateImageWithAdmission(base44, args, meta = {}) {
