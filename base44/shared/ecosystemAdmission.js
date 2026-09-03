@@ -148,19 +148,27 @@ export async function invokeLLMWithAdmission(base44, args, meta = {}) {
 }
 
 export async function generateImageWithAdmission(base44, args, meta = {}) {
+  const allowPaid = paidAiFallbackAllowed();
   return withEcosystemAdmission(base44, {
-    sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'production', type:'image_generation', operation:'GenerateImage', provider:'base44_core_image',
-    priority:n(meta.priority, 60), estimatedMs:n(meta.estimatedMs, 30_000), estimatedCost:n(meta.estimatedCost, 1), background:meta.background === true, tags:['credits','production','media', ...(meta.tags || [])],
+    sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'production', type:'image_generation', operation:'GenerateImage', provider:allowPaid ? 'base44_core_image' : 'paid_image_blocked',
+    priority:n(meta.priority, 60), estimatedMs:n(meta.estimatedMs, 30_000), estimatedCost:allowPaid ? n(meta.estimatedCost, 1) : 0, background:meta.background === true, tags:[allowPaid ? 'credits' : 'paid-blocked','production','media', ...(meta.tags || [])],
     idempotencyKey: meta.idempotencyKey || `image:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
-  }, () => base44.asServiceRole.integrations.Core.GenerateImage(args));
+  }, () => {
+    if (!allowPaid) { const error = new Error('Paid Base44 image generation is disabled by the LOKIN Credit Firewall.'); error.code = 'LOKIN_PAID_IMAGE_DISABLED'; throw error; }
+    return base44.asServiceRole.integrations.Core.GenerateImage(args);
+  });
 }
 
 export async function generateSpeechWithAdmission(base44, args, meta = {}) {
+  const allowPaid = paidAiFallbackAllowed();
   return withEcosystemAdmission(base44, {
-    sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'voice', type:'speech_generation', operation:'GenerateSpeech', provider:'base44_core_tts',
-    priority:n(meta.priority, 70), estimatedMs:n(meta.estimatedMs, 12_000), estimatedCost:n(meta.estimatedCost, 1), realtime:meta.realtime === true, tags:['credits','voice', ...(meta.tags || [])],
+    sourceApp: meta.sourceApp || 'LOKIN', domain: meta.domain || 'voice', type:'speech_generation', operation:'GenerateSpeech', provider:allowPaid ? 'base44_core_tts' : 'paid_speech_blocked',
+    priority:n(meta.priority, 70), estimatedMs:n(meta.estimatedMs, 12_000), estimatedCost:allowPaid ? n(meta.estimatedCost, 1) : 0, realtime:meta.realtime === true, tags:[allowPaid ? 'credits' : 'paid-blocked','voice', ...(meta.tags || [])],
     idempotencyKey: meta.idempotencyKey || `speech:${stableHash(args)}:${Math.floor(Date.now() / DEDUPE_WINDOW_MS)}`,
-  }, () => base44.asServiceRole.integrations.Core.GenerateSpeech(args));
+  }, () => {
+    if (!allowPaid) { const error = new Error('Paid Base44 speech generation is disabled by the LOKIN Credit Firewall.'); error.code = 'LOKIN_PAID_SPEECH_DISABLED'; throw error; }
+    return base44.asServiceRole.integrations.Core.GenerateSpeech(args);
+  });
 }
 
 function classifyFetch(url, init = {}, meta = {}) {
