@@ -35,7 +35,28 @@ function interpolateCoordinate(from, to, progress) {
 }
 
 function styleUrl(style) {
-  return `mapbox://styles/mapbox/${style === "satellite-streets-v12" ? "satellite-streets-v12" : "dark-v11"}`;
+  return style === "satellite-streets-v12"
+    ? "mapbox://styles/mapbox/standard-satellite"
+    : "mapbox://styles/mapbox/standard";
+}
+
+function configureImmersiveStyle(map, style) {
+  const settings = {
+    lightPreset: style === "satellite-streets-v12" ? "dusk" : "night",
+    show3dObjects: true,
+    show3dBuildings: true,
+    show3dTrees: true,
+    show3dLandmarks: true,
+    show3dFacades: true,
+    showPointOfInterestLabels: true,
+  };
+  Object.entries(settings).forEach(([property, value]) => {
+    try {
+      map.setConfigProperty("basemap", property, value);
+    } catch {
+      // Older cached style fragments may not expose every Standard setting.
+    }
+  });
 }
 
 function routeFeature(routeGeometry) {
@@ -68,6 +89,7 @@ function addNavigationLayers(map, routeGeometry) {
     id: ROUTE_CASING,
     type: "line",
     source: ROUTE_SOURCE,
+    slot: "top",
     layout: {
       "line-cap": "round",
       "line-join": "round",
@@ -82,6 +104,7 @@ function addNavigationLayers(map, routeGeometry) {
     id: ROUTE_LINE,
     type: "line",
     source: ROUTE_SOURCE,
+    slot: "top",
     layout: {
       "line-cap": "round",
       "line-join": "round",
@@ -141,6 +164,9 @@ export default function LiveVectorMap({
   const loadedRef = useRef(false);
   const interactingRef = useRef(false);
   const resumeTimerRef = useRef(null);
+  const horizonGestureRef = useRef({ active: false, pointerId: null, startY: 0, startPitch: 58, startZoom: 17.8 });
+  const preferredPitchRef = useRef(perspective ? 58 : 0);
+  const styleRef = useRef(style);
   const displayedRef = useRef({
     coordinate: normalizeCoordinate(snappedPosition?.coordinate),
     bearing: Number(heading || 0),
@@ -148,8 +174,10 @@ export default function LiveVectorMap({
   const motionRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
+  const [cameraPitch, setCameraPitch] = useState(perspective ? 58 : 0);
 
   routeRef.current = routeGeometry;
+  styleRef.current = style;
   callbacksRef.current = { onReady, onUnavailable };
 
   useEffect(() => {
@@ -180,11 +208,11 @@ export default function LiveVectorMap({
           zoom: snappedPosition?.coordinate ? (perspective ? 17.8 : 16.8) : 13,
           bearing: perspective ? Number(heading || 0) : 0,
           pitch: perspective ? 58 : 0,
-          antialias: false,
+          antialias: true,
           attributionControl: false,
           renderWorldCopies: false,
           fadeDuration: 0,
-          maxPitch: 65,
+          maxPitch: 80,
           minZoom: 2,
           maxZoom: 19,
           cooperativeGestures: false,
@@ -217,9 +245,15 @@ export default function LiveVectorMap({
           if (event?.originalEvent) markInteraction();
         });
         map.on("moveend", scheduleResume);
+        map.on("pitch", (event) => {
+          const nextPitch = clamp(map.getPitch(), 0, 80);
+          setCameraPitch(nextPitch);
+          if (event?.originalEvent) preferredPitchRef.current = nextPitch;
+        });
 
         map.on("style.load", () => {
           if (disposed) return;
+          configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
           if (!loadedRef.current) {
             loadedRef.current = true;
@@ -277,7 +311,6 @@ export default function LiveVectorMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     const nextUrl = styleUrl(style);
-    if (map.getStyle()?.sprite?.includes(style === "satellite-streets-v12" ? "satellite-streets-v12" : "dark-v11")) return;
     map.setStyle(nextUrl, { diff: true });
   }, [style]);
 
@@ -331,7 +364,7 @@ export default function LiveVectorMap({
         center,
         zoom: targetZoom,
         bearing: perspective ? Number(heading || 0) : 0,
-        pitch: perspective ? 58 : 0,
+        pitch: perspective ? preferredPitchRef.current : 0,
         duration,
         easing: (value) => value * value * (3 - 2 * value),
         essential: true,
@@ -361,6 +394,8 @@ export default function LiveVectorMap({
     const coordinate = normalizeCoordinate(displayedRef.current.coordinate || snappedPosition?.coordinate);
     if (!map || !coordinate || !loadedRef.current) return;
     interactingRef.current = false;
+    preferredPitchRef.current = perspective ? 58 : 0;
+    setCameraPitch(preferredPitchRef.current);
     window.clearTimeout(resumeTimerRef.current);
     map.easeTo({
       center: normalizeCoordinate(followCenter) || coordinate,
