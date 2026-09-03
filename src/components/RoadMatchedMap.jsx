@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters } from "@/lib/navigationGeometry";
+import LiveVectorMap from "@/components/LiveVectorMap";
 
 const MAP_W = 640;
 const MAP_H = 420;
@@ -109,6 +110,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rendererMode, setRendererMode] = useState("live");
+  const [fallbackReason, setFallbackReason] = useState("");
+  const [resetRevision, setResetRevision] = useState(0);
   const [zoomOffset, setZoomOffset] = useState(0);
   const [gestureScale, setGestureScale] = useState(1);
   const [manualCenter, setManualCenter] = useState(null);
@@ -200,6 +204,11 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
   useEffect(() => {
     desiredViewportKeyRef.current = viewportKey;
+    if (rendererMode !== "fallback") {
+      mapRequestRef.current += 1;
+      setLoading(false);
+      return undefined;
+    }
     if (!viewport) {
       mapRequestRef.current += 1;
       setImage("");
@@ -252,7 +261,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce]);
+  }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode]);
 
   const routePoints = useMemo(() => {
     if (!viewport || !Array.isArray(activeCoords)) return "";
@@ -377,6 +386,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     pinchRef.current = { distance: 0, scale: 1 };
     dragRef.current = { active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null };
     setStyle(defaultStyle);
+    setResetRevision((value) => value + 1);
     onResetFollow?.();
   }
 
@@ -386,20 +396,42 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     <div className={`relative box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-screen max-w-[100vw] rounded-none border-0 shadow-none" : "w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
       <div
         className={`relative w-full max-w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
-        style={{ touchAction: "none" }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={finishGesture}
-        onTouchCancel={finishGesture}
+        style={{ touchAction: rendererMode === "fallback" ? "none" : "auto" }}
+        onTouchStart={rendererMode === "fallback" ? onTouchStart : undefined}
+        onTouchMove={rendererMode === "fallback" ? onTouchMove : undefined}
+        onTouchEnd={rendererMode === "fallback" ? finishGesture : undefined}
+        onTouchCancel={rendererMode === "fallback" ? finishGesture : undefined}
       >
         <div
           className="absolute inset-0 will-change-transform"
           style={{ transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) scale(${gestureScale})`, transformOrigin: "50% 55%", transition: gestureScale === 1 && dragOffset.x === 0 && dragOffset.y === 0 ? "transform 160ms ease-out" : "none" }}
         >
-          {image && <img src={image} alt="LOKIN real street navigation map" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
+          {rendererMode !== "fallback" ? (
+            <LiveVectorMap
+              routeGeometry={activeRouteGeometry}
+              snappedPosition={snappedPosition}
+              perspective={perspective}
+              followDriver={followDriver}
+              style={style}
+              followCenter={followCenter}
+              heading={heading}
+              speedMps={speedMps}
+              resetRevision={resetRevision}
+              onReady={() => {
+                setRendererMode("active");
+                setFallbackReason("");
+              }}
+              onUnavailable={(reason) => {
+                setFallbackReason(reason || "Live vector map unavailable");
+                setRendererMode("fallback");
+              }}
+            />
+          ) : (
+            image && <img src={image} alt="LOKIN real street navigation map fallback" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+          )}
           <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
-          {image && (
+          {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 7px rgba(168,255,0,.95))" }} />}
@@ -446,7 +478,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           </>
         )}
 
-        {fullscreen && (Math.abs(zoomOffset) > 0.03 || manualCenter) && (
+        {fullscreen && (rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
           <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
         )}
 
@@ -485,7 +517,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           </div>
         )}
 
-        {!image && (loading || error) && (
+        {rendererMode === "fallback" && fallbackReason && image && (
+          <div className="absolute left-1/2 top-[calc(4.9rem+env(safe-area-inset-top))] z-20 -translate-x-1/2 rounded-full border border-amber-300/25 bg-black/80 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-amber-200 backdrop-blur">
+            LOW-BANDWIDTH MAP FALLBACK
+          </div>
+        )}
+
+        {rendererMode === "fallback" && !image && (loading || error) && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#111820]/85 px-6 text-center backdrop-blur-sm">
             {loading ? (
               <div className="flex items-center gap-2 text-sm font-semibold text-accent"><Layers3 className="h-4 w-4 animate-pulse" /> {perspective ? "Loading real 4D Mapbox view…" : "Loading real Mapbox streets…"}</div>
@@ -494,10 +532,10 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             )}
           </div>
         )}
-        {!fullscreen && image && loading && (
+        {rendererMode === "fallback" && !fullscreen && image && loading && (
           <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent/20 bg-black/75 px-3 py-1.5 text-[9px] font-bold tracking-[0.1em] text-accent backdrop-blur"><Layers3 className="mr-1 inline h-3 w-3 animate-pulse" />REFINING SATELLITE</div>
         )}
-        {image && error && <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-red-400/20 bg-black/80 px-3 py-1.5 text-[9px] text-red-300 backdrop-blur">{error}</div>}
+        {rendererMode === "fallback" && image && error && <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-red-400/20 bg-black/80 px-3 py-1.5 text-[9px] text-red-300 backdrop-blur">{error}</div>}
       </div>
     </div>
   );
