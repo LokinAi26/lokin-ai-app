@@ -419,9 +419,64 @@ export default function LiveVectorMap({
     map.fitBounds(bounds, { padding: 64, duration: 650, maxZoom: 16.5 });
   }, [followDriver, routeGeometry]);
 
+  function beginHorizonGesture(event) {
+    const map = mapRef.current;
+    if (!perspective || !map || !loadedRef.current) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    window.clearTimeout(resumeTimerRef.current);
+    interactingRef.current = true;
+    horizonGestureRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startPitch: map.getPitch(),
+      startZoom: map.getZoom(),
+    };
+  }
+
+  function moveHorizonGesture(event) {
+    const map = mapRef.current;
+    const gesture = horizonGestureRef.current;
+    if (!map || !gesture.active || gesture.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const deltaY = event.clientY - gesture.startY;
+    const nextPitch = clamp(gesture.startPitch + deltaY * 0.32, 18, 80);
+    const nextZoom = clamp(gesture.startZoom - (nextPitch - gesture.startPitch) * 0.012, 15.8, 19);
+    preferredPitchRef.current = nextPitch;
+    setCameraPitch(nextPitch);
+    map.jumpTo({ pitch: nextPitch, zoom: nextZoom });
+  }
+
+  function endHorizonGesture(event) {
+    const gesture = horizonGestureRef.current;
+    if (!gesture.active || gesture.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    horizonGestureRef.current = { ...gesture, active: false, pointerId: null };
+    window.clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = window.setTimeout(() => {
+      interactingRef.current = false;
+    }, 900);
+  }
+
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="absolute inset-0" aria-label="LOKIN live vector navigation map" />
+      {perspective && status === "ready" && (
+        <button
+          type="button"
+          aria-label="Pull down or push up to adjust the horizon"
+          className="absolute left-1/2 top-14 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary"
+          onPointerDown={beginHorizonGesture}
+          onPointerMove={moveHorizonGesture}
+          onPointerUp={endHorizonGesture}
+          onPointerCancel={endHorizonGesture}
+        >
+          <span className="mr-1.5 inline-block h-1 w-6 rounded-full bg-primary/80 align-middle" />
+          PULL HORIZON · {Math.round(cameraPitch)}°
+        </button>
+      )}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
