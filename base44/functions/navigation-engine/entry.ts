@@ -535,7 +535,8 @@ export default async function navigationEngine(req: Request) {
         provider: "mapbox",
         configured: true,
         verified: Boolean(result?.longitude && result?.latitude),
-        capabilities: ["geocoding", "driving_traffic", "road_geometry", "turn_by_turn"],
+        live_vector_configured: Boolean(publicMapToken()),
+        capabilities: ["geocoding", "driving_traffic", "road_geometry", "turn_by_turn", "live_vector_rendering"],
       });
     }
 
