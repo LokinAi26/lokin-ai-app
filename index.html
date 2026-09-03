@@ -15,6 +15,16 @@
     <title>LOKIN AI — Lock In. Make More.</title>
   </head>
   <body>
+    <script>
+      (function () {
+        var ua = navigator.userAgent || '';
+        var ios = ua.match(/OS (\d+)[._]/);
+        var isLegacyIOS = /iPad|iPhone|iPod/.test(ua) && ios && parseInt(ios[1], 10) <= 12;
+        if (isLegacyIOS) {
+          window.location.replace('/legacy.html' + window.location.search + window.location.hash);
+        }
+      }());
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
