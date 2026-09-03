@@ -470,7 +470,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
                 </>
               )}
             </div>
-            {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">58° PITCH · HEADING UP</div>}
+            {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">IMMERSIVE 3D · HEADING UP</div>}
             <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
               <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">DRAG · PINCH</div>
               <button type="button" aria-label="Reset and follow driver" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
