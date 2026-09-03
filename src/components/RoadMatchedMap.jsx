@@ -413,7 +413,6 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               perspective={perspective}
               followDriver={followDriver}
               style={style}
-              followCenter={followCenter}
               heading={heading}
               speedMps={speedMps}
               resetRevision={resetRevision}
