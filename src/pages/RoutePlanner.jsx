@@ -29,6 +29,20 @@ export default function RoutePlanner() {
   }, []);
 
   async function optimizeAndLaunchGps() {
+    const directDestination = origin.trim();
+    if (directDestination) {
+      setError("");
+      const params = new URLSearchParams({
+        focus: "locked",
+        nav: "1",
+        view: "real",
+        source: "route-planner",
+        destination: directDestination,
+      });
+      navigate(`/ai-gps?${params.toString()}`);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setData(null);
@@ -104,7 +118,7 @@ export default function RoutePlanner() {
         <RouteIcon className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
       </div>
-      <p className="text-sm text-white/45 -mt-2">Pick a mode — one tap optimizes your eligible stops and launches them in LOKIN GPS.</p>
+      <p className="text-sm text-white/45 -mt-2">Enter a destination to launch GPS directly, or leave it blank to optimize verified delivery stops first.</p>
 
       <RouteHeatMap
         mode={mode}
@@ -130,10 +144,10 @@ export default function RoutePlanner() {
       </div>
 
       <div className="grid gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
-        <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Start address / zip"
+        <input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Store, business, place, or address"
           className="min-h-12 w-full min-w-0 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
         <button onClick={optimizeAndLaunchGps} disabled={loading} className="min-h-12 w-full rounded-xl bg-primary px-5 text-sm font-extrabold text-primary-foreground glow-primary disabled:opacity-60 min-[480px]:w-auto">
-          {loading ? "OPTIMIZING ROUTE…" : "OPTIMIZE + LAUNCH GPS"}
+          {loading ? "OPTIMIZING ROUTE…" : origin.trim() ? "LAUNCH GPS" : "OPTIMIZE + LAUNCH GPS"}
         </button>
       </div>
 
