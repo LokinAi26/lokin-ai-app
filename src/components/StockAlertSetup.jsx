@@ -67,7 +67,7 @@ export default function StockAlertSetup({ prefs, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-xs text-white/45 mb-1">Low-stock threshold</div>
-              <input type="number" min={0} value={threshold} onChange={(e) => setThreshold(e.target.value)}
+              <input type="number" min={0} value={threshold} onChange={(e) => setThreshold(Math.max(0, Number(e.target.value) || 0))}
                 className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white" />
               <div className="text-[10px] text-white/35 mt-1">Variants enabled below this = low</div>
             </div>
