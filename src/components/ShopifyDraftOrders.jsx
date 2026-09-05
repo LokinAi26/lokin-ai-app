@@ -291,7 +291,7 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
             {variantOptions.map((o) => <option key={o.id} value={o.id}>{o.title} — {o.variant} ({money(o.price, currency)})</option>)}
           </select>
           <div className="grid grid-cols-2 gap-2">
-            <input type="number" min="1" value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))} placeholder="Qty" className="rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
+            <input type="number" min="1" value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: Math.max(1, Number(e.target.value) || 1) }))} placeholder="Qty" className="rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
             <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="Customer email" className="rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
           </div>
           <input value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="Note (optional)" className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
