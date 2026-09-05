@@ -72,7 +72,6 @@ export default function Settings() {
         target_per_mile: 1.5,
         max_wait_minutes: 15,
         earnings_intelligence_enabled: true,
-        human_acceptance_required: true,
         mileage_cost: 0.67,
         daily_goal: 150,
         weekly_goal: 850,
