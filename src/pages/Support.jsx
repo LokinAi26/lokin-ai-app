@@ -30,18 +30,26 @@ export default function Support() {
   const endRef = useRef(null);
 
   useEffect(() => {
-    let conv = null;
-    try {
-      conv = base44.agents.createConversation({ agent_name: AGENT, metadata: { name: "LOKIN Support" } });
-      setConversationId(conv.id);
-      const init = (conv.messages && conv.messages.length) ? conv.messages.map(toUi) : [{ role: "assistant", text: GREETING, rated: false, escalated: false }];
-      setMessages(init);
-      setMode("agent");
-    } catch (e) {
-      // Agent not available — fall back to the external-ai-gateway support mode.
-      console.warn("lokin-support agent unavailable, using gateway fallback", e?.message || e);
-      setMode("fallback");
+    let cancelled = false;
+
+    async function initializeConversation() {
+      try {
+        const conv = await base44.agents.createConversation({ agent_name: AGENT, metadata: { name: "LOKIN Support" } });
+        if (cancelled) return;
+        setConversationId(conv.id);
+        const init = (conv.messages && conv.messages.length) ? conv.messages.map(toUi) : [{ role: "assistant", text: GREETING, rated: false, escalated: false }];
+        setMessages(init);
+        setMode("agent");
+      } catch (e) {
+        if (cancelled) return;
+        // Agent not available — fall back to the external-ai-gateway support mode.
+        console.warn("lokin-support agent unavailable, using gateway fallback", e?.message || e);
+        setMode("fallback");
+      }
     }
+
+    initializeConversation();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -62,8 +70,8 @@ export default function Support() {
     if (!conversationId) return;
     setBusy(true);
     try {
-      const conv = base44.agents.getConversation(conversationId);
-      base44.agents.addMessage(conv, { role: "user", content: text });
+      const conv = await base44.agents.getConversation(conversationId);
+      await base44.agents.addMessage(conv, { role: "user", content: text });
       // optimistic local echo so the user sees their message immediately
       setMessages((prev) => [...prev, { role: "user", text, rated: false, escalated: false }]);
     } catch (e) {
