@@ -11,10 +11,11 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const mode = ["scheduled","manual","chatgpt"].includes(body.mode) ? body.mode : "scheduled";
-    const [commands, incidents, nativeBuilds, controlHealth] = await Promise.all([
+    const [commands, incidents, nativeBuilds, trackedTasks, controlHealth] = await Promise.all([
       safeList(base44.asServiceRole.entities.LokinCommandRun.filter({}, "-updated_date", 100)),
       safeList(base44.asServiceRole.entities.LokinCommerceIncident.filter({}, "-updated_date", 100)),
       safeList(base44.asServiceRole.entities.NavigationNativeBuildStatus.filter({}, "-updated_date", 20)),
+      safeList(base44.asServiceRole.entities.Base44BuildTask.filter({}, "-updated_date", 500)),
       controlPlaneHealth(base44, { namespace:"lokin", source_app:"LOKIN AI" }, { service:true, role:"admin", userId:"LOKIN_OPERATIONS_AI" }).catch(() => ({ status:"warning", health_score:80, conflicts:[], duplicates:[], expired:0, active_states:0 }))
     ]);
 
@@ -39,8 +40,23 @@ export default async function(req) {
       approvals.push({type:"native_build", record_id:item.id, reason:"Native shell changes require compilation and physical-device verification."});
     }
 
+    const taskCounts = { queued:0, running:0, blocked:0, completed:0, failed:0, canceled:0 };
+    let progressTotal = 0;
+    let progressRows = 0;
+    for (const task of trackedTasks) {
+      const s = String(task.status || "").toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(taskCounts, s)) taskCounts[s] += 1;
+      if (s !== "canceled") {
+        progressTotal += Math.max(0, Math.min(100, Number(task.progress_percent || 0)));
+        progressRows += 1;
+      }
+      if (s === "blocked" || s === "failed") approvals.push({type:"build_task", record_id:task.id, reason:task.last_error || `Tracked Base44 task is ${s}.`});
+    }
+    const taskRemaining = taskCounts.queued + taskCounts.running + taskCounts.blocked + taskCounts.failed;
+    const taskProgress = progressRows ? Math.round((progressTotal / progressRows) * 100) / 100 : 100;
+
     for (const conflict of controlHealth.conflicts || []) approvals.push({type:"control_state_conflict", record_id:conflict.key, reason:"Canonical state conflict is fail-closed and requires explicit resolution."});
-    const warnings = openIncidents.length + nativeBlockers.length + (controlHealth.duplicates?.length || 0) + (controlHealth.expired || 0);
+    const warnings = openIncidents.length + nativeBlockers.length + taskCounts.blocked + taskCounts.failed + (controlHealth.duplicates?.length || 0) + (controlHealth.expired || 0);
     const critical = (controlHealth.conflicts?.length || 0) > 0;
     const score = Math.max(0, Math.min(Number(controlHealth.health_score ?? 100), 100 - warnings * 6 - (critical ? 20 : 0)));
     const status = critical || warnings > 3 ? "action_required" : warnings ? "warning" : "healthy";
@@ -50,7 +66,7 @@ export default async function(req) {
       mode,
       status,
       health_score:score,
-      checks:{commands_scanned:commands.length, open_commerce_incidents:openIncidents.length, native_build_blockers:nativeBlockers.length, control_plane:{status:controlHealth.status, active_states:controlHealth.active_states, conflicts:controlHealth.conflicts?.length || 0, duplicates:controlHealth.duplicates?.length || 0, expired:controlHealth.expired || 0}},
+      checks:{commands_scanned:commands.length, open_commerce_incidents:openIncidents.length, native_build_blockers:nativeBlockers.length, build_tasks:{tracked:trackedTasks.length, remaining:taskRemaining, progress_percent:taskProgress, ...taskCounts, coverage_mode:"connection_tracked", platform_internal_queue_visible:false}, control_plane:{status:controlHealth.status, active_states:controlHealth.active_states, conflicts:controlHealth.conflicts?.length || 0, duplicates:controlHealth.duplicates?.length || 0, expired:controlHealth.expired || 0}},
       repairs,
       approvals_required:approvals,
       started_at:startedAt,
