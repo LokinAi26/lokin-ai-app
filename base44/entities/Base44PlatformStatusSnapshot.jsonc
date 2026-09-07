@@ -1,0 +1,42 @@
+{
+  "name": "Base44PlatformStatusSnapshot",
+  "type": "object",
+  "properties": {
+    "app_id": {
+      "type": "string"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tracked_queue": {
+      "type": "object"
+    },
+    "platform_visibility": {
+      "type": "object"
+    },
+    "public_settings": {
+      "type": "object"
+    },
+    "monitoring_api": {
+      "type": "object"
+    },
+    "dev_build": {
+      "type": "object"
+    },
+    "completion": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "app_id",
+    "observed_at",
+    "tracked_queue",
+    "platform_visibility",
+    "monitoring_api",
+    "completion"
+  ]
+}
