@@ -1,0 +1,144 @@
+{
+  "name": "Base44BuildTask",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "task_key": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "CHATGPT",
+        "BASE44_EDITOR",
+        "CLAUDE_CODE",
+        "REMOTE_AGENT",
+        "SYSTEM"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "blocked",
+        "completed",
+        "failed",
+        "canceled"
+      ]
+    },
+    "progress_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "work_units_total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "work_units_completed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "estimated_seconds_remaining": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eta_basis": {
+      "type": "string",
+      "enum": [
+        "explicit",
+        "work_units",
+        "historical",
+        "unavailable"
+      ]
+    },
+    "source_reference": {
+      "type": "string"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "heartbeat_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "task_key",
+    "source",
+    "title",
+    "status",
+    "progress_percent",
+    "submitted_at"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
