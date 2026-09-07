@@ -63,9 +63,11 @@ export default function DriverLayout() {
       const roamActive = sessionStorage.getItem("lokin_app_free_roam") === "1";
       setAppFreeRoam(roamActive);
       // DriverPreference.work_status is authoritative during session restore.
-      // Resolve paused before any navigation-engine or route optimization work.
-      if (workStatus === "paused" && loc.pathname === "/") {
+      // Resolve paused/off before any navigation-engine or route optimization work.
+      if (workStatus === "paused" && loc.pathname !== "/break-time") {
         navigate("/break-time", { replace: true });
+      } else if (workStatus === "off" && lockedGps) {
+        navigate("/", { replace: true });
       } else if (isWorking && !roamActive && loc.pathname === "/") {
         // GPS is the primary Home surface while working, except when the driver
         // deliberately opened app Free Roam to use the rest of LOKIN.
@@ -73,28 +75,15 @@ export default function DriverLayout() {
       }
     }).catch(() => {});
     return () => { alive = false; };
-  }, [loc.pathname, navigate]);
+  }, [loc.pathname, lockedGps, navigate]);
 
-  // Entering active navigation is itself a lock-in action. Persist that state so
-  // returning to Home during the shift restores the GPS instead of the dashboard.
+  // Locked navigation is a view of an already-active session, never a state
+  // transition. Start Work and Resume persist "working" before navigating here.
   useEffect(() => {
-    if (!activeNavigation) return;
+    if (!lockedGps) return;
     sessionStorage.removeItem("lokin_app_free_roam");
     setAppFreeRoam(false);
-    let alive = true;
-    base44.entities.DriverPreference.filter({}).then(async (p) => {
-      if (!alive) return;
-      const current = p[0] || null;
-      // Session restore and post-resume navigation must not rewrite an
-      // already-authoritative working state.
-      if (current?.work_status !== "working") {
-        if (current?.id) await base44.entities.DriverPreference.update(current.id, { work_status: "working" });
-        else await base44.entities.DriverPreference.create({ work_status: "working" });
-      }
-      if (alive) setWorking(true);
-    }).catch(() => {});
-    return () => { alive = false; };
-  }, [activeNavigation]);
+  }, [lockedGps]);
 
   // Track the last visited path per tab so switching back restores it
   useEffect(() => {
