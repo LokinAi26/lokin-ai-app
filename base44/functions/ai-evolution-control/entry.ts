@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { VERIFIED_EVALUATION_CANDIDATES } from '../../shared/verifiedEvaluationCandidates.js';
 import { secrets } from 'base44:runtime';
 import { createFreshEvaluationSuite } from '../../shared/dynamicEvaluation.js';
 import { evaluateResponse, routeModel, MODEL_ROUTER_VERSION } from '../../shared/modelRouter.js';
@@ -32,7 +33,7 @@ export default async function(req:Request){
     headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),
     claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')
    });
-   return Response.json({status:'READY',versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION,memory_retrieval:MEMORY_RETRIEVAL_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},external_adapters:adapters,gateway_plan:buildGatewayPlan({omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')},{capability:'ai.infer'}),capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
+   return Response.json({status:'READY',evaluation_candidates:VERIFIED_EVALUATION_CANDIDATES,evaluation_circuit:{status:'IMPLEMENTED',scope:'SEQUENTIAL_EVALUATION_RUN',max_calls:16,max_errors:2,elapsed_budget_ms:120000,interrupts_inflight:false},external_agent_circuit:{status:'SETUP_REQUIRED',required:['persistent owner-authorized sessions','atomic admission and counters','executor enforcement']},versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION,memory_retrieval:MEMORY_RETRIEVAL_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},external_adapters:adapters,gateway_plan:buildGatewayPlan({omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')},{capability:'ai.infer'}),capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
   }
 
   if(action==='generate_dynamic_suite'){
