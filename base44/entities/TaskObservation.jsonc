@@ -21,8 +21,13 @@
         "GAP",
         "PATTERN",
         "BLIND_SPOT",
+        "TASK_QUEUED",
         "TASK_STARTED",
+        "TASK_PROGRESS",
         "TASK_COMPLETED",
+        "TASK_BLOCKED",
+        "TASK_FAILED",
+        "TASK_CANCELED",
         "TOOL_FAILURE",
         "POLICY_BLOCK"
       ]
