@@ -84,8 +84,13 @@ export default function DriverLayout() {
     let alive = true;
     base44.entities.DriverPreference.filter({}).then(async (p) => {
       if (!alive) return;
-      if (p[0]?.id) await base44.entities.DriverPreference.update(p[0].id, { work_status: "working" });
-      else await base44.entities.DriverPreference.create({ work_status: "working" });
+      const current = p[0] || null;
+      // Session restore and post-resume navigation must not rewrite an
+      // already-authoritative working state.
+      if (current?.work_status !== "working") {
+        if (current?.id) await base44.entities.DriverPreference.update(current.id, { work_status: "working" });
+        else await base44.entities.DriverPreference.create({ work_status: "working" });
+      }
       if (alive) setWorking(true);
     }).catch(() => {});
     return () => { alive = false; };
