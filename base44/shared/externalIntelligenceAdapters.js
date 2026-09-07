@@ -9,10 +9,10 @@ export function adapterStatus(config={}){
  const claudeCode=Boolean(config.claude_code_observer_token);
  return{
   version:ADAPTER_CONTROL_VERSION,
-  omniroute:{status:omniroute?'READY':'SETUP_REQUIRED',mode:'OPTIONAL_GATEWAY',base_url_configured:Boolean(omniOrigin),token_configured:Boolean(config.omniroute_token),automatic_primary:false},
-  headroom:{status:headroom?'READY':'SETUP_REQUIRED',mode:headroom?'AUDIT':'DISABLED',base_url_configured:Boolean(headroomOrigin),token_configured:Boolean(config.headroom_token),transforms_enabled:false},
+  omniroute:{status:omniroute?'CONFIGURED_UNVERIFIED':'SETUP_REQUIRED',mode:'OPTIONAL_GATEWAY',base_url_configured:Boolean(omniOrigin),token_configured:Boolean(config.omniroute_token),automatic_primary:false},
+  headroom:{status:headroom?'CONFIGURED_UNVERIFIED':'SETUP_REQUIRED',mode:headroom?'AUDIT':'DISABLED',base_url_configured:Boolean(headroomOrigin),token_configured:Boolean(config.headroom_token),transforms_enabled:false},
   claude_mem:{status:'NATIVE_PATTERN',mode:'LOKIN_CONTROL_PLANE',package_embedded:false,reason:'CLAUDE_MEM_LOCAL_WORKER_NOT_BASE44_SERVERLESS_RUNTIME'},
-  claude_code:{status:claudeCode?'READY':'SETUP_REQUIRED',mode:'BOUNDED_EXTERNAL_ENGINEERING_AGENT',observer_token_configured:claudeCode,direct_production_authority:false},
+  claude_code:{status:claudeCode?'CONFIGURED_UNVERIFIED':'SETUP_REQUIRED',mode:'BOUNDED_EXTERNAL_ENGINEERING_AGENT',observer_token_configured:claudeCode,direct_production_authority:false},
   task_observer:{status:'READY',mode:'NATIVE_OBSERVATION_LOG',auto_apply:false,approval_required_for_skill_changes:true}
  };
 }
