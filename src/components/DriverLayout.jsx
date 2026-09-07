@@ -57,13 +57,18 @@ export default function DriverLayout() {
     let alive = true;
     base44.entities.DriverPreference.filter({}).then((p) => {
       if (!alive) return;
-      const isWorking = (p[0] && p[0].work_status) === "working";
+      const workStatus = p[0]?.work_status || "off";
+      const isWorking = workStatus === "working";
       setWorking(isWorking);
       const roamActive = sessionStorage.getItem("lokin_app_free_roam") === "1";
       setAppFreeRoam(roamActive);
-      // GPS is the primary Home surface while working, except when the driver
-      // deliberately opened app Free Roam to use the rest of LOKIN.
-      if (isWorking && !roamActive && loc.pathname === "/") {
+      // DriverPreference.work_status is authoritative during session restore.
+      // Resolve paused before any navigation-engine or route optimization work.
+      if (workStatus === "paused" && loc.pathname === "/") {
+        navigate("/break-time", { replace: true });
+      } else if (isWorking && !roamActive && loc.pathname === "/") {
+        // GPS is the primary Home surface while working, except when the driver
+        // deliberately opened app Free Roam to use the rest of LOKIN.
         navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
       }
     }).catch(() => {});
