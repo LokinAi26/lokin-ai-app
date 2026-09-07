@@ -187,15 +187,29 @@ export default function RoutePlanner() {
 
       {data?.seal && <SealDecisionCard seal={data.seal} />}
 
+      {/* Dark map card with bright route line */}
       {stops.length > 0 && (
         <div className="rounded-3xl border border-white/10 overflow-hidden lokin-panel">
-          <SatelliteRoutePreview stops={stops} compact />
+          <div className="relative h-40 bg-black">
+            <div className="absolute inset-0 brand-grid opacity-40" />
+            <svg viewBox="0 0 320 160" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+              <path d="M30 130 C 80 110, 90 60, 140 70 S 220 120, 290 30" stroke="hsl(80 100% 50%)" strokeWidth="3" fill="none" strokeLinecap="round" style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.9))" }} />
+              {stops.slice(0, 6).map((_, i) => {
+                const pts = [[30, 130], [110, 80], [170, 95], [230, 70], [290, 30]];
+                const p = pts[Math.min(i, pts.length - 1)];
+                return <circle key={i} cx={p[0]} cy={p[1]} r="5" fill="hsl(80 100% 50%)" stroke="#000" strokeWidth="2" />;
+              })}
+            </svg>
+            <div className="absolute top-2 left-3 text-[10px] uppercase tracking-wider text-white/40">Optimized route</div>
+          </div>
           <Link to="/ai-gps?focus=locked&nav=1&view=real"
             className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary">
             <Navigation className="h-4 w-4" /> Start LOKIN Navigation
           </Link>
         </div>
       )}
+
+      {stops.length > 0 && <SatelliteRoutePreview stops={stops} compact />}
 
       {data?.lockInScore && <LockInScore score={data.lockInScore} />}
 

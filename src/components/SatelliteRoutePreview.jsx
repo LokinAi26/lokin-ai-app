@@ -27,14 +27,11 @@ export default function SatelliteRoutePreview({ stops = [], destinationAddress =
 
   useEffect(() => {
     let alive = true;
-    setRoute(null);
-    setOrigin(null);
-    setError("");
-    if (!addresses.length) { setLoading(false); return; }
+    if (!addresses.length) { setRoute(null); return; }
     setLoading(true);
+    setError("");
     currentPosition()
       .then((position) => {
-        if (!alive) return null;
         const coordinate = [Number(position.coords.longitude), Number(position.coords.latitude)];
         if (alive) setOrigin({ coordinate, accuracy_m: Number(position.coords.accuracy || 0), heading: Number.isFinite(position.coords.heading) ? position.coords.heading : null });
         return base44LiveFunctions.functions.invoke("navigation-engine", {
