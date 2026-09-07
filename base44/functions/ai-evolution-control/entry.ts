@@ -6,6 +6,7 @@ import { chooseSpeechProvider, SPEECH_ROUTER_VERSION } from '../../shared/speech
 import { authorizeCapability, listCapabilityPolicies, CAPABILITY_BROKER_VERSION } from '../../shared/capabilityBroker.js';
 import { adapterStatus, buildGatewayPlan } from '../../shared/externalIntelligenceAdapters.js';
 import { searchMemoryRows, memoryTimeline, getMemoryObservations, MEMORY_RETRIEVAL_VERSION } from '../../shared/memoryRetrieval.js';
+import { createEvaluationCircuit, advanceEvaluationCircuit, estimateEvaluationCost, summarizeEvaluationCost } from '../../shared/evaluationSafety.js';
 import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 
 const txt=(v:any,n=4000)=>String(v??'').trim().slice(0,n);
@@ -73,27 +74,40 @@ export default async function(req:Request){
 
   if(action==='run_model_evaluation'){
    if(!admin(user))return Response.json({error:'ADMIN_REQUIRED'},{status:403});
-   const models=(Array.isArray(body.models)?body.models:[]).slice(0,4).map((m:any)=>({provider:txt(m.provider,80)||'base44_core',model:txt(m.model,160),input_rate:Number(m.input_rate||0),output_rate:Number(m.output_rate||0)})).filter((m:any)=>m.model);
+   const models=(Array.isArray(body.models)?body.models:[]).slice(0,4).map((m:any)=>({provider:txt(m.provider,80)||'base44_core',model:txt(m.model,160),input_rate:m.input_rate,output_rate:m.output_rate})).filter((m:any)=>m.model);
    if(!models.length)return Response.json({error:'CONFIGURED_MODEL_LIST_REQUIRED',status:'SETUP_REQUIRED'},{status:400});
    const suite=createFreshEvaluationSuite({seed:body.seed}),summaries:any[]=[];
+   let circuit=createEvaluationCircuit();
    for(const candidate of models){
+    if(circuit.status==='FROZEN')break;
     const results:any[]=[];
     for(const task of suite.tasks){
+     circuit=advanceEvaluationCircuit(circuit,'CALL');
+     if(circuit.status==='FROZEN')break;
      const started=Date.now();
      try{
       const response:any=await invokeLLMWithAdmission(base44,{prompt:task.prompt,model:candidate.model},{sourceApp:'LOKIN AI',domain:'evaluation',priority:35,estimatedCost:0,tags:['model-evaluation','owned-gpu']});
       const raw=typeof response==='string'?response:JSON.stringify(response);
-      const estimated=(Math.ceil((task.prompt.length+raw.length)/4)/1_000_000)*Math.max(0,candidate.input_rate+candidate.output_rate);
-      results.push(evaluateResponse(task,raw,Date.now()-started,estimated,''));
-     }catch(e:any){results.push(evaluateResponse(task,'',Date.now()-started,0,txt(e?.message||e,600)))}
+      const estimated=estimateEvaluationCost(task.prompt,raw,candidate.input_rate,candidate.output_rate);
+      results.push({...evaluateResponse(task,raw,Date.now()-started,estimated,''),estimated_cost_usd:estimated});
+      circuit=advanceEvaluationCircuit(circuit,'CHECK');
+     }catch(e:any){
+      results.push({...evaluateResponse(task,'',Date.now()-started,0,txt(e?.code||'INFERENCE_FAILED',100)),estimated_cost_usd:null});
+      circuit=advanceEvaluationCircuit(circuit,e?.code==='LOKIN_ECOSYSTEM_ADMISSION_DENIED'?'POLICY_DENIAL':'ERROR');
+     }
+     if(circuit.status==='FROZEN')break;
     }
+    if(!results.length)break;
     const failures=results.filter((x:any)=>!x.pass).length;
-    const summary={provider:candidate.provider,model:candidate.model,quality_score:results.reduce((s:number,x:any)=>s+Number(x.quality||0),0)/results.length,failure_rate:failures/results.length,p95_latency_ms:p95(results.map((x:any)=>x.latency_ms)),estimated_cost_usd:results.reduce((s:number,x:any)=>s+Number(x.estimated_cost_usd||0),0),results};
+    const costSummary=summarizeEvaluationCost(results);
+    const summary={requested_provider:candidate.provider,requested_model:candidate.model,provider:'admission_router',model:'UNVERIFIED',identity_status:'UNVERIFIED',completed_tasks:results.length,expected_tasks:suite.tasks.length,circuit:{...circuit},quality_score:results.reduce((s:number,x:any)=>s+Number(x.quality||0),0)/results.length,failure_rate:failures/results.length,p95_latency_ms:p95(results.map((x:any)=>x.latency_ms)),...costSummary,results};
     summaries.push(summary);
-    await base44.asServiceRole.entities.AIModelEvaluation.create({suite_id:suite.suite_id,model:candidate.model,provider:candidate.provider,status:failures?'FAIL':'PASS',quality_score:summary.quality_score,failure_rate:summary.failure_rate,p95_latency_ms:summary.p95_latency_ms,estimated_cost_usd:summary.estimated_cost_usd,results:{items:results},router_version:MODEL_ROUTER_VERSION,created_at:new Date().toISOString()});
+    await base44.asServiceRole.entities.AIModelEvaluation.create({suite_id:suite.suite_id,model:'UNVERIFIED',provider:'admission_router',status:failures||results.length!==suite.tasks.length?'FAIL':'PASS',quality_score:summary.quality_score,failure_rate:summary.failure_rate,p95_latency_ms:summary.p95_latency_ms,...(summary.estimated_cost_usd===null?{}:{estimated_cost_usd:summary.estimated_cost_usd}),results:{items:results,requested_provider:candidate.provider,requested_model:candidate.model,identity_status:'UNVERIFIED',cost:costSummary,circuit:{...circuit}},router_version:MODEL_ROUTER_VERSION,created_at:new Date().toISOString()});
    }
-   const recommendation=routeModel(summaries.map((s:any)=>({model:s.model,provider:s.provider,enabled:true,capabilities:['general'],metrics:{quality:s.quality_score,failure_rate:s.failure_rate,p95_latency_ms:s.p95_latency_ms,cost_per_task_usd:s.estimated_cost_usd/suite.tasks.length}})),body.policy||{max_failure_rate:.25}).selected;
-   return Response.json({suite_id:suite.suite_id,summaries,recommendation,promotion_applied:false});
+   // Admission may select a local model or fallback without returning model identity.
+   // Scored outputs cannot establish which candidate actually executed.
+   const recommendation=null;
+   return Response.json({suite_id:suite.suite_id,summaries,recommendation,recommendation_status:'BLOCKED_UNVERIFIED_MODEL_IDENTITY',circuit,circuit_scope:'THIS_SEQUENTIAL_EVALUATION_ONLY',promotion_applied:false});
   }
 
   return Response.json({error:'UNKNOWN_ACTION'},{status:400});
