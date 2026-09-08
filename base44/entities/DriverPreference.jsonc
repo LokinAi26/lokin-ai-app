@@ -1,56 +1,83 @@
 {
   "name": "DriverPreference",
-  "type": "object",
   "properties": {
-    "user_type": {
-      "type": "string",
-      "enum": [
-        "driver",
-        "trucker",
-        "traveler"
-      ],
-      "default": "driver"
-    },
     "accepted_categories": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
       "default": [
         "food_pickup",
         "grocery_shop_deliver",
         "grocery_pickup",
         "retail",
         "package"
-      ]
-    },
-    "work_filters": {
-      "type": "array",
+      ],
       "items": {
         "type": "string"
       },
-      "default": []
+      "type": "array"
     },
     "active_modes": {
-      "type": "array",
+      "default": [
+        "delivery"
+      ],
       "items": {
         "type": "string"
       },
-      "default": [
-        "delivery"
-      ]
+      "type": "array"
     },
-    "work_status": {
-      "type": "string",
-      "enum": [
-        "off",
-        "working",
-        "paused"
-      ],
-      "default": "off"
+    "alert_enabled": {
+      "default": false,
+      "description": "Opt-in to automatic alerts when a new opportunity matches this driver's location and vehicle.",
+      "type": "boolean"
+    },
+    "break_active": {
+      "default": false,
+      "description": "Explicit break-screen activation flag. Independent from work_status so paused sessions retain normal tab navigation.",
+      "type": "boolean"
+    },
+    "daily_goal": {
+      "default": 150,
+      "type": "number"
+    },
+    "daily_hours_goal": {
+      "default": 8,
+      "type": "number"
+    },
+    "earnings_intelligence_enabled": {
+      "default": true,
+      "description": "Enables LOKIN Earnings Intelligence recommendations for verified offers.",
+      "type": "boolean"
+    },
+    "gas_price": {
+      "default": 3.45,
+      "type": "number"
+    },
+    "human_acceptance_required": {
+      "default": true,
+      "description": "Safety policy: third-party offer acceptance always remains an explicit driver action.",
+      "type": "boolean"
+    },
+    "max_miles": {
+      "default": 12,
+      "type": "number"
+    },
+    "max_wait_minutes": {
+      "default": 15,
+      "description": "Driver tolerance used to penalize high-friction offers in Earnings Intelligence.",
+      "type": "number"
+    },
+    "mileage_cost": {
+      "default": 0.67,
+      "type": "number"
+    },
+    "min_payout": {
+      "default": 6,
+      "type": "number"
+    },
+    "min_per_hour": {
+      "default": 22,
+      "type": "number"
     },
     "optimization_mode": {
-      "type": "string",
+      "default": "most_profit",
       "enum": [
         "fastest",
         "most_profit",
@@ -60,96 +87,74 @@
         "minimum_mileage",
         "homeward"
       ],
-      "default": "most_profit"
+      "type": "string"
     },
-    "min_payout": {
-      "type": "number",
-      "default": 6
-    },
-    "max_miles": {
-      "type": "number",
-      "default": 12
-    },
-    "min_per_hour": {
-      "type": "number",
-      "default": 22
-    },
-    "target_per_mile": {
-      "type": "number",
-      "default": 1.5,
-      "description": "Preferred minimum projected net dollars per mile for Earnings Intelligence scoring."
-    },
-    "max_wait_minutes": {
-      "type": "number",
-      "default": 15,
-      "description": "Driver tolerance used to penalize high-friction offers in Earnings Intelligence."
-    },
-    "earnings_intelligence_enabled": {
-      "type": "boolean",
-      "default": true,
-      "description": "Enables LOKIN Earnings Intelligence recommendations for verified offers."
-    },
-    "human_acceptance_required": {
-      "type": "boolean",
-      "default": true,
-      "description": "Safety policy: third-party offer acceptance always remains an explicit driver action."
-    },
-    "mileage_cost": {
-      "type": "number",
-      "default": 0.67
-    },
-    "vehicle_mpg": {
-      "type": "number",
-      "default": 26
-    },
-    "gas_price": {
-      "type": "number",
-      "default": 3.45
-    },
-    "daily_goal": {
-      "type": "number",
-      "default": 150
-    },
-    "weekly_goal": {
-      "type": "number",
-      "default": 850
-    },
-    "daily_hours_goal": {
-      "type": "number",
-      "default": 8
-    },
-    "stock_alert_enabled": {
-      "type": "boolean",
-      "default": false
-    },
-    "stock_alert_threshold": {
-      "type": "number",
-      "default": 5
+    "region": {
+      "default": "Hampton Roads, VA",
+      "description": "Driver's primary working market. LOKIN AI launches Virginia-first in Hampton Roads while retaining future multi-market support.",
+      "type": "string"
     },
     "stock_alert_email": {
       "type": "string"
     },
+    "stock_alert_enabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "stock_alert_threshold": {
+      "default": 5,
+      "type": "number"
+    },
+    "target_per_mile": {
+      "default": 1.5,
+      "description": "Preferred minimum projected net dollars per mile for Earnings Intelligence scoring.",
+      "type": "number"
+    },
+    "user_type": {
+      "default": "driver",
+      "enum": [
+        "driver",
+        "trucker",
+        "traveler"
+      ],
+      "type": "string"
+    },
+    "vehicle_mpg": {
+      "default": 26,
+      "type": "number"
+    },
     "vehicle_type": {
-      "type": "string",
+      "default": "personal_car",
+      "description": "Driver's vehicle class, used to match against opportunity role_type.",
       "enum": [
         "personal_car",
         "cargo_van",
         "box_truck",
         "other"
       ],
-      "default": "personal_car",
-      "description": "Driver's vehicle class, used to match against opportunity role_type."
+      "type": "string"
     },
-    "region": {
-      "type": "string",
-      "default": "Hampton Roads, VA",
-      "description": "Driver's primary working market. LOKIN AI launches Virginia-first in Hampton Roads while retaining future multi-market support."
+    "weekly_goal": {
+      "default": 850,
+      "type": "number"
     },
-    "alert_enabled": {
-      "type": "boolean",
-      "default": false,
-      "description": "Opt-in to automatic alerts when a new opportunity matches this driver's location and vehicle."
+    "work_filters": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "work_status": {
+      "default": "off",
+      "enum": [
+        "off",
+        "working",
+        "paused"
+      ],
+      "type": "string"
     }
   },
-  "required": []
+  "required": [],
+  "type": "object"
 }
