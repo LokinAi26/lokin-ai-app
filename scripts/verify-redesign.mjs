@@ -37,7 +37,7 @@ for (const file of sourceFiles) {
 assert(violations.length === 0, `Forbidden redesign values remain: ${JSON.stringify(violations)}`);
 
 const css = read("src/index.css");
-assert(css.includes("--primary: 81 84% 51%"), "Global primary token is not the approved #A2EB1B equivalent.");
+assert(css.includes("--primary: 81.1 83.9% 51.4%"), "Global primary token is not the approved #A2EB1B equivalent.");
 assert(css.includes("#A2EB1B"), "Approved LOKIN lime #A2EB1B is missing from the global design authority.");
 
 const routeMap = read("src/components/LiveVectorMap.jsx");
@@ -79,7 +79,7 @@ for (const file of coreScreens) {
 console.log(JSON.stringify({
   ok: true,
   officialLime: "#A2EB1B",
-  hslToken: "81 84% 51%",
+  hslToken: "81.1 83.9% 51.4%",
   coreScreens: coreScreens.length,
   appStoreSafeOnboarding: true,
   sessionRestorePreserved: true,
