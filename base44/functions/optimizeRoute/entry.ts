@@ -1,3 +1,4 @@
+import { withDeadline } from '../../shared/requestDeadline.js';
 import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import {
@@ -31,20 +32,20 @@ function isCurrentTrustedOffer(offer) {
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await withDeadline(() => base44.auth.me(), 5000, "authentication");
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await req.json().catch(() => ({}));
+    const body = await withDeadline(() => req.json().catch(() => ({})), 2000, "request parsing");
     const originAddress = body.originAddress || user.address || "";
     const mode = OPTIMIZATION_MODES.some((m) => m.value === body.mode) ? body.mode : "most_profit";
 
-    const [allOffers, prefsList, blocked, avoidPlaces, earnings] = await Promise.all([
+    const [allOffers, prefsList, blocked, avoidPlaces, earnings] = await withDeadline(() => Promise.all([
       base44.entities.Offer.filter({}),
       base44.entities.DriverPreference.filter({}),
       base44.entities.BlockedCustomer.filter({}),
       base44.entities.AvoidPlace.filter({}),
       base44.entities.Earning.filter({}),
-    ]);
+    ]), 10000, "loading offers and preferences");
 
     const visibleOffers = filterOffersForUser(allOffers, String(user.id));
 
@@ -132,7 +133,8 @@ export default async function(req) {
       });
     }
 
-    const briefing = await invokeLLMWithAdmission(base44, {
+    let briefingSource = "ai";
+    const briefing = await withDeadline(() => invokeLLMWithAdmission(base44, {
       prompt: [
         `You are LOKIN AI, a gig-driver earnings optimizer. Be concise and direct.`,
         `Optimization mode: ${modeLabel}. Origin: "${originAddress || "unknown"}".`,
@@ -151,6 +153,10 @@ export default async function(req) {
         `and a concrete estimate to close the remaining $${Math.max(0, (prefs.daily_goal || 150) - todayEarnings).toFixed(2)} to hit today's goal.`,
         `3-4 short bullets, plain text, no markdown headings.`,
       ].join("\n"),
+    }), 5000, "strategy briefing").catch(() => {
+      briefingSource = "route_summary";
+      console.warn("[optimizeRoute] AI briefing unavailable; returning computed route.");
+      return `Route ready: ${stats.stops} stops, ${stats.miles} miles, estimated $${stats.net} net. Follow the listed stop order. AI strategy is temporarily unavailable.`;
     });
 
     return Response.json({
@@ -176,6 +182,7 @@ export default async function(req) {
       declinedCount: declined.length,
       todayEarnings,
       briefing,
+      briefingSource,
       feed: {
         active_verified: currentOffers.length,
         excluded_untrusted_or_expired: Math.max(0, visibleOffers.length - currentOffers.length),
@@ -184,6 +191,7 @@ export default async function(req) {
       },
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("[optimizeRoute] request failed", error.code || "OPTIMIZE_FAILED");
+    return Response.json({ error: error.message, code: error.code || "OPTIMIZE_FAILED" }, { status: error.status || 500 });
   }
 }
