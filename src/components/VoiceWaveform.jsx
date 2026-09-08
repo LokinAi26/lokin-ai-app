@@ -11,10 +11,10 @@ export default function VoiceWaveform({ active = false, bars = 5, className = ""
             width: 4,
             height: active ? 30 : 10,
             borderRadius: 4,
-            background: "hsl(80 100% 50%)",
+            background: "hsl(81 84% 51%)",
             opacity: active ? 1 : 0.4,
             animationDelay: `${(i % bars) * 0.13}s`,
-            boxShadow: active ? "0 0 8px hsl(80 100% 50% / 0.7)" : "none",
+            boxShadow: active ? "0 0 8px hsl(81 84% 51% / 0.7)" : "none",
           }}
         />
       ))}
