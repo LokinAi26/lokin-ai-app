@@ -79,7 +79,7 @@ export default function DrivingMode() {
             </radialGradient>
             <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="hsl(188 95% 50%)" />
-              <stop offset="100%" stopColor="hsl(80 100% 50%)" />
+              <stop offset="100%" stopColor="hsl(81 84% 51%)" />
             </linearGradient>
             <linearGradient id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="hsl(188 95% 50% / 0.4)" />
@@ -102,15 +102,15 @@ export default function DrivingMode() {
 
           {/* route line */}
           {stopPts.length > 1 && (
-            <polyline points={stopPts.map((p) => p.join(",")).join(" ")} fill="none" stroke="url(#routeGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 5px hsl(80 100% 50% / 0.8))" }} />
+            <polyline points={stopPts.map((p) => p.join(",")).join(" ")} fill="none" stroke="url(#routeGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 5px hsl(81 84% 51% / 0.8))" }} />
           )}
 
           {/* stop nodes */}
           {stopPts.map((p, i) => (
             <g key={i}>
-              <circle cx={p[0]} cy={p[1]} r={i === idx ? 9 : 6} fill={i < idx ? "hsl(80 100% 50% / 0.35)" : i === idx ? "hsl(80 100% 50%)" : "hsl(188 95% 50%)"} stroke="#000" strokeWidth="2" />
+              <circle cx={p[0]} cy={p[1]} r={i === idx ? 9 : 6} fill={i < idx ? "hsl(81 84% 51% / 0.35)" : i === idx ? "hsl(81 84% 51%)" : "hsl(188 95% 50%)"} stroke="#000" strokeWidth="2" />
               {i === idx && (
-                <circle cx={p[0]} cy={p[1]} r="9" fill="none" stroke="hsl(80 100% 50%)" strokeWidth="2">
+                <circle cx={p[0]} cy={p[1]} r="9" fill="none" stroke="hsl(81 84% 51%)" strokeWidth="2">
                   <animate attributeName="r" values="9;20;9" dur="1.6s" repeatCount="indefinite" />
                   <animate attributeName="opacity" values="0.9;0;0.9" dur="1.6s" repeatCount="indefinite" />
                 </circle>
@@ -140,7 +140,7 @@ export default function DrivingMode() {
             <span>PROGRESS</span><span>{progress}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
-            <div className="h-full bg-primary" style={{ width: `${progress}%`, boxShadow: "0 0 8px hsl(80 100% 50% / 0.8)" }} />
+            <div className="h-full bg-primary" style={{ width: `${progress}%`, boxShadow: "0 0 8px hsl(81 84% 51% / 0.8)" }} />
           </div>
         </div>
       </div>
