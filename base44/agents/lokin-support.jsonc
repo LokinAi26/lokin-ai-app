@@ -33,5 +33,75 @@
       ]
     }
   ],
+  "context_files": [
+    {
+      "asset_id": "6a9f7ebf67456c9a8a63fcc9",
+      "file_name": "9B3B1E39-3D41-4F6D-8572-884711BE534B.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/1a881f964_9B3B1E39-3D41-4F6D-8572-884711BE534B.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ec3a7634c863b1fe345",
+      "file_name": "637786F6-611E-425B-A6C8-116076722090.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/6491cd067_637786F6-611E-425B-A6C8-116076722090.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ec51b0881f17fa1b3d0",
+      "file_name": "B38CB20D-CA3C-4908-9517-085992FC97E0.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/b9b1e47ba_B38CB20D-CA3C-4908-9517-085992FC97E0.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ec7f7fd50e57497e700",
+      "file_name": "466615DB-A805-4CC8-A1E1-6598962C62D7.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/9043f48ae_466615DB-A805-4CC8-A1E1-6598962C62D7.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ec9509a217d5239652c",
+      "file_name": "0C41155C-0179-452A-8C72-FF40524D892A.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/d4092b1a3_0C41155C-0179-452A-8C72-FF40524D892A.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ecb0152378ce77416d4",
+      "file_name": "AD47BBE6-64B4-4938-9578-846ACF1D65B0.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/910f5fda1_AD47BBE6-64B4-4938-9578-846ACF1D65B0.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ecd3c0c663f6af64045",
+      "file_name": "71D0D3ED-E060-42C0-9396-1EF8CA39DD0B.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/d49f5ba74_71D0D3ED-E060-42C0-9396-1EF8CA39DD0B.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ecf261b139c5d21f651",
+      "file_name": "389D1C58-5DF7-4181-B104-8D7B6BD0CF97.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/a247fed70_389D1C58-5DF7-4181-B104-8D7B6BD0CF97.png",
+      "file_type": "png"
+    },
+    {
+      "asset_id": "6a9f7ed1a5fad1677ffa1fcc",
+      "file_name": "AC4E3F04-D0AE-4548-9271-2C63B09BF6B8.png",
+      "file_url": "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/be633001d_AC4E3F04-D0AE-4548-9271-2C63B09BF6B8.png",
+      "file_type": "png"
+    }
+  ],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": "",
+  "telegram_greeting": "",
+  "line_greeting": "",
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "allow_anonymous_access": false,
   "name": "lokin-support"
 }
