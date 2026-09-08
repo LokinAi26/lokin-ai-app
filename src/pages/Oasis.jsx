@@ -645,7 +645,7 @@ export default function Oasis() {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-black shadow-[0_0_24px_rgba(170,255,0,0.22)] active:scale-[0.98]"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-black shadow-[0_0_24px_rgba(162,235,27,0.22)] active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" /> Plant an idea
           </button>
