@@ -121,7 +121,7 @@ export default function Connectivity() {
           <div className="flex items-end gap-1 h-12">
             {history.length === 0 && <div className="text-xs text-white/40 self-center">Collecting supported samples…</div>}
             {history.map((b, i) => (
-              <div key={`${i}-${b}`} className="flex-1 rounded-sm" style={{ height: `${(b / 5) * 100}%`, background: "hsl(80 100% 50% / 0.75)", minHeight: "3px" }} />
+              <div key={`${i}-${b}`} className="flex-1 rounded-sm" style={{ height: `${(b / 5) * 100}%`, background: "hsl(81 84% 51% / 0.75)", minHeight: "3px" }} />
             ))}
           </div>
           <div className="mt-2 text-[10px] text-white/40 flex items-center gap-1"><Activity className="h-3 w-3" /> Device-reported connection history</div>
