@@ -180,9 +180,9 @@ export default function Earnings() {
             <LineChart data={chart} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} interval={range === "month" ? 4 : 0} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
-              <Tooltip cursor={{ stroke: "hsl(80 100% 50% / 0.4)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
-              {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(80 100% 50%)" strokeDasharray="4 4" />}
-              <Line type="monotone" dataKey="value" stroke="#AAFF00" strokeWidth={3} dot={{ r: 3, fill: "#AAFF00" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.8))" }} />
+              <Tooltip cursor={{ stroke: "hsl(81 84% 51% / 0.4)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v) => [`$${v.toFixed(2)}`, "Earnings"]} />
+              {range === "today" && <ReferenceLine y={dailyGoal} stroke="hsl(81 84% 51%)" strokeDasharray="4 4" />}
+              <Line type="monotone" dataKey="value" stroke="#A2EB1B" strokeWidth={3} dot={{ r: 3, fill: "#A2EB1B" }} activeDot={{ r: 5 }} style={{ filter: "drop-shadow(0 0 6px hsl(81 84% 51% / 0.8))" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
