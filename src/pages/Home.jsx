@@ -45,13 +45,13 @@ export default function Home() {
 
   async function tapOut() {
     if (!prefs?.id) return;
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off" });
+    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
     setPrefs(updated);
   }
 
   async function resumeWork() {
     if (!prefs?.id) return;
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "working" });
+    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
     setPrefs(updated);
     sessionStorage.removeItem("lokin_app_free_roam");
     navigate("/ai-gps?focus=locked&nav=1&view=real");
