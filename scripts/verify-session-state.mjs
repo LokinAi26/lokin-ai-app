@@ -40,8 +40,20 @@ assert(
     pathname: "/ai-gps",
     lockedGps: true,
     freeRoam: false,
+    hasExplicitGpsDestination: false,
   }) === "/",
-  "off restore must leave locked GPS",
+  "off restore without a destination must leave locked GPS",
+);
+
+assert(
+  resolveSessionRestoreRedirect({
+    workStatus: "off",
+    pathname: "/ai-gps",
+    lockedGps: true,
+    freeRoam: false,
+    hasExplicitGpsDestination: true,
+  }) === null,
+  "FIND + GO must preserve direct navigation while work status is off",
 );
 
 const layoutSource = fs.readFileSync(new URL("../src/components/DriverLayout.jsx", import.meta.url), "utf8");
@@ -64,7 +76,8 @@ assert(workSheetSource.includes('break_active: false'), "Start Work must clear s
 const coldRestoreCases = [
   { workStatus: "paused", pathname: "/route", lockedGps: false, freeRoam: false, expected: null },
   { workStatus: "working", pathname: "/", lockedGps: false, freeRoam: false, expected: "/ai-gps?focus=locked&nav=1&view=real" },
-  { workStatus: "off", pathname: "/ai-gps", lockedGps: true, freeRoam: false, expected: "/" },
+  { workStatus: "off", pathname: "/ai-gps", lockedGps: true, freeRoam: false, hasExplicitGpsDestination: false, expected: "/" },
+  { workStatus: "off", pathname: "/ai-gps", lockedGps: true, freeRoam: false, hasExplicitGpsDestination: true, expected: null },
 ];
 for (const test of coldRestoreCases) {
   const { expected, ...input } = test;
