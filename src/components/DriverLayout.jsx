@@ -53,6 +53,7 @@ export default function DriverLayout() {
   const currentTab = pathToTab(loc.pathname);
   const gpsParams = new URLSearchParams(loc.search);
   const lockedGps = loc.pathname === "/ai-gps" && gpsParams.get("focus") === "locked";
+  const hasExplicitGpsDestination = Boolean(gpsParams.get("destination")?.trim());
   const activeNavigation = lockedGps && gpsParams.get("nav") === "1";
 
   useEffect(() => {
@@ -70,11 +71,12 @@ export default function DriverLayout() {
         pathname: loc.pathname,
         lockedGps,
         freeRoam: roamActive,
+        hasExplicitGpsDestination,
       });
       if (redirect) navigate(redirect, { replace: true });
     }).catch(() => {});
     return () => { alive = false; };
-  }, [loc.pathname, lockedGps, navigate]);
+  }, [loc.pathname, lockedGps, hasExplicitGpsDestination, navigate]);
 
   // Locked navigation is a view of an already-active session, never a state
   // transition. Start Work and Resume persist "working" before navigating here.
