@@ -33,6 +33,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
     try {
       const data = {
         work_status: "working",
+        break_active: false,
         active_modes: modes.length ? modes : ["delivery"],
         work_filters: filters,
       };
