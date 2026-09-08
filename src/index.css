@@ -25,10 +25,10 @@ body {
   -webkit-font-smoothing: antialiased;
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(circle, hsl(80 100% 50% / 0.10) 1px, transparent 1.6px),
-    repeating-linear-gradient(0deg, transparent 0 7px, hsl(80 100% 50% / 0.045) 7px 8px, transparent 8px 15px),
-    repeating-linear-gradient(90deg, transparent 0 13px, hsl(80 100% 50% / 0.05) 13px 14px, transparent 14px 23px, hsl(80 100% 50% / 0.025) 23px 24px, transparent 24px 37px),
-    linear-gradient(180deg, hsl(80 100% 50% / 0.02) 0%, transparent 22%, hsl(80 100% 50% / 0.03) 58%, transparent 100%);
+    radial-gradient(circle, hsl(81 84% 51% / 0.10) 1px, transparent 1.6px),
+    repeating-linear-gradient(0deg, transparent 0 7px, hsl(81 84% 51% / 0.045) 7px 8px, transparent 8px 15px),
+    repeating-linear-gradient(90deg, transparent 0 13px, hsl(81 84% 51% / 0.05) 13px 14px, transparent 14px 23px, hsl(81 84% 51% / 0.025) 23px 24px, transparent 24px 37px),
+    linear-gradient(180deg, hsl(81 84% 51% / 0.02) 0%, transparent 22%, hsl(81 84% 51% / 0.03) 58%, transparent 100%);
   background-size: 18px 18px, 100% 100%, 100% 100%, 100% 100%;
   background-attachment: fixed, fixed, fixed, fixed;
   background-position: center, 0 0, 0 0, center;
@@ -42,7 +42,7 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
-    --primary: 80 100% 50%; /* LOKIN Neon Lime master: #AAFF00 */
+    --primary: 81 84% 51%; /* LOKIN Neon Lime master: #A2EB1B */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 92%;
@@ -54,10 +54,10 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 18%;
-    --ring: 80 100% 50%;
-    --neon: 80 100% 50%;
+    --ring: 81 84% 51%;
+    --neon: 81 84% 51%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 80 100% 50%;
+    --chart-1: 81 84% 51%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
@@ -69,12 +69,12 @@ body {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 90%;
-    --sidebar-primary: 80 100% 50%;
+    --sidebar-primary: 81 84% 51%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 12%;
     --sidebar-accent-foreground: 220 14% 92%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 80 100% 50%;
+    --sidebar-ring: 81 84% 51%;
   }
   .dark {
     --background: 0 0% 0%;
@@ -83,7 +83,7 @@ body {
     --card-foreground: 220 14% 94%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 94%;
-    --primary: 80 100% 50%; /* LOKIN Neon Lime master: #AAFF00 */
+    --primary: 81 84% 51%; /* LOKIN Neon Lime master: #A2EB1B */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 94%;
@@ -95,22 +95,22 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 18%;
-    --ring: 80 100% 50%;
-    --neon: 80 100% 50%;
+    --ring: 81 84% 51%;
+    --neon: 81 84% 51%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 80 100% 50%;
+    --chart-1: 81 84% 51%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 90%;
-    --sidebar-primary: 80 100% 50%;
+    --sidebar-primary: 81 84% 51%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 12%;
     --sidebar-accent-foreground: 220 14% 92%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 80 100% 50%;
+    --sidebar-ring: 81 84% 51%;
   }
 }
 
@@ -131,12 +131,12 @@ body {
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .glow-primary {
-    box-shadow: 0 0 0 1px hsl(80 100% 50% / 0.35), 0 0 18px -2px hsl(80 100% 50% / 0.55);
+    box-shadow: 0 0 0 1px hsl(81 84% 51% / 0.35), 0 0 18px -2px hsl(81 84% 51% / 0.55);
   }
   .glow-cyan {
     box-shadow: 0 0 0 1px hsl(188 95% 50% / 0.35), 0 0 18px -2px hsl(188 95% 50% / 0.5);
   }
-  .text-glow { text-shadow: 0 0 12px hsl(80 100% 50% / 0.55); }
+  .text-glow { text-shadow: 0 0 12px hsl(81 84% 51% / 0.55); }
   .text-glow-cyan { text-shadow: 0 0 12px hsl(188 95% 50% / 0.55); }
   .glass {
     background: hsl(240 6% 5% / 0.7);
@@ -150,26 +150,26 @@ body {
     color: transparent;
   }
   .glow-border {
-    border: 1px solid hsl(80 100% 50% / 0.45);
-    box-shadow: 0 0 16px -4px hsl(80 100% 50% / 0.55), inset 0 0 14px -8px hsl(80 100% 50% / 0.45);
+    border: 1px solid hsl(81 84% 51% / 0.45);
+    box-shadow: 0 0 16px -4px hsl(81 84% 51% / 0.55), inset 0 0 14px -8px hsl(81 84% 51% / 0.45);
   }
   .lokin-panel {
     background: linear-gradient(180deg, hsl(240 6% 7%) 0%, hsl(240 6% 4%) 100%);
   }
   .radial-fade {
-    background-image: radial-gradient(120% 80% at 50% 0%, hsl(80 100% 50% / 0.09), transparent 60%);
+    background-image: radial-gradient(120% 80% at 50% 0%, hsl(81 84% 51% / 0.09), transparent 60%);
   }
   .brand-grid {
     background-image:
-      linear-gradient(hsl(80 100% 50% / 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(80 100% 50% / 0.05) 1px, transparent 1px);
+      linear-gradient(hsl(81 84% 51% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(81 84% 51% / 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .leaflet-container { background: #050608; font-family: var(--font-body); }
-  .lokin-route { filter: drop-shadow(0 0 6px rgba(170, 255, 0, 0.85)); }
-  .leaflet-tooltip.lokin-tip { background: rgba(5, 6, 8, 0.92); border: 1px solid rgba(170, 255, 0, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
+  .lokin-route { filter: drop-shadow(0 0 6px rgba(162, 235, 27, 0.85)); }
+  .leaflet-tooltip.lokin-tip { background: rgba(5, 6, 8, 0.92); border: 1px solid rgba(162, 235, 27, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
   .leaflet-tooltip.lokin-tip::before { display: none; }
   @keyframes ticker-scroll {
     from { transform: translateX(0); }
@@ -201,8 +201,8 @@ body {
     50% { transform: scaleY(1); }
   }
   @keyframes lokin-pulse {
-    0%, 100% { filter: drop-shadow(0 0 3px hsl(80 100% 50% / 0.35)); transform: scale(1); }
-    50% { filter: drop-shadow(0 0 16px hsl(80 100% 50% / 0.85)); transform: scale(1.06); }
+    0%, 100% { filter: drop-shadow(0 0 3px hsl(81 84% 51% / 0.35)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 16px hsl(81 84% 51% / 0.85)); transform: scale(1.06); }
   }
   @keyframes lokin-spin {
     to { transform: rotate(360deg); }
