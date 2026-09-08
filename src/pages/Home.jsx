@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Brain, Truck, SlidersHorizontal, ScanLine, Package, Activity, Flame } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph, LokinWordmark } from "@/components/Brand";
@@ -12,6 +12,7 @@ import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import SealDecisionCard from "@/components/SealDecisionCard";
+import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
 
 function greeting() {
   const h = new Date().getHours();
@@ -21,6 +22,7 @@ function greeting() {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const [prefs, setPrefs] = useState(null);
   const [data, setData] = useState(null);
   const [me, setMe] = useState(null);
@@ -45,6 +47,14 @@ export default function Home() {
     if (!prefs?.id) return;
     const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off" });
     setPrefs(updated);
+  }
+
+  async function resumeWork() {
+    if (!prefs?.id) return;
+    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "working" });
+    setPrefs(updated);
+    sessionStorage.removeItem("lokin_app_free_roam");
+    navigate("/ai-gps?focus=locked&nav=1&view=real");
   }
 
   async function loadPrefs() {
@@ -77,7 +87,9 @@ export default function Home() {
   const netPerHour = data?.stats?.perHour || 0;
   const miles = data?.stats?.miles || 0;
   const fuel = data?.stats?.fuel || 0;
-  const working = prefs?.work_status === "working";
+  const workStatus = normalizeWorkStatus(prefs?.work_status);
+  const working = workStatus === "working";
+  const paused = workStatus === "paused";
   const role = getRoleMeta(prefs?.user_type);
   const firstName = (me?.full_name?.split(" ")[0]) || role.short;
 
@@ -128,7 +140,7 @@ export default function Home() {
             <div className="text-[9px] text-white/45">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", working ? "ON" : "OFF"], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
@@ -137,6 +149,12 @@ export default function Home() {
           <Link to="/ai-gps?focus=locked" className="block rounded-3xl border border-primary/35 bg-primary/[.06] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
+      ) : paused ? (
+        <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
+          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(180,255,0,.13),transparent 64%)",boxShadow:"0 0 42px rgba(170,255,0,.12)"}}><LokinGlyph size={112} /></div>
+          <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
+          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
+        </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
           <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(180,255,0,.13),transparent 64%)",boxShadow:"0 0 42px rgba(170,255,0,.12)"}}><LokinGlyph size={112} className="lokin-pulse"/></div>
