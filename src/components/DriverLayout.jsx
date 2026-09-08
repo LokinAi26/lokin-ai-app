@@ -109,7 +109,7 @@ export default function DriverLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
-      {!lockedGps && <header className="sticky top-0 z-30 glass border-b border-white/8 pt-[env(safe-area-inset-top)] select-none">
+      {!lockedGps && <header className="chrome-shell sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
           {isNested ? (
             <button onClick={() => navigate(isShopFlow && loc.pathname === "/locator" ? "/shop-deliver" : TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
@@ -149,7 +149,7 @@ export default function DriverLayout() {
         </motion.div>
       </main>
 
-      {!lockedGps && <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 border-t border-white/8 glass z-40 pb-[env(safe-area-inset-bottom)] select-none">
+      {!lockedGps && <nav aria-label="Main navigation" className="chrome-dock fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)] select-none">
         <div className="max-w-md mx-auto grid grid-cols-5">
           {NAV.map(({ key, label, icon: Icon, center }) => {
             const active = currentTab === key;
@@ -157,7 +157,7 @@ export default function DriverLayout() {
               return (
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
+                  <div className={`chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
                     <Icon size={24} />
                   </div>
                   <span className={active ? "text-primary" : "text-white/45"}>LOKIN</span>
