@@ -494,7 +494,7 @@ export default function PrintfulStore({ storeId = "", limit = 200 }) {
                   rel="noopener noreferrer"
                   aria-disabled={selectedVariant?.in_stock === false}
                   onClick={(e) => { if (selectedVariant?.in_stock === false) e.preventDefault(); }}
-                  className={`w-full rounded-xl border py-3 text-sm font-black text-center transition-transform inline-flex items-center justify-center gap-2 ${selectedVariant?.in_stock === false ? "border-white/10 bg-white/5 text-white/30 pointer-events-none" : "border-primary/50 bg-primary text-black active:scale-[0.99] shadow-[0_0_24px_rgba(170,255,0,0.18)]"}`}
+                  className={`w-full rounded-xl border py-3 text-sm font-black text-center transition-transform inline-flex items-center justify-center gap-2 ${selectedVariant?.in_stock === false ? "border-white/10 bg-white/5 text-white/30 pointer-events-none" : "border-primary/50 bg-primary text-black active:scale-[0.99] shadow-[0_0_24px_rgba(162,235,27,0.18)]"}`}
                 >
                   <ShoppingCart className="h-4 w-4" /> LOCK IT IN{selectedVariant?.name ? ` · ${selectedVariant.name}` : ""}
                 </a>
