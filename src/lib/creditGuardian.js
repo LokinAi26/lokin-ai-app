@@ -1,5 +1,6 @@
 import { guardianPolicyFor } from "./creditGuardianManifest";
 import { hasAiConsent } from "./aiConsent";
+import { requestRouteOptimization } from "./routeOptimizerRequest";
 
 const CACHE_PREFIX = "lokin:guardian:";
 
@@ -55,11 +56,14 @@ export async function guardedInvoke(base44, name, payload = {}, { force = false,
     err.code = "LOKIN_CREDIT_DEFERRED";
     throw err;
   }
+  const invoke = () => name === "optimizeRoute"
+    ? requestRouteOptimization(base44, payload)
+    : base44.functions.invoke(name, payload);
   const ttl = Number(policy.ttl || 0);
   if (ttl > 0) {
     const key = `${name}:${JSON.stringify(payload)}`;
-    const result = await guardedCall(key, () => base44.functions.invoke(name, payload), { maxAge: ttl, force });
+    const result = await guardedCall(key, invoke, { maxAge: ttl, force });
     return result.data;
   }
-  return base44.functions.invoke(name, payload);
+  return invoke();
 }
