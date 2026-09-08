@@ -5,7 +5,7 @@
 export default function SatelliteView({ status = "online", connected = 4 }) {
   // status: "online" | "weak" | "offline"
   const beamColor =
-    status === "online" ? "#AAFF00" : status === "weak" ? "#FFD200" : "#FF3B3B";
+    status === "online" ? "#A2EB1B" : status === "weak" ? "#FFD200" : "#FF3B3B";
   const glow =
     status === "online"
       ? "drop-shadow(0 0 8px rgba(168,255,0,0.85))"
@@ -44,14 +44,14 @@ export default function SatelliteView({ status = "online", connected = 4 }) {
 
         {/* Orbital rings (tilted ellipses) */}
         <g transform="rotate(-18 120 120)">
-          <ellipse cx="120" cy="120" rx="78" ry="48" fill="none" stroke="hsl(80 100% 50% / 0.22)" strokeWidth="1" strokeDasharray="3 5" />
+          <ellipse cx="120" cy="120" rx="78" ry="48" fill="none" stroke="hsl(81 84% 51% / 0.22)" strokeWidth="1" strokeDasharray="3 5" />
           <ellipse cx="120" cy="120" rx="96" ry="60" fill="none" stroke="hsl(188 95% 50% / 0.18)" strokeWidth="1" strokeDasharray="3 6" />
         </g>
 
         {/* Globe */}
-        <circle cx="120" cy="120" r="46" fill="url(#globe-grad)" stroke="hsl(80 100% 50% / 0.4)" strokeWidth="1.5" />
+        <circle cx="120" cy="120" r="46" fill="url(#globe-grad)" stroke="hsl(81 84% 51% / 0.4)" strokeWidth="1.5" />
         {/* Meridians + parallels for a planet look */}
-        <g stroke="hsl(80 100% 50% / 0.18)" strokeWidth="0.8" fill="none">
+        <g stroke="hsl(81 84% 51% / 0.18)" strokeWidth="0.8" fill="none">
           <ellipse cx="120" cy="120" rx="46" ry="14" />
           <ellipse cx="120" cy="120" rx="46" ry="28" />
           <ellipse cx="120" cy="120" rx="14" ry="46" />
