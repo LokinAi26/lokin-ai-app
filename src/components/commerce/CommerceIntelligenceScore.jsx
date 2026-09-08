@@ -33,7 +33,7 @@ export default function CommerceIntelligenceScore({ score }) {
               strokeLinecap="round"
               strokeDasharray={circ}
               strokeDashoffset={offset}
-              style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 0 6px hsl(80 100% 50% / 0.6))" }}
+              style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 0 6px hsl(81 84% 51% / 0.6))" }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
