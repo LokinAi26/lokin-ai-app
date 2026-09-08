@@ -128,7 +128,7 @@ export default function Home() {
         </div>
         <div className="mt-2 text-5xl font-extrabold font-display text-primary text-glow">${dailyGoal}</div>
         <div className="relative mt-4 h-2.5 rounded-full bg-white/10 overflow-visible">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 14px hsl(80 100% 50% / .8)" }} />
+          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 14px hsl(81 84% 51% / .8)" }} />
           <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #baff00"}} />
         </div>
         <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
@@ -151,13 +151,13 @@ export default function Home() {
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(180,255,0,.13),transparent 64%)",boxShadow:"0 0 42px rgba(170,255,0,.12)"}}><LokinGlyph size={112} /></div>
+          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(162,235,27,.13),transparent 64%)",boxShadow:"0 0 42px rgba(162,235,27,.12)"}}><LokinGlyph size={112} /></div>
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(180,255,0,.13),transparent 64%)",boxShadow:"0 0 42px rgba(170,255,0,.12)"}}><LokinGlyph size={112} className="lokin-pulse"/></div>
+          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(162,235,27,.13),transparent 64%)",boxShadow:"0 0 42px rgba(162,235,27,.12)"}}><LokinGlyph size={112} className="lokin-pulse"/></div>
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">START WORK</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">LOCK IN &amp; START EARNING</div>
         </button>
