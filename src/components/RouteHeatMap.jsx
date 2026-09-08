@@ -28,7 +28,7 @@ function heatColor(ratio) {
   if (ratio >= 0.82) return "#FF3B3B";
   if (ratio >= 0.62) return "#FF8A00";
   if (ratio >= 0.4) return "#FFD200";
-  return "#AAFF00";
+  return "#A2EB1B";
 }
 
 function Recenter({ center, zones }) {
@@ -276,8 +276,8 @@ export default function RouteHeatMap({
 
           {deviceCenter && (
             <>
-              <CircleMarker center={deviceCenter} radius={6} pathOptions={{ color: "#00E5FF", fillColor: "#AAFF00", fillOpacity: 1, weight: 2 }} />
-              <CircleMarker center={deviceCenter} radius={14} pathOptions={{ color: "#AAFF00", fillColor: "#AAFF00", fillOpacity: 0.14, weight: 0 }} />
+              <CircleMarker center={deviceCenter} radius={6} pathOptions={{ color: "#00E5FF", fillColor: "#A2EB1B", fillOpacity: 1, weight: 2 }} />
+              <CircleMarker center={deviceCenter} radius={14} pathOptions={{ color: "#A2EB1B", fillColor: "#A2EB1B", fillOpacity: 0.14, weight: 0 }} />
             </>
           )}
 
@@ -286,7 +286,7 @@ export default function RouteHeatMap({
 
         <div className="absolute bottom-2 left-2 z-[500] flex items-center gap-1.5 rounded-full glass border border-white/10 px-2.5 py-1">
           <span className="text-[9px] tracking-widest text-white/50 font-display">LOW</span>
-          {["#AAFF00", "#FFD200", "#FF8A00", "#FF3B3B"].map((color) => (
+          {["#A2EB1B", "#FFD200", "#FF8A00", "#FF3B3B"].map((color) => (
             <span key={color} className="h-2 w-2 rounded-full" style={{ background: color }} />
           ))}
           <span className="text-[9px] tracking-widest text-white/50 font-display">HIGH</span>
