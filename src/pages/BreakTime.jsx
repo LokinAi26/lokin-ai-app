@@ -83,9 +83,9 @@ export default function BreakTime() {
         <div className="relative h-28 w-28 mx-auto">
           <svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90">
             <circle cx="50" cy="50" r="42" stroke="hsl(0 0% 100% / 0.08)" strokeWidth="5" fill="none" />
-            <circle cx="50" cy="50" r="42" stroke="hsl(80 100% 50%)" strokeWidth="5" fill="none" strokeLinecap="round"
+            <circle cx="50" cy="50" r="42" stroke="hsl(81 84% 51%)" strokeWidth="5" fill="none" strokeLinecap="round"
               strokeDasharray={`${(pct / 100) * 2 * Math.PI * 42} ${2 * Math.PI * 42}`}
-              style={{ filter: "drop-shadow(0 0 4px hsl(80 100% 50% / 0.7))" }} />
+              style={{ filter: "drop-shadow(0 0 4px hsl(81 84% 51% / 0.7))" }} />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-2xl font-bold font-display text-primary text-glow leading-none">
