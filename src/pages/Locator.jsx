@@ -108,7 +108,7 @@ export default function Locator() {
 
         <div className="rounded-3xl border border-primary/20 bg-black overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b border-white/8"><div><div className="text-[10px] tracking-[0.18em] text-primary/70">STORE MAP</div><div className="text-sm font-bold text-white">Aisle {item.aisle || "?"} · Shelf {item.shelf || "?"}</div></div><Navigation className="h-5 w-5 text-primary"/></div>
-          <div className="relative aspect-[4/3] bg-[linear-gradient(rgba(170,255,0,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(170,255,0,.04)_1px,transparent_1px)] bg-[size:24px_24px]">
+          <div className="relative aspect-[4/3] bg-[linear-gradient(rgba(162,235,27,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(162,235,27,.04)_1px,transparent_1px)] bg-[size:24px_24px]">
             {[18,34,50,66,82].map((x,i)=><div key={x} className="absolute top-[12%] bottom-[12%] w-[9%] rounded-xl border border-white/10 bg-white/[0.03]" style={{left:`${x}%`}}><div className="text-center text-[9px] text-white/25 pt-1">A{i+1}</div></div>)}
             <div className="absolute left-[4%] bottom-[4%] rounded-lg border border-white/10 bg-black/80 px-2 py-1 text-[9px] text-white/40">ENTRANCE</div>
             <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{left:`${px}%`,top:`${py}%`}}>
