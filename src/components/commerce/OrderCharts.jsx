@@ -34,7 +34,7 @@ export default function OrderCharts({ orders, currency }) {
     unfulfilled: orders.filter((o) => !o.fulfillment_status || o.fulfillment_status === "null").length,
   };
   const pie = [
-    { name: "Fulfilled", value: ff.fulfilled, color: "hsl(80 100% 50%)" },
+    { name: "Fulfilled", value: ff.fulfilled, color: "hsl(81 84% 51%)" },
     { name: "Partial", value: ff.partial, color: "hsl(43 74% 66%)" },
     { name: "Unfulfilled", value: ff.unfulfilled, color: "hsl(0 84% 60%)" },
   ].filter((d) => d.value > 0);
@@ -59,10 +59,10 @@ export default function OrderCharts({ orders, currency }) {
                 <XAxis dataKey="label" tick={{ fontSize: 9, fill: "hsl(0 0% 100% / 0.4)" }} interval={1} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: "hsl(0 0% 100% / 0.4)" }} tickLine={false} axisLine={false} width={40} />
                 <Tooltip
-                  contentStyle={{ background: "hsl(240 6% 5%)", border: "1px solid hsl(80 100% 50% / 0.3)", borderRadius: 12, fontSize: 11 }}
+                  contentStyle={{ background: "hsl(240 6% 5%)", border: "1px solid hsl(81 84% 51% / 0.3)", borderRadius: 12, fontSize: 11 }}
                   formatter={(v) => money(v, currency)}
                 />
-                <Bar dataKey="revenue" fill="hsl(80 100% 50%)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="revenue" fill="hsl(81 84% 51%)" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -78,7 +78,7 @@ export default function OrderCharts({ orders, currency }) {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ background: "hsl(240 6% 5%)", border: "1px solid hsl(80 100% 50% / 0.3)", borderRadius: 12, fontSize: 11 }}
+                  contentStyle={{ background: "hsl(240 6% 5%)", border: "1px solid hsl(81 84% 51% / 0.3)", borderRadius: 12, fontSize: 11 }}
                 />
               </PieChart>
             </ResponsiveContainer>
