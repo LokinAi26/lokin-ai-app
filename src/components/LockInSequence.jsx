@@ -90,11 +90,11 @@ function LockClockAnim({ phase }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <circle cx="50" cy="58" r="38" fill="#8dff00" opacity="0.08" />
-        <path d="M35 40 V27 a15 15 0 0 1 30 0 V40" stroke="#8dff00" strokeWidth="8" strokeLinecap="round" />
+        <circle cx="50" cy="58" r="38" fill="#A2EB1B" opacity="0.08" />
+        <path d="M35 40 V27 a15 15 0 0 1 30 0 V40" stroke="#A2EB1B" strokeWidth="8" strokeLinecap="round" />
         <circle cx="50" cy="58" r="33" fill="#050608" stroke="#c8ced8" strokeWidth="5" />
         <line x1="50" y1="58" x2="50" y2="41" stroke="#fff" strokeWidth="3.8" strokeLinecap="round" />
-        <line x1="50" y1="58" x2="64" y2="50" stroke="#8dff00" strokeWidth="4" strokeLinecap="round" />
+        <line x1="50" y1="58" x2="64" y2="50" stroke="#A2EB1B" strokeWidth="4" strokeLinecap="round" />
       </motion.svg>
     );
   }
@@ -106,7 +106,7 @@ function LockClockAnim({ phase }) {
       <defs>
         <linearGradient id={`${gid}-neon`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#d7ff45" />
-          <stop offset="50%" stopColor="#8dff00" />
+          <stop offset="50%" stopColor="#A2EB1B" />
           <stop offset="100%" stopColor="#39b900" />
         </linearGradient>
         <linearGradient id={`${gid}-metal`} x1="0" y1="0" x2="0" y2="1">
@@ -125,7 +125,7 @@ function LockClockAnim({ phase }) {
       </defs>
 
       {/* halo pulse */}
-      <motion.circle cx="50" cy="58" r="38" fill="#8dff00"
+      <motion.circle cx="50" cy="58" r="38" fill="#A2EB1B"
         initial={{ opacity: 0.08, scale: 1 }}
         animate={{ opacity: locked ? [0.2, 0.3, 0.2] : [0.08, 0.22, 0.08], scale: locked ? 1.04 : 1.08 }}
         style={{ transformBox: "view-box", transformOrigin: "50px 58px" }}
