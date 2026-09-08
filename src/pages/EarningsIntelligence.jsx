@@ -110,7 +110,7 @@ export default function EarningsIntelligence() {
           <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${Math.max(0, Math.min(100, Number(mission.goal_progress_pct || 0)))}%`, boxShadow: "0 0 16px hsl(80 100% 50% / .8)" }}
+              style={{ width: `${Math.max(0, Math.min(100, Number(mission.goal_progress_pct || 0)))}%`, boxShadow: "0 0 16px hsl(81 84% 51% / .8)" }}
             />
           </div>
           <div className="mt-2 flex justify-between text-[10px] text-white/40">
