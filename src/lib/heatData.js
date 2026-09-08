@@ -46,7 +46,7 @@ export function heatColor(metric, val) {
   if (val >= red) return "#FF3B3B";
   if (val >= orange) return "#FF8A00";
   if (val >= yellow) return "#FFD200";
-  return "#AAFF00";
+  return "#A2EB1B";
 }
 
 export function metricValue(h, metric) {
