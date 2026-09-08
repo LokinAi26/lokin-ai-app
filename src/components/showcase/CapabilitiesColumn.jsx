@@ -51,7 +51,7 @@ function ShoppingLocator() {
       </div>
       <div className="mt-2 text-[11px] text-white/70">Peanut Butter</div>
       <div className="text-[10px] text-primary font-semibold">Aisle 7 · Shelf 3</div>
-      <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: "40%", boxShadow: "0 0 6px hsl(80 100% 50% / 0.7)" }} /></div>
+      <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: "40%", boxShadow: "0 0 6px hsl(81 84% 51% / 0.7)" }} /></div>
       <div className="text-[9px] text-white/40 mt-0.5">You're 40% closer</div>
     </div>
   );
