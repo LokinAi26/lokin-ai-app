@@ -4,6 +4,7 @@ import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } f
 import { motion } from "framer-motion";
 import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
+import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
@@ -41,7 +42,8 @@ const NAV = [
 export default function DriverLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
-  const [working, setWorking] = useState(false);
+  const [workStatus, setWorkStatus] = useState("off");
+  const working = workStatus === "working";
   const [appFreeRoam, setAppFreeRoam] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("lokin_app_free_roam") === "1");
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -57,22 +59,19 @@ export default function DriverLayout() {
     let alive = true;
     base44.entities.DriverPreference.filter({}).then((p) => {
       if (!alive) return;
-      const workStatus = p[0]?.work_status || "off";
-      const isWorking = workStatus === "working";
-      setWorking(isWorking);
+      const restoredStatus = normalizeWorkStatus(p[0]?.work_status);
+      setWorkStatus(restoredStatus);
       const roamActive = sessionStorage.getItem("lokin_app_free_roam") === "1";
       setAppFreeRoam(roamActive);
-      // DriverPreference.work_status is authoritative during session restore.
-      // Resolve paused/off before any navigation-engine or route optimization work.
-      if (workStatus === "paused" && loc.pathname !== "/break-time") {
-        navigate("/break-time", { replace: true });
-      } else if (workStatus === "off" && lockedGps) {
-        navigate("/", { replace: true });
-      } else if (isWorking && !roamActive && loc.pathname === "/") {
-        // GPS is the primary Home surface while working, except when the driver
-        // deliberately opened app Free Roam to use the rest of LOKIN.
-        navigate("/ai-gps?focus=locked&nav=1&view=real", { replace: true });
-      }
+      // DriverPreference.work_status is the sole session-restore authority.
+      // The resolver is pure and independent from navigation/optimization engines.
+      const redirect = resolveSessionRestoreRedirect({
+        workStatus: restoredStatus,
+        pathname: loc.pathname,
+        lockedGps,
+        freeRoam: roamActive,
+      });
+      if (redirect) navigate(redirect, { replace: true });
     }).catch(() => {});
     return () => { alive = false; };
   }, [loc.pathname, lockedGps, navigate]);
@@ -127,9 +126,9 @@ export default function DriverLayout() {
               </span>
             </button>
           )}
-          {working && (
+          {workStatus !== "off" && (
             <span className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> LOCKED IN
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> {sessionStatusLabel(workStatus)}
             </span>
           )}
         </div>
