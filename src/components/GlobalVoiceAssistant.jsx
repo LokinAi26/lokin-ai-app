@@ -134,7 +134,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const me = await base44.auth.me().catch(() => null);
 
       if (includesAny(t, ["level up", "start work", "start my shift", "begin work"])) {
-        const next = { work_status: "working" };
+        const next = { work_status: "working", break_active: false };
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
         if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
@@ -148,7 +148,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       }
 
       if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused" });
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
         const msg = "Paused. Take your time. Say LOKIN, resume when you're ready to lock back in.";
@@ -156,7 +156,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       }
 
       if (includesAny(t, ["resume", "resume work", "continue work", "lock back in"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working" });
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
         const msg = "Welcome back. Recalculating and locking you back in.";
@@ -164,7 +164,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       }
 
       if (includesAny(t, ["tap out", "end work", "end my shift", "finish work"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off" });
+        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
         const msg = "You're tapped out. Nice work today. I'll have your recap ready on the home screen.";
