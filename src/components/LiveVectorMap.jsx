@@ -7,7 +7,7 @@ import { base44LiveFunctions } from "@/api/base44Client";
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
-const LOKIN_NEON_ROUTE = "#AAFF00";
+const LOKIN_NEON_ROUTE = "#A2EB1B";
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
