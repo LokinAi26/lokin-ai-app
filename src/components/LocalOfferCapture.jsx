@@ -179,7 +179,7 @@ export default function LocalOfferCapture({ onSaved }) {
           font-size: .78rem;
           outline: none;
         }
-        .input:focus { border-color: rgba(170,255,0,.5); }
+        .input:focus { border-color: rgba(162,235,27,.5); }
         .input option { background: #080a0c; color: white; }
       `}</style>
     </div>
