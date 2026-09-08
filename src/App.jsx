@@ -167,7 +167,7 @@ const AuthenticatedApp = () => {
           <Route path="/green-delivery" element={RELEASE_FLAGS.regulatedCannabis ? <GreenDelivery /> : <ReleaseGate title="Green Delivery — partner activation required" body="Regulated delivery remains disabled until licensed-market and jurisdiction controls are active." />} />
           <Route path="/insurance" element={RELEASE_FLAGS.insuranceTransactions ? <Insurance /> : <ReleaseGate title="LOKIN Cover — partner activation required" body="Insurance application and binding workflows are preserved but disabled in the App Store 1.0 launch until an authorized carrier/agency relationship and required legal-entity submission are in place." />} />
           <Route path="/insurance-admin" element={RELEASE_FLAGS.insuranceTransactions ? <InsuranceAdmin /> : <ReleaseGate title="LOKIN Cover Admin unavailable" body="Carrier administration is not enabled in the App Store 1.0 launch candidate." />} />
-          <Route path="/onboarding" element={RELEASE_FLAGS.regulatedCannabis ? <DriverOnboarding /> : <ReleaseGate title="Regulated onboarding unavailable" body="Green Delivery onboarding is disabled for the App Store 1.0 launch candidate." />} />
+          <Route path="/onboarding" element={<DriverOnboarding />} />
         </Route>
       </Route>
       <Route path="/command" element={<CommandIngress />} />
