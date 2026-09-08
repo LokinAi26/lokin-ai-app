@@ -7,7 +7,7 @@ import CommerceCommandCenter from "@/components/CommerceCommandCenter";
 import MyLokinOrders from "@/components/MyLokinOrders";
 
 const PALETTE = [
-  { name: "LOKIN Neon Lime™", hex: "#AAFF00", text: "text-black" },
+  { name: "LOKIN Neon Lime™", hex: "#A2EB1B", text: "text-black" },
   { name: "Vault Black", hex: "#000000", text: "text-white" },
   { name: "Carbon", hex: "#0b0f14", text: "text-white" },
   { name: "LOKIN AI Cyan™", hex: "#06D9F9", text: "text-black" },
@@ -102,7 +102,7 @@ export default function Brand() {
         <div className="grid grid-cols-3 gap-2">
           {PALETTE.map((c) => (
             <div key={c.name} className="rounded-xl overflow-hidden border border-white/10">
-              <div className="h-12 flex items-center justify-center text-[10px] font-bold" style={{ background: c.hex, color: c.hex === "#000000" ? "#AAFF00" : undefined }}>
+              <div className="h-12 flex items-center justify-center text-[10px] font-bold" style={{ background: c.hex, color: c.hex === "#000000" ? "#A2EB1B" : undefined }}>
                 <span className={c.text}>{c.hex}</span>
               </div>
               <div className="bg-black/60 text-[10px] text-white/55 py-1 text-center">{c.name}</div>
