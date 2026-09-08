@@ -23,7 +23,7 @@ function PhoneFrame({ children, label }) {
 function LiveRouteScreen() {
   return (
     <div className="relative h-full bg-[#06100a] p-3 flex flex-col">
-      <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(hsl(80 100% 50% / 0.08) 1px, transparent 1px), linear-gradient(90deg, hsl(80 100% 50% / 0.08) 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
+      <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(hsl(81 84% 51% / 0.08) 1px, transparent 1px), linear-gradient(90deg, hsl(81 84% 51% / 0.08) 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 230 436" preserveAspectRatio="none">
         <path d="M30 380 C 80 300, 60 220, 130 200 S 200 120, 180 60" fill="none" stroke="#ccff00" strokeWidth="3" strokeLinecap="round" className="lokin-route" />
       </svg>
@@ -63,7 +63,7 @@ function DashboardScreen() {
       </div>
       <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
         <div className="flex justify-between text-[10px] text-white/50"><span>Today's Goal</span><span className="text-primary font-bold">$200</span></div>
-        <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 8px hsl(80 100% 50% / 0.7)" }} /></div>
+        <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 8px hsl(81 84% 51% / 0.7)" }} /></div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         {[["Net/HR", "$28"], ["Active", "3"], ["Orders", "5"], ["Miles", "12"]].map(([k, v]) => (
