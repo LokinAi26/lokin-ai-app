@@ -46,8 +46,10 @@ assert(routeMap.includes('LOKIN_NEON_ROUTE = "#A2EB1B"'), "Live route renderer i
 const brand = read("src/pages/Brand.jsx");
 assert(brand.includes('hex: "#A2EB1B"'), "Brand page does not publish the approved LOKIN lime.");
 
+const app = read("src/App.jsx");
 const onboarding = read("src/pages/DriverOnboarding.jsx");
 assert(!/cannabis|Green Delivery|InsuranceApplication|DriverCertification/i.test(onboarding), "Regulated-delivery requirements leaked into App Store 1.0 onboarding.");
+assert(app.includes('<Route path="/onboarding" element={<DriverOnboarding />} />'), "General driver onboarding route is not active.");
 for (const phrase of ["Account ready", "Set your daily goal", "Enable driving permissions", "Lock in", "OPTIONAL"]) {
   assert(onboarding.includes(phrase), `Onboarding is missing required step: ${phrase}`);
 }
