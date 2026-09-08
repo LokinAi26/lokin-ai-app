@@ -12,10 +12,9 @@ try {
   assert.equal(await withDeadline(() => 42, 100, "test"), 42);
 
   let calls = 0;
-  let signal;
   let release;
-  const client = { functions: { fetch: (_path, init) => {
-    calls++; signal = init.signal;
+  const client = { functions: { invoke: () => {
+    calls++;
     return new Promise(resolve => { release = resolve; });
   } } };
   const one = requestRouteOptimization(client, { mode: "fastest" });
@@ -23,14 +22,13 @@ try {
   assert.equal(one, two);
   await Promise.resolve();
   assert.equal(calls, 1);
-  release(Response.json({ sequenced: [{ id: "stop-1" }] }));
+  release({ data: { sequenced: [{ id: "stop-1" }] } });
   assert.equal((await one).data.sequenced[0].id, "stop-1");
   const timeout = requestRouteOptimization(client, { mode: "fastest" });
   await assert.rejects(timeout, { code: "LOKIN_ROUTE_TIMEOUT" });
-  assert.equal(signal.aborted, true);
-  client.functions.fetch = async () => Response.json({ sequenced: [] });
+  client.functions.invoke = async () => ({ data: { sequenced: [] } });
   assert.deepEqual((await requestRouteOptimization(client, { mode: "fastest" })).data.sequenced, []);
-  client.functions.fetch = async () => Response.json({ error: "Data unavailable" }, { status: 504 });
+  client.functions.invoke = async () => { throw new Error("Data unavailable"); };
   await assert.rejects(requestRouteOptimization(client, {}), /Data unavailable/);
 
   // Exercise the real handler; replace remote SDK/AI and ranking dependencies only.
@@ -82,7 +80,7 @@ try {
   entitiesHang = false;
   user = null;
   assert.equal((await handler(request())).status, 401);
-  console.log("PASS: deadlines, request deduplication, abort, retry, backend errors, AI fallback, empty routes and auth.");
+  console.log("PASS: deadlines, request deduplication, retry, backend errors, AI fallback, empty routes and auth.");
 } finally {
   globalThis.setTimeout = originalTimer;
   delete globalThis.__optimizerTest;
