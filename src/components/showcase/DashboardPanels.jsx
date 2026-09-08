@@ -50,7 +50,7 @@ export default function DashboardPanels() {
 
       <Panel title="Goals & Streaks" icon={Flame}>
         <div className="text-sm font-bold text-white">3 Day Streak 🔥</div>
-        <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: "64%", boxShadow: "0 0 6px hsl(80 100% 50% / 0.7)" }} /></div>
+        <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-primary" style={{ width: "64%", boxShadow: "0 0 6px hsl(81 84% 51% / 0.7)" }} /></div>
         <div className="mt-1 text-[10px] text-white/40">64% of $200 daily goal</div>
         <div className="mt-1.5 inline-block rounded-full bg-orange-500/20 border border-orange-400/40 px-2 py-0.5 text-[9px] font-bold text-orange-300">You're on fire!</div>
       </Panel>
