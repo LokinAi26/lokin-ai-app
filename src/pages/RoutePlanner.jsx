@@ -202,7 +202,7 @@ export default function RoutePlanner() {
       {data?.briefing && (
         <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-4">
           <div className="flex items-center gap-2 text-sm font-semibold mb-2 text-primary">
-            <Sparkles className="h-4 w-4" /> AI Strategy ({OPTIMIZATION_MODES.find((m) => m.value === data.mode)?.label})
+            <Sparkles className="h-4 w-4" /> {data.briefingSource === "route_summary" ? "Route Summary" : "AI Strategy"} ({OPTIMIZATION_MODES.find((m) => m.value === data.mode)?.label})
           </div>
           <p className="text-sm whitespace-pre-wrap leading-relaxed text-white/80">{data.briefing}</p>
         </div>
