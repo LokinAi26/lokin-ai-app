@@ -12,7 +12,7 @@ const CATEGORIES = [
 export default function LockInScore({ score, compact = false }) {
   const overall = score?.overall ?? 0;
   const breakdown = score?.breakdown || {};
-  const color = overall >= 80 ? "#AAFF00" : overall >= 55 ? "#facc15" : "#f87171";
+  const color = overall >= 80 ? "#A2EB1B" : overall >= 55 ? "#facc15" : "#f87171";
   const topLabel = overall >= 90 ? "Elite efficiency band" : overall >= 80 ? "Strong efficiency band" : overall >= 70 ? "On-target efficiency band" : "Improvement opportunity";
   const r = 52;
   const circ = 2 * Math.PI * r;
@@ -61,7 +61,7 @@ export default function LockInScore({ score, compact = false }) {
               <div key={c.key} className="flex items-center gap-2">
                 <span className="text-[11px] text-white/50 w-20 shrink-0">{c.label}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${v}%`, boxShadow: "0 0 8px hsl(80 100% 50% / 0.6)" }} />
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${v}%`, boxShadow: "0 0 8px hsl(81 84% 51% / 0.6)" }} />
                 </div>
                 <span className="text-[10px] font-medium w-6 text-right text-white/70">{v}</span>
               </div>
