@@ -95,9 +95,9 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={() => loadCommand(true)}>
-    <div className="p-4 space-y-4">
+    <div className="lokin-dashboard relative isolate p-4 space-y-4">
       {/* Brand header */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="relative z-10 flex items-center justify-between pt-1 pb-1">
         <LokinWordmark size={26} />
         <div className="flex items-center gap-2">
           <HomeSignalIndicator />
@@ -109,8 +109,8 @@ export default function Home() {
       </div>
 
       {/* Profile + streak */}
-      <div className="flex items-center gap-2.5">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center text-black font-bold">{(firstName || "L").charAt(0)}</div>
+      <div className="relative z-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/35 px-3 py-2.5 backdrop-blur-sm">
+        <div className="profile-orbit h-11 w-11 rounded-full flex items-center justify-center text-black font-black">{(firstName || "L").charAt(0)}</div>
         <div>
           <div className="text-xs text-white/45">{greeting()},</div>
           <div className="flex items-center gap-1.5">
@@ -121,12 +121,12 @@ export default function Home() {
       </div>
 
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
-      <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
+      <div className="globalui-hero relative z-10 overflow-hidden rounded-[1.75rem] p-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-white/55"><Activity className="h-4 w-4 text-primary" /> Today&apos;s Goal</div>
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/60"><Activity className="h-4 w-4 text-primary" /> Driver Command Center</div>
           <Link to="/settings" className="text-[10px] rounded-full border border-white/10 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
         </div>
-        <div className="mt-2 text-5xl font-extrabold font-display text-primary text-glow">${dailyGoal}</div>
+        <div className="mt-4 flex items-end justify-between gap-3"><div><div className="text-[10px] uppercase tracking-[0.2em] text-white/35">Today&apos;s Goal</div><div className="mt-1 text-5xl font-black font-display metal-number">${dailyGoal}</div></div><div className="pb-1 text-right"><div className="text-[10px] uppercase tracking-[0.18em] text-white/35">Remaining</div><div className="mt-1 text-xl font-extrabold text-primary text-glow">${remaining.toFixed(2)}</div></div></div>
         <div className="relative mt-4 h-2.5 rounded-full bg-white/10 overflow-visible">
           <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 14px hsl(81 84% 51% / .8)" }} />
           <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #baff00"}} />
@@ -136,28 +136,28 @@ export default function Home() {
 
       <div className="grid grid-cols-4 gap-2">
         {(loading && !data) ? ["NET/HR","ACTIVE","ORDERS","MILES"].map((k) => (
-          <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center">
+          <div key={k} className="dashboard-stat rounded-2xl py-3 px-1 text-center">
             <div className="text-[9px] text-white/45">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="rounded-2xl border border-white/10 bg-white/[.025] py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="dashboard-stat rounded-2xl py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="block rounded-3xl border border-primary/35 bg-primary/[.06] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="globalui-hero block rounded-[1.75rem] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(162,235,27,.13),transparent 64%)",boxShadow:"0 0 42px rgba(162,235,27,.12)"}}><LokinGlyph size={112} /></div>
+          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinGlyph size={118} /></div>
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/20" style={{background:"radial-gradient(circle,rgba(162,235,27,.13),transparent 64%)",boxShadow:"0 0 42px rgba(162,235,27,.12)"}}><LokinGlyph size={112} className="lokin-pulse"/></div>
+          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinGlyph size={118} className="lokin-pulse"/></div>
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">START WORK</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">LOCK IN &amp; START EARNING</div>
         </button>
@@ -170,13 +170,13 @@ export default function Home() {
         <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
       </div>
 
-      <Link to="/lokin" className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[.045] p-3.5 active:scale-[.99] transition-transform">
+      <Link to="/lokin" className="ai-command-card relative z-10 flex items-center gap-3 rounded-2xl p-3.5 active:scale-[.99] transition-transform">
         <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 glow-primary"><Brain className="h-5 w-5 text-primary"/></div>
         <div className="min-w-0 flex-1"><div className="text-xs font-bold">LOKIN AI <span className="text-primary">COPILOT</span></div><div className="text-[11px] text-white/45">Your AI copilot is ready.</div></div>
         <div className="rounded-full border border-white/10 px-3 py-2 text-[10px] text-white/70">TAP TO TALK</div>
       </Link>
 
-      <div className="rounded-2xl border border-white/8 bg-white/[.02] p-3 flex items-center justify-between gap-3">
+      <div className="dashboard-stat relative z-10 rounded-2xl p-3 flex items-center justify-between gap-3">
         <div className="text-[11px] text-white/45">AI recommendation</div>
         <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.error ? "Couldn't load — pull down to refresh." : (data?.briefing || "Ready when you are."))}</div>
       </div>
@@ -186,7 +186,7 @@ export default function Home() {
       <AwarenessBanner />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
-        DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
+        GLOBALUI v1 • BUILD 7 READY<br />DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
       </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
@@ -199,7 +199,7 @@ export default function Home() {
 
 function QuickLink({ to, icon: Icon, label }) {
   return (
-    <Link to={to} className="rounded-2xl border border-white/10 lokin-panel p-3 text-center active:scale-[0.97] transition-transform">
+    <Link to={to} className="quick-command rounded-2xl p-3 text-center active:scale-[0.97] transition-transform">
       <Icon className="h-5 w-5 mx-auto text-primary mb-1" />
       <div className="text-xs font-medium text-white/80">{label}</div>
     </Link>
