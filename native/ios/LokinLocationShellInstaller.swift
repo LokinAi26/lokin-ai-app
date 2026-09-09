@@ -13,7 +13,4 @@ final class LokinLocationShellInstaller {
         self.bridge.install()
     }
 
-    deinit {
-        bridge.uninstall()
-    }
 }
