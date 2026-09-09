@@ -13,12 +13,14 @@ import {
   nativeLocationAvailable,
   normalizeNativeLocationSample,
   requestNativeWhenInUse,
+  requestNativeRuntimeStatus,
   startNativeLocation,
   stopNativeLocation,
   subscribeNativeLocation,
   subscribeNativeLocationAuthorization,
   subscribeNativeLocationError,
   subscribeNativeLocationQueue,
+  subscribeNativeLocationRuntime,
 } from "@/lib/nativeLocationBridge";
 import { reroutePolicy } from "@/lib/navigationQuality";
 import {
@@ -56,6 +58,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [liveVectorConfigured, setLiveVectorConfigured] = useState(null);
   const [providerProbeError, setProviderProbeError] = useState("");
   const [trafficEta, setTrafficEta] = useState(null);
+  const [nativeRuntime, setNativeRuntime] = useState(null);
   const routeRef = useRef(null);
   const geocodedRef = useRef([]);
   const destinationsRef = useRef(normalizedDestinations);
@@ -375,6 +378,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setStatus("error");
       setError(nativeError?.message || "LOKIN native location engine reported an error.");
     });
+    const unsubscribeRuntime = subscribeNativeLocationRuntime((payload) => {
+      if (payload && typeof payload === "object") setNativeRuntime(payload);
+    });
     const unsubscribeQueue = subscribeNativeLocationQueue((payload) => {
       const points = Array.isArray(payload?.points) ? payload.points : [];
       const latest = points
@@ -386,6 +392,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         processLocationSample({ ...latest, source: "native-warm-start" }, "native");
       }
     });
+
+    requestNativeRuntimeStatus();
 
     // Start routing immediately from a recent trusted native fix while the OS
     // acquires a fresh navigation-grade anchor.
@@ -400,6 +408,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       unsubscribeLocation();
       unsubscribeAuthorization();
       unsubscribeError();
+      unsubscribeRuntime();
       unsubscribeQueue();
       if (nativeStartedRef.current) stopNativeLocation();
       nativeStartedRef.current = false;
@@ -508,5 +517,6 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     etaLiveTraffic: trafficEta?.live_traffic === true || route?.live_traffic === true,
     refreshTrafficEta,
     voiceSupported: voiceSupported(),
+    nativeRuntime,
   };
 }
