@@ -2,9 +2,12 @@ package ai.lokin.location
 
 import android.Manifest
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
@@ -44,6 +47,7 @@ class LokinLocationBridge(
         when (body.optString("command")) {
             "requestWhenInUse" -> requestWhenInUse()
             "requestPrecise" -> requestWhenInUse()
+            "runtimeStatus" -> emitRuntimeStatus()
             "requestAlways" -> {
                 // Active turn-by-turn navigation does not require background
                 // location permission when running as a location foreground
@@ -111,6 +115,21 @@ class LokinLocationBridge(
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         return fine || coarse
+    }
+
+    private fun emitRuntimeStatus() {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val serviceDeclared = runCatching {
+            context.packageManager.getServiceInfo(ComponentName(context, LokinLocationService::class.java), 0)
+        }.isSuccess
+        val detail = JSONObject()
+            .put("packageVersion", "3.0.0")
+            .put("platform", "android")
+            .put("motionAvailable", sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null && sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
+            .put("barometerAvailable", sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE) != null)
+            .put("backgroundLocationDeclared", serviceDeclared)
+            .put("bridge", "webview")
+        evaluate("window.dispatchEvent(new CustomEvent('lokin:native-location-runtime',{detail:${detail}}));")
     }
 
     private fun emitAuthorization() {
