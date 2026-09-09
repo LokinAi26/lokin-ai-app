@@ -2,6 +2,7 @@ const LOCATION_EVENT = "lokin:native-location";
 const AUTH_EVENT = "lokin:native-location-authorization";
 const ERROR_EVENT = "lokin:native-location-error";
 const QUEUE_EVENT = "lokin:native-location-queue";
+const RUNTIME_EVENT = "lokin:native-location-runtime";
 
 function iosHandler() {
   if (typeof window === "undefined") return null;
@@ -56,6 +57,10 @@ export function requestNativePrecise() {
   return postNativeLocationCommand("requestPrecise");
 }
 
+export function requestNativeRuntimeStatus() {
+  return postNativeLocationCommand("runtimeStatus");
+}
+
 export function drainNativeLocationQueue(limit = 120) {
   return postNativeLocationCommand("drain", { limit });
 }
@@ -90,6 +95,13 @@ export function subscribeNativeLocationQueue(callback) {
   const handler = (event) => callback(event.detail);
   window.addEventListener(QUEUE_EVENT, handler);
   return () => window.removeEventListener(QUEUE_EVENT, handler);
+}
+
+export function subscribeNativeLocationRuntime(callback) {
+  if (typeof window === "undefined") return () => {};
+  const handler = (event) => callback(event.detail);
+  window.addEventListener(RUNTIME_EVENT, handler);
+  return () => window.removeEventListener(RUNTIME_EVENT, handler);
 }
 
 export function normalizeNativeLocationSample(sample) {
