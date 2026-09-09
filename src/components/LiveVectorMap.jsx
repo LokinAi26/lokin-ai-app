@@ -3,6 +3,10 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Layers3 } from "lucide-react";
 import { base44LiveFunctions } from "@/api/base44Client";
+import {
+  rendererInterpolationBudgetMs,
+  shouldAcceptNavigationSample,
+} from "@/lib/navigationPerformance";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -181,6 +185,7 @@ export default function LiveVectorMap({
     bearing: Number(heading || 0),
   });
   const motionRef = useRef(null);
+  const lastAppliedRenderSampleRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [cameraPitch, setCameraPitch] = useState(perspective ? 58 : 0);
@@ -327,13 +332,14 @@ export default function LiveVectorMap({
     const target = normalizeCoordinate(snappedPosition?.coordinate);
     const marker = markerRef.current;
     if (!target || !marker) return undefined;
+    if (!shouldAcceptNavigationSample(snappedPosition, lastAppliedRenderSampleRef.current)) return undefined;
+    lastAppliedRenderSampleRef.current = snappedPosition;
 
     const now = performance.now();
     const fromCoordinate = displayedRef.current.coordinate || target;
     const fromBearing = Number(displayedRef.current.bearing || heading || 0);
     const targetBearing = shortestBearing(fromBearing, heading);
-    const reportedInterval = Number(snappedPosition?.interval_ms);
-    const duration = clamp(Number.isFinite(reportedInterval) ? reportedInterval : 480, 220, 850);
+    const duration = rendererInterpolationBudgetMs(snappedPosition);
 
     motionRef.current = {
       fromCoordinate,
@@ -390,6 +396,7 @@ export default function LiveVectorMap({
     snappedPosition?.coordinate?.[0],
     snappedPosition?.coordinate?.[1],
     snappedPosition?.timestamp,
+    snappedPosition?.seq,
     heading,
     perspective,
     followDriver,
