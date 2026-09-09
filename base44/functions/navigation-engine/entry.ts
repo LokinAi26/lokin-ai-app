@@ -61,7 +61,7 @@ function localSearchBBox(proximity: { longitude: number; latitude: number }, rad
 }
 
 async function fetchJson(url: string, init?: RequestInit) {
-  const response = await fetch(url, init);
+  const response = await fetch(url, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = data?.message || data?.error || `Provider request failed (${response.status})`;
@@ -192,7 +192,7 @@ async function fetchStaticMap(accessToken: string, viewport: any = {}) {
   const densitySuffix = retina ? "@2x" : "";
   const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlayPrefix}${longitude},${latitude},${zoom},${bearing.toFixed(1)},${pitch.toFixed(1)}/${width}x${height}${densitySuffix}?${params.toString()}`;
   if (url.length > 8100) throw new Error("Static map route overlay is too large; reduce route detail");
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(text || `Static map request failed (${response.status})`);
