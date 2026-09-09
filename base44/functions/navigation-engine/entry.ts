@@ -62,7 +62,7 @@ function localSearchBBox(proximity: { longitude: number; latitude: number }, rad
 
 async function fetchJson(url: string, init?: RequestInit) {
   const response = await fetch(url, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000) });
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json();
   if (!response.ok) {
     const message = data?.message || data?.error || `Provider request failed (${response.status})`;
     throw new Error(message);
