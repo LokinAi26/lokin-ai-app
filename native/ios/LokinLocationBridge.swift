@@ -48,6 +48,8 @@ final class LokinLocationBridge: NSObject, WKScriptMessageHandler {
             engine.requestAlwaysAfterUserExplanation()
         case "requestPrecise":
             engine.requestTemporaryPreciseLocation()
+        case "runtimeStatus":
+            emit(event: "lokin:native-location-runtime", payload: LokinNativeRuntime.status())
         case "start":
             let rawMode = body["mode"] as? String ?? LokinTrackingMode.activeNavigation.rawValue
             let mode = LokinTrackingMode(rawValue: rawMode) ?? .activeNavigation
