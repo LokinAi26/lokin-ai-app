@@ -94,16 +94,20 @@ Retain `LokinLocationShellInstaller(webView:)` for the lifetime of the trusted L
 
 The current native package intentionally queues telemetry locally. Background cloud upload should use a short-lived authenticated navigation-session upload token rather than placing a permanent Base44 or provider secret inside either app binary.
 
-## Sensor Fusion v2.1
+## Navigation Performance Stack v3
 
-Sensor Fusion v2.1 extends the native location core without increasing raw GPS polling:
+Navigation Performance Stack v3 upgrades live-vector rendering, sensor fusion, and native packaging as one coordinated path. The React layer rejects duplicate/out-of-order navigation samples, measures real sample cadence, and uses age/speed-aware interpolation to reduce visual lag. Native iOS fusion now runs Core Motion at 60 Hz in normal power mode (25 Hz in Low Power Mode), emits bounded predictions up to 10 Hz, learns stationary IMU bias, and suppresses phantom drift without damping legitimate constant-speed motion. Android carries the same bias/drift and 10 Hz bounded-prediction behavior. Both native bridges expose a `runtimeStatus` handshake so the shipping web layer can confirm package version, sensor availability, and background-location/service declaration at runtime instead of assuming the native package was embedded correctly.
+
+## Sensor Fusion v2.1 baseline
+
+Sensor Fusion v2.1 remains the bounded-fusion baseline underneath v3:
 
 - `native/ios/LokinSensorFusion.swift` uses Core Motion device motion plus `CMAltimeter` around Core Location anchors. `native/android/LokinSensorFusion.kt` uses rotation-vector, linear-acceleration, and pressure sensors around Fused Location Provider anchors.
 - Dead reckoning is now calibrated for bounded tunnel/garage continuity up to 20 seconds. Uncertainty grows non-linearly and confidence decays continuously; the engine stops predicting beyond the calibrated horizon rather than pretending IMU-only positioning is absolute.
 - Every predicted sample now receives a real monotonic sequence number and is persisted to SQLite. It carries `authoritative=false`, `deadReckoned=true`, the originating `anchorSeq`, confidence, source, and explicit uncertainty. This preserves complete offline navigation history while keeping absolute-provider fixes distinguishable from estimates.
 - `src/lib/navigationQuality.js` prevents dead-reckoned samples from triggering a network reroute by themselves. A sufficiently confident absolute Core Location/Fused Location anchor must confirm the off-route condition. Thresholds automatically widen under urban-canyon accuracy and low HMM-match confidence.
 - `src/lib/navigationGeometry.js` contains the online HMM-style road matcher using distance, heading, route continuity, expected travel, and segment-jump costs to reduce parallel-road snapping.
-- Low Power Mode reduces IMU duty cycle while keeping absolute navigation anchors active: iOS drops Core Motion from 50 Hz to 25 Hz, and Android uses the lower-power sensor delivery profile.
+- Low Power Mode reduces IMU duty cycle while keeping absolute navigation anchors active: iOS drops Core Motion from 60 Hz to 25 Hz, and Android uses the lower-power sensor delivery profile.
 - `native/ios/Package.swift` packages the location stack as `LokinLocationCore` with SQLite linkage. `native/android/location-core` is an importable Android library module with Fused Location Provider and foreground-location service dependencies declared.
 - `npm run verify:navigation` now runs HMM regression checks, tunnel/garage, urban-canyon, highway continuity, adaptive reroute checks, native-package contract verification, the production web build, and lint.
 - `base44/functions/navigation-calibration-report` accepts authenticated structured field-test results. `base44/functions/navigation-telemetry-ingest` preserves authoritative/estimated counts and anchor lineage when opted-in telemetry is uploaded.
