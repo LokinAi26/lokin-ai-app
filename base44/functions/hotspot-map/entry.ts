@@ -70,7 +70,7 @@ async function geocodeAddress(address: string, accessToken: string, origin: any)
     params.set("bbox", localSearchBBox(origin).join(","));
   }
 
-  const response = await fetch(`${MAPBOX_GEOCODE}/forward?${params.toString()}`);
+  const response = await fetch(`${MAPBOX_GEOCODE}/forward?${params.toString()}`, { signal: AbortSignal.timeout(10_000) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.message || `Mapbox geocoding failed (${response.status})`);
 
