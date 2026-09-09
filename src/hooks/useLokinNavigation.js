@@ -21,6 +21,10 @@ import {
   subscribeNativeLocationQueue,
 } from "@/lib/nativeLocationBridge";
 import { reroutePolicy } from "@/lib/navigationQuality";
+import {
+  navigationSampleIntervalMs,
+  shouldAcceptNavigationSample,
+} from "@/lib/navigationPerformance";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -65,6 +69,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
+  const lastAcceptedSampleRef = useRef(null);
 
   useEffect(() => {
     destinationsRef.current = normalizedDestinations;
@@ -74,6 +79,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     startedKeyRef.current = "";
     offRouteSamplesRef.current = 0;
     lastSpokenRef.current = "";
+    lastAcceptedSampleRef.current = null;
     setRoute(null);
     setGeocodedDestinations([]);
     setSnapped(null);
@@ -255,8 +261,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const processLocationSample = useCallback((sample, source = "web") => {
     const coord = sample?.coordinate;
     if (!coord || coord.length < 2) return;
+    const previousSample = lastAcceptedSampleRef.current;
+    if (!shouldAcceptNavigationSample(sample, previousSample)) return;
+    const intervalMs = navigationSampleIntervalMs(sample, previousSample);
+    const acceptedSample = { ...sample, interval_ms: intervalMs };
+    lastAcceptedSampleRef.current = acceptedSample;
     if (source === "native") nativeSeenAtRef.current = Date.now();
-    setRawPosition(sample);
+    setRawPosition(acceptedSample);
 
     const key = destinationsRef.current.join("||");
     if (!routeRef.current && startedKeyRef.current !== key) {
@@ -270,22 +281,24 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     if (!geometry.length) return;
     const snap = matchToRouteHMM(coord, geometry, cumulativeRef.current, {
       previousSnap: snappedRef.current,
-      heading: sample.heading,
-      speedMps: sample.speed_mps,
-      accuracyM: sample.accuracy_m,
-      timestamp: sample.timestamp,
+      heading: acceptedSample.heading,
+      speedMps: acceptedSample.speed_mps,
+      accuracyM: acceptedSample.accuracy_m,
+      timestamp: acceptedSample.timestamp,
     });
     if (!snap) return;
     const enrichedSnap = {
       ...snap,
       raw_coordinate: coord,
-      accuracy_m: sample.accuracy_m,
-      heading: sample.heading,
-      speed_mps: sample.speed_mps,
-      timestamp: sample.timestamp,
-      source: sample.source,
-      confidence: sample.confidence,
-      dead_reckoned: sample.dead_reckoned === true,
+      accuracy_m: acceptedSample.accuracy_m,
+      heading: acceptedSample.heading,
+      speed_mps: acceptedSample.speed_mps,
+      timestamp: acceptedSample.timestamp,
+      interval_ms: acceptedSample.interval_ms,
+      seq: acceptedSample.seq,
+      source: acceptedSample.source,
+      confidence: acceptedSample.confidence,
+      dead_reckoned: acceptedSample.dead_reckoned === true,
     };
     snappedRef.current = enrichedSnap;
     setSnapped(enrichedSnap);
@@ -293,7 +306,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setManeuver(next);
 
     const finalDestination = geocodedRef.current?.[geocodedRef.current.length - 1];
-    const arrivalThresholdM = Math.max(20, Math.min(55, Math.max(1, Number(sample.accuracy_m) || 15) * 1.5));
+    const arrivalThresholdM = Math.max(20, Math.min(55, Math.max(1, Number(acceptedSample.accuracy_m) || 15) * 1.5));
     const finalDistanceM = finalDestination
       ? haversineMeters(coord, [Number(finalDestination.longitude), Number(finalDestination.latitude)])
       : Infinity;
@@ -304,8 +317,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       return;
     }
 
-    const policy = reroutePolicy(sample, snap);
-    if (sample.dead_reckoned === true) {
+    const policy = reroutePolicy(acceptedSample, snap);
+    if (acceptedSample.dead_reckoned === true) {
       // Dead-reckoned fixes keep the map moving through a tunnel/garage, but
       // never create a network reroute on their own. Wait for an absolute
       // Core Location / Fused Location Provider fix to confirm the deviation.
