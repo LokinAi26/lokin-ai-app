@@ -50,6 +50,9 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
     private var predictedLon: Double? = null
     private var velocityNorth = 0.0
     private var velocityEast = 0.0
+    private var lastAnchorSpeedMps = 0.0
+    private var accelerationBiasNorth = 0.0
+    private var accelerationBiasEast = 0.0
 
     private var pressureReferenceAltitudeM: Double? = null
     private var pressureReferenceAbsoluteM: Double? = null
@@ -81,6 +84,9 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         predictedLon = null
         velocityNorth = 0.0
         velocityEast = 0.0
+        lastAnchorSpeedMps = 0.0
+        accelerationBiasNorth = 0.0
+        accelerationBiasEast = 0.0
         haveRotation = false
         pressureReferenceAltitudeM = null
         pressureReferenceAbsoluteM = null
@@ -96,8 +102,13 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         lastPredictionElapsedNs = anchorElapsedNs
         predictedLat = location.latitude
         predictedLon = location.longitude
+        lastAnchorSpeedMps = speed
         velocityNorth = speed * cos(headingRad)
         velocityEast = speed * sin(headingRad)
+        if (speed < 0.7) {
+            velocityNorth = 0.0
+            velocityEast = 0.0
+        }
         if (location.hasAltitude()) pressureReferenceAltitudeM = location.altitude
     }
 
@@ -149,8 +160,29 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
             northAcceleration = max(-6.0, min(6.0, northAcceleration))
         }
 
+        val rawEastAcceleration = eastAcceleration
+        val rawNorthAcceleration = northAcceleration
+        val rawAccelerationMagnitude = hypot(rawNorthAcceleration, rawEastAcceleration)
+        if (lastAnchorSpeedMps < 1.2 && rawAccelerationMagnitude < 0.55) {
+            val alpha = min(0.06, max(0.005, dt * 0.8))
+            accelerationBiasNorth = accelerationBiasNorth * (1.0 - alpha) + rawNorthAcceleration * alpha
+            accelerationBiasEast = accelerationBiasEast * (1.0 - alpha) + rawEastAcceleration * alpha
+        }
+
+        northAcceleration = max(-6.0, min(6.0, rawNorthAcceleration - accelerationBiasNorth))
+        eastAcceleration = max(-6.0, min(6.0, rawEastAcceleration - accelerationBiasEast))
+
         velocityNorth += northAcceleration * dt
         velocityEast += eastAcceleration * dt
+        if (lastAnchorSpeedMps < 0.8 && hypot(northAcceleration, eastAcceleration) < 0.22 && ageS < 4.0) {
+            val damping = exp(-5.0 * dt)
+            velocityNorth *= damping
+            velocityEast *= damping
+            if (hypot(velocityNorth, velocityEast) < 0.25) {
+                velocityNorth = 0.0
+                velocityEast = 0.0
+            }
+        }
         val speed = hypot(velocityNorth, velocityEast)
         if (speed > 75.0) {
             val scale = 75.0 / speed
@@ -164,10 +196,11 @@ class LokinSensorFusion(context: Context) : SensorEventListener {
         predictedLat = lat
         predictedLon = lon
 
-        if ((nowNs - lastEmitElapsedNs) < 200_000_000L) return
+        if ((nowNs - lastEmitElapsedNs) < 100_000_000L) return
         lastEmitElapsedNs = nowNs
 
-        val uncertainty = min(220.0, max(base.accuracy.toDouble(), 4.0) + ageS * 5.5 + ageS * ageS * 0.20)
+        val dynamicsPenalty = min(28.0, hypot(northAcceleration, eastAcceleration) * ageS * 0.55)
+        val uncertainty = min(220.0, max(base.accuracy.toDouble(), 4.0) + ageS * 5.5 + ageS * ageS * 0.20 + dynamicsPenalty)
         val confidence = max(0.03, min(0.98, exp(-ageS / 8.0) * exp(-uncertainty / 180.0)))
         val heading = (atan2(velocityEast, velocityNorth) * 180.0 / PI + 360.0) % 360.0
         val predicted = Location("lokin-dead-reckoning").apply {
