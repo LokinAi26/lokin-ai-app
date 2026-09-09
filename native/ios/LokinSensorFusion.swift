@@ -31,6 +31,9 @@ final class LokinSensorFusion {
     // Local tangent-plane velocity. +north, +east in m/s.
     private var velocityNorth = 0.0
     private var velocityEast = 0.0
+    private var lastAnchorSpeedMps = 0.0
+    private var accelerationBiasNorth = 0.0
+    private var accelerationBiasEast = 0.0
     private var predictedLatitude: Double?
     private var predictedLongitude: Double?
 
@@ -54,7 +57,7 @@ final class LokinSensorFusion {
         if motion.isDeviceMotionAvailable {
             // Reduce IMU duty cycle in Low Power Mode without reducing Core Location
             // anchor accuracy. Navigation remains responsive while battery use drops.
-            motion.deviceMotionUpdateInterval = ProcessInfo.processInfo.isLowPowerModeEnabled ? 1.0 / 25.0 : 1.0 / 50.0
+            motion.deviceMotionUpdateInterval = ProcessInfo.processInfo.isLowPowerModeEnabled ? 1.0 / 25.0 : 1.0 / 60.0
             let frame: CMAttitudeReferenceFrame = CMMotionManager.availableAttitudeReferenceFrames().contains(.xTrueNorthZVertical)
                 ? .xTrueNorthZVertical
                 : .xArbitraryCorrectedZVertical
@@ -84,6 +87,9 @@ final class LokinSensorFusion {
         predictedLongitude = nil
         velocityNorth = 0
         velocityEast = 0
+        lastAnchorSpeedMps = 0
+        accelerationBiasNorth = 0
+        accelerationBiasEast = 0
         barometerReferenceRelativeM = nil
         barometerReferenceAltitudeM = nil
         latestBarometricAltitudeM = nil
@@ -99,8 +105,13 @@ final class LokinSensorFusion {
         lastPredictionMonotonic = lastAnchorMonotonic
         predictedLatitude = location.coordinate.latitude
         predictedLongitude = location.coordinate.longitude
+        lastAnchorSpeedMps = speed
         velocityNorth = speed * cos(heading)
         velocityEast = speed * sin(heading)
+        if speed < 0.7 {
+            velocityNorth = 0
+            velocityEast = 0
+        }
         if location.verticalAccuracy >= 0 {
             barometerReferenceAltitudeM = location.altitude
         }
@@ -153,11 +164,34 @@ final class LokinSensorFusion {
         let refX = r.m11 * a.x + r.m21 * a.y + r.m31 * a.z
         let refY = r.m12 * a.x + r.m22 * a.y + r.m32 * a.z
         let g = 9.80665
-        let northAcceleration = max(-6.0, min(6.0, refX * g))
-        let eastAcceleration = max(-6.0, min(6.0, -refY * g))
+        let rawNorthAcceleration = max(-6.0, min(6.0, refX * g))
+        let rawEastAcceleration = max(-6.0, min(6.0, -refY * g))
+        let rawAccelerationMagnitude = hypot(rawNorthAcceleration, rawEastAcceleration)
+
+        // Learn slow IMU bias only while the absolute anchor says the vehicle is
+        // effectively stationary. This suppresses phantom drift without damping
+        // legitimate constant-speed motion during a GNSS outage.
+        if lastAnchorSpeedMps < 1.2 && rawAccelerationMagnitude < 0.55 {
+            let alpha = min(0.06, max(0.005, dt * 0.8))
+            accelerationBiasNorth = accelerationBiasNorth * (1 - alpha) + rawNorthAcceleration * alpha
+            accelerationBiasEast = accelerationBiasEast * (1 - alpha) + rawEastAcceleration * alpha
+        }
+
+        let northAcceleration = max(-6.0, min(6.0, rawNorthAcceleration - accelerationBiasNorth))
+        let eastAcceleration = max(-6.0, min(6.0, rawEastAcceleration - accelerationBiasEast))
 
         velocityNorth += northAcceleration * dt
         velocityEast += eastAcceleration * dt
+
+        if lastAnchorSpeedMps < 0.8 && hypot(northAcceleration, eastAcceleration) < 0.22 && anchorAge < 4.0 {
+            let damping = exp(-5.0 * dt)
+            velocityNorth *= damping
+            velocityEast *= damping
+            if hypot(velocityNorth, velocityEast) < 0.25 {
+                velocityNorth = 0
+                velocityEast = 0
+            }
+        }
 
         // Prevent sensor noise from creating impossible vehicle speeds.
         let speed = hypot(velocityNorth, velocityEast)
@@ -178,9 +212,10 @@ final class LokinSensorFusion {
         let altitude = latestBarometricAltitudeM ?? anchor.altitude
         let heading = (atan2(velocityEast, velocityNorth) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
         let predictedSpeed = hypot(velocityNorth, velocityEast)
-        let uncertainty = min(220.0, max(anchor.horizontalAccuracy, 4.0) + anchorAge * 5.5 + anchorAge * anchorAge * 0.20)
+        let dynamicsPenalty = min(28.0, hypot(northAcceleration, eastAcceleration) * anchorAge * 0.55)
+        let uncertainty = min(220.0, max(anchor.horizontalAccuracy, 4.0) + anchorAge * 5.5 + anchorAge * anchorAge * 0.20 + dynamicsPenalty)
         let confidence = max(0.03, min(0.98, exp(-anchorAge / 8.0) * exp(-uncertainty / 180.0)))
-        let shouldEmit = now - lastEmitMonotonic >= 0.20
+        let shouldEmit = now - lastEmitMonotonic >= 0.10
         if shouldEmit { lastEmitMonotonic = now }
         lock.unlock()
 
