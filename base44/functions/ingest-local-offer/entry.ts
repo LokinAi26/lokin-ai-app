@@ -70,7 +70,7 @@ async function geocodeVirginia(address: string, accessToken: string) {
     types: "address",
     bbox: "-83.6753,36.5407,-75.2423,39.4660",
   });
-  const response = await fetch(`${MAPBOX_GEOCODE}/forward?${params.toString()}`);
+  const response = await fetch(`${MAPBOX_GEOCODE}/forward?${params.toString()}`, { signal: AbortSignal.timeout(10_000) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.message || `Mapbox geocoding failed (${response.status})`);
 
