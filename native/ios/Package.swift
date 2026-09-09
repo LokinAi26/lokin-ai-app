@@ -25,6 +25,7 @@ let package = Package(
             ],
             sources: [
                 "LokinLocationModels.swift",
+                "LokinNativeRuntime.swift",
                 "LokinLocationFilter.swift",
                 "LokinLocationQueue.swift",
                 "LokinSensorFusion.swift",
