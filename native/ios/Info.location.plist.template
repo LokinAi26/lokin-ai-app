@@ -1,4 +1,6 @@
 <!-- Merge these keys/capabilities into the shipping iOS target's Info.plist. -->
+<key>NSMotionUsageDescription</key>
+<string>LOKIN AI uses motion data to improve map orientation and navigation responsiveness while you’re driving.</string>
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>LOKIN uses your precise location to provide live turn-by-turn navigation, route matching, and driver context while you use navigation.</string>
 <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
