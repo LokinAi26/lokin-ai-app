@@ -21,6 +21,9 @@ const required = [
 ];
 for (const path of required) assert.ok(fs.existsSync(path), `missing native package file: ${path}`);
 
+const iosPrivacy = fs.readFileSync("native/ios/Info.location.plist.template", "utf8");
+assert.match(iosPrivacy, /<key>NSMotionUsageDescription<\/key>\s*<string>[^<\s][^<]*<\/string>/, "CoreMotion requires a nonempty motion usage description in the shipping plist template");
+
 const iosPackage = fs.readFileSync("native/ios/Package.swift", "utf8");
 assert.match(iosPackage, /LokinLocationCore/);
 assert.match(iosPackage, /linkedLibrary\("sqlite3"\)/);
