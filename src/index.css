@@ -369,10 +369,14 @@ body {
   .lokin-cta:active { transform: scale(0.98); }
   .lokin-cta:disabled { opacity: 0.45; cursor: default; }
   .lokin-cta-sm { padding: 0.7rem 1.1rem; font-size: 0.8rem; width: auto; }
+  .lokin-btn-glow {
+    display: block; width: 100%; border-radius: 999px; padding: 2px;
+    background: #070a04;
+    box-shadow: 0 0 0 2px rgba(190,255,110,.8), 0 0 16px rgba(162,235,27,.55), 0 0 42px rgba(162,235,27,.28);
+  }
   .lokin-chrome-ring {
     display: block; width: 100%; border-radius: 999px; padding: 3px;
-    background: linear-gradient(165deg, #f8fafc 0%, #c3c9d2 15%, #7e8590 32%, #e9edf1 48%, #98a0aa 62%, #f2f5f7 78%, #b7bdc5 100%);
-    box-shadow: 0 0 0 1px rgba(162,235,27,.5), 0 0 18px rgba(162,235,27,.45), 0 0 44px rgba(162,235,27,.22);
+    background: linear-gradient(180deg, #c9cdc9 0%, #a3a7a3 16%, #545754 38%, #2b2e2b 55%, #434643 76%, #aeb2ae 100%);
   }
   .lokin-cta-caption {
     margin-top: 0.5rem; text-align: center;
