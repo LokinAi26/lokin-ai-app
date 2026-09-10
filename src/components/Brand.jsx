@@ -140,5 +140,7 @@ export const LOKIN_NAV_LOCK = LOKIN_NAV_LOCK_V3;
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 // LOKIN_NAV_LOCK_V5 is declared above with the other nav exports.
 export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
+// START WORK button — cropped directly from the approved concept artwork (pixel-exact).
+export const LOKIN_START_WORK_BTN = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e1904df34_lokin-start-work-btn.png";
 
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
