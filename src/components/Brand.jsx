@@ -103,3 +103,20 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
     ? <LokinWordmark size={size} className={className} />
     : <LokinGlyph size={size} className={className} />;
 }
+
+// Concept emblem artwork (black-background PNG). Blends invisibly on black.
+export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem" }) {
+  return (
+    <img
+      src="/assets/lokin-emblem.png"
+      width={size}
+      height={size}
+      alt={alt}
+      draggable="false"
+      className={className}
+      style={{ maxWidth: "100%", height: "auto" }}
+    />
+  );
+}
+
+export const LOKIN_SKYLINE_BG = "/assets/city-skyline-night.png";
