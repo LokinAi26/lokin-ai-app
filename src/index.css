@@ -376,7 +376,7 @@ body {
   }
   .lokin-chrome-ring {
     display: block; width: 100%; border-radius: 999px; padding: 3px;
-    background: linear-gradient(180deg, #c9cdc9 0%, #a3a7a3 16%, #545754 38%, #2b2e2b 55%, #434643 76%, #aeb2ae 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #e9edf1 10%, #969ca4 22%, #33373b 40%, #101315 52%, #43484d 64%, #cdd2d8 82%, #ffffff 93%, #dbe0e6 100%);
   }
   .lokin-cta-caption {
     margin-top: 0.5rem; text-align: center;
