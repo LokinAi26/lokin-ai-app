@@ -145,7 +145,7 @@ export default function Home() {
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><LokinEmblemImg size={86} className="mx-auto" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
