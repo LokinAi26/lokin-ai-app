@@ -53,6 +53,8 @@ export default function FeatureTour() {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(() => {
     try {
+      // Never gate the embedded Shopify admin experience behind marketing.
+      if (window.location.pathname.startsWith("/shopify")) return false;
       if (localStorage.getItem(TOUR_SEEN_KEY) === "1") return false;
       localStorage.setItem(TOUR_SEEN_KEY, "1");
       return true;
