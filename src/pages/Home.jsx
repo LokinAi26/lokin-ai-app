@@ -163,7 +163,7 @@ export default function Home() {
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
             <img src={LOKIN_HERO_LOCK_V6} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
-          <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-btn-glow"><span className="lokin-chrome-ring"><span className="lokin-cta font-display text-xl font-black tracking-wide" style={{ background: "linear-gradient(180deg, #eefda0 0%, #d9f752 35%, #b8f82e 70%, #a6ee20 100%)", boxShadow: "0 0 0 2px rgba(2,4,2,.9), inset 0 2px 4px rgba(235,255,150,.7), inset 0 -3px 8px rgba(80,150,0,.5)" }}>START WORK &raquo;</span></span></span></div>
+          <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-startbtn"><span className="lokin-startbtn-chrome"><span className="lokin-startbtn-pill font-display" XXX style={{ background: "linear-gradient(180deg, #eefda0 0%, #d9f752 35%, #b8f82e 70%, #a6ee20 100%)", boxShadow: "0 0 0 2px rgba(2,4,2,.9), inset 0 2px 4px rgba(235,255,150,.7), inset 0 -3px 8px rgba(80,150,0,.5)" }}>START WORK &raquo;</span></span></span></div>
           <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
         </button>
       )}
