@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, CreditCard, MessageCircle, Route as RouteIcon, ScanLine, ShieldCheck, X } from "lucide-react";
 import { LOKIN_SKYLINE_BG, LokinWordmark } from "@/components/Brand";
+import { useAuth } from "@/lib/AuthContext";
 
-// First-run marketing feature tour, shown once (localStorage seen-key)
-// after the splash screen. GET STARTED routes to the existing
+// First-run marketing feature tour, shown once per signed-in user
+// (localStorage seen-key) after login. GET STARTED routes to the existing
 // permission-checklist onboarding. Tour cards for features that are not
 // built yet carry explicit "Coming soon" labels so nothing is
 // misrepresented.
@@ -51,17 +52,26 @@ const CARDS = [
 
 export default function FeatureTour() {
   const navigate = useNavigate();
-  const [visible, setVisible] = useState(() => {
+  const { isAuthenticated, isLoadingAuth, authChecked } = useAuth();
+  const [visible, setVisible] = useState(false);
+  const decidedRef = useRef(false);
+
+  // Show the tour once, and only after a confirmed sign-in. The seen-key is
+  // written only at this decision point, so logged-out visits never consume
+  // it. (The embedded Shopify admin path never mounts this component, so no
+  // extra pathname guard is needed here.)
+  useEffect(() => {
+    if (decidedRef.current) return;
+    if (!authChecked || isLoadingAuth || !isAuthenticated) return;
+    decidedRef.current = true;
     try {
-      // Never gate the embedded Shopify admin experience behind marketing.
-      if (window.location.pathname.startsWith("/shopify")) return false;
-      if (localStorage.getItem(TOUR_SEEN_KEY) === "1") return false;
+      if (localStorage.getItem(TOUR_SEEN_KEY) === "1") return;
       localStorage.setItem(TOUR_SEEN_KEY, "1");
-      return true;
+      setVisible(true);
     } catch {
-      return true;
+      setVisible(true);
     }
-  });
+  }, [authChecked, isLoadingAuth, isAuthenticated]);
   const [index, setIndex] = useState(0);
   const trackRef = useRef(null);
 
