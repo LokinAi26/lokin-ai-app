@@ -125,7 +125,9 @@ export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem"
 export const LOKIN_HERO_LOCK = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/80310056f_lokin-hero-lock.png";
 // Free-floating hero (transparent background), cropped from the approved concept.
 // Center hero V7: black band below the lock cropped off; bottom edge feathered into the page.
-export const LOKIN_HERO_LOCK_V7 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/091c9b886_lokin-hero-lock-v7.png";
+// Center hero V8: all four edges feathered so the artwork melts into the page texture — no edge lines.
+export const LOKIN_HERO_LOCK_V8 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6c9611fd1_lokin-hero-lock-v8.png";
+export const LOKIN_HERO_LOCK_V7 = LOKIN_HERO_LOCK_V8;
 export const LOKIN_HERO_LOCK_V6 = LOKIN_HERO_LOCK_V7;
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
 export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19590ff33_lokin-header-lockup-v2.png";
