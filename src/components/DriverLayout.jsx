@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { LokinGlyph, LOKIN_NAV_LOCK_V5, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
+import { LokinGlyph, LOKIN_NAV_CIRCLE, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
