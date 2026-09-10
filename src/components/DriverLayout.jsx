@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { LokinGlyph } from "@/components/Brand";
+import { LokinGlyph, LOKIN_NAV_LOCK, LOKIN_HEADER_LOCKUP } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
@@ -120,12 +120,7 @@ export default function DriverLayout() {
             </button>
           ) : (
             <button onClick={() => setCmdOpen(true)} aria-label="LOKIN command engine" className="flex items-center gap-1.5 select-none">
-              <LokinGlyph size={20} />
-              <span className="font-display font-extrabold tracking-[0.22em] text-sm">
-                <span className="metal-text">L</span>
-                <span className="metal-text">OKIN</span>
-                <span className="text-primary text-glow ml-1">AI</span>
-              </span>
+              <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI" draggable="false" className="h-6 w-auto" />
             </button>
           )}
           {workStatus !== "off" && (
@@ -160,7 +155,7 @@ export default function DriverLayout() {
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
                   <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
-                    <Icon size={38} />
+                    <img src={LOKIN_NAV_LOCK} alt="LOKIN" draggable="false" className="h-10 w-10 rounded-full object-cover" />
                   </div>
                   <span className={active ? "text-primary lokin-tab-active" : "text-white/45"}>LOKIN</span>
                 </button>
