@@ -82,20 +82,20 @@ export default function LocalOfferCapture({ onSaved }) {
   }
 
   return (
-    <div className="rounded-3xl border border-accent/20 bg-accent/[0.04] overflow-hidden">
+    <div className="lokin-card-cyan overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-accent/30 bg-black text-accent">
+        <div className="glow-cyan flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-accent/40 bg-black text-accent">
           <MapPinned className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold text-white">Add Current Virginia Offer</div>
           <div className="text-[11px] text-white/45">Address-verify an offer you can currently see in your delivery app.</div>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-white/40" /> : <ChevronDown className="h-4 w-4 text-white/40" />}
+        {open ? <ChevronUp className="h-4 w-4 text-accent/70" /> : <ChevronDown className="h-4 w-4 text-accent/70" />}
       </button>
 
       {open && (
