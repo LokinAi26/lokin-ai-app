@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinEmblemImg } from "@/components/Brand";
+import { LokinEmblemImg, LOKIN_HERO_LOCK } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -151,14 +151,14 @@ export default function Home() {
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%]" alt="LOKIN emblem" />
-          <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
+          <img src={LOKIN_HERO_LOCK} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
+          <div className="-mt-8 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%]" alt="LOKIN emblem" />
-          <div className="-mt-1 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK &raquo;</span></div>
+          <img src={LOKIN_HERO_LOCK} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
+          <div className="-mt-8 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
         </button>
       )}
