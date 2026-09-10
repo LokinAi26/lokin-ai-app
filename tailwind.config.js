@@ -10,6 +10,14 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			lokin: {
+  				lime: '#BFFF00',
+  				neon: '#33FF14',
+  				cyan: '#38E1FF',
+  				red: '#FF3B5C',
+  				card: '#060A06',
+  				dim: '#9AA39A',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
