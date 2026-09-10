@@ -121,4 +121,7 @@ export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem"
   );
 }
 
+// Clean hero lock/clock artwork (no wordmark), cropped from the approved concept.
+export const LOKIN_HERO_LOCK = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/80310056f_lokin-hero-lock.png";
+
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
