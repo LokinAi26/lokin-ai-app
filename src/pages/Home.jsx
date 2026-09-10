@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone } from "lucide-react";
+import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinEmblemImg, LOKIN_HERO_LOCK } from "@/components/Brand";
+import { LokinEmblemImg, LOKIN_HERO_LOCK_V2, LOKIN_HEADER_LOCKUP } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -96,8 +96,7 @@ export default function Home() {
     <div className="lokin-dashboard relative isolate p-4 space-y-4">
       {/* Brand header */}
       <div className="relative z-10 flex items-center gap-2 pt-1 pb-1">
-        <LokinEmblemImg size={24} />
-        <span className="font-display leading-none"><span className="lokin-wordmark block text-lg font-black tracking-[0.08em]">LOKIN <span className="lokin-ai-suffix">AI</span></span><span className="lokin-kicker mt-1 block text-[9px]">UNLOCK YOUR POTENTIAL</span></span>
+        <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-11 w-auto" />
         <div className="ml-auto flex items-center gap-2">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
@@ -108,12 +107,12 @@ export default function Home() {
       </div>
 
       {/* Profile + streak */}
-      <div className="relative z-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/35 px-3 py-2.5 backdrop-blur-sm">
-        <div className="profile-orbit h-11 w-11 rounded-full flex items-center justify-center text-black font-black">{(firstName || "L").charAt(0)}</div>
+      <div className="relative z-10 flex items-center gap-3 px-1 py-1">
+        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{boxShadow:"0 0 18px rgba(162,235,27,.45)"}}>{(firstName || "L").charAt(0)}</div>
         <div>
           <div className="text-xs text-white/45">{greeting()},</div>
           <div className="flex items-center gap-1.5">
-            <h1 className="text-xl font-bold font-heading metal-text">{firstName}</h1>
+            <h1 className="text-2xl font-extrabold text-white font-heading">{firstName}</h1>
             {working && <Flame className="h-4 w-4 text-orange-400" />}
           </div>
         </div>
@@ -124,9 +123,9 @@ export default function Home() {
       <div className="lokin-card relative z-10 overflow-hidden p-5">
         <div className="flex items-center justify-between">
           <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> TODAY&apos;S GOAL</div>
-          <Link to="/settings" className="text-[10px] rounded-full border border-lokin-neon/30 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
+          <Link to="/settings" className="flex items-center gap-1.5 rounded-full border border-lokin-neon/50 px-3 py-1.5 text-[10px] font-bold tracking-[0.14em] text-white/80"><Settings className="h-3.5 w-3.5 text-white/70" />GOAL SETTINGS</Link>
         </div>
-        <div className="mt-4 flex items-end justify-between gap-3"><div><div className="lokin-kicker">Today&apos;s Goal</div><div className="lokin-hero-number mt-1 text-5xl font-display">${dailyGoal}</div></div><div className="pb-1 text-right"><div className="lokin-kicker">Remaining</div><div className="lokin-hero-number mt-1 text-xl font-extrabold">${remaining.toFixed(2)}</div></div></div>
+        <div className="lokin-hero-number mt-3 font-display text-6xl">${dailyGoal}</div>
         <div className="lokin-progress-track relative mt-4 h-2.5 overflow-visible">
           <div className="lokin-progress-fill" style={{ width: `${pct}%` }} />
           <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #A2EB1B"}} />
@@ -140,7 +139,7 @@ export default function Home() {
             <div className="lokin-kicker">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className="lokin-stat-value mt-1 text-lg font-black">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
@@ -151,14 +150,14 @@ export default function Home() {
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <img src={LOKIN_HERO_LOCK} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
+          <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
           <div className="mt-3 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <img src={LOKIN_HERO_LOCK} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
-          <div className="mt-3 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK &raquo;</span></div>
+          <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
+          <div className="mt-3 w-[82%] max-w-sm"><span className="lokin-cta font-display text-lg tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
         </button>
       )}
