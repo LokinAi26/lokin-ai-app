@@ -119,6 +119,7 @@ export default function Home() {
             {working && <Flame className="h-4 w-4 text-orange-400" />}
           </div>
         </div>
+        <div className="ml-auto text-right text-[9px] font-bold leading-tight tracking-[0.18em] text-primary/80">DRIVE<br />EARN<br />LEVEL UP</div>
       </div>
 
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
@@ -141,7 +142,7 @@ export default function Home() {
             <div className="lokin-kicker">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker">{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker">{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
