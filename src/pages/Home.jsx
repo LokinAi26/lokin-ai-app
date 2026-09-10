@@ -93,7 +93,7 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={() => loadCommand(true)}>
-    <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-3 min-h-[calc(100dvh-8.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
+    <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-3 min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
       {/* Brand header */}
       <div className="relative z-10 flex items-center gap-1.5 pt-1 pb-1 shrink-0">
         <div className="h-9 min-w-0 flex-1">
@@ -118,7 +118,7 @@ export default function Home() {
             {working && <Flame className="h-4 w-4 text-orange-400" />}
           </div>
         </div>
-        <div className="ml-auto text-right text-[9px] font-bold leading-tight tracking-[0.18em] text-primary/80">DRIVE<br />EARN<br />LEVEL UP</div>
+        
       </div>
 
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
@@ -155,7 +155,7 @@ export default function Home() {
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
             <img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
-          <div className="mt-3 w-[82%] max-w-sm shrink-0 rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
+          <div className="mt-3 w-[82%] max-w-sm shrink-0 rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary" style={{ boxShadow: "0 0 0 2px rgba(200,255,120,.95), 0 0 18px rgba(162,235,27,.8), 0 0 42px rgba(162,235,27,.4)" }}>RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35 shrink-0">SESSION PAUSED</div>
         </button>
       ) : (
