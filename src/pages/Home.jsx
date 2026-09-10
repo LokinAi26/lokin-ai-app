@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinEmblemImg, LOKIN_HERO_LOCK_V2, LOKIN_HEADER_LOCKUP } from "@/components/Brand";
+import { LokinEmblemImg, LOKIN_HERO_LOCK_V3, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -95,12 +95,14 @@ export default function Home() {
     <PullToRefresh onRefresh={() => loadCommand(true)}>
     <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-3 min-h-[calc(100dvh-8.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
       {/* Brand header */}
-      <div className="relative z-10 flex items-center gap-2 pt-1 pb-1 shrink-0">
-        <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-11 w-auto" />
-        <div className="ml-auto flex items-center gap-2">
+      <div className="relative z-10 flex items-center gap-1.5 pt-1 pb-1 shrink-0">
+        <div className="h-9 min-w-0 flex-1">
+          <img src={LOKIN_HEADER_LOCKUP_V2} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-full w-full object-contain object-left" />
+        </div>
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
-            className="flex items-center gap-1.5 rounded-full border border-lokin-neon/40 bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white/85 glow-primary active:scale-[0.97] transition-transform">
+            className="flex items-center gap-1.5 rounded-full border border-lokin-neon/40 bg-black/60 px-2 py-1 text-[10px] font-semibold text-white/85 glow-primary active:scale-[0.97] transition-transform">
             <span>{role.emoji}</span> {role.short}
           </button>
         </div>
@@ -139,19 +141,19 @@ export default function Home() {
             <div className="lokin-kicker">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className="lokin-stat-value mt-1 text-lg font-black">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className={`lokin-stat-value mt-1 font-black ${String(v).length > 7 ? "text-[13px] leading-tight" : "text-lg"}`}>{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
-            <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+            <img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
           <div className="mt-3 w-[82%] max-w-sm shrink-0 rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35 shrink-0">SESSION PAUSED</div>
@@ -159,7 +161,7 @@ export default function Home() {
       ) : (
         <button onClick={startLockIn} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
-            <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+            <img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
           <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-cta font-display text-xl tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
