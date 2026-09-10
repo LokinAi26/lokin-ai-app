@@ -105,7 +105,9 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
 }
 
 // Concept emblem artwork (black-background PNG). Blends invisibly on black.
-export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem" }) {
+// Pass `cover` to fill a clipped container (e.g. a rounded-full ring) edge to
+// edge so the artwork never renders as a floating box.
+export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem", cover = false }) {
   return (
     <img
       src="https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e475600a6_lokin-emblem.png"
@@ -114,7 +116,7 @@ export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem"
       alt={alt}
       draggable="false"
       className={className}
-      style={{ maxWidth: "100%", height: "auto" }}
+      style={cover ? { width: "100%", height: "100%", objectFit: "cover", display: "block" } : { maxWidth: "100%", height: "auto" }}
     />
   );
 }
