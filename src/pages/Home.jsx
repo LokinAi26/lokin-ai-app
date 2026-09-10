@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Brain, Truck, SlidersHorizontal, ScanLine, Package, Activity, Flame } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinGlyph, LokinWordmark } from "@/components/Brand";
+import { LokinEmblemImg } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -97,12 +97,13 @@ export default function Home() {
     <PullToRefresh onRefresh={() => loadCommand(true)}>
     <div className="lokin-dashboard relative isolate p-4 space-y-4">
       {/* Brand header */}
-      <div className="relative z-10 flex items-center justify-between pt-1 pb-1">
-        <LokinWordmark size={26} />
-        <div className="flex items-center gap-2">
+      <div className="relative z-10 flex items-center gap-2 pt-1 pb-1">
+        <LokinEmblemImg size={24} />
+        <span className="lokin-wordmark font-display font-black tracking-[0.08em] text-lg leading-none">LOKIN <span className="lokin-ai-suffix">AI</span></span>
+        <div className="ml-auto flex items-center gap-2">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
-            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/80 active:scale-[0.97] transition-transform">
+            className="flex items-center gap-1.5 rounded-full border border-lokin-neon/40 bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white/85 glow-primary active:scale-[0.97] transition-transform">
             <span>{role.emoji}</span> {role.short}
           </button>
         </div>
@@ -121,14 +122,14 @@ export default function Home() {
       </div>
 
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
-      <div className="globalui-hero relative z-10 overflow-hidden rounded-[1.75rem] p-5">
+      <div className="lokin-card relative z-10 overflow-hidden p-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/60"><Activity className="h-4 w-4 text-primary" /> Driver Command Center</div>
-          <Link to="/settings" className="text-[10px] rounded-full border border-white/10 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
+          <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Driver Command Center</div>
+          <Link to="/settings" className="text-[10px] rounded-full border border-lokin-neon/30 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
         </div>
-        <div className="mt-4 flex items-end justify-between gap-3"><div><div className="text-[10px] uppercase tracking-[0.2em] text-white/35">Today&apos;s Goal</div><div className="mt-1 text-5xl font-black font-display metal-number">${dailyGoal}</div></div><div className="pb-1 text-right"><div className="text-[10px] uppercase tracking-[0.18em] text-white/35">Remaining</div><div className="mt-1 text-xl font-extrabold text-primary text-glow">${remaining.toFixed(2)}</div></div></div>
-        <div className="relative mt-4 h-2.5 rounded-full bg-white/10 overflow-visible">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%`, boxShadow: "0 0 14px hsl(81.1 83.9% 51.4% / .8)" }} />
+        <div className="mt-4 flex items-end justify-between gap-3"><div><div className="lokin-kicker">Today&apos;s Goal</div><div className="lokin-hero-number mt-1 text-5xl font-display">${dailyGoal}</div></div><div className="pb-1 text-right"><div className="lokin-kicker">Remaining</div><div className="lokin-hero-number mt-1 text-xl font-extrabold">${remaining.toFixed(2)}</div></div></div>
+        <div className="lokin-progress-track relative mt-4 h-2.5 overflow-visible">
+          <div className="lokin-progress-fill" style={{ width: `${pct}%` }} />
           <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #A2EB1B"}} />
         </div>
         <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
@@ -136,30 +137,30 @@ export default function Home() {
 
       <div className="grid grid-cols-4 gap-2">
         {(loading && !data) ? ["NET/HR","ACTIVE","ORDERS","MILES"].map((k) => (
-          <div key={k} className="dashboard-stat rounded-2xl py-3 px-1 text-center">
-            <div className="text-[9px] text-white/45">{k}</div>
+          <div key={k} className="lokin-stat-tile">
+            <div className="lokin-kicker">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="dashboard-stat rounded-2xl py-3 px-1 text-center"><div className="text-[9px] text-white/45">{k}</div><div className="mt-1 text-sm sm:text-base font-bold text-primary">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["SESSION", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker">{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="globalui-hero block rounded-[1.75rem] p-6 glow-primary"><LokinGlyph size={86} className="mx-auto lokin-pulse"/><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><LokinEmblemImg size={86} className="mx-auto lokin-pulse" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinGlyph size={118} /></div>
+          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinEmblemImg size={118} /></div>
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinGlyph size={118} className="lokin-pulse"/></div>
-          <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">START WORK</div>
-          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">LOCK IN &amp; START EARNING</div>
+          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinEmblemImg size={118} className="lokin-pulse" /></div>
+          <div className="-mt-1 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK</span></div>
+          <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
         </button>
       )}
 
@@ -170,10 +171,10 @@ export default function Home() {
         <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
       </div>
 
-      <Link to="/lokin" className="ai-command-card relative z-10 flex items-center gap-3 rounded-2xl p-3.5 active:scale-[.99] transition-transform">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 glow-primary"><Brain className="h-5 w-5 text-primary"/></div>
-        <div className="min-w-0 flex-1"><div className="text-xs font-bold">LOKIN AI <span className="text-primary">COPILOT</span></div><div className="text-[11px] text-white/45">Your AI copilot is ready.</div></div>
-        <div className="rounded-full border border-white/10 px-3 py-2 text-[10px] text-white/70">TAP TO TALK</div>
+      <Link to="/lokin" className="lokin-card relative z-10 flex items-center gap-3 p-3.5 active:scale-[.99] transition-transform">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/50 bg-accent/10 glow-cyan"><Brain className="h-5 w-5 text-accent"/></div>
+        <div className="min-w-0 flex-1"><div className="text-xs font-bold">LOKIN AI <span className="text-accent">COPILOT</span></div><div className="text-[11px] text-white/45">Your AI copilot is ready.</div></div>
+        <div className="rounded-full border border-accent/30 px-3 py-2 text-[10px] text-accent/90">TAP TO TALK</div>
       </Link>
 
       <div className="dashboard-stat relative z-10 rounded-2xl p-3 flex items-center justify-between gap-3">
