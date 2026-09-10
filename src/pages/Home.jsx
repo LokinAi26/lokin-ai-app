@@ -93,9 +93,9 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={() => loadCommand(true)}>
-    <div className="lokin-dashboard relative isolate p-4 space-y-4">
+    <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-3 min-h-[calc(100dvh-8.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
       {/* Brand header */}
-      <div className="relative z-10 flex items-center gap-2 pt-1 pb-1">
+      <div className="relative z-10 flex items-center gap-2 pt-1 pb-1 shrink-0">
         <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-11 w-auto" />
         <div className="ml-auto flex items-center gap-2">
           <HomeSignalIndicator />
@@ -107,7 +107,7 @@ export default function Home() {
       </div>
 
       {/* Profile + streak */}
-      <div className="relative z-10 flex items-center gap-3 px-1 py-1">
+      <div className="relative z-10 flex items-center gap-3 px-1 py-1 shrink-0">
         <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{boxShadow:"0 0 18px rgba(162,235,27,.45)"}}>{(firstName || "L").charAt(0)}</div>
         <div>
           <div className="text-xs text-white/45">{greeting()},</div>
@@ -120,7 +120,7 @@ export default function Home() {
       </div>
 
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
-      <div className="lokin-card relative z-10 overflow-hidden p-5">
+      <div className="lokin-card relative z-10 overflow-hidden p-4 shrink-0">
         <div className="flex items-center justify-between">
           <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> TODAY&apos;S GOAL</div>
           <Link to="/settings" className="flex items-center gap-1.5 rounded-full border border-lokin-neon/50 px-3 py-1.5 text-[10px] font-bold tracking-[0.14em] text-white/80"><Settings className="h-3.5 w-3.5 text-white/70" />GOAL SETTINGS</Link>
@@ -133,7 +133,7 @@ export default function Home() {
         <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 shrink-0">
         {(loading && !data) ? ["NET/HR","ACTIVE","ORDERS","MILES"].map((k) => (
           <div key={k} className="lokin-stat-tile">
             <div className="lokin-kicker">{k}</div>
@@ -144,21 +144,25 @@ export default function Home() {
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
-        <div className="space-y-3 text-center">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center space-y-3 text-center">
           <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
-        <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
-          <div className="mt-3 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
-          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
+        <button onClick={resumeWork} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
+          <span className="flex-1 min-h-0 w-full flex items-center justify-center">
+            <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+          </span>
+          <div className="mt-3 w-[82%] max-w-sm shrink-0 rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
+          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35 shrink-0">SESSION PAUSED</div>
         </button>
       ) : (
-        <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="h-auto w-[330px] max-w-[88%]" />
-          <div className="mt-3 w-[82%] max-w-sm"><span className="lokin-cta font-display text-lg tracking-wide">START WORK &raquo;</span></div>
-          <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
+        <button onClick={startLockIn} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
+          <span className="flex-1 min-h-0 w-full flex items-center justify-center">
+            <img src={LOKIN_HERO_LOCK_V2} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+          </span>
+          <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-cta font-display text-xl tracking-wide">START WORK &raquo;</span></div>
+          <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
         </button>
       )}
 
