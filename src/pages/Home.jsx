@@ -99,7 +99,7 @@ export default function Home() {
       {/* Brand header */}
       <div className="relative z-10 flex items-center gap-2 pt-1 pb-1">
         <LokinEmblemImg size={24} />
-        <span className="lokin-wordmark font-display font-black tracking-[0.08em] text-lg leading-none">LOKIN <span className="lokin-ai-suffix">AI</span></span>
+        <span className="font-display leading-none"><span className="lokin-wordmark block text-lg font-black tracking-[0.08em]">LOKIN <span className="lokin-ai-suffix">AI</span></span><span className="lokin-kicker mt-1 block text-[9px]">UNLOCK YOUR POTENTIAL</span></span>
         <div className="ml-auto flex items-center gap-2">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
@@ -153,14 +153,14 @@ export default function Home() {
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinEmblemImg size={118} /></div>
+          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%]" alt="LOKIN emblem" />
           <div className="-mt-1 w-[82%] max-w-sm rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary">RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35">SESSION PAUSED</div>
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <div className="session-orb relative flex h-48 w-48 items-center justify-center rounded-full"><LokinEmblemImg size={118} className="lokin-pulse" /></div>
-          <div className="-mt-1 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK</span></div>
+          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%] lokin-pulse" alt="LOKIN emblem" />
+          <div className="-mt-1 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
         </button>
       )}
