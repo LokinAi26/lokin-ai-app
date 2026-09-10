@@ -369,31 +369,9 @@ body {
   .lokin-cta:active { transform: scale(0.98); }
   .lokin-cta:disabled { opacity: 0.45; cursor: default; }
   .lokin-cta-sm { padding: 0.7rem 1.1rem; font-size: 0.8rem; width: auto; }
-  .lokin-btn-glow {
-    display: block; width: 100%; border-radius: 999px; padding: 2px;
-    background: #070a04;
-    box-shadow: 0 0 0 2px rgba(190,255,110,.8), 0 0 16px rgba(162,235,27,.55), 0 0 42px rgba(162,235,27,.28);
-  }
   .lokin-chrome-ring {
     display: block; width: 100%; border-radius: 999px; padding: 3px;
     background: linear-gradient(180deg, #ffffff 0%, #e9edf1 10%, #969ca4 22%, #33373b 40%, #101315 52%, #43484d 64%, #cdd2d8 82%, #ffffff 93%, #dbe0e6 100%);
-  }
-  /* START WORK button — clean rebuild to the approved concept. Self-contained: no .lokin-cta inheritance. */
-  .lokin-startbtn {
-    display: block; width: 100%; border-radius: 999px; padding: 2px;
-    background: #070a04;
-    box-shadow: 0 0 0 2px rgba(190,255,110,.85), 0 0 18px rgba(162,235,27,.55), 0 0 46px rgba(162,235,27,.30);
-  }
-  .lokin-startbtn-chrome {
-    display: block; width: 100%; border-radius: 999px; padding: 4px;
-    background: linear-gradient(180deg, #ffffff 0%, #e9edf1 10%, #969ca4 22%, #33373b 40%, #101315 52%, #43484d 64%, #cdd2d8 82%, #ffffff 93%, #dbe0e6 100%);
-  }
-  .lokin-startbtn-pill {
-    display: flex; align-items: center; justify-content: center; gap: .5rem;
-    width: 100%; border-radius: 999px; padding: 1rem 1.5rem;
-    font-size: 1.25rem; line-height: 1.2; font-weight: 900; letter-spacing: .06em; color: #000;
-    background: linear-gradient(180deg, #f2ffa8 0%, #ddf75c 30%, #bdf72f 65%, #a5ec1f 100%);
-    box-shadow: 0 0 0 2px rgba(3,6,3,.92), inset 0 2px 5px rgba(240,255,160,.75), inset 0 -4px 10px rgba(70,140,0,.45);
   }
   .lokin-cta-caption {
     margin-top: 0.5rem; text-align: center;
