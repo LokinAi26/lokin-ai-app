@@ -123,13 +123,16 @@ export default function EarningsIntelligence() {
             <MissionMetric icon={Clock3} label="Projected goal time" value={timeToGoal(mission.projected_minutes_to_goal)} />
           </div>
 
-          <div className="lokin-card mt-4 p-3">
-            <div className="flex items-start gap-2">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <div>
-                <div className="lokin-kicker lokin-kicker-lime">Next best action</div>
-                <div className="mt-1 text-sm leading-relaxed text-white/80">{mission.next_action || "Waiting for current verified offers."}</div>
-              </div>
+        </div>
+
+        <div className="lokin-card p-5 glow-primary">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="lokin-kicker lokin-kicker-lime">Next best action</div>
+              <div className="mt-1 text-base font-bold leading-relaxed text-white">{mission.next_action || "Waiting for current verified offers."}</div>
             </div>
           </div>
         </div>
