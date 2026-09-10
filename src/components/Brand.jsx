@@ -144,7 +144,8 @@ export const LOKIN_NAV_LOCK = LOKIN_NAV_LOCK_V3;
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 // LOKIN_NAV_LOCK_V5 is declared above with the other nav exports.
 export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
-// START WORK button V2 — cropped from the full approved concept with complete glow halo; all edges feathered into the page.
-export const LOKIN_START_WORK_BTN_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/06dae3cf4_lokin-start-work-btn-v2.png";
+// START WORK button V3 — transparent surround (luminance alpha): only pill + glow exist, no dark box, no border.
+export const LOKIN_START_WORK_BTN_V3 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1aac65650_lokin-start-work-btn-v3.png";
+export const LOKIN_START_WORK_BTN_V2 = LOKIN_START_WORK_BTN_V3;
 
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
