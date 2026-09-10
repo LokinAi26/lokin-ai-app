@@ -363,7 +363,7 @@ body {
     background: linear-gradient(180deg, var(--lokin-lime-from) 0%, var(--lokin-lime-to) 100%);
     color: #000; font-weight: 800; letter-spacing: 0.04em;
     padding: 1rem 1.5rem; font-size: 1rem; line-height: 1.2;
-    box-shadow: 0 0 28px rgba(140, 255, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 2px rgba(200, 255, 120, 0.95), 0 0 18px rgba(162, 235, 27, 0.8), 0 0 42px rgba(162, 235, 27, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
     transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   }
   .lokin-cta:active { transform: scale(0.98); }
