@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { LokinGlyph } from "@/components/Brand";
+import { LokinGlyph, LokinEmblemImg } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
@@ -34,7 +34,7 @@ function pathToTab(path) {
 const NAV = [
   { key: "home", label: "Delivery", icon: Truck },
   { key: "route", label: "Route", icon: RouteIcon },
-  { key: "lokin", label: "LOKIN", icon: LokinGlyph, center: true },
+  { key: "lokin", label: "LOKIN", icon: LokinEmblemImg, center: true },
   { key: "earnings", label: "Earnings", icon: BarChart3 },
   { key: "more", label: "More", icon: Menu },
 ];
@@ -151,7 +151,7 @@ export default function DriverLayout() {
         </motion.div>
       </main>
 
-      {!lockedGps && <nav aria-label="Main navigation" className="chrome-dock fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)] select-none">
+      {!lockedGps && <nav aria-label="Main navigation" className="chrome-dock bg-black fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)] select-none">
         <div className="max-w-md mx-auto grid grid-cols-5">
           {NAV.map(({ key, label, icon: Icon, center }) => {
             const active = currentTab === key;
@@ -159,16 +159,16 @@ export default function DriverLayout() {
               return (
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
-                  <div className={`chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
-                    <Icon size={24} />
+                  <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
+                    <Icon size={40} />
                   </div>
-                  <span className={active ? "text-primary" : "text-white/45"}>LOKIN</span>
+                  <span className={active ? "text-primary lokin-tab-active" : "text-white/45"}>LOKIN</span>
                 </button>
               );
             }
             return (
               <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
-                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-colors ${active ? "text-primary" : "text-white/45"}`}>
+                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-colors ${active ? "text-primary lokin-tab-active" : "text-white/45"}`}>
                 <Icon className="h-5 w-5" />
                 {label}
               </button>
