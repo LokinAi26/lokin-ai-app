@@ -155,7 +155,7 @@ export default function DriverLayout() {
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
                   <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
-                    <img src={LOKIN_NAV_LOCK} alt="LOKIN" draggable="false" className="h-10 w-10 rounded-full object-cover" />
+                    <img src={LOKIN_NAV_LOCK} alt="LOKIN" draggable="false" className="h-11 w-11 rounded-full object-cover" />
                   </div>
                   <span className={active ? "text-primary lokin-tab-active" : "text-white/45"}>LOKIN</span>
                 </button>
