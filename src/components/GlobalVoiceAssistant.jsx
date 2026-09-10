@@ -107,6 +107,9 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const voiceSupported = Boolean(speechRecognitionCtor());
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
+  // Presentation: full-screen hero when opened from the LOKIN tab;
+  // compact bottom sheet for in-flow (driving) invocations.
+  const full = !drivingMode;
 
   useEffect(() => {
     if (drivingMode) setWakeBlocked(false);
@@ -444,17 +447,19 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center"
+            className={`fixed inset-0 z-50 ${full ? "overflow-y-auto bg-black" : "flex items-end justify-center"}`}
             onClick={() => setOpen(false)}
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className={`absolute inset-0 ${full ? "bg-black" : "bg-black/60 backdrop-blur-sm"}`} />
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={full ? { opacity: 0 } : { y: "100%" }}
+              animate={full ? { opacity: 1 } : { y: 0 }}
+              exit={full ? { opacity: 0 } : { y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md lokin-card rounded-t-3xl rounded-b-none border-t border-primary/30 p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+              className={full
+                ? "relative mx-auto flex min-h-full w-full max-w-md flex-col bg-black px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+                : "relative w-full max-w-md lokin-card rounded-t-3xl rounded-b-none border-t border-primary/30 p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -472,11 +477,16 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               </div>
 
               {/* Listening orb */}
-              <div className="flex flex-col items-center py-4">
+              {full && (
+                <div className="flex flex-col items-center pt-1">
+                  <LokinEmblemImg size={120} alt="LOKIN voice emblem" />
+                </div>
+              )}
+              <div className={`flex flex-col items-center ${full ? "py-5" : "py-4"}`}>
                 <button
                   onClick={startOnce}
                   disabled={busy}
-                  className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
+                  className={`flex ${full ? "h-24 w-24" : "h-20 w-20"} items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
                 >
                   {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                 </button>
@@ -539,11 +549,11 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                 Wake-word listening works while LOKIN is open. Use Siri shortcuts for system-level voice launch.
               </div>
 
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/40 bg-primary/[0.08] p-2 text-center glow-primary"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
-                <button onClick={() => handleCommand("pause")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Pause className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">PAUSE</div></button>
-                <button onClick={() => handleCommand("resume")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Play className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">RESUME</div></button>
-                <button onClick={() => handleCommand("tap out")} className="lokin-card-danger p-2 text-center"><Power className="h-4 w-4 text-red-400 mx-auto"/><div className="text-[9px] text-red-300 mt-1">TAP OUT</div></button>
+              <div className={`grid grid-cols-4 ${full ? "mt-4 gap-3" : "mt-3 gap-2"}`}>
+                <button onClick={() => handleCommand("lock in")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-primary/40 bg-primary/[0.08] text-center glow-primary`}><Lock className={`${full ? "h-6 w-6" : "h-4 w-4"} text-primary mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>LOCK IN</div></button>
+                <button onClick={() => handleCommand("pause")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-white/10 bg-white/[0.03] text-center`}><Pause className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/60 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>PAUSE</div></button>
+                <button onClick={() => handleCommand("resume")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-white/10 bg-white/[0.03] text-center`}><Play className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/60 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>RESUME</div></button>
+                <button onClick={() => handleCommand("tap out")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} lokin-card-danger text-center`}><Power className={`${full ? "h-6 w-6" : "h-4 w-4"} text-red-400 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-red-300 mt-1`}>TAP OUT</div></button>
               </div>
 
               <div className="mt-2 text-center text-[10px] text-white/35">
