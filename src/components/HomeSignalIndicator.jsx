@@ -54,7 +54,7 @@ export default function HomeSignalIndicator() {
   return (
     <Link
       to="/connectivity"
-      className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 active:scale-[0.97] transition-transform"
+      className="flex items-center gap-2 rounded-full border border-lokin-neon/50 bg-black/60 px-2.5 py-1 glow-primary active:scale-[0.97] transition-transform"
       aria-label="Network status — open Stay Linked"
     >
       {!online ? <WifiOff className="h-3.5 w-3.5 text-destructive" /> : <Signal className={`h-3.5 w-3.5 ${color}`} />}
