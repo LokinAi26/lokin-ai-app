@@ -108,7 +108,7 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
 export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem" }) {
   return (
     <img
-      src="/assets/lokin-emblem.png"
+      src="https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e475600a6_lokin-emblem.png"
       width={size}
       height={size}
       alt={alt}
@@ -119,4 +119,4 @@ export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem"
   );
 }
 
-export const LOKIN_SKYLINE_BG = "/assets/city-skyline-night.png";
+export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
