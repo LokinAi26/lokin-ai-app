@@ -339,3 +339,141 @@ body {
     100% { opacity: 0; transform: translateX(-6px); }
   }
 }
+/* =====================================================================
+   LOKIN AI RESKIN — Design System (Sept 2026, visual-only)
+   Tokens + shared component classes for the concept reskin.
+   Do not rename: screen implementations reference these class names.
+   ===================================================================== */
+:root {
+  --lokin-lime-from: #C8FF00;
+  --lokin-lime-to: #7DFF00;
+  --lokin-neon: #33FF14;
+  --lokin-cyan: #38E1FF;
+  --lokin-red: #FF3B5C;
+  --lokin-card: #060A06;
+  --lokin-card-border: rgba(140, 255, 0, 0.45);
+  --lokin-text-dim: #9AA39A;
+}
+
+@layer components {
+  /* Primary CTA: full-width lime pill, black 800 text, outer glow */
+  .lokin-cta {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; border-radius: 999px; border: none; cursor: pointer;
+    background: linear-gradient(180deg, var(--lokin-lime-from) 0%, var(--lokin-lime-to) 100%);
+    color: #000; font-weight: 800; letter-spacing: 0.04em;
+    padding: 1rem 1.5rem; font-size: 1rem; line-height: 1.2;
+    box-shadow: 0 0 28px rgba(140, 255, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  .lokin-cta:active { transform: scale(0.98); }
+  .lokin-cta:disabled { opacity: 0.45; cursor: default; }
+  .lokin-cta-sm { padding: 0.7rem 1.1rem; font-size: 0.8rem; width: auto; }
+  .lokin-cta-caption {
+    margin-top: 0.5rem; text-align: center;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--lokin-text-dim);
+  }
+
+  /* Ghost button: transparent, 1px lime border, lime text, pill */
+  .lokin-ghost {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border-radius: 999px; border: 1px solid var(--lokin-neon);
+    background: transparent; color: var(--lokin-neon);
+    font-weight: 700; padding: 0.7rem 1.25rem; font-size: 0.85rem; cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  .lokin-ghost:active { transform: scale(0.97); }
+  .lokin-ghost-cyan { border-color: var(--lokin-cyan); color: var(--lokin-cyan); }
+
+  /* Card: near-black green-tinted fill, neon border, outer glow, 22px radius */
+  .lokin-card {
+    background: var(--lokin-card);
+    border: 1px solid var(--lokin-card-border);
+    box-shadow: 0 0 24px rgba(51, 255, 20, 0.25);
+    border-radius: 22px;
+  }
+  .lokin-card-cyan {
+    background: #050A0C;
+    border: 1px solid rgba(56, 225, 255, 0.45);
+    box-shadow: 0 0 24px rgba(56, 225, 255, 0.22);
+    border-radius: 22px;
+  }
+  .lokin-card-danger {
+    background: #0C0608;
+    border: 1px solid rgba(255, 59, 92, 0.5);
+    box-shadow: 0 0 18px rgba(255, 59, 92, 0.3);
+    border-radius: 22px;
+  }
+
+  /* Micro-label: 10-11px uppercase, .25em letter-spacing */
+  .lokin-kicker {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.25em; color: var(--lokin-text-dim);
+  }
+  .lokin-kicker-lime { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(51, 255, 20, 0.5); }
+  .lokin-kicker-cyan { color: var(--lokin-cyan); text-shadow: 0 0 10px rgba(56, 225, 255, 0.5); }
+
+  /* Chrome wordmark gradient text */
+  .lokin-wordmark {
+    background: linear-gradient(180deg, #FFFFFF 0%, #9A9A9A 38%, #E8E8E8 55%, #6E6E6E 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lokin-ai-suffix {
+    color: var(--lokin-neon);
+    text-shadow: 0 0 14px rgba(51, 255, 20, 0.6);
+  }
+
+  /* Hero numbers: heavy, lime with soft glow */
+  .lokin-hero-number {
+    font-weight: 900; color: var(--lokin-lime-from);
+    text-shadow: 0 0 18px rgba(140, 255, 0, 0.55);
+    line-height: 1;
+  }
+
+  /* Chat bubbles, 18px radius */
+  .lokin-bubble-user {
+    background: #0B0E0B; border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+  }
+  .lokin-bubble-lokin {
+    background: #0A0F0A; border: 1px solid rgba(56, 225, 255, 0.55);
+    border-radius: 18px;
+    box-shadow: 0 0 18px rgba(56, 225, 255, 0.28);
+  }
+
+  /* Stat tile: small card, icon + micro label top, big lime value */
+  .lokin-stat-tile {
+    background: var(--lokin-card);
+    border: 1px solid rgba(140, 255, 0, 0.28);
+    border-radius: 18px; padding: 0.75rem 0.25rem; text-align: center;
+  }
+  .lokin-stat-value { font-weight: 800; color: var(--lokin-lime-from); }
+
+  /* Progress bar */
+  .lokin-progress-track { background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden; }
+  .lokin-progress-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--lokin-lime-from), var(--lokin-lime-to));
+    box-shadow: 0 0 14px rgba(140, 255, 0, 0.7);
+  }
+
+  /* Raised center tab emblem: glowing green ring */
+  .lokin-emblem-ring {
+    border: 2px solid var(--lokin-neon);
+    box-shadow: 0 0 22px rgba(51, 255, 20, 0.5), inset 0 0 12px rgba(51, 255, 20, 0.25);
+  }
+  .lokin-tab-active { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(51, 255, 20, 0.6); }
+
+  /* Dark scrim for full-bleed imagery (onboarding skyline) */
+  .lokin-scrim {
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.92) 100%);
+  }
+
+  /* Toggle row */
+  .lokin-toggle-row {
+    background: var(--lokin-card);
+    border: 1px solid rgba(140, 255, 0, 0.25);
+    border-radius: 16px;
+  }
+}
