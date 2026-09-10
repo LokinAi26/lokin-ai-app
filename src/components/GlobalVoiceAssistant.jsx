@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Radio, X, Volume2, Ear, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { LokinGlyph } from "@/components/Brand";
+import { LokinEmblemImg } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -454,15 +454,15 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md lokin-panel border-t border-primary/30 rounded-t-3xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+              className="relative w-full max-w-md lokin-card rounded-t-3xl rounded-b-none border-t border-primary/30 p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <LokinGlyph size={24} />
-                  <span className="font-display font-bold tracking-wider metal-text">LOKIN VOICE</span>
+                  <LokinEmblemImg size={24} />
+                  <span className="font-display font-bold tracking-wider lokin-wordmark">LOKIN VOICE</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="text-[10px] font-bold tracking-wide text-primary/80 border border-primary/25 rounded-lg px-2 py-1 active:scale-90">
+                  <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="lokin-ghost px-3 py-1.5 text-[10px] font-bold tracking-wide active:scale-90">
                     FULL AI →
                   </button>
                   <button onClick={() => setOpen(false)} aria-label="Close LOKIN Voice" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/50 active:scale-90">
@@ -486,13 +486,13 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               </div>
 
               {transcript && (
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80">
-                  <span className="text-[10px] text-white/40 mr-1">YOU</span>{transcript}
+                <div className="lokin-bubble-user px-3 py-2 text-sm text-white/80">
+                  <span className="lokin-kicker mr-1">YOU</span>{transcript}
                 </div>
               )}
               {reply && (
-                <div className="mt-2 rounded-xl border border-accent/30 bg-accent/[0.06] px-3 py-2 text-sm text-white/90">
-                  <span className="text-[10px] text-accent mr-1">LOKIN</span>{reply}
+                <div className="mt-2 lokin-bubble-lokin px-3 py-2 text-sm text-white/90">
+                  <span className="lokin-kicker lokin-kicker-cyan mr-1">LOKIN</span>{reply}
                   <button onClick={() => speak(reply)} className="ml-2 align-middle text-accent/70">
                     <Volume2 className="h-3.5 w-3.5 inline" />
                   </button>
@@ -525,7 +525,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               {/* Foreground wake-word toggle */}
               <button
                 onClick={toggleAlwaysOn}
-                className={`mt-4 w-full flex items-center justify-between rounded-xl border px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : "border-white/10 bg-white/[0.03]"}`}
+                className={`lokin-toggle-row mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
               >
                 <span className="flex items-center gap-2 text-sm text-white/80">
                   <Ear className={`h-4 w-4 ${alwaysOn ? "text-accent" : "text-white/40"}`} />
@@ -540,10 +540,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               </div>
 
               <div className="mt-3 grid grid-cols-4 gap-2">
-                <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/25 bg-primary/[0.06] p-2 text-center"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
+                <button onClick={() => handleCommand("lock in")} className="rounded-xl border border-primary/40 bg-primary/[0.08] p-2 text-center glow-primary"><Lock className="h-4 w-4 text-primary mx-auto"/><div className="text-[9px] text-white/65 mt-1">LOCK IN</div></button>
                 <button onClick={() => handleCommand("pause")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Pause className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">PAUSE</div></button>
                 <button onClick={() => handleCommand("resume")} className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-center"><Play className="h-4 w-4 text-white/60 mx-auto"/><div className="text-[9px] text-white/65 mt-1">RESUME</div></button>
-                <button onClick={() => handleCommand("tap out")} className="rounded-xl border border-red-500/25 bg-red-500/[0.05] p-2 text-center"><Power className="h-4 w-4 text-red-400 mx-auto"/><div className="text-[9px] text-red-300 mt-1">TAP OUT</div></button>
+                <button onClick={() => handleCommand("tap out")} className="lokin-card-danger p-2 text-center"><Power className="h-4 w-4 text-red-400 mx-auto"/><div className="text-[9px] text-red-300 mt-1">TAP OUT</div></button>
               </div>
 
               <div className="mt-2 text-center text-[10px] text-white/35">
