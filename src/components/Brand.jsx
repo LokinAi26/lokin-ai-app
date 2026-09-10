@@ -104,47 +104,7 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
     : <LokinGlyph size={size} className={className} />;
 }
 
-// Concept emblem artwork (black-background PNG). Blends invisibly on black.
-// Pass `cover` to fill a clipped container (e.g. a rounded-full ring) edge to
-// edge so the artwork never renders as a floating box.
-export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem", cover = false }) {
-  return (
-    <img
-      src="https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e475600a6_lokin-emblem.png"
-      width={size}
-      height={size}
-      alt={alt}
-      draggable="false"
-      className={className}
-      style={cover ? { width: "100%", height: "100%", objectFit: "cover", display: "block" } : { maxWidth: "100%", height: "auto" }}
-    />
-  );
-}
-
-// Clean hero lock/clock artwork (no wordmark), cropped from the approved concept.
-export const LOKIN_HERO_LOCK = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/80310056f_lokin-hero-lock.png";
-// Free-floating hero (transparent background), cropped from the approved concept.
-// Center hero V7: black band below the lock cropped off; bottom edge feathered into the page.
-// Center hero V8: all four edges feathered so the artwork melts into the page texture — no edge lines.
-export const LOKIN_HERO_LOCK_V8 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6c9611fd1_lokin-hero-lock-v8.png";
-export const LOKIN_HERO_LOCK_V7 = LOKIN_HERO_LOCK_V8;
-export const LOKIN_HERO_LOCK_V6 = LOKIN_HERO_LOCK_V7;
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
 export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19590ff33_lokin-header-lockup-v2.png";
-// Back-compat aliases — every surface now resolves to the exact concept-matched assets.
-export const LOKIN_HERO_LOCK_V5 = LOKIN_HERO_LOCK_V6;
-export const LOKIN_HERO_LOCK_V4 = LOKIN_HERO_LOCK_V6;
-export const LOKIN_HERO_LOCK_V3 = LOKIN_HERO_LOCK_V5;
-export const LOKIN_HERO_LOCK_V2 = LOKIN_HERO_LOCK_V4;
-export const LOKIN_NAV_LOCK_V5 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19bb8929d_lokin-nav-lock-v5.png";
-export const LOKIN_NAV_LOCK_V4 = LOKIN_NAV_LOCK_V5;
-export const LOKIN_NAV_LOCK_V3 = LOKIN_NAV_LOCK_V5;
-export const LOKIN_NAV_LOCK_V2 = LOKIN_NAV_LOCK_V4;
-export const LOKIN_NAV_LOCK = LOKIN_NAV_LOCK_V3;
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
-// LOKIN_NAV_LOCK_V5 is declared above with the other nav exports.
-export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
-// Center flow — lock and START WORK as ONE artwork cropped from the approved concept: no seams, no drift, no bleed.
-export const LOKIN_CENTER_FLOW = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/413250fc4_lokin-center-flow.png";
-
-export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
+export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
