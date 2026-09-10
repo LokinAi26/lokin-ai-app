@@ -132,13 +132,13 @@ export const LOKIN_HERO_LOCK_V5 = LOKIN_HERO_LOCK_V6;
 export const LOKIN_HERO_LOCK_V4 = LOKIN_HERO_LOCK_V6;
 export const LOKIN_HERO_LOCK_V3 = LOKIN_HERO_LOCK_V5;
 export const LOKIN_HERO_LOCK_V2 = LOKIN_HERO_LOCK_V4;
+export const LOKIN_NAV_LOCK_V5 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19bb8929d_lokin-nav-lock-v5.png";
 export const LOKIN_NAV_LOCK_V4 = LOKIN_NAV_LOCK_V5;
 export const LOKIN_NAV_LOCK_V3 = LOKIN_NAV_LOCK_V5;
 export const LOKIN_NAV_LOCK_V2 = LOKIN_NAV_LOCK_V4;
 export const LOKIN_NAV_LOCK = LOKIN_NAV_LOCK_V3;
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
-// Bottom-nav center lock, cropped from the approved concept.
-export const LOKIN_NAV_LOCK_V5 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19bb8929d_lokin-nav-lock-v5.png";
+// LOKIN_NAV_LOCK_V5 is declared above with the other nav exports.
 export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
 
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
