@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LokinEmblemImg } from "@/components/Brand";
-
 const SPLASH_SEEN_KEY = "lokin_splash_seen";
+
+const SPLASH_LOGO_URL =
+  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/b4f085791_lokin-splash-logo.jpg";
 
 export default function SplashScreen() {
   const [done, setDone] = useState(() => {
@@ -93,24 +94,15 @@ export default function SplashScreen() {
           aria-modal="true"
           aria-label="LOKIN AI introduction"
         >
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black px-8">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            >
-              <LokinEmblemImg size={208} alt="LOKIN emblem" />
-            </motion.div>
-            <div className="mt-5 text-center font-display">
-              <div className="lokin-wordmark text-6xl font-black tracking-[0.08em]">LOKIN</div>
-              <div className="lokin-ai-suffix mt-1 text-3xl font-black tracking-[0.35em]">AI</div>
-            </div>
-            <div className="mt-8 flex w-full max-w-[300px] items-center gap-4">
-              <div className="h-px flex-1 bg-lokin-neon/70" aria-hidden="true" />
-              <span className="lokin-kicker whitespace-nowrap">UNLOCK YOUR POTENTIAL</span>
-              <div className="h-px flex-1 bg-lokin-neon/70" aria-hidden="true" />
-            </div>
-          </div>
+          <motion.img
+            src={SPLASH_LOGO_URL}
+            alt="LOKIN AI — Unlock your potential"
+            className="absolute inset-0 h-full w-full bg-black object-contain"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            draggable={false}
+          />
 
           <button
             type="button"
