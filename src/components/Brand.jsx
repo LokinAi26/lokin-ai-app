@@ -124,11 +124,12 @@ export function LokinEmblemImg({ size = 96, className = "", alt = "LOKIN emblem"
 // Clean hero lock/clock artwork (no wordmark), cropped from the approved concept.
 export const LOKIN_HERO_LOCK = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/80310056f_lokin-hero-lock.png";
 // Free-floating hero (transparent background), cropped from the approved concept.
-export const LOKIN_HERO_LOCK_V5 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/a0931a22b_lokin-hero-lock-v5.png";
+export const LOKIN_HERO_LOCK_V6 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3f6094869_lokin-hero-lock-v6.png";
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
 export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19590ff33_lokin-header-lockup-v2.png";
 // Back-compat aliases — every surface now resolves to the exact concept-matched assets.
-export const LOKIN_HERO_LOCK_V4 = LOKIN_HERO_LOCK_V5;
+export const LOKIN_HERO_LOCK_V5 = LOKIN_HERO_LOCK_V6;
+export const LOKIN_HERO_LOCK_V4 = LOKIN_HERO_LOCK_V6;
 export const LOKIN_HERO_LOCK_V3 = LOKIN_HERO_LOCK_V5;
 export const LOKIN_HERO_LOCK_V2 = LOKIN_HERO_LOCK_V4;
 export const LOKIN_NAV_LOCK_V4 = LOKIN_NAV_LOCK_V5;
