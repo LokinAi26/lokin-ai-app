@@ -71,10 +71,10 @@ export default function EarningsIntelligence() {
       <div className="space-y-4 p-4 pb-8">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 text-[10px] font-display tracking-[0.2em] text-primary">
+            <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2">
               <BrainCircuit className="h-4 w-4" /> LOKIN DRIVER
             </div>
-            <h1 className="mt-1 text-2xl font-black font-heading metal-text">Earnings Intelligence</h1>
+            <h1 className="lokin-wordmark mt-1 text-2xl font-black font-heading">Earnings Intelligence</h1>
             <p className="mt-1 text-xs leading-relaxed text-white/45">Optimize earnings velocity, not just individual order price.</p>
           </div>
           <button
@@ -88,9 +88,9 @@ export default function EarningsIntelligence() {
           </button>
         </div>
 
-        <div className="rounded-3xl border border-primary/25 bg-primary/[0.055] p-5 radial-fade">
+        <div className="lokin-card p-5 radial-fade">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[10px] font-display tracking-[0.18em] text-primary/80">EARNINGS MISSION</div>
+            <div className="lokin-kicker lokin-kicker-lime">EARNINGS MISSION</div>
             <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-black/30 px-2.5 py-1 text-[9px] font-bold text-primary">
               <Activity className="h-3 w-3" /> LIVE DECISION LOOP
             </div>
@@ -98,19 +98,19 @@ export default function EarningsIntelligence() {
 
           <div className="mt-3 flex items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-white/35">Daily goal</div>
-              <div className="text-4xl font-black font-display text-white">{money(mission.goal)}</div>
+              <div className="lokin-kicker">Daily goal</div>
+              <div className="lokin-hero-number text-4xl font-black font-display">{money(mission.goal)}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-white/35">Remaining</div>
-              <div className="text-2xl font-black font-display text-primary">{money(mission.remaining)}</div>
+              <div className="lokin-kicker">Remaining</div>
+              <div className="lokin-hero-number text-2xl font-black font-display">{money(mission.remaining)}</div>
             </div>
           </div>
 
-          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10">
+          <div className="lokin-progress-track mt-4 h-2.5">
             <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${Math.max(0, Math.min(100, Number(mission.goal_progress_pct || 0)))}%`, boxShadow: "0 0 16px hsl(81 84% 51% / .8)" }}
+              className="lokin-progress-fill transition-all"
+              style={{ width: `${Math.max(0, Math.min(100, Number(mission.goal_progress_pct || 0)))}%` }}
             />
           </div>
           <div className="mt-2 flex justify-between text-[10px] text-white/40">
@@ -123,11 +123,11 @@ export default function EarningsIntelligence() {
             <MissionMetric icon={Clock3} label="Projected goal time" value={timeToGoal(mission.projected_minutes_to_goal)} />
           </div>
 
-          <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3">
+          <div className="lokin-card mt-4 p-3">
             <div className="flex items-start gap-2">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-primary/75">Next best action</div>
+                <div className="lokin-kicker lokin-kicker-lime">Next best action</div>
                 <div className="mt-1 text-sm leading-relaxed text-white/80">{mission.next_action || "Waiting for current verified offers."}</div>
               </div>
             </div>
@@ -149,13 +149,13 @@ export default function EarningsIntelligence() {
         )}
 
         {top && (
-          <div className="rounded-3xl border border-primary/25 lokin-panel p-4">
+          <div className="lokin-card p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10">
                 <Gauge className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-white/35">Top current decision</div>
+                <div className="lokin-kicker">Top current decision</div>
                 <div className="truncate text-base font-black text-white">{top.merchant}</div>
               </div>
               <div className={`rounded-full border px-3 py-1 text-xs font-black ${ACTION_STYLE[top.action] || ACTION_STYLE.CONSIDER}`}>{top.action}</div>
@@ -195,17 +195,17 @@ export default function EarningsIntelligence() {
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Link to="/route" className="flex items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-primary/[0.055] px-3 py-3 text-xs font-black text-primary">
+          <Link to="/route" className="lokin-cta lokin-cta-sm flex items-center justify-center gap-2 text-xs font-black">
             <Route className="h-4 w-4" /> ROUTE OPTIMIZER
           </Link>
-          <Link to="/driver-platforms" className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 text-xs font-black text-white/75">
-            <Database className="h-4 w-4 text-primary" /> DATA SOURCES
+          <Link to="/driver-platforms" className="lokin-ghost flex w-full items-center justify-center gap-2 px-3 py-3 text-xs font-black">
+            <Database className="h-4 w-4" /> DATA SOURCES
           </Link>
         </div>
 
         <LocalOfferCapture onSaved={load} />
 
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="lokin-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-black text-white">Current verified opportunities</div>
@@ -265,9 +265,9 @@ export default function EarningsIntelligence() {
 
 function MissionMetric({ icon: Icon, label, value, accent = false }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-black/25 p-3">
-      <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-white/35"><Icon className="h-3 w-3 text-primary" />{label}</div>
-      <div className={`mt-1 text-sm font-black ${accent ? "text-primary" : "text-white"}`}>{value}</div>
+    <div className="lokin-stat-tile">
+      <div className="flex items-center justify-center gap-1.5 text-[9px] uppercase tracking-wider text-white/35"><Icon className="h-3 w-3 text-primary" />{label}</div>
+      <div className={`lokin-stat-value mt-1 text-sm ${accent ? "" : "text-white"}`}>{value}</div>
     </div>
   );
 }
