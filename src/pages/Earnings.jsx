@@ -142,30 +142,30 @@ export default function Earnings() {
         <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
       </Link>
 
-      <div className="flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 text-sm">
+      <div className="flex rounded-2xl border border-lokin-neon/20 bg-white/[0.03] p-1 text-sm">
         {RANGES.map((r) => (
           <button key={r.value} onClick={() => setRange(r.value)}
-            className={`flex-1 rounded-xl py-1.5 font-medium transition-colors ${range === r.value ? "bg-primary/15 text-primary" : "text-white/50"}`}>
+            className={`flex-1 rounded-xl py-1.5 font-medium transition-colors ${range === r.value ? "bg-lokin-lime font-bold text-black" : "text-lokin-dim"}`}>
             {r.label}
           </button>
         ))}
       </div>
 
-      <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/80">EARNINGS</div>
+      <div className="lokin-card radial-fade p-5">
+        <div className="lokin-kicker lokin-kicker-lime">EARNINGS</div>
         {loading ? (
           <div className="mt-2 h-10 w-40 rounded-lg bg-white/10 animate-pulse" />
         ) : (
-          <div className="text-5xl font-bold font-display text-primary text-glow leading-none mt-1">${gross.toFixed(2)}</div>
+          <div className="lokin-hero-number mt-1 text-5xl font-display leading-none">${gross.toFixed(2)}</div>
         )}
         <div className="text-xs text-white/45 mt-2">Gross {RANGES.find((r) => r.value === range)?.label.toLowerCase()} · {trips} trips · {miles.toFixed(0)} mi</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-white/10 lokin-panel p-3 text-center">
+          <div key={s.label} className="lokin-stat-tile">
             <s.icon className={`h-4 w-4 mx-auto mb-1 ${s.accent ? "text-primary" : "text-white/40"}`} />
-            <div className={`text-lg font-bold font-display ${s.accent ? "text-primary" : "text-white"}`}>{s.value}</div>
+            <div className={`lokin-stat-value text-lg font-display ${s.accent ? "" : "text-white"}`}>{s.value}</div>
             <div className="text-[10px] text-white/40">{s.label}</div>
           </div>
         ))}
@@ -173,8 +173,8 @@ export default function Earnings() {
 
       {score && <LockInScore score={score} />}
 
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
-        <div className="text-sm font-semibold text-white/80 mb-2">Daily earnings</div>
+      <div className="lokin-card p-4">
+        <div className="lokin-kicker mb-2">Daily earnings</div>
         <div className="h-48 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chart} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
@@ -188,8 +188,8 @@ export default function Earnings() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
-        <div className="text-sm font-semibold text-white/80 mb-2">Breakdown</div>
+      <div className="lokin-card p-4">
+        <div className="lokin-kicker mb-2">Breakdown</div>
         <div className="space-y-1.5">
           {[["Base Pay", basePay], ["Tips", tipsTotal], ["Bonuses", bonuses], ["Adjustments", adjustments]].map(([k, v]) => (
             <div key={k} className="flex justify-between text-sm">
@@ -200,14 +200,14 @@ export default function Earnings() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-primary/70">Net Earnings</div>
-        <div className="text-4xl font-bold font-display text-primary text-glow leading-none mt-1">${net.toFixed(2)}</div>
+      <div className="lokin-card p-5">
+        <div className="lokin-kicker lokin-kicker-lime">Net Earnings</div>
+        <div className="lokin-hero-number mt-1 text-4xl font-display leading-none">${net.toFixed(2)}</div>
         <div className="text-xs text-white/45 mt-2">after fuel · ${netPerHour.toFixed(0)}/hr</div>
       </div>
 
-      <div className="rounded-3xl border border-primary/25 bg-primary/[0.06] p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold mb-2 text-primary">
+      <div className="lokin-card p-4">
+        <div className="lokin-kicker lokin-kicker-lime mb-2 flex items-center gap-2">
           <Sparkles className="h-4 w-4" /> AI Insights
         </div>
         <ul className="space-y-1.5">
