@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinEmblemImg, LOKIN_HERO_LOCK_V6, LOKIN_HEADER_LOCKUP_V2, LOKIN_START_WORK_BTN_V2 } from "@/components/Brand";
+import { LokinEmblemImg, LOKIN_HERO_LOCK_V6, LOKIN_HEADER_LOCKUP_V2, LOKIN_CENTER_FLOW } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -161,9 +161,8 @@ export default function Home() {
       ) : (
         <button onClick={startLockIn} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
-            <img src={LOKIN_HERO_LOCK_V6} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+            <img src={LOKIN_CENTER_FLOW} alt="Start Work" draggable="false" className="max-h-full w-auto max-w-[92%] object-contain" />
           </span>
-          <div className="-mt-5 w-[82%] max-w-sm shrink-0"><img src={LOKIN_START_WORK_BTN_V2} alt="Start Work" className="h-auto w-full" draggable={false} /></div>
           <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
         </button>
       )}
