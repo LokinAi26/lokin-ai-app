@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { LokinEmblemImg } from "@/components/Brand";
 
 const SPLASH_SEEN_KEY = "lokin_splash_seen";
-const SPLASH_IMAGE = "/lokin-approved-splash.webp";
 
 export default function SplashScreen() {
   const [done, setDone] = useState(() => {
@@ -93,14 +93,23 @@ export default function SplashScreen() {
           aria-modal="true"
           aria-label="LOKIN AI introduction"
         >
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <img
-              src={SPLASH_IMAGE}
-              alt="LOKIN AI — Unlock Your Potential, Level Up"
-              className="block h-full w-full object-contain object-center"
-              draggable="false"
-              fetchPriority="high"
-            />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black px-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <LokinEmblemImg size={208} alt="LOKIN emblem" />
+            </motion.div>
+            <div className="mt-5 text-center font-display">
+              <div className="lokin-wordmark text-6xl font-black tracking-[0.08em]">LOKIN</div>
+              <div className="lokin-ai-suffix mt-1 text-3xl font-black tracking-[0.35em]">AI</div>
+            </div>
+            <div className="mt-8 flex w-full max-w-[300px] items-center gap-4">
+              <div className="h-px flex-1 bg-lokin-neon/70" aria-hidden="true" />
+              <span className="lokin-kicker whitespace-nowrap">UNLOCK YOUR POTENTIAL</span>
+              <div className="h-px flex-1 bg-lokin-neon/70" aria-hidden="true" />
+            </div>
           </div>
 
           <button
