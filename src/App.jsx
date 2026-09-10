@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/SplashScreen';
+import FeatureTour from './components/FeatureTour';
 import DeepLinkHandler from './components/DeepLinkHandler';
 // Add page imports here
 import Home from './pages/Home';
@@ -232,6 +233,7 @@ function App() {
         <Router>
           <ScrollToTop />
           <SplashScreen />
+          <FeatureTour />
           <DeepLinkHandler />
           <AuthenticatedApp />
         </Router>
