@@ -111,7 +111,7 @@ export default function DriverLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
-      {!lockedGps && <header className="chrome-shell sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
+      {!lockedGps && loc.pathname !== "/" && <header className="chrome-shell sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
           {isNested ? (
             <button onClick={() => navigate(isShopFlow && loc.pathname === "/locator" ? "/shop-deliver" : TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
@@ -155,7 +155,7 @@ export default function DriverLayout() {
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
                   <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
-                    <img src={LOKIN_NAV_LOCK_V2} alt="LOKIN" draggable="false" className="h-11 w-11 rounded-full object-cover" />
+                    <img src={LOKIN_NAV_LOCK_V2} alt="LOKIN" draggable="false" className="h-9 w-9 rounded-full object-cover" />
                   </div>
                   <span className={active ? "text-primary lokin-tab-active" : "text-white/45"}>LOKIN</span>
                 </button>
