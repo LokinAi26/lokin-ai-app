@@ -148,11 +148,11 @@ export default function AiGps() {
         <div className="flex items-center gap-2">
           <Radar className="h-5 w-5 text-accent" />
           <div>
-            <h1 className="text-xl font-bold font-heading metal-text">4D AI GPS</h1>
-            <div className="text-[9px] tracking-[0.18em] text-primary/65">PRODUCTION ROAD ENGINE</div>
+            <h1 className="lokin-wordmark text-xl font-bold font-heading leading-none tracking-[0.04em]">4D AI GPS</h1>
+            <div className="lokin-kicker lokin-kicker-lime mt-1">PRODUCTION ROAD ENGINE</div>
           </div>
         </div>
-        <span className="text-[10px] tracking-[0.18em] text-accent/80 font-display">{locked ? "LOCKED-IN" : "ROAD MATCH · TURNS · RE-ROUTE"}</span>
+        <span className="lokin-kicker lokin-kicker-cyan font-display">{locked ? "LOCKED-IN" : "ROAD MATCH · TURNS · RE-ROUTE"}</span>
       </div>
 
       {!providerReady && (
@@ -166,7 +166,7 @@ export default function AiGps() {
       )}
 
       {!activeNavigationSession && nav.providerConfigured === true && (
-        <div className={`rounded-2xl border p-3 ${nav.providerVerified === true ? "border-primary/30 bg-primary/[0.06]" : "border-white/10 bg-white/[0.025]"}`}>
+        <div className={`lokin-card p-3 ${nav.providerVerified === true ? "border-primary/60 bg-primary/[0.06]" : "bg-white/[0.025]"}`}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <CircleCheck className={`h-4 w-4 shrink-0 ${nav.providerVerified === true ? "text-primary" : "text-white/45"}`} />
@@ -184,13 +184,13 @@ export default function AiGps() {
       )}
 
       {!activeNavigationSession && (locked ? (
-        <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3 flex items-center gap-3">
+        <div className="lokin-card p-3 flex items-center gap-3 border-primary/60">
           <div className="h-9 w-9 rounded-full border border-primary/40 bg-primary/10 flex items-center justify-center glow-primary"><Lock className="h-4 w-4 text-primary" /></div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-bold text-white">Distraction-Free Navigation</div>
             <div className="text-[11px] text-white/45">Real road geometry, next-turn guidance, and automatic off-route recovery stay front and center.</div>
           </div>
-          <button type="button" onClick={() => setFocusMode("free")} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-white/70 active:scale-95">Free roam</button>
+          <button type="button" onClick={() => setFocusMode("free")} className="lokin-ghost !py-2 !px-3 !text-[11px] active:scale-95">Free roam</button>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
@@ -199,22 +199,22 @@ export default function AiGps() {
         </div>
       ))}
 
-      {!activeNavigationSession && <form onSubmit={startDirectNavigation} className="rounded-3xl border border-accent/20 bg-black/60 p-3">
+      {!activeNavigationSession && <form onSubmit={startDirectNavigation} className="lokin-card-cyan p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <div className="text-[10px] tracking-[0.2em] text-accent/75 font-display">LIVE ROAD TEST</div>
+            <div className="lokin-kicker lokin-kicker-cyan font-display">LIVE ROAD TEST</div>
             <div className="text-[10px] text-white/35">Type a store, business, place, or address—or say “Hey LOKIN, navigate to Walmart.”</div>
           </div>
           {explicitDestination && <button type="button" onClick={useDeliveryRoute} className="text-[10px] font-semibold text-white/45">Use delivery route</button>}
         </div>
         <div className="flex gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-3">
-            <MapPin className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-accent/25 bg-black/70 px-3">
+            <MapPin className="h-4 w-4 shrink-0 text-accent" />
             <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Store, business, place, or address" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/25" />
           </div>
-          <button type="submit" disabled={!destinationInput.trim()} className="rounded-2xl bg-primary px-4 text-xs font-extrabold text-black glow-primary disabled:opacity-35">FIND + GO</button>
+          <button type="submit" disabled={!destinationInput.trim()} className="lokin-cta lokin-cta-sm font-extrabold">FIND + GO</button>
         </div>
-        {explicitDestination && <div className="mt-2 truncate text-[10px] text-primary/70">ACTIVE DESTINATION · {explicitDestination}</div>}
+        {explicitDestination && <div className="mt-2 truncate text-[10px] text-accent/70">ACTIVE DESTINATION · {explicitDestination}</div>}
       </form>}
 
       {(loadingStops || nav.status === "waiting_location" || nav.status === "routing") && destinationAddresses.length > 0 && (
@@ -234,17 +234,17 @@ export default function AiGps() {
       )}
 
       {nav.route && (
-        <div className="rounded-3xl border border-primary/25 bg-black/70 p-4 shadow-[0_0_35px_-20px_hsl(80_100%_50%)]">
+        <div className="lokin-card p-4">
           <div className="flex items-start gap-3">
             <div className="h-12 w-12 shrink-0 rounded-2xl border border-primary/35 bg-primary/10 flex items-center justify-center glow-primary"><Navigation className="h-6 w-6 text-primary" /></div>
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] tracking-[0.2em] text-primary/70">NEXT MANEUVER</div>
+              <div className="lokin-kicker lokin-kicker-lime">NEXT MANEUVER</div>
               <div className="mt-1 text-lg font-extrabold leading-tight text-white">{nav.maneuver?.maneuver?.instruction || "Continue on route"}</div>
               <div className="mt-1 text-xs text-white/45 truncate">{nav.maneuver?.road_name || destinationAddresses[0] || "LOKIN road route"}</div>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-xl font-display font-black text-primary text-glow">{nav.maneuver?.distance_from_driver_m != null ? formatDistance(nav.maneuver.distance_from_driver_m) : "—"}</div>
-              <div className="text-[9px] tracking-wider text-white/35">UNTIL TURN</div>
+              <div className="lokin-hero-number font-display text-xl">{nav.maneuver?.distance_from_driver_m != null ? formatDistance(nav.maneuver.distance_from_driver_m) : "—"}</div>
+              <div className="lokin-kicker mt-1">UNTIL TURN</div>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
@@ -267,7 +267,7 @@ export default function AiGps() {
 
       {nav.route ? (
         <div ref={mapSectionRef} id="lokin-gps-map" className="space-y-2 scroll-mt-4">
-          <div className="mx-auto flex w-fit gap-1 rounded-full border border-white/10 bg-black/80 p-1">
+          <div className="mx-auto flex w-fit gap-1 rounded-full border border-lokin-neon/30 bg-black/85 p-1">
             <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
             <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
           </div>
@@ -297,7 +297,7 @@ export default function AiGps() {
       )}
 
       {!nav.route && !loadingStops && destinationAddresses.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-white/15 p-6 text-center">
+        <div className="rounded-3xl border border-dashed border-lokin-neon/45 bg-black/60 p-6 text-center shadow-[0_0_18px_rgba(51,255,20,0.12)]">
           <RouteIcon className="h-7 w-7 mx-auto text-primary/60" />
           <div className="mt-2 text-sm font-bold text-white/70">No destination is available yet</div>
           <div className="mt-1 text-xs text-white/40">Add eligible offers in Route Optimizer, then start LOKIN Navigation.</div>
@@ -307,13 +307,13 @@ export default function AiGps() {
 
       {locked && (
         <>
-          <div className="rounded-3xl border border-primary/30 bg-primary/[0.055] p-4 shadow-[0_0_30px_-18px_hsl(80_100%_50%)]">
+          <div className="lokin-card p-4 border-accent/40">
             <div className="flex items-center gap-3">
-              <button onClick={() => setVoiceGuidance((v) => !v)} className="h-12 w-12 shrink-0 rounded-full border border-primary/40 bg-black/60 flex items-center justify-center glow-primary">
-                <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-primary" : "text-white/35"}`} />
+              <button onClick={() => setVoiceGuidance((v) => !v)} className="h-12 w-12 shrink-0 rounded-full border border-accent/40 bg-black/60 flex items-center justify-center glow-cyan">
+                <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
               </button>
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] tracking-[0.2em] text-primary/70">LOKIN COPILOT · {nav.status === "navigating" ? "ROAD LOCKED" : nav.status.toUpperCase()}</div>
+                <div className="lokin-kicker lokin-kicker-cyan">LOKIN COPILOT · {nav.status === "navigating" ? "ROAD LOCKED" : nav.status.toUpperCase()}</div>
                 <div className="mt-1 text-base font-bold text-white">{voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
                 <div className="mt-0.5 text-[11px] text-white/45">Keep your eyes on the road. LOKIN reroutes only after repeated off-route GPS fixes.</div>
               </div>
@@ -382,18 +382,18 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         <button
           type="button"
           onClick={onExit}
-          className="pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/85 px-2.5 text-[10px] font-extrabold tracking-[0.02em] text-white shadow-lg active:scale-95"
+          className="pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-lokin-neon/50 bg-black/85 px-2.5 text-[10px] font-extrabold tracking-[0.02em] text-lokin-neon shadow-lg active:scale-95"
           aria-label="Back to LOKIN home"
         >
           ‹<span className="hidden min-[390px]:inline"> BACK</span>
         </button>
 
-        <div className="pointer-events-auto min-w-0 truncate rounded-full border border-primary/25 bg-black/72 px-2.5 py-2 text-[8px] font-extrabold tracking-[0.04em] text-primary backdrop-blur">
+        <div className="pointer-events-auto min-w-0 truncate rounded-full border border-accent/50 bg-black/72 px-2.5 py-2 text-[8px] font-extrabold tracking-[0.04em] text-accent glow-cyan backdrop-blur">
           ● <span className="hidden min-[410px]:inline">HEY </span>LOKIN
         </div>
 
         {nav.route ? (
-          <div className="pointer-events-auto flex shrink-0 rounded-full border border-white/10 bg-black/78 p-0.5 shadow-lg backdrop-blur">
+          <div className="pointer-events-auto flex shrink-0 rounded-full border border-lokin-neon/30 bg-black/78 p-0.5 shadow-lg backdrop-blur">
             <button type="button" onClick={() => setMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
             <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
@@ -426,9 +426,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
 
 function NavMetric({ label, value, accent = false }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.025] p-2">
-      <div className={`text-xs font-display font-bold ${accent ? "text-amber-300" : "text-white"}`}>{value}</div>
-      <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/35">{label}</div>
+    <div className="lokin-stat-tile">
+      <div className={`text-xs font-display ${accent ? "font-bold text-amber-300" : "lokin-stat-value"}`}>{value}</div>
+      <div className="lokin-kicker mt-1">{label}</div>
     </div>
   );
 }
