@@ -152,7 +152,11 @@ export default function AiGps() {
             <div className="lokin-kicker lokin-kicker-lime mt-1">PRODUCTION ROAD ENGINE</div>
           </div>
         </div>
-        <span className="lokin-kicker lokin-kicker-cyan font-display">{locked ? "LOCKED-IN" : "ROAD MATCH · TURNS · RE-ROUTE"}</span>
+        {locked ? (
+          <span className="rounded-full border border-lokin-neon/60 bg-black/70 px-3 py-1 font-display text-[10px] font-extrabold tracking-[0.18em] text-primary glow-primary">● LOCKED-IN</span>
+        ) : (
+          <span className="lokin-kicker lokin-kicker-cyan font-display">ROAD MATCH · TURNS · RE-ROUTE</span>
+        )}
       </div>
 
       {!providerReady && (
@@ -394,6 +398,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
 
         {nav.route ? (
           <div className="pointer-events-auto flex shrink-0 rounded-full border border-lokin-neon/30 bg-black/78 p-0.5 shadow-lg backdrop-blur">
+            <button type="button" onClick={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-view")} aria-label="Ask LOKIN" className="min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] text-primary active:scale-95">LOKIN</button>
             <button type="button" onClick={() => setMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
             <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
