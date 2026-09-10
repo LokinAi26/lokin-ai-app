@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Brain, Truck, SlidersHorizontal, ScanLine, Package, Activity, Flame } from "lucide-react";
+import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinEmblemImg } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
-import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
-import SealDecisionCard from "@/components/SealDecisionCard";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
 
 function greeting() {
@@ -125,7 +123,7 @@ export default function Home() {
       {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
       <div className="lokin-card relative z-10 overflow-hidden p-5">
         <div className="flex items-center justify-between">
-          <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Driver Command Center</div>
+          <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> TODAY&apos;S GOAL</div>
           <Link to="/settings" className="text-[10px] rounded-full border border-lokin-neon/30 px-3 py-1.5 text-white/55">GOAL SETTINGS</Link>
         </div>
         <div className="mt-4 flex items-end justify-between gap-3"><div><div className="lokin-kicker">Today&apos;s Goal</div><div className="lokin-hero-number mt-1 text-5xl font-display">${dailyGoal}</div></div><div className="pb-1 text-right"><div className="lokin-kicker">Remaining</div><div className="lokin-hero-number mt-1 text-xl font-extrabold">${remaining.toFixed(2)}</div></div></div>
@@ -142,13 +140,13 @@ export default function Home() {
             <div className="lokin-kicker">{k}</div>
             <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`], ["ACTIVE", sessionStatusLabel(workStatus)], ["ORDERS", `${data?.stats?.stops ?? 0}`], ["MILES", `${miles.toFixed(1)}`]].map(([k,v]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker">{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
+        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className="lokin-stat-value mt-1 text-sm sm:text-base">{v}</div></div>)}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><LokinEmblemImg size={86} className="mx-auto lokin-pulse" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><LokinEmblemImg size={86} className="mx-auto" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
@@ -159,37 +157,11 @@ export default function Home() {
         </button>
       ) : (
         <button onClick={startLockIn} className="w-full flex flex-col items-center active:scale-[.99] transition-transform">
-          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%] lokin-pulse" alt="LOKIN emblem" />
+          <LokinEmblemImg size={600} className="h-auto w-[300px] max-w-[82%]" alt="LOKIN emblem" />
           <div className="-mt-1 w-[82%] max-w-sm"><span className="lokin-cta text-lg tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption">LOCK IN &amp; START EARNING</div>
         </button>
       )}
-
-      <div className="grid grid-cols-4 gap-2">
-        <QuickLink to="/categories" icon={Package} label="Delivery" />
-        <QuickLink to="/locator" icon={ScanLine} label="Shop & Deliver" />
-        <QuickLink to="/route" icon={Truck} label="Rideshare" />
-        <QuickLink to="/more" icon={SlidersHorizontal} label="More" />
-      </div>
-
-      <Link to="/lokin" className="lokin-card relative z-10 flex items-center gap-3 p-3.5 active:scale-[.99] transition-transform">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/50 bg-accent/10 glow-cyan"><Brain className="h-5 w-5 text-accent"/></div>
-        <div className="min-w-0 flex-1"><div className="text-xs font-bold">LOKIN AI <span className="text-accent">COPILOT</span></div><div className="text-[11px] text-white/45">Your AI copilot is ready.</div></div>
-        <div className="rounded-full border border-accent/30 px-3 py-2 text-[10px] text-accent/90">TAP TO TALK</div>
-      </Link>
-
-      <div className="dashboard-stat relative z-10 rounded-2xl p-3 flex items-center justify-between gap-3">
-        <div className="text-[11px] text-white/45">AI recommendation</div>
-        <div className="text-xs text-right text-white/75 line-clamp-2">{loading ? "LOKIN is analyzing your day…" : (data?.error ? "Couldn't load — pull down to refresh." : (data?.briefing || "Ready when you are."))}</div>
-      </div>
-
-      {data?.seal && <SealDecisionCard seal={data.seal} compact />}
-
-      <AwarenessBanner />
-
-      <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1 pb-2">
-        GLOBALUI v1 • BUILD 7 READY<br />DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.
-      </div>
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
