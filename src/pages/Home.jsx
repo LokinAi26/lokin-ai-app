@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinEmblemImg, LOKIN_HERO_LOCK_V3, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
+import { LokinEmblemImg, LOKIN_HERO_LOCK_V4, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -147,13 +147,13 @@ export default function Home() {
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
+          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><img src={LOKIN_HERO_LOCK_V4} alt="LOKIN emblem" draggable="false" className="mx-auto h-auto w-[190px]" /><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
           <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
         </div>
       ) : paused ? (
         <button onClick={resumeWork} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
-            <img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+            <img src={LOKIN_HERO_LOCK_V4} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
           <div className="mt-3 w-[82%] max-w-sm shrink-0 rounded-full bg-primary py-3.5 text-lg font-black tracking-wide text-black glow-primary" style={{ boxShadow: "0 0 0 2px rgba(200,255,120,.95), 0 0 18px rgba(162,235,27,.8), 0 0 42px rgba(162,235,27,.4)" }}>RESUME</div>
           <div className="mt-2 text-[10px] tracking-[.18em] text-white/35 shrink-0">SESSION PAUSED</div>
@@ -161,7 +161,7 @@ export default function Home() {
       ) : (
         <button onClick={startLockIn} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
-            <img src={LOKIN_HERO_LOCK_V3} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
+            <img src={LOKIN_HERO_LOCK_V4} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
           <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-cta font-display text-xl tracking-wide">START WORK &raquo;</span></div>
           <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
