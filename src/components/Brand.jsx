@@ -130,10 +130,11 @@ export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6ba
 // Back-compat aliases — every surface now resolves to the exact concept-matched assets.
 export const LOKIN_HERO_LOCK_V3 = LOKIN_HERO_LOCK_V4;
 export const LOKIN_HERO_LOCK_V2 = LOKIN_HERO_LOCK_V4;
-export const LOKIN_NAV_LOCK_V2 = LOKIN_NAV_LOCK_V3;
+export const LOKIN_NAV_LOCK_V3 = LOKIN_NAV_LOCK_V4;
+export const LOKIN_NAV_LOCK_V2 = LOKIN_NAV_LOCK_V4;
 export const LOKIN_NAV_LOCK = LOKIN_NAV_LOCK_V3;
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 // Bottom-nav center lock, cropped from the approved concept.
-export const LOKIN_NAV_LOCK_V3 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/0fce6031a_lokin-nav-lock-v3.png";
+export const LOKIN_NAV_LOCK_V4 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1105aec55_lokin-nav-lock-v4.png";
 
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
