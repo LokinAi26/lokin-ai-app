@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { LokinGlyph, LokinEmblemImg } from "@/components/Brand";
+import { LokinGlyph } from "@/components/Brand";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
@@ -34,7 +34,7 @@ function pathToTab(path) {
 const NAV = [
   { key: "home", label: "Delivery", icon: Truck },
   { key: "route", label: "Route", icon: RouteIcon },
-  { key: "lokin", label: "LOKIN", icon: LokinEmblemImg, center: true },
+  { key: "lokin", label: "LOKIN", icon: LokinGlyph, center: true },
   { key: "earnings", label: "Earnings", icon: BarChart3 },
   { key: "more", label: "More", icon: Menu },
 ];
@@ -159,8 +159,8 @@ export default function DriverLayout() {
               return (
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
                   className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
-                  <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center overflow-hidden rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
-                    <Icon size={40} cover />
+                  <div className={`lokin-emblem-ring chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 border-2 transition-all ${active ? "border-primary bg-primary/10" : "border-primary/40 bg-card"} glow-primary`}>
+                    <Icon size={38} />
                   </div>
                   <span className={active ? "text-primary lokin-tab-active" : "text-white/45"}>LOKIN</span>
                 </button>
