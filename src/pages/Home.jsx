@@ -163,7 +163,7 @@ export default function Home() {
           <span className="flex-1 min-h-0 w-full flex items-center justify-center">
             <img src={LOKIN_HERO_LOCK_V6} alt="LOKIN emblem" draggable="false" className="max-h-full w-auto max-w-[88%] object-contain" />
           </span>
-          <div className="mt-3 w-[82%] max-w-sm shrink-0"><img src={LOKIN_START_WORK_BTN_V2} alt="Start Work" className="h-auto w-full" draggable={false} /></div>
+          <div className="-mt-5 w-[82%] max-w-sm shrink-0"><img src={LOKIN_START_WORK_BTN_V2} alt="Start Work" className="h-auto w-full" draggable={false} /></div>
           <div className="lokin-cta-caption shrink-0">LOCK IN &amp; START EARNING</div>
         </button>
       )}
