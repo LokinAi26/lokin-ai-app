@@ -170,12 +170,3 @@ export default function Home() {
     </PullToRefresh>
   );
 }
-
-function QuickLink({ to, icon: Icon, label }) {
-  return (
-    <Link to={to} className="quick-command rounded-2xl p-3 text-center active:scale-[0.97] transition-transform">
-      <Icon className="h-5 w-5 mx-auto text-primary mb-1" />
-      <div className="text-xs font-medium text-white/80">{label}</div>
-    </Link>
-  );
-}
