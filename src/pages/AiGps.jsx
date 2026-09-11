@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
+import { AlertTriangle, ChevronRight, CircleCheck, Crosshair, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, ShieldCheck, Volume2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -143,17 +143,33 @@ export default function AiGps() {
   }
 
   return (
-    <div className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} space-y-4 pb-6`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Radar className="h-5 w-5 text-accent" />
+    <div className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} relative isolate space-y-4 overflow-hidden pb-6`}>
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-[1]">
+        <div className="absolute -left-1/4 top-20 h-56 w-[150%] -rotate-[18deg] bg-gradient-to-r from-transparent via-[#8FE44E]/[0.06] to-transparent" />
+        <div className="absolute -left-1/4 top-[480px] h-40 w-[150%] -rotate-[18deg] bg-gradient-to-r from-transparent via-[#8FE44E]/[0.05] to-transparent" />
+        <div className="absolute -left-1/4 top-[860px] h-48 w-[150%] -rotate-[18deg] bg-gradient-to-r from-transparent via-[#8FE44E]/[0.04] to-transparent" />
+      </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="relative h-14 w-14 shrink-0">
+            <div className="absolute inset-0 rounded-full" style={{ background: "conic-gradient(from 200deg, #f4f4f4, #8a8a8a 25%, #e6e6e6 50%, #5f5f5f 75%, #f4f4f4)" }} />
+            <div className="absolute inset-[3px] flex items-center justify-center rounded-full bg-[#0a0f0a]">
+              <MapPin className="h-6 w-6 text-[#8FE44E] drop-shadow-[0_0_8px_rgba(143,228,78,0.9)]" />
+            </div>
+          </div>
           <div>
-            <h1 className="lokin-wordmark text-xl font-bold font-heading leading-none tracking-[0.04em]">4D AI GPS</h1>
-            <div className="lokin-kicker lokin-kicker-lime mt-1">PRODUCTION ROAD ENGINE</div>
+            <h1 className="font-display text-[28px] font-black italic leading-none tracking-tight">
+              <span className="bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(180deg,#FFFFFF 0%,#9A9A9A 38%,#E8E8E8 55%,#6E6E6E 100%)" }}>4D AI </span>
+              <span className="text-[#8FE44E] drop-shadow-[0_0_12px_rgba(143,228,78,0.55)]">GPS</span>
+            </h1>
+            <div className="mt-1.5 text-[9px] font-semibold tracking-[0.42em] text-white/45">PRODUCTION ROAD ENGINE</div>
           </div>
         </div>
         {locked ? (
-          <span className="rounded-full border border-lokin-neon/60 bg-black/70 px-3 py-1 font-display text-[10px] font-extrabold tracking-[0.18em] text-primary glow-primary">● LOCKED-IN</span>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="rounded-full border border-[#8FE44E]/70 bg-black/70 px-4 py-1.5 font-display text-[11px] font-extrabold tracking-[0.18em] text-[#8FE44E] shadow-[0_0_14px_rgba(143,228,78,0.35)]">● LOCKED-IN</span>
+            <span className="text-right text-[8px] font-semibold leading-relaxed tracking-[0.34em] text-white/40">DRIVE SMARTER<br />GO FURTHER</span>
+          </div>
         ) : (
           <span className="lokin-kicker lokin-kicker-cyan font-display">ROAD MATCH · TURNS · RE-ROUTE</span>
         )}
@@ -170,17 +186,17 @@ export default function AiGps() {
       )}
 
       {!activeNavigationSession && nav.providerConfigured === true && (
-        <div className={`lokin-card p-3 ${nav.providerVerified === true ? "border-primary/60 bg-primary/[0.06]" : "bg-white/[0.025]"}`}>
+        <div className="rounded-[20px] border border-[#8FE44E]/50 bg-[#0a0f0a]/90 p-4 shadow-[0_0_18px_rgba(143,228,78,0.18)]">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <CircleCheck className={`h-4 w-4 shrink-0 ${nav.providerVerified === true ? "text-primary" : "text-white/45"}`} />
+            <div className="flex min-w-0 items-center gap-3">
+              <ShieldCheck className={`h-9 w-9 shrink-0 ${nav.providerVerified === true ? "text-[#8FE44E]" : "text-[#8FE44E]"} drop-shadow-[0_0_10px_rgba(143,228,78,0.7)]`} />
               <div className="min-w-0">
-                <div className="text-xs font-bold text-white">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Mapbox live vector GPS verified" : nav.providerVerified === true ? "Mapbox routing verified" : "Mapbox secret detected"}</div>
-                <div className="text-[10px] text-white/40">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Routing, search, and the persistent GPU map are ready." : nav.providerVerified === true ? "Routing works; add MAPBOX_PUBLIC_TOKEN to activate the live vector map." : "Run one provider check before the road test."}</div>
+                <div className="text-[15px] font-bold text-white">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Mapbox live vector GPS verified" : nav.providerVerified === true ? "Mapbox routing verified" : "Mapbox secret detected"}</div>
+                <div className="mt-0.5 text-xs leading-relaxed text-white/45">{nav.providerVerified === true && nav.liveVectorConfigured === true ? "Routing, search, and the persistent GPU map are ready." : nav.providerVerified === true ? "Routing works; add MAPBOX_PUBLIC_TOKEN to activate the live vector map." : "Run one provider check before the road test."}</div>
               </div>
             </div>
-            <button onClick={verifyProvider} disabled={probingProvider} className="shrink-0 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-[10px] font-bold text-primary disabled:opacity-50">
-              {probingProvider ? "CHECKING…" : nav.providerVerified === true ? "RECHECK" : "VERIFY MAPBOX"}
+            <button onClick={verifyProvider} disabled={probingProvider} className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#8FE44E]/70 bg-transparent px-4 py-2.5 text-[11px] font-extrabold tracking-[0.08em] text-[#8FE44E] shadow-[0_0_12px_rgba(143,228,78,0.25)] disabled:opacity-50 active:scale-95">
+              {probingProvider ? "CHECKING…" : nav.providerVerified === true ? "RECHECK" : "VERIFY MAPBOX"} <ChevronRight className="h-4 w-4" />
             </button>
           </div>
           {nav.providerProbeError && <div className="mt-2 text-[10px] text-red-300">{nav.providerProbeError}</div>}
@@ -188,13 +204,36 @@ export default function AiGps() {
       )}
 
       {!activeNavigationSession && (locked ? (
-        <div className="lokin-card p-3 flex items-center gap-3 border-primary/60">
-          <div className="h-9 w-9 rounded-full border border-primary/40 bg-primary/10 flex items-center justify-center glow-primary"><Lock className="h-4 w-4 text-primary" /></div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-white">Distraction-Free Navigation</div>
-            <div className="text-[11px] text-white/45">Real road geometry, next-turn guidance, and automatic off-route recovery stay front and center.</div>
+        <div className="overflow-hidden rounded-[20px] border border-[#8FE44E]/50 bg-[#0a0f0a]/90 shadow-[0_0_22px_rgba(143,228,78,0.2)]">
+          <div className="flex">
+            <div className="relative min-h-[196px] w-[38%] shrink-0 overflow-hidden">
+              <svg viewBox="0 0 120 196" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
+                <g fill="none" stroke="#8FE44E">
+                  <ellipse cx="60" cy="160" rx="54" ry="30" strokeOpacity="0.28" strokeWidth="1.5" />
+                  <ellipse cx="60" cy="160" rx="42" ry="23" strokeOpacity="0.24" strokeWidth="1.5" />
+                  <ellipse cx="60" cy="160" rx="30" ry="16" strokeOpacity="0.22" strokeWidth="1.5" />
+                  <ellipse cx="60" cy="160" rx="18" ry="10" strokeOpacity="0.2" strokeWidth="1.5" />
+                  <path d="M8 44 Q42 62 32 104 T62 168" strokeOpacity="0.16" strokeWidth="1.5" />
+                  <path d="M104 30 Q82 72 98 122 T72 176" strokeOpacity="0.16" strokeWidth="1.5" />
+                  <path d="M-4 178 C 26 164, 38 152, 48 140 S 74 118, 62 98" strokeWidth="4" strokeLinecap="round" style={{ filter: "drop-shadow(0 0 7px rgba(143,228,78,0.95))" }} />
+                </g>
+              </svg>
+              <MapPin className="absolute left-1/2 top-[36%] h-14 w-14 -translate-x-1/2 -translate-y-1/2 text-[#8FE44E] drop-shadow-[0_0_14px_rgba(143,228,78,1)]" fill="rgba(143,228,78,0.25)" />
+            </div>
+            <div className="min-w-0 flex-1 p-4">
+              <div className="text-[15px] font-bold text-white">Distraction-Free</div>
+              <div className="text-[27px] font-black leading-tight text-[#8FE44E] drop-shadow-[0_0_10px_rgba(143,228,78,0.45)]">Navigation</div>
+              <div className="mt-1 text-[11px] leading-relaxed text-white/45">Real road geometry, next-turn guidance, and automatic off-route recovery stay front and center.</div>
+              <div className="mt-3 flex justify-end">
+                <button type="button" onClick={() => setFocusMode("free")} className="inline-flex items-center gap-1 rounded-full border border-[#8FE44E]/70 px-4 py-2 text-[12px] font-semibold text-white shadow-[0_0_10px_rgba(143,228,78,0.2)] active:scale-95">Free roam <ChevronRight className="h-4 w-4 text-[#8FE44E]" /></button>
+              </div>
+            </div>
           </div>
-          <button type="button" onClick={() => setFocusMode("free")} className="lokin-ghost !py-2 !px-3 !text-[11px] active:scale-95">Free roam</button>
+          <div className="flex items-center gap-3 px-6 pb-4">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#8FE44E]/60" />
+            <div className="text-[9px] font-semibold tracking-[0.4em] text-white/50">FOCUS&nbsp;&nbsp;DRIVES&nbsp;&nbsp;PROGRESS</div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#8FE44E]/60" />
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
@@ -203,22 +242,23 @@ export default function AiGps() {
         </div>
       ))}
 
-      {!activeNavigationSession && <form onSubmit={startDirectNavigation} className="lokin-card-cyan p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div>
-            <div className="lokin-kicker lokin-kicker-cyan font-display">LIVE ROAD TEST</div>
-            <div className="text-[10px] text-white/35">Type a store, business, place, or address—or say “Hey LOKIN, navigate to Walmart.”</div>
+      {!activeNavigationSession && <form onSubmit={startDirectNavigation} className="rounded-[20px] border border-cyan-400/50 bg-[#070b0d]/90 p-4 shadow-[0_0_20px_rgba(6,217,249,0.18)]">
+        <div className="mb-3 flex items-start gap-3">
+          <Crosshair className="h-8 w-8 shrink-0 text-cyan-300 drop-shadow-[0_0_10px_rgba(6,217,249,0.8)]" />
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-[15px] font-extrabold tracking-[0.14em] text-[#8FE44E]">LIVE ROAD TEST</div>
+            <div className="mt-0.5 text-[11px] leading-relaxed text-white/45">Type a store, business, place, or address—or say “Hey LOKIN, navigate to Walmart.”</div>
           </div>
-          {explicitDestination && <button type="button" onClick={useDeliveryRoute} className="text-[10px] font-semibold text-white/45">Use delivery route</button>}
+          {explicitDestination && <button type="button" onClick={useDeliveryRoute} className="shrink-0 text-[10px] font-semibold text-white/45">Use delivery route</button>}
         </div>
         <div className="flex gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-accent/25 bg-black/70 px-3">
-            <MapPin className="h-4 w-4 shrink-0 text-accent" />
-            <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Store, business, place, or address" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/25" />
+          <div className="flex flex-1 items-center gap-2 rounded-2xl border border-white/15 bg-black/70 px-3">
+            <MapPin className="h-5 w-5 shrink-0 text-white/70" />
+            <input value={destinationInput} onChange={(e) => setDestinationInput(e.target.value)} placeholder="Store, business, place, or address" className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] text-white outline-none placeholder:text-white/30" />
           </div>
-          <button type="submit" disabled={!destinationInput.trim()} className="lokin-cta lokin-cta-sm font-extrabold">FIND + GO</button>
+          <button type="submit" disabled={!destinationInput.trim()} className="inline-flex items-center gap-1 rounded-2xl bg-[#8FE44E] px-5 text-[15px] font-black text-black shadow-[0_0_16px_rgba(143,228,78,0.45)] disabled:opacity-40 active:scale-95">FIND + GO <ChevronRight className="h-5 w-5" /></button>
         </div>
-        {explicitDestination && <div className="mt-2 truncate text-[10px] text-accent/70">ACTIVE DESTINATION · {explicitDestination}</div>}
+        {explicitDestination && <div className="mt-2 truncate text-[10px] text-cyan-200/70">ACTIVE DESTINATION · {explicitDestination}</div>}
       </form>}
 
       {(loadingStops || nav.status === "waiting_location" || nav.status === "routing") && destinationAddresses.length > 0 && (
@@ -301,25 +341,28 @@ export default function AiGps() {
       )}
 
       {!nav.route && !loadingStops && destinationAddresses.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-lokin-neon/45 bg-black/60 p-6 text-center shadow-[0_0_18px_rgba(51,255,20,0.12)]">
-          <RouteIcon className="h-7 w-7 mx-auto text-primary/60" />
-          <div className="mt-2 text-sm font-bold text-white/70">No destination is available yet</div>
-          <div className="mt-1 text-xs text-white/40">Add eligible offers in Route Optimizer, then start LOKIN Navigation.</div>
-          <Link to="/route" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-black"><MapPin className="h-3.5 w-3.5" /> Open Route Optimizer</Link>
+        <div className="rounded-[20px] border border-dashed border-[#8FE44E]/40 bg-black/60 p-6 text-center shadow-[0_0_18px_rgba(143,228,78,0.12)]">
+          <RouteIcon className="mx-auto h-10 w-10 text-[#8FE44E] drop-shadow-[0_0_10px_rgba(143,228,78,0.8)]" />
+          <div className="mt-3 text-[17px] font-bold text-white">No destination is available yet</div>
+          <div className="mt-1 text-[13px] text-white/45">Add eligible offers in Route Optimizer, then start LOKIN Navigation.</div>
+          <Link to="/route" className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#8FE44E] px-6 py-3.5 text-[15px] font-bold text-black shadow-[0_0_16px_rgba(143,228,78,0.45)] active:scale-95"><MapPin className="h-4 w-4" /> Open Route Optimizer <ChevronRight className="h-5 w-5" /></Link>
         </div>
       )}
 
       {locked && (
         <>
-          <div className="lokin-card p-4 border-accent/40">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setVoiceGuidance((v) => !v)} className="h-12 w-12 shrink-0 rounded-full border border-accent/40 bg-black/60 flex items-center justify-center glow-cyan">
-                <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
+          <div className="rounded-[20px] border border-[#8FE44E]/50 bg-[#0a0f0a]/90 p-4 shadow-[0_0_20px_rgba(143,228,78,0.2)]">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setVoiceGuidance((v) => !v)} aria-label="Toggle voice guidance" className="relative h-16 w-16 shrink-0 active:scale-95">
+                <div className="absolute inset-0 rounded-full" style={{ background: "conic-gradient(from 200deg, #f4f4f4, #8a8a8a 25%, #e6e6e6 50%, #5f5f5f 75%, #f4f4f4)" }} />
+                <div className="absolute inset-[3px] flex items-center justify-center rounded-full bg-[#0a0f0a] shadow-[0_0_14px_rgba(143,228,78,0.5)]">
+                  <Volume2 className={`h-6 w-6 ${voiceGuidance ? "text-[#8FE44E]" : "text-white/35"}`} />
+                </div>
               </button>
               <div className="min-w-0 flex-1">
-                <div className="lokin-kicker lokin-kicker-cyan">LOKIN COPILOT · {nav.status === "navigating" ? "ROAD LOCKED" : nav.status.toUpperCase()}</div>
-                <div className="mt-1 text-base font-bold text-white">{voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
-                <div className="mt-0.5 text-[11px] text-white/45">Keep your eyes on the road. LOKIN reroutes only after repeated off-route GPS fixes.</div>
+                <div className="text-[9px] font-semibold tracking-[0.4em] text-white/45">LOKIN COPILOT · <span className="text-[#8FE44E]">{nav.status === "navigating" ? "ROAD LOCKED" : nav.status.toUpperCase()}</span></div>
+                <div className="mt-1.5 text-[17px] font-bold text-white">{voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
+                <div className="mt-1 text-[12px] leading-relaxed text-white/45">Keep your eyes on the road. LOKIN reroutes only after repeated off-route GPS fixes.</div>
               </div>
             </div>
           </div>
@@ -348,6 +391,12 @@ export default function AiGps() {
           </div>
         </>
       )}
+
+      <div className="flex items-center gap-4 pt-2">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#8FE44E]/70" />
+        <div className="text-[9px] font-semibold tracking-[0.5em] text-white/40">UNLOCK YOUR POTENTIAL</div>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#8FE44E]/70" />
+      </div>
     </div>
   );
 }
