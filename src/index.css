@@ -25,10 +25,10 @@ body {
   -webkit-font-smoothing: antialiased;
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(circle, hsl(81.1 83.9% 51.4% / 0.10) 1px, transparent 1.6px),
-    repeating-linear-gradient(0deg, transparent 0 7px, hsl(81.1 83.9% 51.4% / 0.045) 7px 8px, transparent 8px 15px),
-    repeating-linear-gradient(90deg, transparent 0 13px, hsl(81.1 83.9% 51.4% / 0.05) 13px 14px, transparent 14px 23px, hsl(81.1 83.9% 51.4% / 0.025) 23px 24px, transparent 24px 37px),
-    linear-gradient(180deg, hsl(81.1 83.9% 51.4% / 0.02) 0%, transparent 22%, hsl(81.1 83.9% 51.4% / 0.03) 58%, transparent 100%);
+    radial-gradient(circle, hsl(94 73.5% 60% / 0.10) 1px, transparent 1.6px),
+    repeating-linear-gradient(0deg, transparent 0 7px, hsl(94 73.5% 60% / 0.045) 7px 8px, transparent 8px 15px),
+    repeating-linear-gradient(90deg, transparent 0 13px, hsl(94 73.5% 60% / 0.05) 13px 14px, transparent 14px 23px, hsl(94 73.5% 60% / 0.025) 23px 24px, transparent 24px 37px),
+    linear-gradient(180deg, hsl(94 73.5% 60% / 0.02) 0%, transparent 22%, hsl(94 73.5% 60% / 0.03) 58%, transparent 100%);
   background-size: 18px 18px, 100% 100%, 100% 100%, 100% 100%;
   background-attachment: fixed, fixed, fixed, fixed;
   background-position: center, 0 0, 0 0, center;
@@ -42,7 +42,7 @@ body {
     --card-foreground: 220 14% 92%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 92%;
-    --primary: 81.1 83.9% 51.4%; /* LOKIN Neon Lime master: #A2EB1B */
+    --primary: 94 73.5% 60%; /* LOKIN Green master: #8FE44E */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 92%;
@@ -54,10 +54,10 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 18%;
-    --ring: 81.1 83.9% 51.4%;
-    --neon: 81.1 83.9% 51.4%;
+    --ring: 94 73.5% 60%;
+    --neon: 94 73.5% 60%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 81.1 83.9% 51.4%;
+    --chart-1: 94 73.5% 60%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
@@ -69,12 +69,12 @@ body {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 90%;
-    --sidebar-primary: 81.1 83.9% 51.4%;
+    --sidebar-primary: 94 73.5% 60%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 12%;
     --sidebar-accent-foreground: 220 14% 92%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 81.1 83.9% 51.4%;
+    --sidebar-ring: 94 73.5% 60%;
   }
   .dark {
     --background: 0 0% 0%;
@@ -83,7 +83,7 @@ body {
     --card-foreground: 220 14% 94%;
     --popover: 240 6% 5%;
     --popover-foreground: 220 14% 94%;
-    --primary: 81.1 83.9% 51.4%; /* LOKIN Neon Lime master: #A2EB1B */
+    --primary: 94 73.5% 60%; /* LOKIN Green master: #8FE44E */
     --primary-foreground: 240 10% 4%;
     --secondary: 240 6% 10%;
     --secondary-foreground: 220 14% 94%;
@@ -95,22 +95,22 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 18%;
-    --ring: 81.1 83.9% 51.4%;
-    --neon: 81.1 83.9% 51.4%;
+    --ring: 94 73.5% 60%;
+    --neon: 94 73.5% 60%;
     --neon-cyan: 188 95% 50%;
-    --chart-1: 81.1 83.9% 51.4%;
+    --chart-1: 94 73.5% 60%;
     --chart-2: 188 95% 50%;
     --chart-3: 262 83% 66%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --sidebar-background: 240 6% 5%;
     --sidebar-foreground: 220 14% 90%;
-    --sidebar-primary: 81.1 83.9% 51.4%;
+    --sidebar-primary: 94 73.5% 60%;
     --sidebar-primary-foreground: 240 10% 4%;
     --sidebar-accent: 240 6% 12%;
     --sidebar-accent-foreground: 220 14% 92%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 81.1 83.9% 51.4%;
+    --sidebar-ring: 94 73.5% 60%;
   }
 }
 
@@ -131,12 +131,12 @@ body {
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .glow-primary {
-    box-shadow: 0 0 0 1px hsl(81.1 83.9% 51.4% / 0.35), 0 0 18px -2px hsl(81.1 83.9% 51.4% / 0.55);
+    box-shadow: 0 0 0 1px hsl(94 73.5% 60% / 0.35), 0 0 18px -2px hsl(94 73.5% 60% / 0.55);
   }
   .glow-cyan {
     box-shadow: 0 0 0 1px hsl(188 95% 50% / 0.35), 0 0 18px -2px hsl(188 95% 50% / 0.5);
   }
-  .text-glow { text-shadow: 0 0 12px hsl(81.1 83.9% 51.4% / 0.55); }
+  .text-glow { text-shadow: 0 0 12px hsl(94 73.5% 60% / 0.55); }
   .text-glow-cyan { text-shadow: 0 0 12px hsl(188 95% 50% / 0.55); }
   .glass {
     background: hsl(240 6% 5% / 0.7);
@@ -150,19 +150,19 @@ body {
     color: transparent;
   }
   .glow-border {
-    border: 1px solid hsl(81.1 83.9% 51.4% / 0.45);
-    box-shadow: 0 0 16px -4px hsl(81.1 83.9% 51.4% / 0.55), inset 0 0 14px -8px hsl(81.1 83.9% 51.4% / 0.45);
+    border: 1px solid hsl(94 73.5% 60% / 0.45);
+    box-shadow: 0 0 16px -4px hsl(94 73.5% 60% / 0.55), inset 0 0 14px -8px hsl(94 73.5% 60% / 0.45);
   }
   .lokin-panel {
     background: linear-gradient(180deg, hsl(240 6% 7%) 0%, hsl(240 6% 4%) 100%);
   }
   .radial-fade {
-    background-image: radial-gradient(120% 80% at 50% 0%, hsl(81.1 83.9% 51.4% / 0.09), transparent 60%);
+    background-image: radial-gradient(120% 80% at 50% 0%, hsl(94 73.5% 60% / 0.09), transparent 60%);
   }
   .brand-grid {
     background-image:
-      linear-gradient(hsl(81.1 83.9% 51.4% / 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(81.1 83.9% 51.4% / 0.05) 1px, transparent 1px);
+      linear-gradient(hsl(94 73.5% 60% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(94 73.5% 60% / 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
   .lokin-dashboard::before {
@@ -327,8 +327,8 @@ body {
     50% { transform: scaleY(1); }
   }
   @keyframes lokin-pulse {
-    0%, 100% { filter: drop-shadow(0 0 3px hsl(81.1 83.9% 51.4% / 0.35)); transform: scale(1); }
-    50% { filter: drop-shadow(0 0 16px hsl(81.1 83.9% 51.4% / 0.85)); transform: scale(1.06); }
+    0%, 100% { filter: drop-shadow(0 0 3px hsl(94 73.5% 60% / 0.35)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 16px hsl(94 73.5% 60% / 0.85)); transform: scale(1.06); }
   }
   @keyframes lokin-spin {
     to { transform: rotate(360deg); }
@@ -345,13 +345,13 @@ body {
    Do not rename: screen implementations reference these class names.
    ===================================================================== */
 :root {
-  --lokin-lime-from: #C8FF00;
-  --lokin-lime-to: #7DFF00;
-  --lokin-neon: #33FF14;
+  --lokin-lime-from: #8FE44E;
+  --lokin-lime-to: #88DE49;
+  --lokin-neon: #8FE44E;
   --lokin-cyan: #38E1FF;
   --lokin-red: #FF3B5C;
   --lokin-card: #060A06;
-  --lokin-card-border: rgba(140, 255, 0, 0.45);
+  --lokin-card-border: rgba(143, 228, 78, 0.45);
   --lokin-text-dim: #9AA39A;
 }
 
@@ -363,7 +363,7 @@ body {
     background: linear-gradient(180deg, var(--lokin-lime-from) 0%, var(--lokin-lime-to) 100%);
     color: #000; font-weight: 800; letter-spacing: 0.04em;
     padding: 1rem 1.5rem; font-size: 1rem; line-height: 1.2;
-    box-shadow: 0 0 0 2px rgba(200, 255, 120, 0.95), 0 0 18px rgba(162, 235, 27, 0.8), 0 0 42px rgba(162, 235, 27, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(200, 255, 120, 0.95), 0 0 18px rgba(143, 228, 78, 0.8), 0 0 42px rgba(143, 228, 78, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
     transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   }
   .lokin-cta:active { transform: scale(0.98); }
@@ -394,7 +394,7 @@ body {
   .lokin-card {
     background: var(--lokin-card);
     border: 1px solid var(--lokin-card-border);
-    box-shadow: 0 0 24px rgba(51, 255, 20, 0.25);
+    box-shadow: 0 0 24px rgba(143, 228, 78, 0.25);
     border-radius: 22px;
   }
   .lokin-card-cyan {
@@ -415,7 +415,7 @@ body {
     font-size: 10px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.25em; color: var(--lokin-text-dim);
   }
-  .lokin-kicker-lime { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(51, 255, 20, 0.5); }
+  .lokin-kicker-lime { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(143, 228, 78, 0.5); }
   .lokin-kicker-cyan { color: var(--lokin-cyan); text-shadow: 0 0 10px rgba(56, 225, 255, 0.5); }
 
   /* Chrome wordmark gradient text */
@@ -425,13 +425,13 @@ body {
   }
   .lokin-ai-suffix {
     color: var(--lokin-neon);
-    text-shadow: 0 0 14px rgba(51, 255, 20, 0.6);
+    text-shadow: 0 0 14px rgba(143, 228, 78, 0.6);
   }
 
   /* Hero numbers: heavy, lime with soft glow */
   .lokin-hero-number {
     font-weight: 900; color: var(--lokin-lime-from);
-    text-shadow: 0 0 18px rgba(140, 255, 0, 0.55);
+    text-shadow: 0 0 18px rgba(143, 228, 78, 0.55);
     line-height: 1;
   }
 
@@ -449,7 +449,7 @@ body {
   /* Stat tile: small card, icon + micro label top, big lime value */
   .lokin-stat-tile {
     background: var(--lokin-card);
-    border: 1px solid rgba(140, 255, 0, 0.28);
+    border: 1px solid rgba(143, 228, 78, 0.28);
     border-radius: 18px; padding: 0.75rem 0.25rem; text-align: center;
   }
   .lokin-stat-value { font-weight: 800; color: var(--lokin-lime-from); }
@@ -459,9 +459,9 @@ body {
   .lokin-progress-fill {
     height: 100%; border-radius: 999px;
     background: linear-gradient(90deg, var(--lokin-lime-from), var(--lokin-lime-to));
-    box-shadow: 0 0 14px rgba(140, 255, 0, 0.7);
+    box-shadow: 0 0 14px rgba(143, 228, 78, 0.7);
   }
-  .lokin-tab-active { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(51, 255, 20, 0.6); }
+  .lokin-tab-active { color: var(--lokin-neon); text-shadow: 0 0 10px rgba(143, 228, 78, 0.6); }
 
   /* Dark scrim for full-bleed imagery (onboarding skyline) */
   .lokin-scrim {
@@ -471,7 +471,7 @@ body {
   /* Toggle row */
   .lokin-toggle-row {
     background: var(--lokin-card);
-    border: 1px solid rgba(140, 255, 0, 0.25);
+    border: 1px solid rgba(143, 228, 78, 0.25);
     border-radius: 16px;
   }
 }
