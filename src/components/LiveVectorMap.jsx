@@ -11,7 +11,7 @@ import {
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
-const LOKIN_NEON_ROUTE = "#A2EB1B";
+const LOKIN_NEON_ROUTE = "#8FE44E";
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
