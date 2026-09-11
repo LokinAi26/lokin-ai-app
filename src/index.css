@@ -257,8 +257,8 @@ body {
     border: 1px solid rgba(255,255,255,.06);
   }
   .profile-orbit {
-    background: linear-gradient(145deg, #eef2f4 0%, #9ba3aa 42%, #A2EB1B 43%, #A2EB1B 100%);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.20), 0 0 18px rgba(162,235,27,.24);
+    background: linear-gradient(145deg, #eef2f4 0%, #9ba3aa 42%, #8FE44E 43%, #8FE44E 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.20), 0 0 18px rgba(143,228,78,.24);
   }
   .metal-number {
     background: linear-gradient(180deg, #ffffff 0%, #d7dce0 42%, #858d96 72%, #f1f4f5 100%);
@@ -294,8 +294,8 @@ body {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .leaflet-container { background: #050608; font-family: var(--font-body); }
-  .lokin-route { filter: drop-shadow(0 0 6px rgba(162, 235, 27, 0.85)); }
-  .leaflet-tooltip.lokin-tip { background: rgba(5, 6, 8, 0.92); border: 1px solid rgba(162, 235, 27, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
+  .lokin-route { filter: drop-shadow(0 0 6px rgba(143, 228, 78, 0.85)); }
+  .leaflet-tooltip.lokin-tip { background: rgba(5, 6, 8, 0.92); border: 1px solid rgba(143, 228, 78, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
   .leaflet-tooltip.lokin-tip::before { display: none; }
   @keyframes ticker-scroll {
     from { transform: translateX(0); }
