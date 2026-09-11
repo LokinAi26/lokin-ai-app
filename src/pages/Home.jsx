@@ -130,7 +130,7 @@ export default function Home() {
         <div className="lokin-hero-number mt-3 font-display text-6xl">${dailyGoal}</div>
         <div className="lokin-progress-track relative mt-4 h-2.5 overflow-visible">
           <div className="lokin-progress-fill" style={{ width: `${pct}%` }} />
-          <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #A2EB1B"}} />
+          <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #8FE44E"}} />
         </div>
         <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
       </div>
