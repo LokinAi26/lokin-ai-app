@@ -109,7 +109,5 @@ export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6ba
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
-// Center artwork cut exactly from the approved concept (lock + START WORK + caption as one piece).
-export const LOKIN_CENTER_EXACT = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e40e3dd8d_lokin-center-exact.png";
-// Lock-only artwork from the same concept (working / paused states).
-export const LOKIN_LOCK_EXACT = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6f60afd30_lokin-lock-exact.png";
+// The one and only Home center artwork: cut exactly from the approved concept image.
+export const LOKIN_CENTER = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b9cd9303a_lokin-center-only.png";
