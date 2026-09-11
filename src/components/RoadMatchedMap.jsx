@@ -433,7 +433,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
-              {!perspective && <polyline points={routePoints} fill="none" stroke="#A2EB1B" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(162,235,27,1))" }} />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(162,235,27,1))" }} />}
               {driverPoint && (
                 <g
                   style={{
