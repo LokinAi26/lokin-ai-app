@@ -12,7 +12,7 @@ const CATEGORIES = [
 export default function LockInScore({ score, compact = false }) {
   const overall = score?.overall ?? 0;
   const breakdown = score?.breakdown || {};
-  const color = overall >= 80 ? "#A2EB1B" : overall >= 55 ? "#facc15" : "#f87171";
+  const color = overall >= 80 ? "#8FE44E" : overall >= 55 ? "#facc15" : "#f87171";
   const topLabel = overall >= 90 ? "Elite efficiency band" : overall >= 80 ? "Strong efficiency band" : overall >= 70 ? "On-target efficiency band" : "Improvement opportunity";
   const r = 52;
   const circ = 2 * Math.PI * r;
