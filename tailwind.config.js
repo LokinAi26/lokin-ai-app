@@ -12,7 +12,7 @@ module.exports = {
   		colors: {
   			lokin: {
   				lime: '#BFFF00',
-  				neon: '#33FF14',
+  				neon: '#8FE44E',
   				cyan: '#38E1FF',
   				red: '#FF3B5C',
   				card: '#060A06',
