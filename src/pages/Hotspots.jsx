@@ -138,14 +138,14 @@ export default function Hotspots() {
           })}
 
           {/* Your location */}
-          <CircleMarker center={center} radius={6} pathOptions={{ color: "#A2EB1B", fillColor: "#A2EB1B", fillOpacity: 1, weight: 2 }} />
-          <CircleMarker center={center} radius={14} pathOptions={{ color: "#A2EB1B", fillColor: "#A2EB1B", fillOpacity: 0.15, weight: 0 }} />
+          <CircleMarker center={center} radius={6} pathOptions={{ color: "#8FE44E", fillColor: "#8FE44E", fillOpacity: 1, weight: 2 }} />
+          <CircleMarker center={center} radius={14} pathOptions={{ color: "#8FE44E", fillColor: "#8FE44E", fillOpacity: 0.15, weight: 0 }} />
         </MapContainer>
 
         {/* Legend overlay */}
         <div className="absolute bottom-2 left-2 flex items-center gap-2 rounded-full glass border border-white/10 px-2.5 py-1">
           <span className="text-[10px] tracking-widest text-white/50 font-display">LOW</span>
-          <span className="h-2 w-2 rounded-full" style={{ background: "#A2EB1B" }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: "#8FE44E" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FFD200" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF8A00" }} />
           <span className="h-2 w-2 rounded-full" style={{ background: "#FF3B3B" }} />
