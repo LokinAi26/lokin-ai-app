@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Radio, X, Volume2, Ear, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { LOKIN_LOCK_EXACT } from "@/components/Brand";
+import { LOKIN_NAV_CIRCLE } from "@/components/Brand";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -463,7 +463,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <img src={LOKIN_LOCK_EXACT} alt="LOKIN" draggable="false" className="h-6 w-6 object-contain" />
+                  <img src={LOKIN_NAV_CIRCLE} alt="LOKIN" draggable="false" className="h-6 w-6 object-contain" />
                   <span className="font-display font-bold tracking-wider lokin-wordmark">LOKIN VOICE</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               {/* Listening orb */}
               {full && (
                 <div className="flex flex-col items-center pt-1">
-                  <img src={LOKIN_LOCK_EXACT} alt="LOKIN voice emblem" draggable="false" className="h-[120px] w-[120px] object-contain" />
+                  <img src={LOKIN_NAV_CIRCLE} alt="LOKIN voice emblem" draggable="false" className="h-[120px] w-[120px] object-contain" />
                 </div>
               )}
               <div className={`flex flex-col items-center ${full ? "py-5" : "py-4"}`}>
