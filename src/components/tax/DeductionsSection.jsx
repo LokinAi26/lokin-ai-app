@@ -49,7 +49,7 @@ export default function DeductionsSection() {
           <input type="text" placeholder="Vendor" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
         <label className="flex items-center gap-2 text-xs text-white/60">
-          <input type="checkbox" checked={form.deductible} onChange={(e) => setForm({ ...form, deductible: e.target.checked })} className="accent-[#A2EB1B]" />
+          <input type="checkbox" checked={form.deductible} onChange={(e) => setForm({ ...form, deductible: e.target.checked })} className="accent-[#8FE44E]" />
           Deductible business expense
         </label>
         <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold active:scale-95 transition-transform flex items-center justify-center gap-1.5">
