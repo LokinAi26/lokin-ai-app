@@ -132,6 +132,13 @@ function addNavigationLayers(map, routeGeometry) {
 }
 
 function createDriverMarker() {
+  if (typeof document !== "undefined" && !document.getElementById("lokin-marker-pulse-keyframes")) {
+    const styleTag = document.createElement("style");
+    styleTag.id = "lokin-marker-pulse-keyframes";
+    styleTag.textContent = "@keyframes lokin-marker-pulse{0%{transform:scale(.55);opacity:.9}70%{transform:scale(1.3);opacity:0}100%{transform:scale(1.3);opacity:0}}";
+    document.head.appendChild(styleTag);
+  }
+
   const root = document.createElement("div");
   root.setAttribute("aria-label", "Current road-matched location");
   root.style.width = "48px";
@@ -142,7 +149,17 @@ function createDriverMarker() {
   root.style.boxShadow = "0 0 0 5px rgba(0,229,255,.08), 0 0 18px rgba(0,229,255,.45)";
   root.style.display = "grid";
   root.style.placeItems = "center";
+  root.style.position = "relative";
   root.style.willChange = "transform";
+
+  const pulse = document.createElement("div");
+  pulse.style.position = "absolute";
+  pulse.style.inset = "-9px";
+  pulse.style.borderRadius = "999px";
+  pulse.style.border = "2px solid rgba(0,229,255,.55)";
+  pulse.style.animation = "lokin-marker-pulse 2.2s ease-out infinite";
+  pulse.style.pointerEvents = "none";
+  root.appendChild(pulse);
 
   const arrow = document.createElement("div");
   arrow.style.width = "0";
@@ -177,8 +194,8 @@ export default function LiveVectorMap({
   const loadedRef = useRef(false);
   const interactingRef = useRef(false);
   const resumeTimerRef = useRef(null);
-  const horizonGestureRef = useRef({ active: false, pointerId: null, startY: 0, startPitch: 58, startZoom: 17.8 });
-  const preferredPitchRef = useRef(perspective ? 58 : 0);
+  const horizonGestureRef = useRef({ active: false, pointerId: null, startY: 0, startPitch: 78, startZoom: 16.6 });
+  const preferredPitchRef = useRef(perspective ? 78 : 0);
   const styleRef = useRef(style);
   const displayedRef = useRef({
     coordinate: normalizeCoordinate(snappedPosition?.coordinate),
@@ -188,7 +205,7 @@ export default function LiveVectorMap({
   const lastAppliedRenderSampleRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
-  const [cameraPitch, setCameraPitch] = useState(perspective ? 58 : 0);
+  const [cameraPitch, setCameraPitch] = useState(perspective ? 78 : 0);
 
   routeRef.current = routeGeometry;
   styleRef.current = style;
@@ -219,9 +236,9 @@ export default function LiveVectorMap({
           container: containerRef.current,
           style: styleUrl(style),
           center: initial,
-          zoom: snappedPosition?.coordinate ? (perspective ? 17.8 : 16.8) : 13,
+          zoom: snappedPosition?.coordinate ? (perspective ? 16.6 : 16.8) : 13,
           bearing: perspective ? Number(heading || 0) : 0,
-          pitch: perspective ? 58 : 0,
+          pitch: perspective ? 78 : 0,
           antialias: true,
           attributionControl: false,
           renderWorldCopies: false,
@@ -371,8 +388,9 @@ export default function LiveVectorMap({
 
     const map = mapRef.current;
     if (map && loadedRef.current && followDriver && !interactingRef.current) {
+      // 4D cinematic follow: default zoom ~16.5 with a slight speed-based pull-back.
       const targetZoom = perspective
-        ? clamp(18.05 - Math.max(0, Number(speedMps || 0)) * 0.018, 16.9, 18.05)
+        ? clamp(16.8 - Math.max(0, Number(speedMps || 0)) * 0.012, 16.0, 16.8)
         : clamp(17.1 - Math.max(0, Number(speedMps || 0)) * 0.015, 16.1, 17.1);
       map.easeTo({
         center: target,
@@ -408,15 +426,15 @@ export default function LiveVectorMap({
     const coordinate = normalizeCoordinate(displayedRef.current.coordinate || snappedPosition?.coordinate);
     if (!map || !coordinate || !loadedRef.current) return;
     interactingRef.current = false;
-    preferredPitchRef.current = perspective ? 58 : 0;
+    preferredPitchRef.current = perspective ? 78 : 0;
     setCameraPitch(preferredPitchRef.current);
     window.clearTimeout(resumeTimerRef.current);
     map.easeTo({
       center: coordinate,
       offset: driverLockOffset(map, perspective),
-      zoom: perspective ? 18 : 17,
+      zoom: perspective ? 16.6 : 17,
       bearing: perspective ? Number(heading || 0) : 0,
-      pitch: perspective ? 58 : 0,
+      pitch: perspective ? 78 : 0,
       duration: 420,
       essential: true,
     });
@@ -456,7 +474,7 @@ export default function LiveVectorMap({
     if (!map || !gesture.active || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     const deltaY = event.clientY - gesture.startY;
-    const nextPitch = clamp(gesture.startPitch + deltaY * 0.32, 18, 80);
+    const nextPitch = clamp(gesture.startPitch + deltaY * 0.32, 20, 80);
     const nextZoom = clamp(gesture.startZoom - (nextPitch - gesture.startPitch) * 0.012, 15.8, 19);
     preferredPitchRef.current = nextPitch;
     setCameraPitch(nextPitch);

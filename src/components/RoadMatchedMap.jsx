@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Layers3, Map, Satellite } from "lucide-react";
+import { Crosshair, Layers3, Map, Maximize2, Satellite } from "lucide-react";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters } from "@/lib/navigationGeometry";
 import LiveVectorMap from "@/components/LiveVectorMap";
@@ -103,9 +103,11 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
+export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
-  const defaultStyle = perspective ? "satellite-streets-v12" : "dark-v11";
+  // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
+  // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
+  const defaultStyle = perspective ? "dark-v11" : "dark-v11";
   const [style, setStyle] = useState(defaultStyle);
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -183,9 +185,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       return {
         longitude: Number(manualCenter?.longitude ?? autoLongitude),
         latitude: Number(manualCenter?.latitude ?? autoLatitude),
-        zoom: Math.max(13.5, Math.min(18.5, (perspective ? 18.0 : 16.9) + zoomOffset)),
+        zoom: Math.max(13.5, Math.min(18.5, (perspective ? 16.9 : 16.9) + zoomOffset)),
         bearing: cameraBearing,
-        pitch: perspective ? 58 : 0,
+        pitch: perspective ? 78 : 0,
       };
     }
     const fitted = fitViewport(coords, renderW, renderH);
@@ -196,7 +198,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       latitude: Number(manualCenter?.latitude ?? fitted.latitude),
       zoom: Math.max(2, Math.min(18.5, fitted.zoom + zoomOffset)),
       bearing: cameraBearing,
-      pitch: perspective ? 50 : 0,
+      pitch: perspective ? 70 : 0,
     };
   }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
@@ -461,7 +463,10 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             </div>
             <div className="absolute right-3 top-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur">
               {perspective ? (
-                <div className="rounded-full bg-primary px-2.5 py-1 text-[9px] font-extrabold text-black"><Satellite className="inline h-3 w-3 mr-1" />SATELLITE HD</div>
+                <>
+                  <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
+                  <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}><Satellite className="inline h-3 w-3 mr-1" />AERIAL</button>
+                </>
               ) : (
                 <>
                   <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>STREET</button>
@@ -473,12 +478,23 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
               <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">DRAG · PINCH</div>
               <button type="button" aria-label="Reset and follow driver" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+              {onEnterFullscreen && (
+                <button type="button" aria-label="Open fullscreen navigation" onClick={onEnterFullscreen} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/85 text-white/75 shadow-lg backdrop-blur active:scale-95"><Maximize2 className="h-4 w-4" /></button>
+              )}
             </div>
           </>
         )}
 
-        {fullscreen && (rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
-          <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+        {fullscreen && (
+          <div className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex flex-col items-end gap-2">
+            <div className="flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 shadow-lg backdrop-blur">
+              <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
+              <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
+            </div>
+            {(rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
+              <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+            )}
+          </div>
         )}
 
         {rerouting && (

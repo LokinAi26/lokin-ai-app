@@ -127,6 +127,13 @@ export default function AiGps() {
     navigate("/", { replace: true });
   }
 
+  function enterFullscreenNavigation() {
+    const next = new URLSearchParams(params);
+    next.set("focus", "locked");
+    next.set("nav", "1");
+    setParams(next, { replace: true });
+  }
+
   if (activeNavigationSession) {
     return (
       <LockedGpsSurface
@@ -169,7 +176,9 @@ export default function AiGps() {
         </div>
       )}
 
-      {!activeNavigationSession && nav.providerConfigured === true && (
+      {/* Provider QA card (VERIFY MAPBOX) is a dev/build-time diagnostic. It must
+          never ship in a production App Store build — gated off via import.meta.env.PROD. */}
+      {!import.meta.env.PROD && !activeNavigationSession && nav.providerConfigured === true && (
         <div className={`lokin-card p-3 ${nav.providerVerified === true ? "border-primary/60 bg-primary/[0.06]" : "bg-white/[0.025]"}`}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
@@ -283,6 +292,7 @@ export default function AiGps() {
               remainingDurationS={nav.remainingDurationS}
               followDriver={locked}
               navigationStatus={nav.status}
+              onEnterFullscreen={enterFullscreenNavigation}
             />
           ) : (
             <RoadMatchedMap
@@ -293,6 +303,7 @@ export default function AiGps() {
               followDriver={locked}
               perspective
               navigationStatus={nav.status}
+              onEnterFullscreen={enterFullscreenNavigation}
             />
           )}
         </div>
