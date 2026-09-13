@@ -114,7 +114,8 @@ export default function RoutePlanner() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="lokin-kicker lokin-kicker-lime">ROUTE</div>
+      <div className="flex items-center gap-2 -mt-2">
         <RouteIcon className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Route Optimizer</h1>
       </div>
@@ -154,7 +155,7 @@ export default function RoutePlanner() {
       {error && <div className="text-sm text-destructive">{error}</div>}
 
       {loading && (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-3">
+        <div className="lokin-card p-4 space-y-3">
           <div className="grid grid-cols-4 gap-2">
             {[0,1,2,3].map((i) => <div key={i} className="h-12 rounded-xl bg-white/8 animate-pulse" />)}
           </div>
@@ -163,14 +164,14 @@ export default function RoutePlanner() {
       )}
 
       {!data && !loading && !error && (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
+        <div className="lokin-card p-6 text-center">
           <RouteIcon className="h-6 w-6 text-primary mx-auto mb-2" />
           <div className="text-sm text-white/70">Pick a mode and tap <span className="text-primary font-bold">Optimize + Launch GPS</span> to sequence your offers and begin navigation.</div>
         </div>
       )}
 
       {data?.stats && (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="lokin-card p-4">
           <div className="grid grid-cols-4 gap-2 text-center">
             <Stat label="stops" value={data.stats.stops} />
             <Stat label="miles" value={data.stats.miles} />
@@ -188,7 +189,7 @@ export default function RoutePlanner() {
       {data?.seal && <SealDecisionCard seal={data.seal} />}
 
       {stops.length > 0 && (
-        <div className="rounded-3xl border border-white/10 overflow-hidden lokin-panel">
+        <div className="lokin-card overflow-hidden">
           <SatelliteRoutePreview stops={stops} compact />
           <Link to="/ai-gps?focus=locked&nav=1&view=real"
             className="w-full flex items-center justify-center gap-2 border-t border-white/10 bg-primary/10 py-3 text-sm font-bold text-primary">
@@ -210,7 +211,7 @@ export default function RoutePlanner() {
 
       {stops.length > 0 && (
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-white/80">Optimized Order</div>
+          <div className="lokin-kicker">Optimized Order</div>
           {stops.map((o, i) => (
             <div key={o.id} className="rounded-2xl border border-white/10 lokin-panel p-3.5">
               <div className="flex items-start gap-3">

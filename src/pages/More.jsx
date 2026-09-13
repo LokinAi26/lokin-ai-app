@@ -88,12 +88,12 @@ function Section({ section, defaultOpen }) {
   const [open, setOpen] = useState(defaultOpen);
   const SIcon = section.icon;
   return (
-    <div className="rounded-2xl border border-white/10 lokin-panel overflow-hidden">
+    <div className="lokin-card overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03] transition-colors"
       >
-        <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 ${section.color}`}>
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 ${section.color}`}>
           <SIcon className="h-4 w-4" />
         </div>
         <div className="flex-1 text-left">
@@ -141,7 +141,8 @@ export default function More() {
   }
   return (
     <div className="p-4 space-y-3 pb-8">
-      <h1 className="text-2xl font-bold font-heading metal-text">More</h1>
+      <div className="lokin-kicker lokin-kicker-lime">HUB</div>
+      <h1 className="text-2xl font-bold font-heading metal-text -mt-2">More</h1>
 
       {visibleSections.map((s, i) => (
         <Section key={s.id} section={s} defaultOpen={i === 0} />
