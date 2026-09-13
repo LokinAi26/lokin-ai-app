@@ -7,6 +7,7 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import UserTypeSelector from "@/components/UserTypeSelector";
+import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -162,6 +163,9 @@ export default function Home() {
           </span>
         </button>
       )}
+
+      {/* LOKIN stands with — awareness dedication, restored 2026-09-13 per Kendall. */}
+      <AwarenessBanner />
 
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
