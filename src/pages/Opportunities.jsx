@@ -133,7 +133,8 @@ export default function Opportunities() {
 
   return (
     <div className="p-4 space-y-4 pb-8">
-      <div className="flex items-center justify-between gap-2">
+      <div className="lokin-kicker lokin-kicker-lime">GIGS</div>
+      <div className="flex items-center justify-between gap-2 -mt-2">
         <div className="flex items-center gap-2 min-w-0">
           <Radar className="h-5 w-5 text-primary shrink-0" />
           <div className="min-w-0">

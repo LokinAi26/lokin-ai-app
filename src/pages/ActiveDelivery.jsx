@@ -89,11 +89,11 @@ export default function ActiveDelivery() {
       <Header />
 
       {loading ? (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center text-sm text-white/50">
+        <div className="lokin-card p-6 text-center text-sm text-white/50">
           Loading active delivery…
         </div>
       ) : !current ? (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center text-sm text-white/50">
+        <div className="lokin-card p-6 text-center text-sm text-white/50">
           {data?.error || "No active deliveries match your filters."}
         </div>
       ) : (
@@ -111,7 +111,7 @@ export default function ActiveDelivery() {
 
           {/* customer card */}
           <motion.div key={current.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-4">
+            className="lokin-card radial-fade p-4">
             <div className="flex items-center justify-between">
               <span className="text-[11px] tracking-[0.22em] text-primary/80 font-display">ACTIVE DELIVERY</span>
               <span className="text-[11px] text-white/40">{CATEGORY_LABELS[current.category] || current.category}</span>
@@ -186,7 +186,7 @@ export default function ActiveDelivery() {
               </div>
 
               {/* auto updates */}
-              <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+              <div className="lokin-card p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
                     <Bell className="h-4 w-4 text-primary" /> Auto Updates
@@ -231,12 +231,15 @@ export default function ActiveDelivery() {
 
 function Header() {
   return (
-    <div className="flex items-center justify-between">
+    <div>
+      <div className="lokin-kicker lokin-kicker-lime mb-1">DELIVERY</div>
+      <div className="flex items-center justify-between">
       <div>
         <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">LIVE ORDER</div>
         <h1 className="text-2xl font-bold font-heading metal-text">Active Delivery</h1>
       </div>
       <Flame className="h-5 w-5 text-orange-400" />
+      </div>
     </div>
   );
 }

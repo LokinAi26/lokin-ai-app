@@ -55,7 +55,8 @@ export default function Hotspots() {
 
   return (
     <div className="p-4 space-y-4 pb-8">
-      <div className="flex items-center justify-between">
+      <div className="lokin-kicker lokin-kicker-lime">ZONES</div>
+      <div className="flex items-center justify-between -mt-2">
         <div>
           <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">SIMULATED MODEL PREVIEW</div>
           <h1 className="text-2xl font-bold font-heading metal-text">Hotspot Model</h1>
@@ -158,7 +159,7 @@ export default function Hotspots() {
 
       {/* Zone ranking */}
       <div>
-        <div className="text-[11px] tracking-[0.24em] text-white/40 font-display mb-2 flex items-center gap-1.5">
+        <div className="lokin-kicker mb-2 flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5 text-primary" /> SAMPLE ZONES · BY {activeMetric.label.toUpperCase()}
         </div>
         <div className="space-y-2">
@@ -168,7 +169,7 @@ export default function Hotspots() {
               <button
                 key={h.id}
                 onClick={() => setFlyTo([h.lat, h.lng])}
-                className="w-full text-left rounded-2xl border border-white/10 lokin-panel p-3 active:scale-[0.99] active:border-primary/40 transition-all"
+                className="w-full text-left lokin-card p-3 active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black font-display font-black" style={{ color: c }}>
