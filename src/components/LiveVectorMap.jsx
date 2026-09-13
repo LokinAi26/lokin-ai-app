@@ -13,6 +13,27 @@ const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
 
+// AERIAL mode is daytime satellite photography. The dusk treatment below is
+// what makes it read as night: a dark fill above the raster (but below the
+// basemap's labels) plus a touch of desaturation. NIGHT vector mode is
+// untouched by all of this.
+const DUSK_SOURCE = "lokin-dusk-overlay";
+const DUSK_LAYER = "lokin-dusk-overlay";
+const DUSK_FILL_COLOR = "#050914";
+const DUSK_FILL_OPACITY = 0.45;
+const WORLD_POLYGON = {
+  type: "Feature",
+  properties: {},
+  geometry: {
+    type: "Polygon",
+    coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]],
+  },
+};
+
+function isAerialStyle(style) {
+  return style === "satellite-streets-v12";
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
 }
@@ -129,6 +150,45 @@ function addNavigationLayers(map, routeGeometry) {
       "line-emissive-strength": 2.4,
     },
   });
+}
+
+function applyDuskTreatment(map, aerial) {
+  if (!map || typeof map.getStyle !== "function") return;
+  try {
+    if (!map.getSource(DUSK_SOURCE)) {
+      map.addSource(DUSK_SOURCE, { type: "geojson", data: WORLD_POLYGON });
+    }
+    if (!map.getLayer(DUSK_LAYER)) {
+      const layers = map.getStyle()?.layers || [];
+      const firstSymbol = layers.find((layer) => layer.type === "symbol");
+      const duskLayer = {
+        id: DUSK_LAYER,
+        type: "fill",
+        source: DUSK_SOURCE,
+        paint: {
+          "fill-color": DUSK_FILL_COLOR,
+          "fill-opacity": DUSK_FILL_OPACITY,
+        },
+      };
+      // Insert just under the first label layer: the satellite raster gets
+      // darkened while road labels, the glow route (slot top), and DOM
+      // markers stay crisp on top.
+      if (firstSymbol) map.addLayer(duskLayer, firstSymbol.id);
+      else map.addLayer(duskLayer);
+    }
+    map.setLayoutProperty(DUSK_LAYER, "visibility", aerial ? "visible" : "none");
+    (map.getStyle()?.layers || [])
+      .filter((layer) => layer.type === "raster")
+      .forEach((layer) => {
+        try {
+          map.setPaintProperty(layer.id, "raster-saturation", aerial ? -0.25 : 0);
+        } catch {
+          // Standard-style basemap layers may reject paint overrides.
+        }
+      });
+  } catch {
+    // Style not ready yet; the next style load re-applies.
+  }
 }
 
 function createDriverMarker() {
@@ -286,6 +346,7 @@ export default function LiveVectorMap({
           if (disposed) return;
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
+          applyDuskTreatment(map, isAerialStyle(styleRef.current));
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -343,6 +404,13 @@ export default function LiveVectorMap({
     if (!map || !loadedRef.current) return;
     const nextUrl = styleUrl(style);
     map.setStyle(nextUrl, { diff: true });
+    // Diff updates keep custom layers, but the dusk treatment must follow the
+    // new style's layer stack, so re-apply once the style settles.
+    map.once("styledata", () => {
+      const live = mapRef.current;
+      if (!live) return;
+      applyDuskTreatment(live, isAerialStyle(style));
+    });
   }, [style]);
 
   useEffect(() => {
