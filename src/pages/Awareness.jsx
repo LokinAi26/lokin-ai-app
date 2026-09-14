@@ -35,6 +35,14 @@ const CAUSES = [
     org: { name: "NAMI", url: "https://www.nami.org" },
     tee: "Mind Over Miles Tee",
   },
+  {
+    name: "Heart Health",
+    color: "#E63946",
+    tagline: "Keep your engine running.",
+    blurb: "Heart disease is the #1 killer of American adults — and long hours behind the wheel, stress, and road food don't help. Know your numbers, move between deliveries, and take the stairs on the walking drops. Your heart carries every mile.",
+    org: { name: "American Heart Association", url: "https://www.heart.org" },
+    tee: "Heart Strong Tee",
+  },
 ];
 
 function Ribbon({ color }) {

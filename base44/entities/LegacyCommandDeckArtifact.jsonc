@@ -1,0 +1,83 @@
+{
+  "type": "object",
+  "name": "LegacyCommandDeckArtifact",
+  "description": "Source-controlled project artifact stored for the Legacy Command Deck",
+  "properties": {
+    "project_key": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string"
+    },
+    "size_bytes": {
+      "type": "number"
+    },
+    "chunk_count": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "uploaded",
+        "verified",
+        "superseded"
+      ],
+      "default": "uploaded"
+    },
+    "source": {
+      "type": "string"
+    },
+    "uploaded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_key",
+    "title",
+    "version",
+    "file_name",
+    "sha256",
+    "size_bytes",
+    "chunk_count",
+    "status",
+    "uploaded_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
