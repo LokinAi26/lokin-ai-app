@@ -72,6 +72,7 @@ export default function BreakTime() {
 
   return (
     <div className="p-4 space-y-4">
+      <div className="lokin-kicker lokin-kicker-lime">BREAK</div>
       <div className="flex items-center gap-2">
         <Coffee className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Break Time</h1>
@@ -79,7 +80,7 @@ export default function BreakTime() {
       <p className="text-sm text-white/45 -mt-2">You earned it. Kick back, watch something, and recharge.</p>
 
       {/* Break timer */}
-      <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-5 text-center">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card radial-fade p-5 text-center">
         <div className="relative h-28 w-28 mx-auto">
           <svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90">
             <circle cx="50" cy="50" r="42" stroke="hsl(0 0% 100% / 0.08)" strokeWidth="5" fill="none" />
@@ -114,7 +115,7 @@ export default function BreakTime() {
       <MotivationCoach />
 
       {/* Now playing */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center gap-2 mb-3">
           <Headphones className="h-4 w-4 text-accent" />
           <div className="text-sm font-semibold text-white/80">Now Playing</div>
@@ -146,7 +147,7 @@ export default function BreakTime() {
       </div>
 
       {/* Browse categories */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="text-sm font-semibold text-white/80 mb-3">Browse on YouTube</div>
         <div className="grid grid-cols-3 gap-2">
           {CATEGORIES.map((c) => (
@@ -160,7 +161,7 @@ export default function BreakTime() {
       </div>
 
       {/* Free streaming apps */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center gap-2 mb-3">
           <ExternalLink className="h-4 w-4 text-primary" />
           <div className="text-sm font-semibold text-white/80">Free Streaming Apps</div>

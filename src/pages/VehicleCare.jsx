@@ -98,6 +98,7 @@ export default function VehicleCare() {
 
   return (
     <div className="p-4 space-y-4">
+      <div className="lokin-kicker lokin-kicker-lime">VEHICLE</div>
       <div className="flex items-center gap-2">
         <Wrench className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Vehicle Care</h1>
@@ -105,7 +106,7 @@ export default function VehicleCare() {
       <p className="text-sm text-white/45 -mt-2">Stay on top of maintenance. Find a mechanic fast when you need one.</p>
 
       {/* Current mileage */}
-      <div className="rounded-3xl border border-white/10 lokin-panel radial-fade p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card radial-fade p-4">
         <div className="text-[11px] uppercase tracking-[0.18em] text-white/45 mb-1">Current Mileage</div>
         <div className="flex items-center gap-2">
           <input type="number" value={mileage} onChange={(e) => saveMileage(e.target.value)} placeholder="Enter odometer reading"
@@ -123,7 +124,7 @@ export default function VehicleCare() {
       </div>
 
       {showAdd && (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-2.5">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4 space-y-2.5">
           <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Maintenance item (e.g. Oil Change)"
             className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, interval_miles: CATEGORY_MAP[v]?.default_interval || form.interval_miles })}>
@@ -156,7 +157,7 @@ export default function VehicleCare() {
             const nextDue = item.last_done_mileage + (item.interval_miles || 0);
             const milesLeft = nextDue - currentMi;
             return (
-              <div key={item.id} className="rounded-2xl border border-white/10 lokin-panel p-3.5">
+              <div key={item.id} className="rounded-2xl border border-white/10 lokin-panel lokin-card p-3.5">
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-base">{cat.emoji}</div>
                   <div className="flex-1 min-w-0">
@@ -187,7 +188,7 @@ export default function VehicleCare() {
       )}
 
       {/* Mechanic finder */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center gap-2 mb-2">
           <Search className="h-4 w-4 text-accent" />
           <div className="text-sm font-semibold text-white/80">Find a Mechanic</div>

@@ -105,6 +105,7 @@ export default function GigTasks() {
 
   return (
     <div className="space-y-4 p-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">TASKS</div>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -146,7 +147,7 @@ export default function GigTasks() {
       ) : scanning && filtered.length === 0 ? (
         <div className="py-14 text-center text-sm text-white/40">Searching and verifying current opportunities…</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.025] p-6 text-center">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.025] lokin-card p-6 text-center">
           <div className="text-sm font-semibold text-white/70">No verified live opportunities right now.</div>
           <div className="mt-1 text-xs text-white/35">LOKIN will not fill this screen with samples or stale assignments.</div>
         </div>
@@ -156,7 +157,7 @@ export default function GigTasks() {
             const meta = TYPE_META[item.category] || TYPE_META.mystery_shop;
             const Icon = meta.icon;
             return (
-              <article key={item.id} className="rounded-3xl border border-white/10 lokin-panel p-4">
+              <article key={item.id} className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.06]">
                     <Icon className="h-5 w-5 text-primary" />

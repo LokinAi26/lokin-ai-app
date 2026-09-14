@@ -54,6 +54,7 @@ export default function Fuel() {
 
   return (
     <div className="p-5 space-y-5">
+      <div className="lokin-kicker lokin-kicker-lime">FUEL</div>
       <div className="flex items-center gap-2">
         <FuelIcon className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Fuel Tracker & Deals</h1>
@@ -72,7 +73,7 @@ export default function Fuel() {
           {deals.map((d) => {
             const net = (d.price_per_gallon - (d.discount_per_gallon || 0)).toFixed(2);
             return (
-              <div key={d.id} className="rounded-2xl border border-white/10 lokin-panel p-3.5">
+              <div key={d.id} className="rounded-2xl border border-white/10 lokin-panel lokin-card p-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-semibold text-sm text-white">{d.station}</div>
@@ -124,7 +125,7 @@ export default function Fuel() {
           <div className="text-sm font-semibold text-white/80 mb-2">Recent Fill-ups</div>
           <div className="space-y-2">
             {purchases.map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel p-3 text-sm">
+              <div key={p.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel lokin-card p-3 text-sm">
                 <div>
                   <div className="font-medium text-white">{p.station}</div>
                   <div className="text-xs text-white/45">{p.purchased_on} · {p.gallons} gal · ${p.total_paid}</div>

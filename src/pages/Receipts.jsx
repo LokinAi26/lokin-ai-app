@@ -19,13 +19,14 @@ export default function Receipts() {
 
   return (
     <div className="p-4 space-y-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">RECEIPTS</div>
       <div className="flex items-center gap-2">
         <ReceiptIcon className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Receipts</h1>
       </div>
       <p className="text-sm text-white/45 -mt-2">Your purchase history &amp; invoices.</p>
 
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="text-[11px] uppercase tracking-wider text-white/45">Total Spent</div>
         <div className="text-3xl font-bold font-display text-primary text-glow leading-none mt-1">
           ${total.toFixed(2)}
@@ -39,7 +40,7 @@ export default function Receipts() {
       ) : (
         <div className="space-y-3">
           {purchases.map((p) => (
-            <div key={p.id} className="rounded-2xl border border-white/10 lokin-panel p-4">
+            <div key={p.id} className="rounded-2xl border border-white/10 lokin-panel lokin-card p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-semibold text-sm text-white truncate">

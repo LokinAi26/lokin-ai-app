@@ -101,6 +101,7 @@ export default function Safety() {
 
   return (
     <div className="p-4 space-y-4">
+      <div className="lokin-kicker lokin-kicker-lime">SAFETY</div>
       <div className="flex items-center gap-2">
         <ShieldAlert className="h-5 w-5 text-destructive" />
         <h1 className="text-xl font-bold font-heading metal-text">Safety</h1>
@@ -124,7 +125,7 @@ export default function Safety() {
       </div>
 
       {/* Share location */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center gap-2 mb-2">
           <MapPin className="h-4 w-4 text-accent" />
           <div className="text-sm font-semibold text-white/80">Share My Location</div>
@@ -166,7 +167,7 @@ export default function Safety() {
       </div>
 
       {/* Emergency contacts */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-primary" />
@@ -212,7 +213,7 @@ export default function Safety() {
       </div>
 
       {/* Fake incoming call */}
-      <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+      <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
         <div className="flex items-center gap-2 mb-2">
           <Phone className="h-4 w-4 text-primary" />
           <div className="text-sm font-semibold text-white/80">Fake Incoming Call</div>

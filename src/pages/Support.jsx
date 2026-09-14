@@ -146,6 +146,7 @@ export default function Support() {
   return (
     <div className="flex flex-col" style={{ minHeight: "calc(100dvh - 7rem)" }}>
       <div className="p-4">
+        <div className="lokin-kicker lokin-kicker-lime">SUPPORT</div>
         <div className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-accent/40 bg-accent/10 glow-cyan">
             <Headphones className="h-5 w-5 text-accent" />

@@ -82,6 +82,7 @@ export default function DriverPlatforms() {
 
   return (
     <div className="space-y-4 p-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">PLATFORMS</div>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-[10px] font-display tracking-[0.2em] text-primary">
@@ -108,7 +109,7 @@ export default function DriverPlatforms() {
       </div>
 
       {loading && !data && (
-        <div className="flex items-center justify-center gap-2 rounded-3xl border border-white/10 lokin-panel p-8 text-sm text-white/50">
+        <div className="flex items-center justify-center gap-2 rounded-3xl border border-white/10 lokin-panel lokin-card p-8 text-sm text-white/50">
           <Loader2 className="h-4 w-4 animate-spin text-primary" /> Checking provider readiness…
         </div>
       )}
@@ -120,7 +121,7 @@ export default function DriverPlatforms() {
           const potential = Object.entries(provider.potential_capabilities || {}).filter(([, enabled]) => enabled);
           const active = Object.entries(provider.active_capabilities || {}).filter(([, enabled]) => enabled);
           return (
-            <div key={provider.key} className="rounded-3xl border border-white/10 lokin-panel p-4">
+            <div key={provider.key} className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/35">
                   {provider.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Unplug className="h-5 w-5 text-white/40" />}
@@ -233,7 +234,7 @@ export default function DriverPlatforms() {
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-black/25 p-3 text-[10px] leading-relaxed text-white/40">
+      <div className="rounded-2xl border border-white/10 bg-black/25 lokin-card p-3 text-[10px] leading-relaxed text-white/40">
         A provider showing “approval required” or “manual only” is intentionally not treated as connected. The signed ingest gateway remains deny-by-default until a provider is explicitly allowlisted on the server after approval.
       </div>
     </div>

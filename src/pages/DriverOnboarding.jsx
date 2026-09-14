@@ -119,6 +119,7 @@ export default function DriverOnboarding() {
 
   return (
     <div className="space-y-4 p-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">ONBOARDING</div>
       <header className="lokin-card relative overflow-hidden radial-fade p-5">
         <div className="absolute -right-6 -top-6 opacity-15"><LokinGlyph size={112} /></div>
         <div className="relative">

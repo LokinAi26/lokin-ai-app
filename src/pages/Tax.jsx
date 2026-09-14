@@ -19,6 +19,7 @@ export default function Tax() {
 
   return (
     <div className="p-4 space-y-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">TAX</div>
       <div>
         <div className="text-[11px] tracking-[0.28em] text-primary/70 font-display">TAX & MONEY</div>
         <h1 className="text-2xl font-bold font-heading metal-text">Tax Engine</h1>

@@ -60,6 +60,7 @@ export default function DrivingMode() {
 
   return (
     <div className="p-4 space-y-4 pb-6">
+      <div className="lokin-kicker lokin-kicker-lime">DRIVE MODE</div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Radar className="h-5 w-5 text-accent" />
@@ -158,7 +159,7 @@ export default function DrivingMode() {
           </button>
         </div>
       ) : current ? (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-3">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="text-[11px] tracking-[0.2em] text-accent/80 font-display">NEXT STOP · {idx + 1}/{total}</div>
             <span className="text-[11px] text-white/40">{CATEGORY_LABELS[current.category] || current.category}</span>
@@ -187,13 +188,13 @@ export default function DrivingMode() {
           </Link>
         </div>
       ) : loading ? (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-6 text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-accent/70">
             <Radar className="h-4 w-4 animate-pulse" /> LOKIN is scanning for offers…
           </div>
         </div>
       ) : (
-        <div className="rounded-3xl border border-white/10 lokin-panel p-6 text-center">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-6 text-center">
           <div className="text-sm text-white/50">{data?.error || "No offers match your filters."}</div>
           <button onClick={() => load(true)} className="mt-3 w-full rounded-2xl border border-white/10 lokin-panel py-2.5 flex items-center justify-center gap-2 text-sm text-white/70">
             <RefreshCw className="h-4 w-4 text-primary" /> Retry

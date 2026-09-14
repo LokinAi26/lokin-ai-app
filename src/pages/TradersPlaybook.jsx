@@ -145,6 +145,7 @@ export default function TradersPlaybook() {
 
   return (
     <div className="space-y-4 p-4 pb-10">
+      <div className="lokin-kicker lokin-kicker-lime">PLAYBOOK</div>
       <header>
         <div className="flex items-center gap-2 text-[10px] font-display tracking-[0.2em] text-primary"><BrainCircuit className="h-4 w-4" /> LOKIN INTELLIGENCE</div>
         <h1 className="mt-1 text-2xl font-black font-heading metal-text">Trader&apos;s Playbook</h1>
@@ -188,7 +189,7 @@ export default function TradersPlaybook() {
 function LearnPanel({ completedIds, onComplete }) {
   return <div className="space-y-2">{LESSONS.map((lesson, index) => {
     const done = completedIds.has(lesson.id);
-    return <div key={lesson.id} className="rounded-3xl border border-white/10 lokin-panel p-4">
+    return <div key={lesson.id} className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
       <div className="flex items-start gap-3"><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm font-black ${done ? "border-primary/40 bg-primary/10 text-primary" : "border-white/10 bg-black/20 text-white/45"}`}>{done ? <CheckCircle2 className="h-5 w-5" /> : index + 1}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h3 className="text-sm font-black">{lesson.title}</h3><span className="ml-auto text-[9px] text-white/35">{lesson.minutes} MIN</span></div><div className="text-[9px] uppercase tracking-wider text-primary/70">{lesson.level}</div><p className="mt-2 text-xs leading-relaxed text-white/55">{lesson.summary}</p><div className="mt-2 rounded-xl border border-white/8 bg-black/25 p-2 text-[10px] text-white/65"><b className="text-primary">PLAYBOOK RULE:</b> {lesson.rule}</div><button onClick={() => onComplete(lesson.id)} disabled={done} className="mt-3 flex items-center gap-1 text-[10px] font-black text-primary disabled:text-white/30">{done ? "COMPLETED" : "MARK LESSON COMPLETE"} <ChevronRight className="h-3 w-3" /></button></div></div>
     </div>;
   })}</div>;
@@ -196,12 +197,12 @@ function LearnPanel({ completedIds, onComplete }) {
 
 function AnalyzePanel({ plan, setPlan, evaluation }) {
   return <div className="space-y-3">
-    <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+    <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
       <div className="flex items-center justify-between"><div><div className="text-sm font-black">Simulated chart lab</div><div className="text-[10px] text-white/40">Practice reading context without financial exposure</div></div><span className="rounded-full border border-white/10 px-2 py-1 text-[8px] text-white/40">DEMO DATA</span></div>
       <CandleChart />
       <div className="grid grid-cols-2 gap-2"><Select label="Direction" value={plan.direction} onChange={(v) => setPlan({ ...plan, direction: v })} options={[["long","Long"],["short","Short"]]} /><Select label="Timeframe" value={plan.timeframe} onChange={(v) => setPlan({ ...plan, timeframe: v })} options={[["5m","5 minute"],["15m","15 minute"],["1h","1 hour"],["4h","4 hour"]]} /></div>
     </div>
-    <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+    <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
       <div className="flex items-center justify-between"><div className="text-sm font-black">Setup validation</div><DecisionBadge evaluation={evaluation} /></div>
       <div className="mt-3 space-y-2">{[
         ["trendAligned","Higher-timeframe trend agrees"],
@@ -218,7 +219,7 @@ function AnalyzePanel({ plan, setPlan, evaluation }) {
 }
 
 function PracticePanel({ plan, setPlan, accountSize, setAccountSize, riskPct, setRiskPct, sizing, evaluation, onSave, saving }) {
-  return <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+  return <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
     <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /><div><div className="text-sm font-black">Paper trade planner</div><div className="text-[10px] text-white/40">Risk determines size. This never routes an order.</div></div></div>
     <div className="mt-4 grid grid-cols-2 gap-2"><Field label="Symbol / label" value={plan.symbol} onChange={(v) => setPlan({ ...plan, symbol: v })} /><Field label="Setup" value={plan.setup_name} onChange={(v) => setPlan({ ...plan, setup_name: v })} /></div>
     <div className="mt-2 grid grid-cols-2 gap-2"><Field label="Paper account $" value={accountSize} onChange={setAccountSize} type="number" /><Field label="Risk %" value={riskPct} onChange={setRiskPct} type="number" /></div>
@@ -232,14 +233,14 @@ function PracticePanel({ plan, setPlan, accountSize, setAccountSize, riskPct, se
 
 function JournalPanel({ trades, journal, setJournal, onSave, saving }) {
   return <div className="space-y-3">
-    <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+    <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
       <div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /><div><div className="text-sm font-black">Discipline journal</div><div className="text-[10px] text-white/40">Grade the process, not only the outcome.</div></div></div>
       <div className="mt-3 grid grid-cols-2 gap-2"><Select label="Emotion before" value={journal.emotion_before} onChange={(v) => setJournal({ ...journal, emotion_before: v })} options={["calm","focused","uncertain","fearful","excited","frustrated","revenge"].map((v) => [v,v])} /><Select label="Discipline grade" value={journal.discipline_grade} onChange={(v) => setJournal({ ...journal, discipline_grade: v })} options={["A","B","C","D","F"].map((v) => [v,v])} /></div>
       <ToggleRow label="I followed the written plan" checked={journal.followed_plan} onChange={() => setJournal({ ...journal, followed_plan: !journal.followed_plan })} />
       {[["what_worked","What worked?"],["what_failed","What failed?"],["next_adjustment","One adjustment for next time"]].map(([key,label]) => <label key={key} className="mt-2 block text-[9px] uppercase tracking-wider text-white/35">{label}<textarea value={journal[key]} onChange={(e) => setJournal({ ...journal, [key]: e.target.value })} className="mt-1 min-h-16 w-full rounded-2xl border border-white/10 bg-black/30 p-3 text-xs text-white outline-none focus:border-primary/50" /></label>)}
       <button onClick={onSave} disabled={saving} className="mt-3 w-full rounded-2xl bg-primary py-3 text-xs font-black text-black disabled:opacity-50">SAVE REVIEW</button>
     </div>
-    <div className="rounded-3xl border border-white/10 lokin-panel p-4"><div className="text-sm font-black">Recent paper decisions</div><div className="mt-3 space-y-2">{trades.slice(0, 8).map((trade) => <div key={trade.id} className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/20 p-3"><div className={`flex h-9 w-9 items-center justify-center rounded-xl ${trade.decision === "PAPER_TRADE" ? "bg-primary/10 text-primary" : "bg-red-400/10 text-red-300"}`}>{trade.decision === "PAPER_TRADE" ? <TrendingUp className="h-4 w-4" /> : <CircleOff className="h-4 w-4" />}</div><div className="min-w-0 flex-1"><div className="text-xs font-black">{trade.symbol} · {trade.direction?.toUpperCase()}</div><div className="truncate text-[9px] text-white/40">{trade.setup_name} · {Number(trade.reward_risk_ratio || 0).toFixed(2)}R</div></div><span className="text-[9px] font-bold text-white/50">{trade.decision === "PAPER_TRADE" ? "PAPER" : "PASS"}</span></div>)}{trades.length === 0 && <div className="py-6 text-center text-xs text-white/35">No paper decisions saved yet.</div>}</div></div>
+    <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4"><div className="text-sm font-black">Recent paper decisions</div><div className="mt-3 space-y-2">{trades.slice(0, 8).map((trade) => <div key={trade.id} className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/20 p-3"><div className={`flex h-9 w-9 items-center justify-center rounded-xl ${trade.decision === "PAPER_TRADE" ? "bg-primary/10 text-primary" : "bg-red-400/10 text-red-300"}`}>{trade.decision === "PAPER_TRADE" ? <TrendingUp className="h-4 w-4" /> : <CircleOff className="h-4 w-4" />}</div><div className="min-w-0 flex-1"><div className="text-xs font-black">{trade.symbol} · {trade.direction?.toUpperCase()}</div><div className="truncate text-[9px] text-white/40">{trade.setup_name} · {Number(trade.reward_risk_ratio || 0).toFixed(2)}R</div></div><span className="text-[9px] font-bold text-white/50">{trade.decision === "PAPER_TRADE" ? "PAPER" : "PASS"}</span></div>)}{trades.length === 0 && <div className="py-6 text-center text-xs text-white/35">No paper decisions saved yet.</div>}</div></div>
   </div>;
 }
 

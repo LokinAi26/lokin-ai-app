@@ -65,6 +65,7 @@ export default function Locator() {
 
   return (
     <div className="p-4 space-y-4 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">LOCATOR</div>
       <div className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-5">
         <div>
           <div className="flex items-center gap-2 text-primary"><PackageSearch className="h-5 w-5"/><span className="text-[11px] tracking-[0.2em] font-display">LOKIN ITEM LOCATOR</span></div>
@@ -73,7 +74,7 @@ export default function Locator() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel p-3">
+      <div className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel lokin-card p-3">
         {STEPS.map((s, i) => <div key={s} className="flex-1 flex items-center">
           <div className="flex flex-col items-center gap-1"><div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold border-2 ${i <= activeStep ? "border-primary bg-primary/15 text-primary glow-primary" : "border-white/10 text-white/40"}`}>{i + 1}</div><div className={`text-[9px] tracking-wide ${i <= activeStep ? "text-primary" : "text-white/35"}`}>{s}</div></div>
           {i < 2 && <div className={`flex-1 h-px mx-1.5 ${i < activeStep ? "bg-primary" : "bg-white/10"}`} />}
@@ -89,7 +90,7 @@ export default function Locator() {
       {result && !result.found && <div className="rounded-2xl border border-white/10 p-5 text-sm text-white/45 text-center">{result.message}</div>}
 
       {item && <>
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
           <div className="flex justify-between gap-3">
             <div className="min-w-0"><div className="text-[10px] tracking-[0.18em] text-primary/75">{item.department || "STORE ITEM"}</div><div className="mt-1 font-bold text-white text-lg leading-tight">{item.name}</div><div className="mt-1 text-xs text-white/45">{item.store || "Selected store"} · Aisle {item.aisle || "?"} · Shelf {item.shelf || "?"}</div></div>
             {item.price != null && <div className="text-right"><div className="text-2xl font-extrabold text-primary">${Number(item.price).toFixed(2)}</div><div className="text-[10px] text-white/35">store price</div></div>}
@@ -119,7 +120,7 @@ export default function Locator() {
           <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 lokin-panel p-4">
+        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><Radio className="h-4 w-4 text-white/45" /></div>
             <div><div className="text-sm font-semibold text-white">Precision proximity not enabled</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Automatic “getting closer” beeps require a real indoor-positioning source such as supported merchant beacons, UWB, or another verified store-position feed. LOKIN does not simulate distance in this build.</div></div>

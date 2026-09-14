@@ -60,6 +60,7 @@ export default function Categories() {
 
   return (
     <div className="p-5 space-y-6">
+      <div className="lokin-kicker lokin-kicker-lime">CATEGORIES</div>
       <div className="flex items-center gap-2">
         <SlidersHorizontal className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold font-heading metal-text">Work Filters</h1>
@@ -118,7 +119,7 @@ export default function Categories() {
         ) : (
           <div className="space-y-2">
             {blocked.map((b) => (
-              <div key={b.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel p-3">
+              <div key={b.id} className="flex items-center justify-between rounded-2xl border border-white/10 lokin-panel lokin-card p-3">
                 <div>
                   <div className="text-sm font-medium text-white">{b.name}</div>
                   {b.reason && <div className="text-xs text-white/60">{b.reason}</div>}

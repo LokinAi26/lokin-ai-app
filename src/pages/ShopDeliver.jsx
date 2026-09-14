@@ -58,6 +58,7 @@ export default function ShopDeliver() {
   return (
     <PullToRefresh onRefresh={load}>
       <div className="p-4 space-y-4">
+        <div className="lokin-kicker lokin-kicker-lime">SHOP</div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-primary" />
@@ -79,7 +80,7 @@ export default function ShopDeliver() {
 
         {/* Dark route map */}
         {orders.length > 0 ? (
-          <div className="rounded-3xl border border-white/10 overflow-hidden lokin-panel">
+          <div className="rounded-3xl border border-white/10 overflow-hidden lokin-panel lokin-card">
             <div className="relative h-60 bg-black">
               <div className="absolute inset-0 brand-grid opacity-40" />
               <svg viewBox="0 0 320 160" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
@@ -100,7 +101,7 @@ export default function ShopDeliver() {
             </Link>
           </div>
         ) : (
-          <div className="rounded-3xl border border-white/10 lokin-panel p-8 text-center">
+          <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-8 text-center">
             <Package className="h-8 w-8 mx-auto text-white/30 mb-2" />
             <div className="text-sm text-white/55">{loading ? "Scanning for shop & deliver orders…" : "No shop & deliver orders yet."}</div>
             <div className="text-xs text-white/35 mt-1">Add offers with a grocery/retail category to map them here.</div>

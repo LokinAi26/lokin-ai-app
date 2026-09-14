@@ -99,6 +99,7 @@ export default function Settings() {
 
   return (
     <div className="p-4 space-y-5">
+      <div className="lokin-kicker lokin-kicker-lime">SETTINGS</div>
       <h1 className="text-2xl font-bold font-heading metal-text">Settings</h1>
 
       <Section title="I am a…">
@@ -219,7 +220,7 @@ export default function Settings() {
 
 function Section({ title, children }) {
   return (
-    <div className="rounded-3xl border border-white/10 lokin-panel p-4 space-y-3">
+    <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4 space-y-3">
       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">{title}</div>
       {children}
     </div>

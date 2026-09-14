@@ -63,6 +63,7 @@ export default function Awareness() {
 
   return (
     <div className="p-4 space-y-5 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">AWARENESS</div>
       <div>
         <div className="text-[11px] tracking-[0.24em] text-primary/70 font-display">LOKIN STANDS WITH</div>
         <h1 className="text-2xl font-bold font-heading metal-text">Awareness Spotlights</h1>
@@ -112,7 +113,7 @@ export default function Awareness() {
       {/* Cause spotlights */}
       <div className="space-y-3">
         {CAUSES.map((c) => (
-          <div key={c.name} className="rounded-3xl border border-white/10 lokin-panel p-4" style={{ boxShadow: `inset 0 0 0 1px ${c.color}22` }}>
+          <div key={c.name} className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4" style={{ boxShadow: `inset 0 0 0 1px ${c.color}22` }}>
             <div className="flex items-center gap-3">
               <Ribbon color={c.color} />
               <div>

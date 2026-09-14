@@ -95,6 +95,7 @@ export default function Pricing() {
 
   return (
     <div className="p-4 space-y-5 pb-8">
+      <div className="lokin-kicker lokin-kicker-lime">PRICING</div>
       <div className="text-center pt-2">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-black glow-primary mb-3">
           <LokinGlyph size={36} />
@@ -111,7 +112,7 @@ export default function Pricing() {
             <div
               key={t.id}
               className={`rounded-3xl border p-5 relative overflow-hidden ${
-                t.accent ? "border-primary/50 glow-primary lokin-panel" : "border-white/10 lokin-panel"
+                t.accent ? "border-primary/50 glow-primary lokin-panel" : "border-white/10 lokin-panel lokin-card"
               }`}
             >
               {t.badge && (
