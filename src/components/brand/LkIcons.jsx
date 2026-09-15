@@ -143,3 +143,15 @@ export function LkIconTapOut(props) {
     </LkIcon>
   );
 }
+
+/* Icons · Mobility */
+export function LkIconScooter(props) {
+  return (
+    <LkIcon {...props}>
+      <circle cx="5.5" cy="16.5" r="1.8" />
+      <circle cx="18.5" cy="16.5" r="1.8" />
+      <path d="M7.3 16.5h5.2l1.5-3.6" />
+      <path d="M14.6 12.4l2.4-6.9h3.5" />
+    </LkIcon>
+  );
+}

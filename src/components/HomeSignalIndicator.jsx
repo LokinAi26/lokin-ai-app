@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Signal, WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";
 
 // Network-status pill for the Home screen. It uses only information the
 // current app environment exposes and never fabricates cellular radio data.
@@ -47,7 +47,7 @@ export default function HomeSignalIndicator() {
   }, []);
 
   const bars = barsFromNet(net, online);
-  const label = !online ? "OFFLINE" : net?.effectiveType ? net.effectiveType.toUpperCase() : "ONLINE";
+  const label = !online ? "OFFLINE" : "ONLINE";
   const color = !online ? "text-destructive" : bars != null && bars < 3 ? "text-[#FFD200]" : "text-primary";
   const barColor = !online ? "bg-destructive" : bars != null && bars < 3 ? "bg-[#FFD200]" : "bg-primary";
 
@@ -57,7 +57,7 @@ export default function HomeSignalIndicator() {
       className="flex items-center gap-2 rounded-full border border-lokin-neon/50 bg-black/60 px-2.5 py-1 glow-primary active:scale-[0.97] transition-transform"
       aria-label="Network status — open Stay Linked"
     >
-      {!online ? <WifiOff className="h-3.5 w-3.5 text-destructive" /> : <Signal className={`h-3.5 w-3.5 ${color}`} />}
+      {!online && <WifiOff className="h-3.5 w-3.5 text-destructive" />}
       <div className="flex items-end gap-0.5">
         {[1, 2, 3, 4, 5].map((n) => (
           <div

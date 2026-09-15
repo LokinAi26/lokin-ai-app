@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Activity, Banknote, ToggleRight, ClipboardList, Milestone, Power } from "lucide-react";
+import { Activity, Banknote, ToggleRight, ClipboardList, Milestone, Power, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LOKIN_LOGO, LOKIN_CENTER } from "@/components/Brand";
-import { LkIconOnline } from "@/components/brand/LkIcons";
+import { LOKIN_HEADER_LOCKUP, LOKIN_CENTER } from "@/components/Brand";
+import { LkIconOnline, LkIconScooter } from "@/components/brand/LkIcons";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -104,59 +104,63 @@ export default function Home() {
     <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-4 min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
       {/* Sticky brand header — logo top-left, status pill top-right */}
       <div className="relative z-10 flex items-center justify-between gap-2 pt-1 pb-1 shrink-0">
-        <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-10 w-auto object-contain object-left shrink-0" />
+        <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-12 w-auto object-contain object-left shrink-0" />
         <div className="flex items-center gap-1.5 shrink-0">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
             className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/[0.06] px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.07em] text-primary active:scale-95 transition-transform"
             style={{ boxShadow: "0 0 12px rgba(124,252,30,.35)" }}>
-            <span>{role.emoji}</span> {role.short}
+            <LkIconScooter className="h-4 w-4" /> {role.short}
           </button>
         </div>
       </div>
 
-      {/* Greeting */}
-      <div className="relative z-10 flex items-center gap-3 px-1 py-1 shrink-0">
-        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{ boxShadow: "0 0 18px rgba(124,252,30,.45)" }}>{(firstName || "L").charAt(0)}</div>
-        <div>
-          <div className="text-xs text-white/45">{greeting()},</div>
-          <div className="flex items-center gap-1.5">
-            <h1 className="text-2xl font-black text-white">{firstName}</h1>
-            {working && <LkIconOnline className="h-5 w-5 text-primary" />}
+      {/* Greeting + goal — wrapped so the edge motto spans both rows */}
+      <div className="relative z-10">
+        <span aria-hidden className="absolute -right-3.5 top-1 bottom-1 flex items-center justify-center pointer-events-none select-none">
+          <span className="[writing-mode:vertical-rl] text-[7px] font-bold tracking-[0.26em] text-white/30 whitespace-nowrap">DRIVE EARN LEVEL UP</span>
+        </span>
+
+        <div className="flex items-center gap-3 px-1 py-1">
+          <div className="h-12 w-12 shrink-0 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{ boxShadow: "0 0 18px rgba(124,252,30,.45)" }}>{(firstName || "L").charAt(0)}</div>
+          <div>
+            <div className="text-xs text-white/50">{greeting()},</div>
+            <div className="flex items-center gap-1.5">
+              <div className="text-3xl font-extrabold text-white leading-tight">{firstName}</div>
+              {working && <LkIconOnline className="h-5 w-5 text-primary" />}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Earnings goal — design-system card, bound to real earnings data */}
-      <div className="lk-card-goal relative z-10 w-full max-w-none shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="eyebrow"><Activity className="h-3.5 w-3.5 text-primary" /> TODAY&apos;S GOAL</div>
-          <Link to="/settings" className="lk-link">GOAL SETTINGS</Link>
-        </div>
-        <div className="amt">${dailyGoal}</div>
-        <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
-        <div className="row">
-          <div><b>${today.toFixed(2)}</b> earned</div>
-          <div><b>${remaining.toFixed(2)}</b> remaining</div>
+        {/* Earnings goal — design-system card, bound to real earnings data */}
+        <div className="lk-card-goal w-full max-w-none mt-4">
+          <div className="flex items-center justify-between">
+            <div className="eyebrow"><Activity className="h-3.5 w-3.5 text-primary" /> TODAY&apos;S GOAL</div>
+            <Link to="/settings" className="inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/[0.07] px-3 py-1.5 font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-primary active:scale-95 transition-transform" style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
+              <Settings className="h-3.5 w-3.5" /> GOAL SETTINGS
+            </Link>
+          </div>
+          <div className="amt">${dailyGoal}</div>
+          <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
+          <div className="row">
+            <div><b>${today.toFixed(2)}</b> earned</div>
+            <div><b>${remaining.toFixed(2)}</b> remaining</div>
+          </div>
         </div>
       </div>
 
       {/* Stat tile grid — design-system compact metrics */}
-      <div className="grid grid-cols-4 gap-4 relative z-10 shrink-0">
+      <div className="grid grid-cols-4 gap-2 relative z-10 shrink-0">
         {(loading && !data) ? statTiles.map((t) => (
-          <div key={t.k} className="lk-card-tile w-full max-w-none">
-            <div className="top">
-              <div className="plate"><t.Icon className="h-4 w-4" strokeWidth={2} /></div>
-              <div className="lbl">{t.k}</div>
-            </div>
+          <div key={t.k} className="lk-card-tile w-full max-w-none items-center p-2 gap-1 text-center">
+            <t.Icon className="h-5 w-5 text-primary" strokeWidth={2} />
+            <div className="lbl text-[9px] tracking-[0.06em] whitespace-nowrap">{t.k}</div>
             <div className="val sm"><span className="inline-block h-4 w-12 rounded bg-white/10 animate-pulse" /></div>
           </div>
         )) : statTiles.map(({ k, v, Icon }) => (
-          <div key={k} className="lk-card-tile w-full max-w-none">
-            <div className="top">
-              <div className="plate"><Icon className="h-4 w-4" strokeWidth={2} /></div>
-              <div className="lbl">{k}</div>
-            </div>
+          <div key={k} className="lk-card-tile w-full max-w-none items-center p-2 gap-1 text-center">
+            <Icon className="h-5 w-5 text-primary" strokeWidth={2} />
+            <div className="lbl text-[9px] tracking-[0.06em] whitespace-nowrap">{k}</div>
             <div className="val sm">{v}</div>
           </div>
         ))}
