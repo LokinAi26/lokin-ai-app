@@ -61,6 +61,10 @@ function bucketCoord(value, step = 0.0025) {
   return Math.round(Number(value || 0) / step) * step;
 }
 
+function angularDifferenceDeg(a, b) {
+  return Math.abs((((Number(a) - Number(b)) % 360) + 540) % 360 - 180);
+}
+
 function interpolateCoord(a, b, t) {
   const clamped = Math.max(0, Math.min(1, Number(t || 0)));
   return [
@@ -139,20 +143,45 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const activeCoords = useMemo(() => {
     if (!followDriver || !snappedPosition?.coordinate || !coords.length) return coords;
     const segmentIndex = Math.max(0, Math.min(coords.length - 2, Number(snappedPosition.segment_index || 0)));
-    return [snappedPosition.coordinate, ...coords.slice(segmentIndex + 1)];
+    // Keep a minimum tail of route visible: near the destination the remaining
+    // line used to collapse to a single point and flicker as the snap settled.
+    const tailStart = Math.max(0, Math.min(segmentIndex + 1, coords.length - 4));
+    return [snappedPosition.coordinate, ...coords.slice(tailStart)];
   }, [routeGeometry, followDriver, snappedPosition?.segment_index, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
 
   const activeRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: activeCoords }), [activeCoords]);
   const staticRouteGeometry = useMemo(() => ({ type: "LineString", coordinates: coords }), [routeGeometry]);
-  // The matcher already resolves the directionally correct road segment.
-  // Prefer that bearing over raw compass data so a noisy/low-speed heading
-  // cannot flip the camera and make the route appear to run backward.
-  const matchedRoadHeading = Number(snappedPosition?.segment_heading_deg);
-  const heading = Number.isFinite(matchedRoadHeading)
-    ? matchedRoadHeading
-    : Number.isFinite(snappedPosition?.heading)
-      ? snappedPosition.heading
-      : 0;
+  // The matcher resolves the road segment, but at low speed it can flip to an
+  // antiparallel leg between fixes. A ~180° heading flip with almost no
+  // movement is a snap flip, not a turn — hold the established heading so the
+  // cursor cannot point backwards. Genuine turns always displace the fix.
+  const headingStabilityRef = useRef({ heading: null, coordinate: null });
+  const rawHeading = Number.isFinite(Number(snappedPosition?.segment_heading_deg))
+    ? Number(snappedPosition.segment_heading_deg)
+    : (Number.isFinite(Number(snappedPosition?.heading)) ? Number(snappedPosition.heading) : null);
+  const snapCoord = snappedPosition?.coordinate;
+  const stableHeading = headingStabilityRef.current;
+  if (rawHeading != null && Array.isArray(snapCoord) && snapCoord.length >= 2) {
+    if (stableHeading.heading == null || !Array.isArray(stableHeading.coordinate)) {
+      stableHeading.heading = rawHeading;
+      stableHeading.coordinate = snapCoord;
+    } else {
+      const movedM = haversineMeters(stableHeading.coordinate, snapCoord);
+      const deltaDeg = angularDifferenceDeg(rawHeading, stableHeading.heading);
+      if (!(deltaDeg > 120 && movedM < 12)) {
+        stableHeading.heading = rawHeading;
+        stableHeading.coordinate = snapCoord;
+      }
+    }
+  }
+  const heading = stableHeading.heading != null
+    ? stableHeading.heading
+    : (rawHeading != null ? rawHeading : 0);
+
+  // A new route means a new travel direction — drop the held heading.
+  useEffect(() => {
+    headingStabilityRef.current = { heading: null, coordinate: null };
+  }, [routeGeometry]);
   const speedMps = Math.max(0, Number(snappedPosition?.speed_mps ?? snappedPosition?.speed ?? 0));
   const lookAheadM = perspective
     ? Math.max(85, Math.min(220, 90 + speedMps * 5.2))
