@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { hasInternalJobKey } from '../../shared/internalJobKey.ts';
 
 // Matches a newly created OpportunityScan against drivers opted into alerts.
 // Matching criteria: vehicle type (opportunity.role_type vs driver vehicle_type)
@@ -8,13 +9,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    // Internal job (invoked by the Opportunity Match Alerts workflow as the app
-    // owner). Unauthenticated or non-admin direct calls must not trigger
-    // driver emails and alert writes.
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (String(user.role || '') !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
+    // Every invocation is guarded by the shared LOKIN_INTERNAL_JOB_KEY.
+    // Interactive calls without it fall back to an authenticated admin session
+    // (the workflow runtime invokes this as the app owner).
+    const jobKeyOk = await hasInternalJobKey(req, body);
+    if (!jobKeyOk) {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      if (String(user.role || '') !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const opportunityId = body.opportunity_id;
     if (!opportunityId) {
       return Response.json({ error: 'opportunity_id is required' }, { status: 400 });
