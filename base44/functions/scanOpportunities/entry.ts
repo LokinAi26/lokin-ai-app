@@ -164,11 +164,9 @@ export default async function(req: Request) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    // Scheduled workflows may execute without an interactive user. Service role is
-    // used only after request creation; manual app scans remain authenticated.
+    if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     const body = await req.json().catch(() => ({}));
     const mode = cleanMode(body?.mode);
-    if (!user && body?.scheduled !== true) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'opportunities', type:'provider_sync', operation:'opportunity_source_scan', priority:45, estimatedMs:15000, background:body?.scheduled === true, tags:['provider','scheduled','ingestion'] });
 
     const region = String(body?.region || DEFAULT_REGION).trim().slice(0, 160) || DEFAULT_REGION;

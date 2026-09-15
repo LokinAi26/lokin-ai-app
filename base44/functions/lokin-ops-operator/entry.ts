@@ -9,6 +9,11 @@ export default async function(req) {
   const startedAt = now();
   try {
     const base44 = createClientFromRequest(req);
+    // Admin operations: only authenticated admins (including the workflow runtime,
+    // which invokes this as the app owner) may run the operations scan.
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    if (String(user.role || "") !== "admin") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     const mode = ["scheduled","manual","chatgpt"].includes(body.mode) ? body.mode : "scheduled";
     const [commands, incidents, nativeBuilds, trackedTasks, controlHealth] = await Promise.all([

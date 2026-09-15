@@ -8,6 +8,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    // Internal job (invoked by the Opportunity Match Alerts workflow as the app
+    // owner). Unauthenticated or non-admin direct calls must not trigger
+    // driver emails and alert writes.
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (String(user.role || '') !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     const opportunityId = body.opportunity_id;
     if (!opportunityId) {
