@@ -184,7 +184,7 @@ export default function LokinAI() {
       className="p-4 space-y-4 flex flex-col min-h-[calc(100dvh-9rem)]"
       style={{
         backgroundImage:
-          "url('https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3ed491a2b_fullai-background-final.jpg')",
+          "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3ed491a2b_fullai-background-final.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
