@@ -40,6 +40,7 @@ export default function VoiceClockHands() {
         transform: "translate(-50%, -50%)",
         pointerEvents: "none",
         overflow: "visible",
+        zIndex: 2,
       }}
     >
       <defs>
