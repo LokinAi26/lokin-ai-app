@@ -462,49 +462,71 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                 : "relative w-full max-w-md lokin-card rounded-t-3xl rounded-b-none border-t border-primary/30 p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"}
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <img src={LOKIN_NAV_CIRCLE} alt="LOKIN" draggable="false" className="h-6 w-6 object-contain" />
-                  <span className="font-display font-bold tracking-wider lokin-wordmark">LOKIN VOICE</span>
+                <div className="flex items-center gap-2.5">
+                  <img src={LOKIN_NAV_CIRCLE} alt="LOKIN" draggable="false" className="h-8 w-8 object-contain" />
+                  <div>
+                    <div className="font-display font-black tracking-[0.06em] leading-none">
+                      <span className="lokin-wordmark">LOKIN</span> <span className="text-primary">VOICE</span>
+                    </div>
+                    <div className="lokin-kicker mt-1.5 text-[8px]">UNLOCK YOUR POTENTIAL</div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="lokin-ghost px-3 py-1.5 text-[10px] font-bold tracking-wide active:scale-90">
+                  <button onClick={() => { setOpen(false); navigate("/lokin"); }} className="lokin-ghost border-primary/60 text-primary px-3 py-1.5 text-[10px] font-bold tracking-wider active:scale-90">
                     FULL AI →
                   </button>
-                  <button onClick={() => setOpen(false)} aria-label="Close LOKIN Voice" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/50 active:scale-90">
+                  <button onClick={() => setOpen(false)} aria-label="Close LOKIN Voice" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/60 active:scale-90">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
 
-              {/* Listening orb */}
+              {/* Hero emblem with flanking captions (full overlay) */}
               {full && (
-                <div className="flex flex-col items-center pt-1">
-                  <img src={LOKIN_NAV_CIRCLE} alt="LOKIN voice emblem" draggable="false" className="h-[120px] w-[120px] object-contain" />
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <span className="flex-1 text-right text-[10px] tracking-widest leading-relaxed text-white/40 select-none">FOCUS BUILDS FREEDOM</span>
+                  <button
+                    onClick={startOnce}
+                    disabled={busy}
+                    aria-label="Tap to speak"
+                    className="relative shrink-0 transition-transform active:scale-95 disabled:opacity-60"
+                  >
+                    <img src={LOKIN_NAV_CIRCLE} alt="LOKIN voice emblem" draggable="false" className={`h-[200px] w-[200px] object-contain rounded-full ${listening ? "glow-cyan animate-pulse" : "glow-primary"}`} />
+                  </button>
+                  <span className="flex-1 text-left text-[10px] tracking-widest leading-relaxed text-white/40 select-none">DISCIPLINE UNLOCKS A BETTER YOU</span>
                 </div>
               )}
-              <div className={`flex flex-col items-center ${full ? "py-5" : "py-4"}`}>
-                <button
-                  onClick={startOnce}
-                  disabled={busy}
-                  className={`flex ${full ? "h-24 w-24" : "h-20 w-20"} items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
-                >
-                  {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
-                </button>
-                <div className="mt-2 text-xs text-white/55">
-                  {listening ? "Listening…" : busy ? "Thinking…" : voiceSupported ? "Tap to speak" : "Voice unavailable · use controls"}
-                </div>
+              <div className={`flex flex-col items-center ${full ? "pt-2 pb-5" : "py-4"}`}>
+                {!full && (
+                  <button
+                    onClick={startOnce}
+                    disabled={busy}
+                    className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
+                  >
+                    {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
+                  </button>
+                )}
+                {full ? (
+                  <div className="text-[11px] font-bold tracking-[0.28em] text-white/80">
+                    {listening ? "LISTENING…" : busy ? "THINKING…" : voiceSupported ? "TAP TO SPEAK" : "VOICE UNAVAILABLE"}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-white/55">
+                    {listening ? "Listening…" : busy ? "Thinking…" : voiceSupported ? "Tap to speak" : "Voice unavailable · use controls"}
+                  </div>
+                )}
               </div>
 
               {transcript && (
-                <div className="lokin-bubble-user px-3 py-2 text-sm text-white/80">
-                  <span className="lokin-kicker mr-1">YOU</span>{transcript}
+                <div className="lokin-card rounded-2xl px-3.5 py-2.5 text-sm text-white/80">
+                  <span className="lokin-kicker text-primary mr-1.5">YOU</span>{transcript}
                 </div>
               )}
               {reply && (
-                <div className="mt-2 lokin-bubble-lokin px-3 py-2 text-sm text-white/90">
-                  <span className="lokin-kicker lokin-kicker-cyan mr-1">LOKIN</span>{reply}
-                  <button onClick={() => speak(reply)} className="ml-2 align-middle text-accent/70">
-                    <Volume2 className="h-3.5 w-3.5 inline" />
+                <div className="mt-2 lokin-card-cyan rounded-2xl px-3.5 py-2.5 text-sm text-white/90 flex items-start justify-between gap-2">
+                  <span className="flex-1"><span className="lokin-kicker lokin-kicker-cyan mr-1.5">LOKIN</span>{reply}</span>
+                  <button onClick={() => speak(reply)} className="shrink-0 pt-0.5 text-accent/80" aria-label="Speak reply">
+                    <Volume2 className="h-4 w-4" />
                   </button>
                 </div>
               )}
@@ -535,7 +557,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               {/* Foreground wake-word toggle */}
               <button
                 onClick={toggleAlwaysOn}
-                className={`lokin-toggle-row mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
+                className={`lokin-card rounded-2xl mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
               >
                 <span className="flex items-center gap-2 text-sm text-white/80">
                   <Ear className={`h-4 w-4 ${alwaysOn ? "text-accent" : "text-white/40"}`} />
@@ -545,19 +567,33 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
                   {!voiceSupported ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
                 </span>
               </button>
-              <div className="mt-1.5 text-center text-[10px] text-white/35">
+              <div className="mt-1.5 text-center text-[10px] text-white/50">
                 Wake-word listening works while LOKIN is open. Use Siri shortcuts for system-level voice launch.
               </div>
 
               <div className={`grid grid-cols-4 ${full ? "mt-4 gap-3" : "mt-3 gap-2"}`}>
-                <button onClick={() => handleCommand("lock in")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-primary/40 bg-primary/[0.08] text-center glow-primary`}><Lock className={`${full ? "h-6 w-6" : "h-4 w-4"} text-primary mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>LOCK IN</div></button>
-                <button onClick={() => handleCommand("pause")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-white/10 bg-white/[0.03] text-center`}><Pause className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/60 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>PAUSE</div></button>
-                <button onClick={() => handleCommand("resume")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} border border-white/10 bg-white/[0.03] text-center`}><Play className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/60 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-white/65 mt-1`}>RESUME</div></button>
-                <button onClick={() => handleCommand("tap out")} className={`${full ? "min-h-[96px] rounded-2xl p-4" : "rounded-xl p-2"} lokin-card-danger text-center`}><Power className={`${full ? "h-6 w-6" : "h-4 w-4"} text-red-400 mx-auto`}/><div className={`${full ? "text-[11px]" : "text-[9px]"} text-red-300 mt-1`}>TAP OUT</div></button>
+                <button onClick={() => handleCommand("lock in")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card border-primary/60 text-center glow-primary`}>
+                  <Lock className={`${full ? "h-6 w-6" : "h-4 w-4"} text-primary mx-auto`} />
+                  <div className={`lokin-kicker text-primary ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>LOCK IN</div>
+                </button>
+                <button onClick={() => handleCommand("pause")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card text-center`}>
+                  <Pause className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/70 mx-auto`} />
+                  <div className={`lokin-kicker ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>PAUSE</div>
+                </button>
+                <button onClick={() => handleCommand("resume")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card text-center`}>
+                  <Play className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/70 mx-auto`} />
+                  <div className={`lokin-kicker ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>RESUME</div>
+                </button>
+                <button onClick={() => handleCommand("tap out")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card-danger text-center`}>
+                  <Power className={`${full ? "h-6 w-6" : "h-4 w-4"} text-[#FF3B5C] mx-auto`} />
+                  <div className={`lokin-kicker text-[#FF3B5C] ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>TAP OUT</div>
+                </button>
               </div>
 
-              <div className="mt-2 text-center text-[10px] text-white/35">
-                Try “Level up”, “Lock in”, “Pause”, “Resume”, “Tap out”, “find gas”, or “what should I do next”.
+              <div className="mt-5 flex items-center gap-3 select-none">
+                <span className="h-px flex-1 bg-white/15" />
+                <span className="lokin-kicker text-[9px]">UNLOCK YOUR POTENTIAL</span>
+                <span className="h-px flex-1 bg-white/15" />
               </div>
             </motion.div>
           </motion.div>
