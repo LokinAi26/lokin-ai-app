@@ -27,6 +27,14 @@ import {
   navigationSampleIntervalMs,
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
+import {
+  FUSION_CONFIG,
+  FusionEngine,
+  predictRender,
+  recordRenderMs,
+  recordRerouteAllowed,
+  recordRerouteBlocked,
+} from "@/lib/navFusion";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -73,6 +81,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
   const lastAcceptedSampleRef = useRef(null);
+  const fusionEngineRef = useRef(null);
+  if (!fusionEngineRef.current) fusionEngineRef.current = new FusionEngine();
 
   useEffect(() => {
     destinationsRef.current = normalizedDestinations;
@@ -270,7 +280,21 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const acceptedSample = { ...sample, interval_ms: intervalMs };
     lastAcceptedSampleRef.current = acceptedSample;
     if (source === "native") nativeSeenAtRef.current = Date.now();
-    setRawPosition(acceptedSample);
+
+    // Nav Fusion v3.5 — pass the accepted sample through the fusion engine and
+    // render the map marker from the +render-horizon prediction, not the raw fix.
+    const fusionEngine = fusionEngineRef.current;
+    const fusionRenderStartMs = Date.now();
+    const fusedPosition = fusionEngine.ingest(acceptedSample);
+    const renderPosition = predictRender(fusedPosition, FUSION_CONFIG.renderPredictionHorizonMs);
+    recordRenderMs(Date.now() - fusionRenderStartMs);
+    setRawPosition({
+      ...acceptedSample,
+      coordinate: [Number(renderPosition.longitude), Number(renderPosition.latitude)],
+      latitude: Number(renderPosition.latitude),
+      longitude: Number(renderPosition.longitude),
+      render_prediction_horizon_ms: FUSION_CONFIG.renderPredictionHorizonMs,
+    });
 
     const key = destinationsRef.current.join("||");
     if (!routeRef.current && startedKeyRef.current !== key) {
@@ -320,6 +344,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       return;
     }
 
+    // Road-match confidence feeds the fusion gate after snapping.
+    fusionEngine.updateRoadMatch({ confidence: snap.match_confidence, distanceM: snap.distance_m });
+    const fusionConfidence = fusionEngine.getConfidence();
+    const fusionAllowsReroute = fusionEngine.shouldAllowReroute();
     const policy = reroutePolicy(acceptedSample, snap);
     if (acceptedSample.dead_reckoned === true) {
       // Dead-reckoned fixes keep the map moving through a tunnel/garage, but
@@ -333,11 +361,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     }
 
     const now = Date.now();
+    if (policy.canReroute && !fusionAllowsReroute) {
+      recordRerouteBlocked();
+    }
     if (
       policy.canReroute &&
+      fusionAllowsReroute &&
       offRouteSamplesRef.current >= policy.requiredSamples &&
       now - lastRerouteAtRef.current > policy.cooldownMs
     ) {
+      recordRerouteAllowed(fusionConfidence?.positionConfidence ?? 0);
       lastRerouteAtRef.current = now;
       offRouteSamplesRef.current = 0;
       const currentIndex = snap.segment_index || 0;
