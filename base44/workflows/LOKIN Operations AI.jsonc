@@ -13,7 +13,8 @@
           "with": {
             "function_name": "lokin-ops-operator",
             "args": {
-              "mode": "scheduled"
+              "mode": "scheduled",
+              "internal_job_key": "REPLACE_WITH_LOKIN_INTERNAL_JOB_KEY"
             }
           },
           "then": "end",

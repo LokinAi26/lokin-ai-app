@@ -14,7 +14,8 @@
             "function_name": "scanOpportunities",
             "args": {
               "scheduled": true,
-              "mode": "jobs"
+              "mode": "jobs",
+              "internal_job_key": "REPLACE_WITH_LOKIN_INTERNAL_JOB_KEY"
             }
           },
           "then": "end",
