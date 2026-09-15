@@ -4,6 +4,7 @@ import { Mic, Radio, Volume2, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { LOKIN_NAV_CIRCLE } from "@/components/Brand";
+import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -442,7 +443,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
 const HEADER_URL =
   "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/2306bf887_lokin-voice-header.jpg";
 const CENTERPIECE_URL =
-  "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/26f1240fd_lokin-voice-centerpiece.jpg";
+  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/3c4e6171c_IMG_3538.jpeg";
 
 // Visual system lifted from the locked reskin1v5 Voice design
 // (Official Lokin app page_reskin1v5), scoped under .lokinvoice-reskin.
@@ -714,6 +715,7 @@ const VOICE_CSS = `
                     <section className="workspace voice-workspace">
                       <div className="centerpiece">
                         <img src={CENTERPIECE_URL} alt="Chrome LOKIN lock-clock surrounded by green energy" draggable="false" />
+                        <VoiceClockHands />
                         <span className="centerpiece-caption left">Focus Builds Freedom</span>
                         <button
                           className={`clock-face-button${listening ? " listening" : ""}`}
