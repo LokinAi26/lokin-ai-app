@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Activity, Flame, Banknote, ToggleRight, ClipboardList, Milestone, Settings } from "lucide-react";
+import { Activity, Banknote, ToggleRight, ClipboardList, Milestone, Power } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LOKIN_HEADER_LOCKUP_V2, LOKIN_CENTER } from "@/components/Brand";
+import { LOKIN_LOGO, LOKIN_CENTER } from "@/components/Brand";
+import { LkIconOnline } from "@/components/brand/LkIcons";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -85,83 +86,106 @@ export default function Home() {
   const pct = Math.min(100, Math.round((today / Math.max(1, dailyGoal)) * 100));
   const netPerHour = data?.stats?.perHour || 0;
   const miles = data?.stats?.miles || 0;
-  const fuel = data?.stats?.fuel || 0;
   const workStatus = normalizeWorkStatus(prefs?.work_status);
   const working = workStatus === "working";
   const paused = workStatus === "paused";
   const role = getRoleMeta(prefs?.user_type);
   const firstName = (me?.full_name?.split(" ")[0]) || role.short;
 
+  const statTiles = [
+    { k: "NET/HR", v: `$${netPerHour.toFixed(2)}`, Icon: Banknote },
+    { k: "ACTIVE", v: sessionStatusLabel(workStatus), Icon: ToggleRight },
+    { k: "ORDERS", v: `${data?.stats?.stops ?? 0}`, Icon: ClipboardList },
+    { k: "MILES", v: `${miles.toFixed(1)}`, Icon: Milestone },
+  ];
+
   return (
     <PullToRefresh onRefresh={() => loadCommand(true)}>
-    <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-3 min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
-      {/* Brand header */}
-      <div className="relative z-10 flex items-center gap-1.5 pt-1 pb-1 shrink-0">
-        <div className="h-9 min-w-0 flex-1">
-          <img src={LOKIN_HEADER_LOCKUP_V2} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-full w-full object-contain object-left" />
-        </div>
-        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+    <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-4 min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
+      {/* Sticky brand header — logo top-left, status pill top-right */}
+      <div className="relative z-10 flex items-center justify-between gap-2 pt-1 pb-1 shrink-0">
+        <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-10 w-auto object-contain object-left shrink-0" />
+        <div className="flex items-center gap-1.5 shrink-0">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
-            className="flex items-center gap-1.5 rounded-full border border-lokin-neon/40 bg-black/60 px-2 py-1 text-[10px] font-semibold text-white/85 glow-primary active:scale-[0.97] transition-transform">
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/[0.06] px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.07em] text-primary active:scale-95 transition-transform"
+            style={{ boxShadow: "0 0 12px rgba(124,252,30,.35)" }}>
             <span>{role.emoji}</span> {role.short}
           </button>
         </div>
       </div>
 
-      {/* Profile + streak */}
+      {/* Greeting */}
       <div className="relative z-10 flex items-center gap-3 px-1 py-1 shrink-0">
-        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{boxShadow:"0 0 18px rgba(162,235,27,.45)"}}>{(firstName || "L").charAt(0)}</div>
+        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{ boxShadow: "0 0 18px rgba(124,252,30,.45)" }}>{(firstName || "L").charAt(0)}</div>
         <div>
           <div className="text-xs text-white/45">{greeting()},</div>
           <div className="flex items-center gap-1.5">
-            <h1 className="text-2xl font-extrabold text-white font-heading">{firstName}</h1>
-            {working && <Flame className="h-4 w-4 text-orange-400" />}
+            <h1 className="text-2xl font-black text-white">{firstName}</h1>
+            {working && <LkIconOnline className="h-5 w-5 text-primary" />}
           </div>
         </div>
-        
       </div>
 
-      {/* Focused driver dashboard — intentionally keeps secondary intelligence off the home screen. */}
-      <div className="lokin-card relative z-10 overflow-hidden p-4 shrink-0">
+      {/* Earnings goal — design-system card, bound to real earnings data */}
+      <div className="lk-card-goal relative z-10 w-full max-w-none shrink-0">
         <div className="flex items-center justify-between">
-          <div className="lokin-kicker lokin-kicker-lime flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> TODAY&apos;S GOAL</div>
-          <Link to="/settings" className="flex items-center gap-1.5 rounded-full border border-lokin-neon/50 px-3 py-1.5 text-[10px] font-bold tracking-[0.14em] text-white/80"><Settings className="h-3.5 w-3.5 text-white/70" />GOAL SETTINGS</Link>
+          <div className="eyebrow"><Activity className="h-3.5 w-3.5 text-primary" /> TODAY&apos;S GOAL</div>
+          <Link to="/settings" className="lk-link">GOAL SETTINGS</Link>
         </div>
-        <div className="lokin-hero-number mt-3 font-display text-6xl">${dailyGoal}</div>
-        <div className="lokin-progress-track relative mt-4 h-2.5 overflow-visible">
-          <div className="lokin-progress-fill" style={{ width: `${pct}%` }} />
-          <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-primary" style={{left:`calc(${pct}% - 8px)`,boxShadow:"0 0 14px #8FE44E"}} />
+        <div className="amt">${dailyGoal}</div>
+        <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
+        <div className="row">
+          <div><b>${today.toFixed(2)}</b> earned</div>
+          <div><b>${remaining.toFixed(2)}</b> remaining</div>
         </div>
-        <div className="mt-3 flex justify-between text-xs"><span><b className="text-primary">${today.toFixed(2)}</b> <span className="text-white/45">earned</span></span><span><b>${remaining.toFixed(2)}</b> <span className="text-white/45">remaining</span></span></div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 shrink-0">
-        {(loading && !data) ? ["NET/HR","ACTIVE","ORDERS","MILES"].map((k) => (
-          <div key={k} className="lokin-stat-tile">
-            <div className="lokin-kicker">{k}</div>
-            <div className="mt-1 h-4 mx-auto w-8 rounded bg-white/10 animate-pulse" />
+      {/* Stat tile grid — design-system compact metrics */}
+      <div className="grid grid-cols-4 gap-4 relative z-10 shrink-0">
+        {(loading && !data) ? statTiles.map((t) => (
+          <div key={t.k} className="lk-card-tile w-full max-w-none">
+            <div className="top">
+              <div className="plate"><t.Icon className="h-4 w-4" strokeWidth={2} /></div>
+              <div className="lbl">{t.k}</div>
+            </div>
+            <div className="val sm"><span className="inline-block h-4 w-12 rounded bg-white/10 animate-pulse" /></div>
           </div>
-        )) : [["NET/HR", `$${netPerHour.toFixed(2)}`, Banknote], ["ACTIVE", sessionStatusLabel(workStatus), ToggleRight], ["ORDERS", `${data?.stats?.stops ?? 0}`, ClipboardList], ["MILES", `${miles.toFixed(1)}`, Milestone]].map(([k,v,Icon]) => <div key={k} className="lokin-stat-tile"><div className="lokin-kicker flex items-center justify-center gap-1"><Icon className="h-3.5 w-3.5 text-primary" />{k}</div><div className={`lokin-stat-value mt-1 font-black ${String(v).length > 7 ? "text-[13px] leading-tight" : "text-lg"}`}>{v}</div></div>)}
+        )) : statTiles.map(({ k, v, Icon }) => (
+          <div key={k} className="lk-card-tile w-full max-w-none">
+            <div className="top">
+              <div className="plate"><Icon className="h-4 w-4" strokeWidth={2} /></div>
+              <div className="lbl">{k}</div>
+            </div>
+            <div className="val sm">{v}</div>
+          </div>
+        ))}
       </div>
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center space-y-3 text-center">
-          <Link to="/ai-gps?focus=locked" className="lokin-card block p-6"><div className="mt-3 font-display text-xl font-black tracking-wider text-primary">YOU&apos;RE LOCKED IN</div><div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div></Link>
-          <button onClick={tapOut} className="w-full rounded-full border border-destructive/50 bg-destructive/[.08] py-3 font-display font-bold tracking-[.18em] text-destructive">TAP OUT</button>
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-4 text-center">
+          <Link to="/ai-gps?focus=locked" className="lokin-card relative z-10 block w-full p-6">
+            <div className="font-heading font-black text-xl text-primary uppercase">YOU&apos;RE LOCKED IN</div>
+            <div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div>
+          </Link>
+          <button onClick={tapOut} className="lk-tile-danger relative z-10 w-full">
+            <Power className="h-6 w-6" strokeWidth={1.8} />
+            <span>TAP OUT</span>
+          </button>
         </div>
       ) : paused ? (
-        <button onClick={resumeWork} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
-                    <div className="mt-3 w-[82%] max-w-sm shrink-0"><span className="lokin-chrome-ring"><span className="block rounded-full bg-primary py-3.5 text-center text-lg font-black tracking-wide text-black" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,.5)" }}>RESUME</span></span></div>
-          <div className="mt-2 text-[10px] tracking-[.18em] text-white/35 shrink-0">SESSION PAUSED</div>
-        </button>
+        <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 relative z-10">
+          <button onClick={resumeWork} className="lk-btn-primary w-full">RESUME <span>»</span></button>
+          <div className="lokin-cta-caption">SESSION PAUSED</div>
+        </div>
       ) : (
-        <button onClick={startLockIn} className="w-full flex-1 min-h-0 flex flex-col items-center active:scale-[.99] transition-transform">
-          <span className="flex-1 min-h-0 w-full flex items-center justify-center">
+        <div className="w-full flex-1 min-h-0 flex flex-col items-center relative z-10">
+          <button onClick={startLockIn} className="flex-1 min-h-0 w-full flex items-center justify-center active:scale-[.99] transition-transform">
             <img src={LOKIN_CENTER} alt="Start Work" draggable="false" className="max-h-full w-auto max-w-full object-contain" />
-          </span>
-        </button>
+          </button>
+          <button onClick={startLockIn} className="lk-btn-primary w-full">START WORK <span>»</span></button>
+        </div>
       )}
 
       {/* LOKIN stands with — awareness dedication, restored 2026-09-13 per Kendall. */}

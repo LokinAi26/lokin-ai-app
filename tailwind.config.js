@@ -11,11 +11,11 @@ module.exports = {
   		},
   		colors: {
   			lokin: {
-  				lime: '#BFFF00',
-  				neon: '#8FE44E',
-  				cyan: '#38E1FF',
-  				red: '#FF3B5C',
-  				card: '#060A06',
+  				lime: '#C8FF3D',
+  				neon: '#7CFC1E',
+  				cyan: '#22D3EE',
+  				red: '#FF2D2D',
+  				card: '#111311',
   				dim: '#9AA39A',
   			},
   			background: 'hsl(var(--background))',

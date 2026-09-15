@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Route as RouteIcon, BarChart3, Menu, ChevronLeft, Truck, Navigation } from "lucide-react";
+import { ChevronLeft, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { LokinGlyph, LOKIN_NAV_CIRCLE, LOKIN_HEADER_LOCKUP_V2 } from "@/components/Brand";
+import { LOKIN_NAV_CIRCLE, LOKIN_LOGO } from "@/components/Brand";
+import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from "@/components/brand/LkIcons";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 
@@ -32,11 +33,11 @@ function pathToTab(path) {
 }
 
 const NAV = [
-  { key: "home", label: "Delivery", icon: Truck },
-  { key: "route", label: "Route", icon: RouteIcon },
-  { key: "lokin", label: "LOKIN", icon: LokinGlyph, center: true },
-  { key: "earnings", label: "Earnings", icon: BarChart3 },
-  { key: "more", label: "More", icon: Menu },
+  { key: "home", label: "Delivery", icon: LkNavDelivery },
+  { key: "route", label: "Route", icon: LkNavRoute },
+  { key: "lokin", label: "LOKIN", icon: LkIconVoice, center: true },
+  { key: "earnings", label: "Earnings", icon: LkNavEarnings },
+  { key: "more", label: "More", icon: LkNavMore },
 ];
 
 export default function DriverLayout() {
@@ -120,12 +121,13 @@ export default function DriverLayout() {
             </button>
           ) : (
             <button onClick={() => setCmdOpen(true)} aria-label="LOKIN command engine" className="flex items-center gap-1.5 select-none">
-              <img src={LOKIN_HEADER_LOCKUP_V2} alt="LOKIN AI" draggable="false" className="h-6 w-auto" />
+              <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-9 w-auto" />
             </button>
           )}
           {workStatus !== "off" && (
-            <span className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> {sessionStatusLabel(workStatus)}
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/[0.06] px-4 py-1.5 font-heading text-[13px] font-bold uppercase tracking-[0.07em] text-primary select-none"
+              style={{ boxShadow: "0 0 14px rgba(124,252,30,.4)", textShadow: "0 0 8px rgba(124,252,30,.6)" }}>
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 8px #7CFC1E" }} /> {sessionStatusLabel(workStatus)}
             </span>
           )}
         </div>

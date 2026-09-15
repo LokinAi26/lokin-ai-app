@@ -572,21 +572,21 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
               </div>
 
               <div className={`grid grid-cols-4 ${full ? "mt-4 gap-3" : "mt-3 gap-2"}`}>
-                <button onClick={() => handleCommand("lock in")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card border-primary/60 text-center glow-primary`}>
-                  <Lock className={`${full ? "h-6 w-6" : "h-4 w-4"} text-primary mx-auto`} />
-                  <div className={`lokin-kicker text-primary ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>LOCK IN</div>
+                <button onClick={() => handleCommand("lock in")} className={`lk-tile ${full ? "min-h-[96px] w-full" : "h-[72px]"}`} style={full ? undefined : { fontSize: 11, gap: 4 }}>
+                  <Lock className={full ? "h-6 w-6" : "h-4 w-4"} strokeWidth={1.6} />
+                  <span>LOCK IN</span>
                 </button>
-                <button onClick={() => handleCommand("pause")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card text-center`}>
-                  <Pause className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/70 mx-auto`} />
-                  <div className={`lokin-kicker ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>PAUSE</div>
+                <button onClick={() => handleCommand("pause")} className={`lk-tile-inactive ${full ? "min-h-[96px] w-full" : "h-[72px]"}`} style={full ? undefined : { fontSize: 11, gap: 4 }}>
+                  <Pause className={full ? "h-6 w-6" : "h-4 w-4"} strokeWidth={1.6} />
+                  <span>PAUSE</span>
                 </button>
-                <button onClick={() => handleCommand("resume")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card text-center`}>
-                  <Play className={`${full ? "h-6 w-6" : "h-4 w-4"} text-white/70 mx-auto`} />
-                  <div className={`lokin-kicker ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>RESUME</div>
+                <button onClick={() => handleCommand("resume")} className={`lk-tile-inactive ${full ? "min-h-[96px] w-full" : "h-[72px]"}`} style={full ? undefined : { fontSize: 11, gap: 4 }}>
+                  <Play className={full ? "h-6 w-6" : "h-4 w-4"} strokeWidth={1.6} />
+                  <span>RESUME</span>
                 </button>
-                <button onClick={() => handleCommand("tap out")} className={`${full ? "min-h-[96px] rounded-2xl p-3" : "rounded-xl p-2"} lokin-card-danger text-center`}>
-                  <Power className={`${full ? "h-6 w-6" : "h-4 w-4"} text-[#FF3B5C] mx-auto`} />
-                  <div className={`lokin-kicker text-[#FF3B5C] ${full ? "text-[10px] mt-2" : "text-[9px] mt-1"}`}>TAP OUT</div>
+                <button onClick={() => handleCommand("tap out")} className={`lk-tile-danger ${full ? "min-h-[96px] w-full" : "h-[72px]"}`} style={full ? undefined : { fontSize: 11, gap: 4 }}>
+                  <Power className={full ? "h-6 w-6" : "h-4 w-4"} strokeWidth={1.8} />
+                  <span>TAP OUT</span>
                 </button>
               </div>
 

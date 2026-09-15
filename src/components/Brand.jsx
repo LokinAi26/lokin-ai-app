@@ -111,3 +111,7 @@ export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
 // The one and only Home center artwork: cut exactly from the approved concept image.
 export const LOKIN_CENTER = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b9cd9303a_lokin-center-only.png";
+
+// LOKIN AI brand logo from the workspace brand kit — chrome padlock-clock emblem
+// with the "Unlock your potential" wordmark. Used for sticky logo headers.
+export const LOKIN_LOGO = "https://media.base44.com/images/public/workspaces/6a7a1b84642cb1ece6bc8361/brands/7594fbdca_brand_upload_logo.png";
