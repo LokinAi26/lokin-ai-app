@@ -189,7 +189,6 @@ export default function Home() {
           <button onClick={startLockIn} className="flex-1 min-h-0 w-full flex items-center justify-center bg-background active:scale-[.99] transition-transform">
             <img src={LOKIN_CENTER} alt="Start Work" draggable="false" className="max-h-full w-auto max-w-full object-contain" />
           </button>
-          <button onClick={startLockIn} className="lk-btn-primary w-full">START WORK <span>»</span></button>
           <div className="mt-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 select-none">LOCK IN &amp; START EARNING</div>
         </div>
       )}
