@@ -180,12 +180,10 @@ export default function Home() {
           </button>
         </div>
       ) : paused ? (
-        <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 relative z-10">
+        <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center relative z-10">
           <button onClick={resumeWork} className="flex-1 min-h-0 w-full flex items-center justify-center bg-background active:scale-[.99] transition-transform" aria-label="Resume work">
             <img src={LOKIN_CENTER_PAUSED} alt="Resume work" draggable="false" className="max-h-full w-auto max-w-full object-contain" />
           </button>
-          <button onClick={resumeWork} className="lk-btn-primary w-full shrink-0">RESUME <span>»</span></button>
-          <div className="lokin-cta-caption">SESSION PAUSED</div>
         </div>
       ) : (
         <div className="w-full flex-1 min-h-0 flex flex-col items-center relative z-10">
