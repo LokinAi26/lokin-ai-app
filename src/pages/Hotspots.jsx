@@ -6,6 +6,7 @@ import ZoneAlertMonitor from "@/components/ZoneAlertMonitor";
 import {
   PLATFORMS, METRICS, DEFAULT_CENTER, buildHotspots, heatColor, metricValue, metricDisplay,
 } from "@/lib/heatData";
+import { CARTO_KEYLESS_TILE_URL, getBasemapTileUrl } from "@/lib/basemap";
 
 function Recenter({ center }) {
   const map = useMap();
@@ -28,6 +29,13 @@ export default function Hotspots() {
   const [selected, setSelected] = useState([]);
   const [metric, setMetric] = useState("earnings");
   const [flyTo, setFlyTo] = useState(null);
+  const [tileUrl, setTileUrl] = useState(CARTO_KEYLESS_TILE_URL);
+
+  useEffect(() => {
+    let alive = true;
+    getBasemapTileUrl().then((url) => { if (alive) setTileUrl(url); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -117,7 +125,7 @@ export default function Hotspots() {
       {/* Map */}
       <div className="relative rounded-3xl border border-primary/20 overflow-hidden glow-border">
         <MapContainer center={center} zoom={13} className="h-[58vh] w-full" zoomControl={false} attributionControl={false}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer url={tileUrl} />
           <Recenter center={center} />
           <FlyTo target={flyTo} />
 

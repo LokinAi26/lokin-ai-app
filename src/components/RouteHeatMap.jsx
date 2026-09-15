@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { AlertTriangle, Clock3, DollarSign, Flame, MapPin, RefreshCw, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { CARTO_KEYLESS_TILE_URL, getBasemapTileUrl } from "@/lib/basemap";
 
 const FALLBACK_CENTER = [36.8529, -75.978];
 const METRICS = [
@@ -94,6 +95,13 @@ export default function RouteHeatMap({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [refreshTick, setRefreshTick] = useState(0);
+  const [tileUrl, setTileUrl] = useState(CARTO_KEYLESS_TILE_URL);
+
+  useEffect(() => {
+    let alive = true;
+    getBasemapTileUrl().then((url) => { if (alive) setTileUrl(url); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -231,7 +239,7 @@ export default function RouteHeatMap({
         >
           <TileLayer
             attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url={tileUrl}
           />
           <Recenter center={center} zones={zones} />
 
