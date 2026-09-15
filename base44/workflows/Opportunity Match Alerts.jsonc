@@ -14,7 +14,8 @@
           "with": {
             "function_name": "match-opportunity-drivers",
             "args": {
-              "opportunity_id": "${ .trigger.entity_id }"
+              "opportunity_id": "${ .trigger.entity_id }",
+              "internal_job_key": "REPLACE_WITH_LOKIN_INTERNAL_JOB_KEY"
             }
           },
           "then": "end",

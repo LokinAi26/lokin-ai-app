@@ -142,8 +142,6 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
   const activeCoords = useMemo(() => {
     if (!followDriver || !snappedPosition?.coordinate || !coords.length) return coords;
-    // Keep a minimum tail of route visible: near the destination the remaining
-    // line used to collapse to a single point and flicker as the snap settled.
     // (Pure helper in navigationGeometry.js — covered by regression tests.)
     return remainingRouteLine(snappedPosition.coordinate, coords, snappedPosition.segment_index);
   }, [routeGeometry, followDriver, snappedPosition?.segment_index, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);

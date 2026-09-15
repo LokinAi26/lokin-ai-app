@@ -1,5 +1,7 @@
+// Guarded by LOKIN_INTERNAL_JOB_KEY — redeployed 2026-09-15 (deploy retry 3).
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { controlPlaneHealth } from "../../shared/unifiedControlPlane.js";
+import { hasInternalJobKey } from "../../shared/internalJobKey.ts";
 
 const now = () => new Date().toISOString();
 const ageMinutes = (value) => value ? (Date.now() - new Date(value).getTime()) / 60000 : 0;
@@ -10,6 +12,15 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
+    // Every invocation is guarded by the shared LOKIN_INTERNAL_JOB_KEY.
+    // Interactive calls without it fall back to an authenticated admin session
+    // (the workflow runtime invokes this as the app owner).
+    const jobKeyOk = await hasInternalJobKey(req, body);
+    if (!jobKeyOk) {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      if (String(user.role || "") !== "admin") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const mode = ["scheduled","manual","chatgpt"].includes(body.mode) ? body.mode : "scheduled";
     const [commands, incidents, nativeBuilds, trackedTasks, controlHealth] = await Promise.all([
       safeList(base44.asServiceRole.entities.LokinCommandRun.filter({}, "-updated_date", 100)),
