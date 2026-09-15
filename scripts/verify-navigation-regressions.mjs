@@ -13,6 +13,7 @@ import {
   remainingRouteLine,
   haversineMeters,
 } from "../src/lib/navigationGeometry.js";
+import { reroutePolicy } from "../src/lib/navigationQuality.js";
 
 function assert(condition, message) {
   if (!condition) throw new Error(`REGRESSION FAIL: ${message}`);
@@ -178,6 +179,34 @@ check("endpoint route-line continuity", () => {
   const gapM = haversineMeters(mid[0], mid[1]);
   assert(gapM < 120, `snap-to-next-point gap implausibly large (${gapM.toFixed(1)} m)`);
   results.endpointTailPoints = tail.length;
+});
+
+// ---------------------------------------------------------------------------
+// T6: reroute gate satisfiability (2026-09-15 iPhone road test).
+// Kendall deviated at Newtown Rd and no reroute ever fired. Root cause: the
+// policy required matchConfidence >= 0.20 for canReroute, but any fix far
+// enough off-route to count (distance_m > thresholdM >= 32 m) drives the HMM
+// match confidence toward 0 — the two gates were mutually exclusive, so the
+// reroute was dead code. canReroute must depend on GPS fix quality only; the
+// fusion usableForReroute gate in the hook remains the second layer.
+// ---------------------------------------------------------------------------
+check("reroute gate satisfiable off-route", () => {
+  for (const accuracyM of [8, 12, 20, 30, 60]) {
+    // Off-route snap: far from the route, match confidence collapsed —
+    // exactly the state a deviated driver is in.
+    const policy = reroutePolicy({ accuracy_m: accuracyM }, { distance_m: 500, match_confidence: 0.01 });
+    assert(policy.thresholdM <= 500,
+      `accuracy ${accuracyM}: 500 m off-route must exceed threshold ${policy.thresholdM}`);
+    assert(policy.canReroute === true,
+      `accuracy ${accuracyM}: good GPS fix off-route must allow reroute (confidence=${policy.confidence.toFixed(2)})`);
+  }
+  // Dead-reckoned fixes still must NOT authorize a reroute on their own.
+  const dr = reroutePolicy({ accuracy_m: 10, dead_reckoned: true }, { distance_m: 500, match_confidence: 0.01 });
+  assert(dr.canReroute === false, "dead-reckoned fix must not authorize a reroute");
+  // Very poor GPS (confidence exp(-200/90) ~= 0.11 < 0.35) must NOT reroute.
+  const bad = reroutePolicy({ accuracy_m: 200 }, { distance_m: 500, match_confidence: 0.01 });
+  assert(bad.canReroute === false, "very poor GPS fix must not authorize a reroute");
+  results.rerouteGate = "satisfiable";
 });
 
 console.log(JSON.stringify({ ok: true, suite: "navigation-regressions", results }, null, 2));

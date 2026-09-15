@@ -321,8 +321,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       timestamp: acceptedSample.timestamp,
     });
     if (!snap) return;
+    // Off-route policy is evaluated here so the map can render the TRUE
+    // position when the driver leaves the route.
+    const policy = reroutePolicy(acceptedSample, snap);
+    const offRoute = Number(snap.distance_m) > policy.thresholdM;
     const enrichedSnap = {
       ...snap,
+      off_route: offRoute,
       raw_coordinate: coord,
       accuracy_m: acceptedSample.accuracy_m,
       heading: acceptedSample.heading,
@@ -377,7 +382,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     fusionEngine.updateRoadMatch({ confidence: snap.match_confidence, distanceM: snap.distance_m });
     const fusionConfidence = fusionEngine.getConfidence();
     const fusionAllowsReroute = fusionEngine.shouldAllowReroute();
-    const policy = reroutePolicy(acceptedSample, snap);
+    // NOTE: `policy` is computed once up at the snap; reuse it here.
     if (acceptedSample.dead_reckoned === true) {
       // Dead-reckoned fixes keep the map moving through a tunnel/garage, but
       // never create a network reroute on their own. Wait for an absolute

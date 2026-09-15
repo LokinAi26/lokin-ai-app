@@ -38,7 +38,13 @@ export function reroutePolicy(sample, snap) {
     confidence,
     matchConfidence,
     deadReckoned,
-    canReroute: !deadReckoned && confidence >= 0.35 && matchConfidence >= 0.20,
+    // NOTE (2026-09-15 iPhone road test): do NOT gate on matchConfidence here.
+    // The HMM route-match confidence collapses toward 0 exactly when a reroute
+    // is needed — any fix far enough off-route to count drives confidence
+    // toward 0, making canReroute unsatisfiable and the reroute dead code. Fix
+    // quality is already guarded by sample confidence here and by the fusion
+    // usableForReroute gate.
+    canReroute: !deadReckoned && confidence >= 0.35,
     quality: confidence >= 0.72 && matchConfidence >= 0.55
       ? "high"
       : confidence >= 0.42 && matchConfidence >= 0.30

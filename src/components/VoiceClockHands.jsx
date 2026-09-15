@@ -40,6 +40,9 @@ export default function VoiceClockHands() {
         transform: "translate(-50%, -50%)",
         pointerEvents: "none",
         overflow: "visible",
+        // Above the centerpiece img (z-index:1) so the hands paint over the
+        // artwork; below the tap-to-speak button (z-index:3) whose center is
+        // transparent. 2026-09-15: hands were invisible, hidden behind the img.
         zIndex: 2,
       }}
     >

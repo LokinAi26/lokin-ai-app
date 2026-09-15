@@ -130,6 +130,11 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const mapRequestRef = useRef(0);
   const mapInFlightRef = useRef(false);
   const pendingMapRefreshRef = useRef(false);
+  // Viewport the currently DISPLAYED basemap image was rendered for.
+  // The SVG route/driver overlay must project against this viewport — not the
+  // live one — so it stays glued to the displayed image while a refresh for
+  // the next viewport is still in flight.
+  const imageViewportRef = useRef(null);
   const desiredViewportKeyRef = useRef("");
   const [mapRefreshNonce, setMapRefreshNonce] = useState(0);
   const lastMapRequestAtRef = useRef(0);
@@ -184,8 +189,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     ? Math.max(85, Math.min(220, 90 + speedMps * 5.2))
     : Math.max(55, Math.min(155, 55 + speedMps * 4.0));
   const followCenter = useMemo(
-    () => pointAheadOnRoute(activeCoords, lookAheadM) || snappedPosition?.coordinate || null,
-    [activeRouteGeometry, lookAheadM, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]],
+    // Off-route, don't look ahead on the stale route — center the true driver
+    // position instead.
+    () => snappedPosition?.off_route
+      ? null
+      : pointAheadOnRoute(activeCoords, lookAheadM) || snappedPosition?.coordinate || null,
+    [activeRouteGeometry, lookAheadM, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1], snappedPosition?.off_route],
   );
 
   useEffect(() => {
@@ -196,12 +205,18 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     dragRef.current = { active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null };
   }, [perspective]);
 
+  // Off-route, the marker and follow camera track the TRUE GPS position, not
+  // the on-route projection.
+  const displayCoord = snappedPosition?.off_route && Array.isArray(snappedPosition?.raw_coordinate)
+    ? snappedPosition.raw_coordinate
+    : snappedPosition?.coordinate;
+
   const viewport = useMemo(() => {
     if (!Array.isArray(coords) || coords.length < 2) return null;
-    const snap = snappedPosition?.coordinate;
+    const snap = displayCoord;
     const cameraBearing = (perspective || headingForward) ? Math.round(heading / 5) * 5 : 0;
     if (followDriver && snap) {
-      const anchor = followCenter || snap;
+      const anchor = snappedPosition?.off_route ? snap : followCenter || snap;
       // Keep the driver in the lower navigation field while reserving the upper
       // field for the road ahead. A fine bucket limits Static Images requests
       // without the 15–40 m camera jumps produced by the old coarse grid.
@@ -226,7 +241,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       bearing: cameraBearing,
       pitch: perspective ? 70 : 0,
     };
-  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], displayCoord?.[0], displayCoord?.[1], snappedPosition?.off_route]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
@@ -239,6 +254,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     }
     if (!viewport) {
       mapRequestRef.current += 1;
+      imageViewportRef.current = null;
       setImage("");
       setLoading(false);
       return undefined;
@@ -268,12 +284,15 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           // source remains screen-sharp without transferring a 2× image each fix.
           retina: !fullscreen,
           route_geometry: perspective ? staticRouteGeometry : null,
-          driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
+          driver_coordinate: perspective ? displayCoord || null : null,
         },
       }).then((response) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         const dataUrl = response.data?.map?.data_url || "";
         if (!dataUrl) throw new Error("Map provider returned no basemap image");
+        // Remember which camera this image was rendered for; the flat-mode
+        // marker is projected with it so the two cannot detach in flight.
+        imageViewportRef.current = viewport;
         setImage(dataUrl);
       }).catch((e) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
@@ -292,21 +311,27 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode]);
 
   const routePoints = useMemo(() => {
-    if (!viewport || !Array.isArray(activeCoords)) return "";
+    // Project against the viewport the DISPLAYED image was rendered for; the
+    // live viewport can already be ahead of the image still on screen.
+    const overlayViewport = imageViewportRef.current || viewport;
+    if (!overlayViewport || !Array.isArray(activeCoords)) return "";
     return activeCoords
-      .map((coord) => project(coord, viewport, renderW, renderH))
+      .map((coord) => project(coord, overlayViewport, renderW, renderH))
       .filter(Boolean)
       .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
       .join(" ");
-  }, [activeRouteGeometry, viewportKey]);
+  }, [activeRouteGeometry, viewportKey, image]);
 
   // Flat MAP mode uses the local SVG projection. 4D uses a Mapbox-native
   // marker embedded in the same pitched static image as the route, eliminating
   // the detached/hidden driver marker seen when the 4D camera was panned.
+  // Project the flat marker with the DISPLAYED image's viewport, not the
+  // newest camera.
+  const markerViewport = imageViewportRef.current || viewport;
   const driverPoint = perspective
     ? null
-    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
-  const markerRotation = heading - Number(viewport?.bearing || 0);
+    : markerViewport ? project(displayCoord || coords[0], markerViewport, renderW, renderH) : null;
+  const markerRotation = heading - Number(markerViewport?.bearing || 0);
 
   function touchDistance(touches) {
     if (!touches || touches.length < 2) return 0;
