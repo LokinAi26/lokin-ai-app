@@ -1,3 +1,4 @@
+// Guarded by LOKIN_INTERNAL_JOB_KEY — redeployed 2026-09-15.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { hasInternalJobKey } from '../../shared/internalJobKey.ts';
 
