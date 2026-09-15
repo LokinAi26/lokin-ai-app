@@ -14,7 +14,7 @@ export function sessionStatusLabel(value) {
   const status = normalizeWorkStatus(value);
   if (status === SESSION_STATUS.working) return "ACTIVE";
   if (status === SESSION_STATUS.paused) return "PAUSED";
-  return "GET STARTED";
+  return "OFF";
 }
 
 export function resolveSessionRestoreRedirect({ workStatus, pathname, lockedGps, freeRoam, hasExplicitGpsDestination = false }) {
