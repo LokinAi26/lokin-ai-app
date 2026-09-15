@@ -93,7 +93,22 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
   const accuracyM = Math.max(4, Math.min(60, Number(options.accuracyM) || 12));
   const timestamp = Number(options.timestamp) || Date.now();
   const sigmaDistance = Math.max(6, accuracyM);
-  const sigmaHeading = speedMps >= 5 ? 28 : 45;
+
+  // Course-made-good fallback: phone browsers (iOS Safari) often report speed
+  // as null at low speed, which used to disable heading discipline entirely and
+  // let the snap latch onto antiparallel legs — backwards cursor, route line
+  // cutting across blocks. Derive direction from consecutive raw fixes instead.
+  let effectiveHeading = heading;
+  let sigmaHeading = speedMps >= 5 ? 28 : 45;
+  const prevRaw = previous?.raw_coordinate;
+  if ((!Number.isFinite(effectiveHeading) || speedMps <= 1.5) && Array.isArray(prevRaw) && Array.isArray(point)) {
+    const courseDistM = haversineMeters(prevRaw, point);
+    if (courseDistM > 10) {
+      effectiveHeading = bearingDegrees(prevRaw, point);
+      sigmaHeading = 65;
+    }
+  }
+  const headingUsable = Number.isFinite(effectiveHeading);
 
   const evaluate = (start, end) => {
     let best = null;
@@ -104,10 +119,13 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
       const segmentHeading = bearingDegrees(geometry[i], geometry[i + 1]);
 
       const distanceCost = Math.pow(p.distance_m / sigmaDistance, 2);
-      const headingError = Number.isFinite(heading) && speedMps > 1.5 ? angularDifferenceDeg(heading, segmentHeading) : 0;
-      const headingCost = Number.isFinite(heading) && speedMps > 1.5
+      const headingError = headingUsable ? angularDifferenceDeg(effectiveHeading, segmentHeading) : 0;
+      const headingCost = headingUsable
         ? 0.9 * Math.pow(headingError / sigmaHeading, 2)
         : 0;
+      // Hard guard: never snap to a leg pointing >100° away from the
+      // established course — that is the wrong-direction-leg flip.
+      const antiParallelPenalty = headingUsable && headingError > 100 ? 6 : 0;
 
       let transitionCost = 0;
       if (previous && Number.isFinite(Number(previous.along_route_m))) {
@@ -128,7 +146,7 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
         if (segmentJump > 45) transitionCost += Math.pow((segmentJump - 45) / 35, 2);
       }
 
-      const cost = distanceCost + headingCost + transitionCost;
+      const cost = distanceCost + headingCost + transitionCost + antiParallelPenalty;
       if (!best || cost < best.cost) {
         best = {
           coordinate: p.coordinate,
