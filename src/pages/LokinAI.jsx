@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, Brain } from "lucide-react";
+import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { LokinGlyph } from "@/components/Brand";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -20,6 +18,261 @@ const QUICK = [
   "Tell my customer I'm outside.",
 ];
 
+const EMBLEM_URL =
+  "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/92b953e33_lokin-fullai-emblem.jpg";
+const BG_URL =
+  "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3ed491a2b_fullai-background-final.jpg";
+
+// Visual system lifted from the locked reskin1v5 Full AI design
+// (Official Lokin app page_reskin1v5), scoped under .lokinai-reskin.
+const RESKIN_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap');
+.lokinai-reskin {
+  --green: #8fe44e;
+  --green-hot: #b9ff82;
+  --cyan: #31e7f3;
+  --red: #ff4d62;
+  --black: #020302;
+  --panel: #090c0d;
+  --panel-2: #0d1214;
+  --line: rgba(255,255,255,.14);
+  --muted: rgba(241,247,239,.58);
+  --chrome: linear-gradient(180deg,#fff 0%,#848b8d 44%,#f4f6f6 56%,#717779 100%);
+  font-family: "Sora", sans-serif;
+  color: #f8fbf7;
+}
+.lokinai-reskin button, .lokinai-reskin input, .lokinai-reskin select { font: inherit; }
+.lokinai-reskin button { -webkit-tap-highlight-color: transparent; }
+.lokinai-reskin .fullai-page {
+  display: flex; flex-direction: column;
+  min-height: calc(100dvh - 9rem);
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.lokinai-reskin .app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 88px; padding: 14px 27px 13px;
+  border-bottom: 0; background: #000; flex: 0 0 auto;
+}
+.lokinai-reskin .brand { display: flex; align-items: center; min-width: 0; gap: 13px; }
+.lokinai-reskin .brand-mark {
+  width: 45px; height: 59px; flex: 0 0 auto; object-fit: contain;
+  mix-blend-mode: screen;
+  filter: saturate(1.22) contrast(1.08) drop-shadow(0 0 8px rgba(143,228,78,.42));
+  clip-path: circle(46% at 50% 50%);
+}
+.lokinai-reskin .wordmark {
+  font-family: "Oxanium", sans-serif;
+  font-size: clamp(24px, 3.1vw, 31px); font-weight: 700;
+  line-height: .95; letter-spacing: .055em; white-space: nowrap;
+}
+.lokinai-reskin .chrome {
+  background: var(--chrome);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.lokinai-reskin .wordmark .ai { color: var(--green); text-shadow: 0 0 16px rgba(143,228,78,.35); }
+.lokinai-reskin .tagline {
+  margin-top: 7px; color: rgba(255,255,255,.58);
+  font-family: "Oxanium", sans-serif; font-size: 8px; font-weight: 500;
+  letter-spacing: .42em; white-space: nowrap;
+}
+.lokinai-reskin .learning-badge {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(143,228,78,.32); background: rgba(12,17,13,.9);
+  color: rgba(255,255,255,.72); border-radius: 999px; padding: 9px 12px;
+  font-family: "Oxanium", sans-serif; font-size: 10px;
+  letter-spacing: .08em; text-transform: uppercase; flex: 0 0 auto;
+}
+.lokinai-reskin .pulse-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 10px var(--green); flex: 0 0 auto;
+}
+.lokinai-reskin .pulse-dot.off { background: var(--red); box-shadow: 0 0 10px var(--red); }
+.lokinai-reskin .workspace {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+  padding: 20px 26px calc(28px + env(safe-area-inset-bottom));
+}
+.lokinai-reskin .voice-row {
+  display: grid; grid-template-columns: auto minmax(160px,1fr) auto; align-items: center; gap: 14px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(16,20,20,.92), rgba(7,9,9,.92));
+  padding: 12px 13px 12px 16px; border-radius: 14px; flex: 0 0 auto;
+}
+.lokinai-reskin .voice-label { display: flex; align-items: center; gap: 9px; color: var(--cyan); }
+.lokinai-reskin .kicker {
+  font-family: "Oxanium", sans-serif; font-size: 9px;
+  letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5);
+}
+.lokinai-reskin .select-wrap { position: relative; border-left: 1px solid var(--line); padding-left: 16px; min-width: 0; }
+.lokinai-reskin .select-wrap:after {
+  content: "\u2304"; position: absolute; right: 2px; top: -2px;
+  color: rgba(255,255,255,.5); pointer-events: none;
+}
+.lokinai-reskin select {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; min-width: 0; border: 0; outline: 0;
+  color: #f5f8f5; background: transparent; font-size: 14px; cursor: pointer;
+  padding: 2px 18px 2px 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+}
+.lokinai-reskin select option { background: #0d1214; color: #f5f8f5; }
+.lokinai-reskin .ghost-button {
+  border: 1px solid rgba(49,231,243,.48); background: rgba(49,231,243,.06); color: var(--cyan);
+  padding: 10px 14px; border-radius: 999px; cursor: pointer;
+  font-family: "Oxanium", sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+}
+.lokinai-reskin .ghost-button:hover { background: rgba(49,231,243,.12); }
+.lokinai-reskin .convo-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  scrollbar-width: none; margin: 0 -4px; padding: 0 4px;
+}
+.lokinai-reskin .convo-scroll::-webkit-scrollbar { display: none; }
+.lokinai-reskin .conversation { display: grid; gap: 12px; margin: 14px auto 20px; max-width: 820px; }
+.lokinai-reskin .empty-prompt {
+  text-align: center; color: rgba(255,255,255,.6);
+  font-size: 14px; line-height: 1.7; padding: 26px 0;
+}
+.lokinai-reskin .empty-prompt span { color: var(--green); font-weight: 600; }
+.lokinai-reskin .bubble {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(18,22,22,.98), rgba(8,10,10,.98));
+  padding: 15px 16px; border-radius: 15px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 12px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.18);
+}
+.lokinai-reskin .bubble.lokin {
+  border-color: rgba(49,231,243,.58);
+  background: linear-gradient(145deg, rgba(2,32,36,.88), rgba(5,14,16,.96));
+  box-shadow: inset 0 0 28px rgba(49,231,243,.05), 0 0 18px rgba(49,231,243,.08);
+}
+.lokinai-reskin .speaker {
+  width: 35px; height: 35px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--cyan); border: 1px solid rgba(49,231,243,.25);
+  background: rgba(49,231,243,.06); cursor: pointer; flex: 0 0 auto;
+}
+.lokinai-reskin .bubble-label {
+  padding-top: 2px; color: var(--green);
+  font-family: "Oxanium", sans-serif; font-size: 10px; font-weight: 600; letter-spacing: .16em;
+}
+.lokinai-reskin .lokin .bubble-label { color: var(--cyan); }
+.lokinai-reskin .bubble-copy { margin: 0; color: rgba(255,255,255,.88); line-height: 1.6; font-size: 14px; overflow-wrap: anywhere; }
+.lokinai-reskin .teach-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.lokinai-reskin .teach-row button {
+  border: 0; color: rgba(255,255,255,.5); background: transparent; padding: 3px; cursor: pointer;
+  display: grid; place-items: center;
+}
+.lokinai-reskin .teach-row button:disabled { opacity: .8; cursor: default; }
+.lokinai-reskin .teach-row button.active-good { color: var(--green); }
+.lokinai-reskin .teach-row button.active-bad { color: var(--red); }
+.lokinai-reskin .learned-tag { font-size: 9px; color: rgba(255,255,255,.5); letter-spacing: .08em; }
+.lokinai-reskin .status-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 2px 4px; color: var(--cyan); font-size: 12px;
+}
+.lokinai-reskin .draft-card {
+  max-width: 820px; margin: 0 auto 20px; padding: 17px;
+  border: 1px solid rgba(49,231,243,.55); border-radius: 15px;
+  background: linear-gradient(135deg, rgba(5,25,29,.94), rgba(6,10,11,.98));
+}
+.lokinai-reskin .draft-card p { margin: 10px 0 15px; line-height: 1.6; color: rgba(255,255,255,.86); font-size: 14px; }
+.lokinai-reskin .draft-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.lokinai-reskin .primary-button {
+  border: 0; border-radius: 999px; background: var(--cyan); color: #001013;
+  padding: 10px 18px; font-family: "Oxanium", sans-serif; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; cursor: pointer; font-size: 12px;
+}
+.lokinai-reskin .subtle-button {
+  border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  color: rgba(255,255,255,.64); padding: 10px 18px; cursor: pointer; font-size: 12px;
+}
+.lokinai-reskin .consent-card {
+  max-width: 820px; margin: 0 auto 20px; padding: 17px;
+  border: 1px solid rgba(143,228,78,.35); border-radius: 15px;
+  background: linear-gradient(135deg, rgba(10,16,10,.96), rgba(6,10,11,.98));
+}
+.lokinai-reskin .consent-title {
+  font-family: "Oxanium", sans-serif; font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: rgba(255,255,255,.9); margin-bottom: 8px;
+}
+.lokinai-reskin .consent-copy { font-size: 12px; line-height: 1.6; color: rgba(255,255,255,.6); margin-bottom: 14px; }
+.lokinai-reskin .consent-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lokinai-reskin .quick-section { max-width: 820px; width: 100%; margin: 0 auto 16px; flex: 0 0 auto; }
+.lokinai-reskin .quick-label { margin-bottom: 10px; text-align: center; }
+.lokinai-reskin .quick-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
+.lokinai-reskin .quick-chip {
+  border: 1px solid rgba(255,255,255,.17); background: rgba(10,13,13,.94);
+  color: rgba(255,255,255,.75); border-radius: 999px;
+  padding: 10px 14px; cursor: pointer; font-size: 12px;
+}
+.lokinai-reskin .quick-chip:hover { border-color: rgba(143,228,78,.45); color: var(--green-hot); }
+.lokinai-reskin .quick-chip:disabled { opacity: .5; }
+.lokinai-reskin .composer { max-width: 820px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 10px; align-items: center; flex: 0 0 auto; }
+.lokinai-reskin .input-wrap {
+  border: 1px solid var(--line); border-radius: 16px;
+  background: linear-gradient(180deg, rgba(16,20,20,.98), rgba(7,9,9,.98));
+  padding: 7px 8px 7px 15px;
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; min-width: 0;
+}
+.lokinai-reskin .input-wrap input {
+  width: 100%; min-width: 0; border: 0; outline: 0;
+  background: transparent; color: #fff; padding: 8px 0; font-size: 14px;
+}
+.lokinai-reskin .input-wrap input::placeholder { color: rgba(255,255,255,.32); }
+.lokinai-reskin .send {
+  width: 38px; height: 38px; border-radius: 11px; border: 0;
+  background: rgba(143,228,78,.14); color: var(--green);
+  display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+}
+.lokinai-reskin .send.ready { background: var(--green); color: #071006; box-shadow: 0 0 18px rgba(143,228,78,.3); }
+.lokinai-reskin .send:disabled { opacity: .5; }
+.lokinai-reskin .mic-button {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid rgba(143,228,78,.4); background: rgba(143,228,78,.1); color: var(--green);
+  display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+}
+.lokinai-reskin .mic-button.listening {
+  background: var(--green); color: #071006;
+  box-shadow: 0 0 18px rgba(143,228,78,.4);
+}
+.lokinai-reskin .mic-button:disabled { opacity: .5; }
+.lokinai-reskin .footer-lockup {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 680px; width: 100%; margin: 22px auto 0;
+  color: rgba(255,255,255,.38); font-family: "Oxanium", sans-serif;
+  font-size: 8px; letter-spacing: .4em; white-space: nowrap; flex: 0 0 auto;
+}
+.lokinai-reskin .footer-lockup:before, .lokinai-reskin .footer-lockup:after {
+  content: ""; height: 1px; flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(143,228,78,.55));
+}
+.lokinai-reskin .footer-lockup:after { transform: rotate(180deg); }
+@media (max-width: 620px) {
+  .lokinai-reskin .app-header { min-height: 70px; padding: 9px 14px 8px; }
+  .lokinai-reskin .brand { gap: 8px; }
+  .lokinai-reskin .brand-mark { width: 32px; height: 42px; }
+  .lokinai-reskin .wordmark { font-size: 21px; letter-spacing: .04em; }
+  .lokinai-reskin .tagline { margin-top: 5px; font-size: 5.5px; letter-spacing: .3em; }
+  .lokinai-reskin .learning-badge { padding: 8px 9px; font-size: 0; }
+  .lokinai-reskin .learning-badge:after { content: "V2"; font-size: 9px; }
+  .lokinai-reskin .workspace { padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); }
+  .lokinai-reskin .voice-row { grid-template-columns: auto 1fr auto; gap: 10px; padding-left: 13px; }
+  .lokinai-reskin .voice-label .kicker { display: none; }
+  .lokinai-reskin .ghost-button { padding: 9px 11px; font-size: 9px; }
+  .lokinai-reskin .bubble { grid-template-columns: 48px 1fr; gap: 8px 10px; padding: 14px; }
+  .lokinai-reskin .bubble .speaker { grid-column: 2; width: 31px; height: 31px; }
+  .lokinai-reskin .bubble-copy { font-size: 13px; }
+  .lokinai-reskin .quick-grid { justify-content: flex-start; }
+  .lokinai-reskin .quick-chip { font-size: 11px; padding: 9px 11px; }
+  .lokinai-reskin .composer { grid-template-columns: 1fr; gap: 8px; }
+  .lokinai-reskin .footer-lockup { font-size: 6px; letter-spacing: .25em; gap: 8px; }
+}
+@media (max-width: 380px) {
+  .lokinai-reskin .learning-badge { display: none; }
+  .lokinai-reskin .voice-row { grid-template-columns: auto minmax(0,1fr); }
+  .lokinai-reskin .ghost-button { grid-column: 1 / -1; width: 100%; }
+  .lokinai-reskin .quick-chip { width: 100%; text-align: left; }
+}
+`;
 export default function LokinAI() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -180,136 +433,175 @@ export default function LokinAI() {
   }
 
   return (
-    <div
-      className="p-4 space-y-4 flex flex-col min-h-[calc(100dvh-9rem)]"
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3ed491a2b_fullai-background-final.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="flex items-center gap-2">
-        <LokinGlyph size={22} />
-        <h1 className="text-xl font-bold font-heading metal-text">LOKIN AI</h1>
-        <span className="text-[11px] text-accent/80 tracking-wide">voice assistant</span>
-        <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-1 text-[10px] text-accent/80">
-          <Brain className="h-3 w-3" />
-          Learning v2 {learning.enabled ? "ON" : "OFF"} · profile {learning.profileVersion}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2 text-xs">
-        <Volume2 className="h-3.5 w-3.5 shrink-0 text-accent/70" />
-        <span className="text-white/60 shrink-0">Voice</span>
-        <Select value={voiceURI || "default"} onValueChange={(v) => pickVoice(v === "default" ? "" : v)}>
-          <SelectTrigger className="flex-1 min-w-0 rounded-lg border-white/10 bg-white/[0.03] text-white/80 h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-neutral-900 border-white/10 text-white">
-            <SelectItem value="default">System default</SelectItem>
-            {voices.map((v) => (
-              <SelectItem key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <button onClick={() => speak("LOKIN online. Locked in.")}
-          className="shrink-0 rounded-lg border border-accent/40 bg-accent/10 px-2 py-1.5 text-accent">
-          Preview
-        </button>
-      </div>
-
-      <div ref={scrollRef} className="flex-1 space-y-2.5 overflow-y-auto no-scrollbar pb-2">
-        {log.length === 0 && (
-          <div className="flex flex-col items-center text-center py-12">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent/40 bg-accent/10 glow-cyan mb-4">
-              <LokinGlyph size={36} />
+    <div className="lokinai-reskin">
+      <style>{RESKIN_CSS}</style>
+      <div
+        className="fullai-page"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('${BG_URL}')`,
+        }}
+      >
+        <header className="app-header">
+          <div className="brand">
+            <img className="brand-mark" src={EMBLEM_URL} alt="LOKIN lock-clock emblem" />
+            <div>
+              <div className="wordmark"><span className="chrome">LOKIN</span> <span className="ai">AI</span></div>
+              <div className="tagline">UNLOCK YOUR POTENTIAL</div>
             </div>
-            <VoiceWaveform active={listening} className="mb-3" />
-            <div className="text-sm text-white/60">Tap the mic and say <span className="text-accent font-semibold">“LOKIN…”</span></div>
-            <div className="text-xs text-white/55 mt-1">or tap a quick command below.</div>
           </div>
-        )}
-        {log.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "you" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${m.role === "you" ? "bg-primary text-primary-foreground font-medium" : "border border-white/10 lokin-panel text-white/85"}`}>
-              <div>{m.text}</div>
-              {m.role === "lokin" && (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <button onClick={() => speak(m.text)} className="text-accent/70 hover:text-accent" title="Read aloud">
-                    <Volume2 className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => sendFeedback(i, 1)} disabled={!!m.feedback}
-                    className={`${m.feedback === 1 ? "text-accent" : "text-white/50 hover:text-accent"} disabled:opacity-80`} title="Helpful — teach LOKIN">
-                    <ThumbsUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => sendFeedback(i, -1)} disabled={!!m.feedback}
-                    className={`${m.feedback === -1 ? "text-red-400" : "text-white/50 hover:text-red-400"} disabled:opacity-80`} title="Not helpful — teach LOKIN">
-                    <ThumbsDown className="h-3.5 w-3.5" />
-                  </button>
-                  {m.feedback && <span className="text-[9px] text-white/50">learned</span>}
-                </div>
+          <div className="learning-badge">
+            <span className={`pulse-dot${learning.enabled ? "" : " off"}`}></span>
+            Learning v2 {learning.enabled ? "ON" : "OFF"}
+          </div>
+        </header>
+
+        <section className="workspace">
+          <div className="voice-row">
+            <div className="voice-label">
+              <Volume2 style={{ width: 20, height: 20 }} aria-hidden="true" />
+              <span className="kicker">Voice</span>
+            </div>
+            <label className="select-wrap">
+              <select
+                value={voiceURI || "default"}
+                onChange={(e) => pickVoice(e.target.value === "default" ? "" : e.target.value)}
+                aria-label="Voice selection"
+              >
+                <option value="default">System default</option>
+                {voices.map((v) => (
+                  <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
+                ))}
+              </select>
+            </label>
+            <button className="ghost-button" type="button" onClick={() => speak("LOKIN online. Locked in.")}>
+              Preview
+            </button>
+          </div>
+
+          <div ref={scrollRef} className="convo-scroll">
+            <section className="conversation" aria-label="Conversation">
+              {log.length === 0 && !busy && !listening && (
+                <p className="empty-prompt">
+                  Tap the mic and say <span>&ldquo;LOKIN&hellip;&rdquo;</span>
+                  <br />or tap a quick command below.
+                </p>
               )}
-            </div>
-          </div>
-        ))}
-        {listening && <div className="flex items-center gap-2 pl-1"><VoiceWaveform active bars={7} /><span className="text-xs text-accent">Listening…</span></div>}
-        {busy && <div className="text-xs text-accent/70 pl-1 flex items-center gap-1"><Radio className="h-3 w-3 animate-pulse" /> LOKIN is thinking…</div>}
+              {log.map((m, i) => (
+                <article key={i} className={`bubble${m.role === "lokin" ? " lokin" : ""}`}>
+                  <div className="bubble-label">{m.role === "you" ? "YOU" : "LOKIN"}</div>
+                  <div>
+                    <p className="bubble-copy">{m.text}</p>
+                    {m.role === "lokin" && (
+                      <div className="teach-row" aria-label="Response feedback">
+                        <button
+                          type="button" aria-label="Helpful" title="Helpful — teach LOKIN"
+                          onClick={() => sendFeedback(i, 1)} disabled={!!m.feedback}
+                          className={m.feedback === 1 ? "active-good" : ""}
+                        >
+                          <ThumbsUp style={{ width: 17, height: 17 }} />
+                        </button>
+                        <button
+                          type="button" aria-label="Not helpful" title="Not helpful — teach LOKIN"
+                          style={{ transform: "rotate(180deg)" }}
+                          onClick={() => sendFeedback(i, -1)} disabled={!!m.feedback}
+                          className={m.feedback === -1 ? "active-bad" : ""}
+                        >
+                          <ThumbsDown style={{ width: 17, height: 17 }} />
+                        </button>
+                        {m.feedback ? <span className="learned-tag">learned</span> : null}
+                      </div>
+                    )}
+                  </div>
+                  {m.role === "lokin" && (
+                    <button type="button" className="speaker" aria-label="Read response aloud" onClick={() => speak(m.text)}>
+                      <Volume2 style={{ width: 19, height: 19 }} />
+                    </button>
+                  )}
+                </article>
+              ))}
+              {listening && (
+                <div className="status-line"><VoiceWaveform active bars={7} /><span>Listening&hellip;</span></div>
+              )}
+              {busy && (
+                <div className="status-line"><Radio style={{ width: 12, height: 12 }} className="animate-pulse" /><span>LOKIN is thinking&hellip;</span></div>
+              )}
+            </section>
 
-        {draft && (
-          <div className="rounded-2xl border border-accent/50 bg-accent/[0.08] p-3">
-            <div className="text-xs font-semibold text-accent mb-1 tracking-wide">DRAFTED MESSAGE</div>
-            <p className="text-sm text-white/90">{draft}</p>
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => { speak("Message sent."); setLog((l) => [...l, { role: "lokin", text: "Sent." }]); setDraft(null); }}
-                className="flex items-center gap-1 rounded-lg bg-accent text-accent-foreground px-3 py-1.5 text-xs font-bold glow-cyan">
-                <Send className="h-3.5 w-3.5" /> SEND
+            {draft && (
+              <section className="draft-card" aria-label="Drafted message">
+                <div className="kicker" style={{ color: "var(--cyan)" }}>Drafted message</div>
+                <p>{draft}</p>
+                <div className="draft-actions">
+                  <button type="button" className="subtle-button" onClick={() => setDraft(null)}>Discard</button>
+                  <button
+                    type="button" className="primary-button"
+                    onClick={() => { speak("Message sent."); setLog((l) => [...l, { role: "lokin", text: "Sent." }]); setDraft(null); }}
+                  >
+                    Send
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {consentRequired && (
+              <section className="consent-card" aria-label="AI processing consent">
+                <div className="consent-title">Allow AI processing?</div>
+                <div className="consent-copy">
+                  LOKIN will securely send your request and limited context needed to answer it to the app&apos;s configured AI service. Non-AI navigation controls remain available if you decline.
+                </div>
+                <div className="consent-actions">
+                  <button type="button" className="subtle-button" onClick={declineAiProcessing}>Not Now</button>
+                  <button type="button" className="primary-button" onClick={allowAiProcessing}>Allow &amp; Retry</button>
+                </div>
+              </section>
+            )}
+          </div>
+
+          <section className="quick-section">
+            <div className="kicker quick-label">Quick commands</div>
+            <div className="quick-grid">
+              {QUICK.map((q) => (
+                <button key={q} type="button" className="quick-chip" onClick={() => ask(q)} disabled={busy}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <form
+            className="composer"
+            onSubmit={(e) => { e.preventDefault(); ask(transcript); }}
+          >
+            <AiKeyboardBar value={transcript} onApply={setTranscript} disabled={busy} />
+            <div className="input-wrap">
+              <input
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder="Ask LOKIN anything…"
+                aria-label="Message"
+              />
+              <button
+                type="button"
+                className={`mic-button${listening ? " listening" : ""}`}
+                onClick={startListening}
+                disabled={busy}
+                aria-label="Tap to speak"
+              >
+                <Mic style={{ width: 18, height: 18 }} />
               </button>
-              <button onClick={() => setDraft(null)} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/60">Discard</button>
+              <button
+                type="submit"
+                className={`send${transcript.trim() ? " ready" : ""}`}
+                disabled={busy}
+                aria-label="Send message"
+              >
+                <Send style={{ width: 19, height: 19 }} />
+              </button>
             </div>
-            <div className="text-[10px] text-white/50 mt-1.5">You stay in control — review and confirm before sending.</div>
-          </div>
-        )}
-      </div>
+          </form>
 
-      {consentRequired && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-3">
-          <div className="text-xs font-semibold text-white/90">Allow AI processing?</div>
-          <div className="mt-1 text-[11px] leading-relaxed text-white/55">
-            LOKIN will securely send your request and limited context needed to answer it to the app&apos;s configured AI service. Non-AI navigation controls remain available if you decline.
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button onClick={declineAiProcessing} className="min-h-11 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/65">Not Now</button>
-            <button onClick={allowAiProcessing} className="min-h-11 rounded-xl border border-primary/40 bg-primary/15 px-3 text-xs font-bold text-primary">Allow & Retry</button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {QUICK.map((q) => (
-          <button key={q} onClick={() => ask(q)} disabled={busy}
-            className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/65 disabled:opacity-50">
-            {q}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-1.5">
-        <AiKeyboardBar value={transcript} onApply={setTranscript} disabled={busy} />
-        <div className="flex items-center gap-2">
-          <input
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && ask(transcript)}
-            placeholder="Say or type a command…"
-            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-white/30"
-          />
-          <button onClick={startListening} disabled={busy}
-            className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all disabled:opacity-60 ${listening ? "bg-accent text-accent-foreground glow-cyan animate-pulse" : "bg-accent/15 border border-accent/40 text-accent"}`}>
-            <Mic className="h-5 w-5" />
-          </button>
-        </div>
+          <div className="footer-lockup">UNLOCK YOUR POTENTIAL</div>
+        </section>
       </div>
     </div>
   );
