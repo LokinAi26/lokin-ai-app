@@ -9,11 +9,6 @@ export default async function(req) {
   const startedAt = now();
   try {
     const base44 = createClientFromRequest(req);
-    // Internal operations endpoint: only the scheduled workflow runtime (which
-    // authenticates as the app owner) or an admin may run operational scans.
-    const caller = await base44.auth.me().catch(() => null);
-    if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (caller.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     const mode = ["scheduled","manual","chatgpt"].includes(body.mode) ? body.mode : "scheduled";
     const [commands, incidents, nativeBuilds, trackedTasks, controlHealth] = await Promise.all([
