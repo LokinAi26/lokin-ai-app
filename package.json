@@ -9,7 +9,7 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "verify:route-preview": "node scripts/verify-route-preview.mjs",
-    "verify:navigation": "node scripts/verify-route-preview.mjs && node scripts/verify-navigation-v2.mjs && node scripts/verify-live-vector-navigation.mjs && node scripts/verify-navigation-performance-v3.mjs && node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-native-location-packaging.mjs && node scripts/verify-session-state.mjs && npm run verify:redesign && npm run build && npm run lint",
+    "verify:navigation": "node scripts/verify-route-preview.mjs && node scripts/verify-navigation-v2.mjs && node scripts/verify-navigation-regressions.mjs && node scripts/verify-live-vector-navigation.mjs && node scripts/verify-navigation-performance-v3.mjs && node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-native-location-packaging.mjs && node scripts/verify-session-state.mjs && npm run verify:redesign && npm run build && npm run lint",
     "verify:session-state": "node scripts/verify-session-state.mjs",
     "verify:redesign": "node scripts/verify-redesign.mjs",
     "verify:seal": "node scripts/verify-seal.mjs",

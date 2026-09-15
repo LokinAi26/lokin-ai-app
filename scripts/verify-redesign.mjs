@@ -24,6 +24,7 @@ const forbidden = [
   { label: "legacy lime hex", pattern: /#AAFF00/gi },
   { label: "legacy lime HSL", pattern: /80\s+100%\s+50%/g },
   { label: "legacy lime RGB", pattern: /rgba?\(\s*(?:170|180)\s*,\s*255\s*,\s*0/gi },
+  { label: "stale pre-reskin lime #A2EB1B (superseded by LOKIN Green #8FE44E)", pattern: /#A2EB1B/gi },
 ];
 
 const violations = [];
@@ -37,14 +38,14 @@ for (const file of sourceFiles) {
 assert(violations.length === 0, `Forbidden redesign values remain: ${JSON.stringify(violations)}`);
 
 const css = read("src/index.css");
-assert(css.includes("--primary: 81.1 83.9% 51.4%"), "Global primary token is not the approved #A2EB1B equivalent.");
-assert(css.includes("#A2EB1B"), "Approved LOKIN lime #A2EB1B is missing from the global design authority.");
+assert(css.includes("--primary: 95 97% 55%"), "Global primary token is not the reskin-approved value.");
+assert(!/#A2EB1B/i.test(css), "Stale pre-reskin lime #A2EB1B remains in the global design authority.");
 
 const routeMap = read("src/components/LiveVectorMap.jsx");
-assert(routeMap.includes('LOKIN_NEON_ROUTE = "#A2EB1B"'), "Live route renderer is not using approved LOKIN lime.");
+assert(routeMap.includes('LOKIN_NEON_ROUTE = "#8FE44E"'), "Live route renderer is not using LOKIN Green #8FE44E.");
 
 const brand = read("src/pages/Brand.jsx");
-assert(brand.includes('hex: "#A2EB1B"'), "Brand page does not publish the approved LOKIN lime.");
+assert(brand.includes('hex: "#8FE44E"'), "Brand page does not publish LOKIN Green #8FE44E.");
 
 const app = read("src/App.jsx");
 const onboarding = read("src/pages/DriverOnboarding.jsx");
@@ -78,8 +79,8 @@ for (const file of coreScreens) {
 
 console.log(JSON.stringify({
   ok: true,
-  officialLime: "#A2EB1B",
-  hslToken: "81.1 83.9% 51.4%",
+  officialGreen: "#8FE44E",
+  hslToken: "95 97% 55%",
   coreScreens: coreScreens.length,
   appStoreSafeOnboarding: true,
   sessionRestorePreserved: true,

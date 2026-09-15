@@ -93,7 +93,22 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
   const accuracyM = Math.max(4, Math.min(60, Number(options.accuracyM) || 12));
   const timestamp = Number(options.timestamp) || Date.now();
   const sigmaDistance = Math.max(6, accuracyM);
-  const sigmaHeading = speedMps >= 5 ? 28 : 45;
+
+  // Course-made-good fallback: phone browsers (iOS Safari) often report speed
+  // as null at low speed, which used to disable heading discipline entirely and
+  // let the snap latch onto antiparallel legs — backwards cursor, route line
+  // cutting across blocks. Derive direction from consecutive raw fixes instead.
+  let effectiveHeading = heading;
+  let sigmaHeading = speedMps >= 5 ? 28 : 45;
+  const prevRaw = previous?.raw_coordinate;
+  if ((!Number.isFinite(effectiveHeading) || speedMps <= 1.5) && Array.isArray(prevRaw) && Array.isArray(point)) {
+    const courseDistM = haversineMeters(prevRaw, point);
+    if (courseDistM > 10) {
+      effectiveHeading = bearingDegrees(prevRaw, point);
+      sigmaHeading = 65;
+    }
+  }
+  const headingUsable = Number.isFinite(effectiveHeading);
 
   const evaluate = (start, end) => {
     let best = null;
@@ -104,10 +119,13 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
       const segmentHeading = bearingDegrees(geometry[i], geometry[i + 1]);
 
       const distanceCost = Math.pow(p.distance_m / sigmaDistance, 2);
-      const headingError = Number.isFinite(heading) && speedMps > 1.5 ? angularDifferenceDeg(heading, segmentHeading) : 0;
-      const headingCost = Number.isFinite(heading) && speedMps > 1.5
+      const headingError = headingUsable ? angularDifferenceDeg(effectiveHeading, segmentHeading) : 0;
+      const headingCost = headingUsable
         ? 0.9 * Math.pow(headingError / sigmaHeading, 2)
         : 0;
+      // Hard guard: never snap to a leg pointing >100° away from the
+      // established course — that is the wrong-direction-leg flip.
+      const antiParallelPenalty = headingUsable && headingError > 100 ? 6 : 0;
 
       let transitionCost = 0;
       if (previous && Number.isFinite(Number(previous.along_route_m))) {
@@ -128,7 +146,7 @@ export function matchToRouteHMM(point, geometry = [], cumulativeInput, options =
         if (segmentJump > 45) transitionCost += Math.pow((segmentJump - 45) / 35, 2);
       }
 
-      const cost = distanceCost + headingCost + transitionCost;
+      const cost = distanceCost + headingCost + transitionCost + antiParallelPenalty;
       if (!best || cost < best.cost) {
         best = {
           coordinate: p.coordinate,
@@ -251,4 +269,50 @@ export function geometryToScenePoints(geometry = [], maxPoints = 180, span = 18)
     return { x: (x - centerX) * scale, z: -(y - centerY) * scale };
   };
   return { points, project, scale, anchor };
+}
+
+/**
+ * Pure arrival state machine. Arrival needs BOTH straight-line proximity AND
+ * small remaining driving distance; the radius never grows with worse GPS so a
+ * bad fix cannot trigger an early arrival. Two consecutive qualifying fixes
+ * confirm arrival; hysteresis leaves "arrived" only while the driver is not
+ * unambiguously still en route (prevents premature-arrival + end glitching).
+ *
+ * Returns { arrivalSamples, arrived, status } where status is "arrived",
+ * "navigating", "arrived-hold" (stay arrived, suppress downstream updates), or
+ * null (no transition).
+ */
+export function evaluateArrivalState({ progress, finalDistanceM, remainingRouteM, arrivalSamples = 0, arrived = false }) {
+  const arrivalCandidate = Number(progress || 0) >= 0.985
+    && Number(finalDistanceM) <= 30
+    && Number(remainingRouteM) <= 60;
+  let nextSamples = arrivalCandidate ? Number(arrivalSamples) + 1 : 0;
+  let nextArrived = Boolean(arrived);
+  let status = null;
+  if (nextArrived) {
+    if (Number(remainingRouteM) > 150 || Number(finalDistanceM) > 120) {
+      nextArrived = false;
+      nextSamples = 0;
+      status = "navigating";
+    } else {
+      status = "arrived-hold";
+    }
+  } else if (nextSamples >= 2) {
+    nextArrived = true;
+    status = "arrived";
+  }
+  return { arrivalSamples: nextSamples, arrived: nextArrived, status };
+}
+
+/**
+ * Remaining-route polyline for rendering. Anchored at the snapped (on-road)
+ * coordinate — never the raw GPS fix — so an invalid snap cannot draw a
+ * diagonal across blocks. Keeps a minimum tail near the destination so the
+ * line cannot collapse to a point and flicker as the snap settles.
+ */
+export function remainingRouteLine(snappedCoordinate, coords = [], segmentIndex = 0) {
+  if (!Array.isArray(coords) || coords.length === 0) return [];
+  const idx = Math.max(0, Math.min(coords.length - 2, Number(segmentIndex) || 0));
+  const tailStart = Math.max(0, Math.min(idx + 1, coords.length - 4));
+  return [snappedCoordinate, ...coords.slice(tailStart)];
 }

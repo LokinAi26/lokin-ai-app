@@ -7,6 +7,7 @@ import {
   prepareManeuvers,
   routeCumulativeDistances,
   matchToRouteHMM,
+  evaluateArrivalState,
 } from "@/lib/navigationGeometry";
 import {
   drainNativeLocationQueue,
@@ -75,6 +76,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const etaRequestRef = useRef(0);
   const routeRequestRef = useRef(0);
   const offRouteSamplesRef = useRef(0);
+  const arrivalSamplesRef = useRef(0);
+  const arrivedRef = useRef(false);
   const lastRerouteAtRef = useRef(0);
   const lastSpokenRef = useRef("");
   const startedKeyRef = useRef("");
@@ -99,6 +102,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setManeuver(null);
     setRerouteCount(0);
     setTrafficEta(null);
+    arrivalSamplesRef.current = 0;
+    arrivedRef.current = false;
   }, [destinationsKey]);
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
@@ -135,6 +140,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setSnapped(null);
       setManeuver(null);
       setRerouteCount(0);
+      arrivalSamplesRef.current = 0;
+      arrivedRef.current = false;
     }
     setStatus(reason === "initial" ? "routing" : "rerouting");
     setError("");
@@ -333,11 +340,33 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setManeuver(next);
 
     const finalDestination = geocodedRef.current?.[geocodedRef.current.length - 1];
-    const arrivalThresholdM = Math.max(20, Math.min(55, Math.max(1, Number(acceptedSample.accuracy_m) || 15) * 1.5));
-    const finalDistanceM = finalDestination
-      ? haversineMeters(coord, [Number(finalDestination.longitude), Number(finalDestination.latitude)])
-      : Infinity;
-    if (Number(snap.progress || 0) >= 0.985 && finalDistanceM <= arrivalThresholdM) {
+    const finalDestinationCoord = finalDestination
+      ? [Number(finalDestination.longitude), Number(finalDestination.latitude)]
+      : null;
+    const finalDistanceM = finalDestinationCoord ? haversineMeters(coord, finalDestinationCoord) : Infinity;
+    const totalRouteM = Number(routeRef.current?.distance_m || 0);
+    const remainingRouteM = totalRouteM * (1 - Number(snap.progress || 0));
+    // Arrival needs BOTH straight-line proximity and small remaining DRIVING
+    // distance. The radius no longer grows with worse GPS — a bad fix must not
+    // trigger an early arrival. Two consecutive fixes confirm it.
+    // (Pure state machine in navigationGeometry.js — covered by regression tests.)
+    const arrival = evaluateArrivalState({
+      progress: snap.progress,
+      finalDistanceM,
+      remainingRouteM,
+      arrivalSamples: arrivalSamplesRef.current,
+      arrived: arrivedRef.current,
+    });
+    arrivalSamplesRef.current = arrival.arrivalSamples;
+    arrivedRef.current = arrival.arrived;
+    if (arrival.status === "navigating") {
+      // Hysteresis: un-arrive — the driver is unambiguously still en route.
+      setStatus("navigating");
+    } else if (arrival.status === "arrived-hold") {
+      offRouteSamplesRef.current = 0;
+      setManeuver(null);
+      return;
+    } else if (arrival.status === "arrived") {
       offRouteSamplesRef.current = 0;
       setManeuver(null);
       setStatus("arrived");

@@ -32,9 +32,9 @@ assert(liveMap.includes("show3dFacades: true"), "3D facade contract is missing")
 assert(liveMap.includes("moveHorizonGesture"), "pull-horizon camera gesture is missing");
 assert(liveMap.includes("maxPitch: 80"), "immersive horizon pitch limit is missing");
 assert(liveMap.includes('slot: "top"'), "route is not guaranteed above the 3D environment");
-assert(liveMap.includes('const LOKIN_NEON_ROUTE = "#A2EB1B"'), "official LOKIN Lime #A2EB1B route color is missing");
+assert(liveMap.includes('const LOKIN_NEON_ROUTE = "#8FE44E"'), "official LOKIN Green #8FE44E route color is missing");
 assert(liveMap.includes('"line-emissive-strength": 2.4'), "route emissive core is missing");
-assert(roadMap.includes('stroke="#A2EB1B"'), "fallback route is not using official LOKIN Lime #A2EB1B");
+assert(roadMap.includes('stroke="#8FE44E"'), "fallback route is not using official LOKIN Green #8FE44E");
 assert(liveMap.includes("lineMetrics: true"), "route is not rendered as a persistent vector source");
 assert(roadMap.includes('rendererMode !== "fallback"'), "static renderer is not isolated as fallback");
 assert(roadMap.includes("<LiveVectorMap"), "RoadMatchedMap does not mount the live renderer");

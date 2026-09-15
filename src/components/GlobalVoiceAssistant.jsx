@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Radio, Volume2, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { LOKIN_NAV_CIRCLE } from "@/components/Brand";
 import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
