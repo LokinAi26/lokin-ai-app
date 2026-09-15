@@ -22,7 +22,7 @@ for (const pathname of ["/", "/route", "/lokin", "/earnings", "/more", "/setting
 
 assert(sessionStatusLabel("working") === "ACTIVE", "working label must be ACTIVE");
 assert(sessionStatusLabel("paused") === "PAUSED", "paused label must be PAUSED");
-assert(sessionStatusLabel("off") === "GET STARTED", "off label must be GET STARTED");
+assert(sessionStatusLabel("off") === "OFF", "off label must be OFF");
 
 assert(
   resolveSessionRestoreRedirect({
