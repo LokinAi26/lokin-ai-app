@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
@@ -246,6 +247,12 @@ const RESKIN_CSS = `
   background: linear-gradient(90deg, transparent, rgba(143,228,78,.55));
 }
 .lokinai-reskin .footer-lockup:after { transform: rotate(180deg); }
+.lokinai-reskin .back-button {
+  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.17); background: rgba(10,13,13,.9);
+  color: rgba(255,255,255,.75); display: grid; place-items: center; cursor: pointer;
+}
+.lokinai-reskin .back-button:hover { border-color: rgba(143,228,78,.45); color: var(--green-hot); }
 @media (max-width: 620px) {
   .lokinai-reskin .app-header { min-height: 70px; padding: 9px 14px 8px; }
   .lokinai-reskin .brand { gap: 8px; }
@@ -265,6 +272,7 @@ const RESKIN_CSS = `
   .lokinai-reskin .quick-chip { font-size: 11px; padding: 9px 11px; }
   .lokinai-reskin .composer { grid-template-columns: 1fr; gap: 8px; }
   .lokinai-reskin .footer-lockup { font-size: 6px; letter-spacing: .25em; gap: 8px; }
+  .lokinai-reskin .back-button { width: 32px; height: 32px; }
 }
 @media (max-width: 380px) {
   .lokinai-reskin .learning-badge { display: none; }
@@ -286,6 +294,12 @@ export default function LokinAI() {
   const [learning, setLearning] = useState({ enabled: true, memoryCount: 0, profileVersion: 1 });
   const [consentRequired, setConsentRequired] = useState(false);
   const [pendingAiCommand, setPendingAiCommand] = useState("");
+  const navigate = useNavigate();
+
+  function goBack() {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  }
 
   useEffect(() => {
     base44.functions.invoke("learning-intelligence", { action: "context" })
@@ -443,6 +457,9 @@ export default function LokinAI() {
       >
         <header className="app-header">
           <div className="brand">
+            <button type="button" className="back-button" onClick={goBack} aria-label="Go back">
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </button>
             <img className="brand-mark" src={EMBLEM_URL} alt="LOKIN lock-clock emblem" />
             <div>
               <div className="wordmark"><span className="chrome">LOKIN</span> <span className="ai">AI</span></div>
