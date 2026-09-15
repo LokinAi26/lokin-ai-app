@@ -59,11 +59,11 @@ export default function HomeSignalIndicator() {
     >
       {!online && <WifiOff className="h-3.5 w-3.5 text-destructive" />}
       <div className="flex items-end gap-0.5">
-        {[1, 2, 3, 4, 5].map((n) => (
+        {[1, 2, 3].map((n) => (
           <div
             key={n}
             className={`w-[3px] rounded-sm transition-all ${bars != null && n <= bars ? barColor : "bg-white/15"}`}
-            style={{ height: `${5 + n * 2}px` }}
+            style={{ height: `${5 + n * 3}px` }}
           />
         ))}
       </div>

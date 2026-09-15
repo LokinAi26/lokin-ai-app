@@ -94,7 +94,7 @@ export default function Home() {
 
   const statTiles = [
     { k: "NET/HR", v: `$${netPerHour.toFixed(2)}`, Icon: Banknote },
-    { k: "ACTIVE", v: sessionStatusLabel(workStatus), Icon: ToggleRight },
+    { k: "ACTIVE", v: sessionStatusLabel(workStatus), Icon: ToggleRight, accent: true },
     { k: "ORDERS", v: `${data?.stats?.stops ?? 0}`, Icon: ClipboardList },
     { k: "MILES", v: `${miles.toFixed(1)}`, Icon: Milestone },
   ];
@@ -108,19 +108,14 @@ export default function Home() {
         <div className="flex items-center gap-1.5 shrink-0">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/[0.06] px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.07em] text-primary active:scale-95 transition-transform"
-            style={{ boxShadow: "0 0 12px rgba(124,252,30,.35)" }}>
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/[0.04] px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.07em] text-white active:scale-95 transition-transform">
             <LkIconScooter className="h-4 w-4" /> {role.short}
           </button>
         </div>
       </div>
 
-      {/* Greeting + goal — wrapped so the edge motto spans both rows */}
+      {/* Greeting + goal — wrapped for the right-edge motto column */}
       <div className="relative z-10">
-        <span aria-hidden className="absolute -right-3.5 top-1 bottom-1 flex items-center justify-center pointer-events-none select-none">
-          <span className="[writing-mode:vertical-rl] text-[7px] font-bold tracking-[0.26em] text-white/30 whitespace-nowrap">DRIVE EARN LEVEL UP</span>
-        </span>
-
         <div className="flex items-center gap-3 px-1 py-1">
           <div className="h-12 w-12 shrink-0 rounded-full bg-primary flex items-center justify-center text-black font-black text-xl" style={{ boxShadow: "0 0 18px rgba(124,252,30,.45)" }}>{(firstName || "L").charAt(0)}</div>
           <div>
@@ -130,6 +125,12 @@ export default function Home() {
               {working && <LkIconOnline className="h-5 w-5 text-primary" />}
             </div>
           </div>
+          <span aria-hidden className="ml-auto flex flex-col items-center gap-1 select-none pointer-events-none shrink-0">
+            <span className="text-[8px] italic font-black uppercase tracking-[0.16em] text-primary leading-none">Drive</span>
+            <span className="text-[8px] italic font-black uppercase tracking-[0.16em] text-primary leading-none">Earn</span>
+            <span className="text-[8px] italic font-black uppercase tracking-[0.16em] text-primary leading-none">Level Up</span>
+            <span className="h-px w-7 bg-primary/70" />
+          </span>
         </div>
 
         {/* Earnings goal — design-system card, bound to real earnings data */}
@@ -143,8 +144,8 @@ export default function Home() {
           <div className="amt">${dailyGoal}</div>
           <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
           <div className="row">
-            <div><b>${today.toFixed(2)}</b> earned</div>
-            <div><b>${remaining.toFixed(2)}</b> remaining</div>
+            <div className="text-primary"><b>${today.toFixed(2)}</b> earned</div>
+            <div className="text-white"><b className="text-white">${remaining.toFixed(2)}</b> remaining</div>
           </div>
         </div>
       </div>
@@ -153,15 +154,15 @@ export default function Home() {
       <div className="grid grid-cols-4 gap-2 relative z-10 shrink-0">
         {(loading && !data) ? statTiles.map((t) => (
           <div key={t.k} className="lk-card-tile w-full max-w-none items-center p-2 gap-1 text-center">
-            <t.Icon className="h-5 w-5 text-primary" strokeWidth={2} />
+            <t.Icon className="h-5 w-5 text-white/85" strokeWidth={2} />
             <div className="lbl text-[9px] tracking-[0.06em] whitespace-nowrap">{t.k}</div>
             <div className="val sm"><span className="inline-block h-4 w-12 rounded bg-white/10 animate-pulse" /></div>
           </div>
-        )) : statTiles.map(({ k, v, Icon }) => (
+        )) : statTiles.map(({ k, v, Icon, accent }) => (
           <div key={k} className="lk-card-tile w-full max-w-none items-center p-2 gap-1 text-center">
-            <Icon className="h-5 w-5 text-primary" strokeWidth={2} />
+            <Icon className="h-5 w-5 text-white/85" strokeWidth={2} />
             <div className="lbl text-[9px] tracking-[0.06em] whitespace-nowrap">{k}</div>
-            <div className="val sm">{v}</div>
+            <div className={`val sm${accent ? "" : " text-white"}`}>{v}</div>
           </div>
         ))}
       </div>
@@ -189,6 +190,7 @@ export default function Home() {
             <img src={LOKIN_CENTER} alt="Start Work" draggable="false" className="max-h-full w-auto max-w-full object-contain" />
           </button>
           <button onClick={startLockIn} className="lk-btn-primary w-full">START WORK <span>»</span></button>
+          <div className="mt-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 select-none">LOCK IN &amp; START EARNING</div>
         </div>
       )}
 
