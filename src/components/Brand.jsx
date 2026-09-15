@@ -110,7 +110,7 @@ export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
 // The one and only Home center artwork: cut exactly from the approved concept image.
-export const LOKIN_CENTER = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b9cd9303a_lokin-center-only.png";
+export const LOKIN_CENTER = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c02c9c277_lokin-center-fresh.png";
 
 // LOKIN AI brand logo from the workspace brand kit — chrome padlock-clock emblem
 // with the "Unlock your potential" wordmark. Used for sticky logo headers.
