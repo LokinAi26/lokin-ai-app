@@ -104,7 +104,7 @@ export default function Home() {
     <div className="lokin-dashboard relative isolate px-4 pt-3 pb-2 flex flex-col space-y-4 min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]">
       {/* Sticky brand header — logo top-left, status pill top-right */}
       <div className="relative z-10 flex items-center justify-between gap-2 pt-1 pb-1 shrink-0">
-        <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-12 w-auto object-contain object-left shrink-0" />
+        <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-12 w-auto object-contain object-left min-w-0" />
         <div className="flex items-center gap-1.5 shrink-0">
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
