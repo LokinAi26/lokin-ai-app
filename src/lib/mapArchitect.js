@@ -1,3 +1,5 @@
+import { haversineMeters } from "@/lib/navigationGeometry";
+
 // LOKIN 3D map scene system.
 // MapArchitect owns basemap-level 3D configuration (buildings, terrain, quality).
 // MasterBuilder enriches the visible area with OSM-derived real building
@@ -28,6 +30,18 @@ const WATER_ANIMATION_FPS = 20;
 const WATER_SHADE_DEEP = "#1873CC";
 const WATER_SHADE_LIGHT = "#7FD4FF";
 const BRIDGE_SCALE_TRANSITION_MS = 320;
+
+// Arch bridge generation: procedural spans aligned with navigation road segments.
+const ARCH_SEGMENT_COUNT = 14;
+const ARCH_DECK_BOTTOM_M = 6;
+const ARCH_DECK_THICKNESS_M = 1;
+const GUARDRAIL_HEIGHT_M = 0.9;
+const ROAD_BRIDGE_WIDTH_M = 11;
+const MIN_ROUTE_SEGMENT_M = 80;
+const MIN_BRIDGE_SPAN_M = 60;
+const MAX_BRIDGE_SPAN_M = 140;
+const MIN_BRIDGE_SPACING_M = 400;
+const MAX_ROUTE_BRIDGES = 2;
 
 async function fetchOverpass(query) {
   const controller = new AbortController();
@@ -85,6 +99,37 @@ function lerpColor(hexA, hexB, t) {
   const channel = (hex, start) => parseInt(hex.slice(start, start + 2), 16);
   const rgb = [1, 3, 5].map((start) => Math.round(channel(hexA, start) + (channel(hexB, start) - channel(hexA, start)) * clamped));
   return `#${rgb.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function bearingDeg(from, to) {
+  const dx = Number(to[0]) - Number(from[0]);
+  const dy = Number(to[1]) - Number(from[1]);
+  return (Math.atan2(dx, dy) * 180) / Math.PI;
+}
+
+function offsetFromBearing(lng, lat, bearingDeg, distanceM) {
+  const bearing = (Number(bearingDeg) * Math.PI) / 180;
+  const dLat = (Math.cos(bearing) * distanceM) / 111320;
+  const dLng = (Math.sin(bearing) * distanceM) / (111320 * Math.max(0.2, Math.cos((Number(lat) * Math.PI) / 180)));
+  return [lng + dLng, lat + dLat];
+}
+
+// Rectangle ring centered at (lng, lat), alongM long in the road bearing and
+// crossM wide across it — keeps generated geometry glued to the road segment.
+function rotatedRectRing(lng, lat, bearingDeg, alongM, crossM) {
+  const halfAlong = alongM / 2;
+  const halfCross = crossM / 2;
+  const corners = [
+    [-halfAlong, -halfCross],
+    [halfAlong, -halfCross],
+    [halfAlong, halfCross],
+    [-halfAlong, halfCross],
+    [-halfAlong, -halfCross],
+  ];
+  return corners.map(([along, cross]) => {
+    const alongPoint = offsetFromBearing(lng, lat, bearingDeg, along);
+    return offsetFromBearing(alongPoint[0], alongPoint[1], bearingDeg + 90, cross);
+  });
 }
 
 export class MapArchitect {
@@ -360,9 +405,6 @@ export class MasterBuilder {
       },
       { type: "FeatureCollection", features: this.water },
     );
-
-    // Span the pool with an animated procedural bridge.
-    meshBuilder.buildBridge(lng, lat);
   }
 
   // Registers and places a custom GLB landmark model at exact coordinates.
@@ -442,29 +484,8 @@ export class MeshBuilder {
     }
   }
 
-  // Procedural bridge: a deck spanning the water with pylons at both ends.
-  buildBridge(lng, lat, spanDeg = 0.00012) {
-    if (!this.map || !Number.isFinite(lng) || !Number.isFinite(lat)) return;
-    const halfWidth = spanDeg * 0.22;
-    const pylonSpan = spanDeg * 0.16;
-    const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
-    this.bridges.push(
-      {
-        type: "Feature",
-        properties: { height: 3, base: 0.6, color: "#9AA3AB" },
-        geometry: { type: "Polygon", coordinates: [rect(lng - spanDeg, lat - halfWidth, lng + spanDeg, lat + halfWidth)] },
-      },
-      {
-        type: "Feature",
-        properties: { height: 6.5, base: 0, color: "#6E7884" },
-        geometry: { type: "Polygon", coordinates: [rect(lng - spanDeg * 0.95, lat - halfWidth * 0.8, lng - spanDeg * 0.95 + pylonSpan, lat + halfWidth * 0.8)] },
-      },
-      {
-        type: "Feature",
-        properties: { height: 6.5, base: 0, color: "#6E7884" },
-        geometry: { type: "Polygon", coordinates: [rect(lng + spanDeg * 0.95 - pylonSpan, lat - halfWidth * 0.8, lng + spanDeg * 0.95, lat + halfWidth * 0.8)] },
-      },
-    );
+  syncBridgeLayer() {
+    if (!this.map) return;
     const data = { type: "FeatureCollection", features: this.bridges };
     if (this.map.getSource(BRIDGE_SOURCE_ID)) {
       this.map.getSource(BRIDGE_SOURCE_ID).setData(data);
@@ -483,8 +504,86 @@ export class MeshBuilder {
         },
       });
     }
+  }
+
+  // Procedural arch bridge: a deck slab riding a parabolic arch ring, both
+  // rotated onto the road segment's bearing so the span aligns with the road.
+  buildArchBridge(lng, lat, bearing, spanM) {
+    if (!this.map || !Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+    const span = Math.max(MIN_BRIDGE_SPAN_M, Math.min(MAX_BRIDGE_SPAN_M, Number(spanM) || MIN_BRIDGE_SPAN_M));
+    const features = [];
+
+    // Arch ring: segment blocks whose base follows the parabolic intrados, so
+    // the opening is widest at the center and solid at the abutments.
+    const segmentLength = span / ARCH_SEGMENT_COUNT;
+    for (let i = 0; i < ARCH_SEGMENT_COUNT; i += 1) {
+      const t = (i + 0.5) / ARCH_SEGMENT_COUNT;
+      const intrados = ARCH_DECK_BOTTOM_M * (1 - (2 * t - 1) ** 2);
+      const center = offsetFromBearing(lng, lat, bearing, (t - 0.5) * span);
+      features.push({
+        type: "Feature",
+        properties: {
+          height: Math.max(0.05, ARCH_DECK_BOTTOM_M - intrados),
+          base: intrados,
+          color: "#A8A49B",
+        },
+        geometry: { type: "Polygon", coordinates: [rotatedRectRing(center[0], center[1], bearing, segmentLength * 1.02, ROAD_BRIDGE_WIDTH_M)] },
+      });
+    }
+
+    // Deck slab and guardrails along the road direction.
+    features.push({
+      type: "Feature",
+      properties: { height: ARCH_DECK_THICKNESS_M, base: ARCH_DECK_BOTTOM_M, color: "#B7B5AC" },
+      geometry: { type: "Polygon", coordinates: [rotatedRectRing(lng, lat, bearing, span, ROAD_BRIDGE_WIDTH_M)] },
+    });
+    [-1, 1].forEach((side) => {
+      const edge = offsetFromBearing(lng, lat, bearing + 90, side * (ROAD_BRIDGE_WIDTH_M / 2 - 0.6));
+      features.push({
+        type: "Feature",
+        properties: { height: GUARDRAIL_HEIGHT_M, base: ARCH_DECK_BOTTOM_M + ARCH_DECK_THICKNESS_M, color: "#9AA3AB" },
+        geometry: { type: "Polygon", coordinates: [rotatedRectRing(edge[0], edge[1], bearing, span, 1.2)] },
+      });
+    });
+
+    this.bridges.push(...features);
+    return features;
+  }
+
+  // Places arch bridges on the route's road segments so the generated spans sit
+  // on the navigation layer instead of floating over unrelated terrain.
+  alignWithRoute(coordinates) {
+    if (!this.map) return 0;
+    const coords = (coordinates?.coordinates || coordinates || [])
+      .map((point) => (Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]) ? point : null))
+      .filter(Boolean);
+    this.bridges = this.bridges.filter((feature) => !feature.properties.routeAligned);
+    if (coords.length < 2) {
+      this.syncBridgeLayer();
+      return 0;
+    }
+
+    const placed = [];
+    for (let i = 0; i < coords.length - 1 && placed.length < MAX_ROUTE_BRIDGES; i += 1) {
+      const a = coords[i];
+      const b = coords[i + 1];
+      const lengthM = haversineMeters(a, b);
+      if (lengthM < MIN_ROUTE_SEGMENT_M) continue;
+      const midLng = (a[0] + b[0]) / 2;
+      const midLat = (a[1] + b[1]) / 2;
+      const tooClose = placed.some((p) => haversineMeters([p.lng, p.lat], [midLng, midLat]) < MIN_BRIDGE_SPACING_M);
+      if (tooClose) continue;
+      const created = this.buildArchBridge(midLng, midLat, bearingDeg(a, b), lengthM);
+      if (created) {
+        created.forEach((feature) => { feature.properties.routeAligned = true; });
+        placed.push({ lng: midLng, lat: midLat });
+      }
+    }
+
+    this.syncBridgeLayer();
     this.lastBridgeScale = null;
     this.renderBridgeScale();
+    return placed.length;
   }
 
   // Scales the bridge geometry with camera zoom. Each update eases through a

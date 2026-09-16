@@ -356,6 +356,9 @@ export default function LiveVectorMap({
           if (disposed) return;
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
+          if (style3dRef.current && qualityRef.current !== "performance") {
+            meshBuilder.alignWithRoute(routeRef.current);
+          }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           if (!loadedRef.current) {
             loadedRef.current = true;
@@ -420,7 +423,12 @@ export default function LiveVectorMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    const apply = () => addNavigationLayers(map, routeGeometry);
+    const apply = () => {
+      addNavigationLayers(map, routeGeometry);
+      if (style3dRef.current && qualityRef.current !== "performance") {
+        meshBuilder.alignWithRoute(routeGeometry);
+      }
+    };
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
   }, [routeGeometry]);
