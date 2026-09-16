@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, BellRing, Car, MapPin, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Bell, BellRing, Car, MapPin, ChevronDown, ChevronUp, Check, DollarSign } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const VEHICLES = [
@@ -16,12 +16,14 @@ export default function OpportunityAlerts({ prefs, onPrefsChange }) {
   const [regionInput, setRegionInput] = useState(prefs.region || "");
   const [vehicle, setVehicle] = useState(prefs.vehicle_type || "personal_car");
   const [enabled, setEnabled] = useState(Boolean(prefs.alert_enabled));
+  const [minPay, setMinPay] = useState(String(prefs.opportunity_alert_min_pay ?? 0));
 
   useEffect(() => {
     setRegionInput(prefs.region || "");
     setVehicle(prefs.vehicle_type || "personal_car");
     setEnabled(Boolean(prefs.alert_enabled));
-  }, [prefs.region, prefs.vehicle_type, prefs.alert_enabled]);
+    setMinPay(String(prefs.opportunity_alert_min_pay ?? 0));
+  }, [prefs.region, prefs.vehicle_type, prefs.alert_enabled, prefs.opportunity_alert_min_pay]);
 
   async function loadAlerts() {
     try {
@@ -36,7 +38,7 @@ export default function OpportunityAlerts({ prefs, onPrefsChange }) {
   async function save() {
     setSaving(true);
     try {
-      const payload = { alert_enabled: enabled, vehicle_type: vehicle, region: regionInput.trim() };
+      const payload = { alert_enabled: enabled, vehicle_type: vehicle, region: regionInput.trim(), opportunity_alert_min_pay: Number(minPay) || 0 };
       if (prefs.id) {
         await base44.entities.DriverPreference.update(prefs.id, payload);
         onPrefsChange?.({ ...prefs, ...payload });
@@ -116,6 +118,21 @@ export default function OpportunityAlerts({ prefs, onPrefsChange }) {
               placeholder="e.g. Hampton Roads"
               className="w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none"
             />
+          </div>
+
+          <div>
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-white/55 mb-1"><DollarSign className="h-3 w-3" /> High-value bar ($)</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              inputMode="numeric"
+              value={minPay}
+              onChange={(e) => setMinPay(e.target.value)}
+              placeholder="0"
+              className="w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none"
+            />
+            <span className="mt-1 block text-[10px] text-white/35">Only ping me when the listed pay is at least this much. Leave 0 to get every match.</span>
           </div>
 
           <button
