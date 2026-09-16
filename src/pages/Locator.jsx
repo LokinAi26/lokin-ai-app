@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Radio } from "lucide-react";
+import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Volume2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
+import BeepSeekScanner from "@/components/locator/BeepSeekScanner";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
@@ -28,6 +29,7 @@ export default function Locator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [beepSeek, setBeepSeek] = useState(false);
   const [tripItems, setTripItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
   });
@@ -120,10 +122,11 @@ export default function Locator() {
           <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
+        <div className="rounded-3xl border border-primary/20 lokin-panel lokin-card p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><Radio className="h-4 w-4 text-white/45" /></div>
-            <div><div className="text-sm font-semibold text-white">Precision proximity not enabled</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Automatic “getting closer” beeps require a real indoor-positioning source such as supported merchant beacons, UWB, or another verified store-position feed. LOKIN does not simulate distance in this build.</div></div>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/[0.06]"><Volume2 className="h-4 w-4 text-primary" /></div>
+            <div className="min-w-0 flex-1"><div className="text-sm font-semibold text-white">Beep Seek — audio homing</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Point your camera along the shelf. LOKIN listens for the target barcode and beeps faster the closer it fills the frame — a continuous rapid chirp means you're on it. Distance comes from the real camera signal, never simulated.</div>
+            <button type="button" onClick={() => setBeepSeek(true)} disabled={!item.barcode && !item.item_code} className="mt-3 w-full rounded-xl border border-primary/25 bg-primary/[0.06] py-2.5 text-xs font-bold text-primary disabled:opacity-40"><Volume2 className="mr-1 inline h-3.5 w-3.5" />{item.barcode || item.item_code ? "START BEEP SEEK" : "NO TARGET CODE ON RECORD"}</button></div>
           </div>
         </div>
       </>}
@@ -133,6 +136,13 @@ export default function Locator() {
         <div className="mt-3 space-y-2">{optimizedTrip.map((x) => <div key={x.id || x.barcode || x.name} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5"><div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold flex items-center justify-center">{x.route_order}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">{x.name}</div><div className="text-[10px] text-white/40">Aisle {x.aisle || "?"} · Shelf {x.shelf || "?"}{x._point?.estimated ? " · estimated map point" : " · store map point"}</div></div><div className="text-right"><div className={`text-[9px] font-bold ${substitutionRisk(x) === "high" ? "text-red-400" : substitutionRisk(x) === "medium" ? "text-amber-300" : "text-primary/70"}`}>{substitutionRisk(x) === "high" ? "SUB NEEDED" : substitutionRisk(x) === "medium" ? "LOW STOCK" : "READY"}</div><button onClick={() => removeFromTrip(x)} className="mt-1 text-[9px] text-white/30">REMOVE</button></div></div>)}</div>
         <div className="mt-3 text-[10px] text-white/35">LOKIN orders stops from the entrance using available store coordinates. Low/out-of-stock items are surfaced before you waste time walking to them.</div>
       </div>}
+
+      {beepSeek && item && (
+        <BeepSeekScanner
+          target={{ name: item.name, codes: [item.barcode, item.item_code] }}
+          onClose={() => setBeepSeek(false)}
+        />
+      )}
 
       {!result && <div className="rounded-3xl border border-dashed border-white/12 p-8 text-center text-sm text-white/40"><Store className="h-8 w-8 mx-auto mb-2 text-primary/50"/><div className="font-semibold text-white/65">Store intelligence, not just a barcode scanner.</div><div className="mt-1">LOKIN can show where the item should be and how many units the connected store says are available.</div></div>}
     </div>
