@@ -105,7 +105,7 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
 }
 
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
-export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ce53bfcc4_official-lokin-top-left-lockup_247.jpg";
+export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/aed7b9917_official-lokin-top-left-text-only_247.jpg";
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 export const LOKIN_NAV_CIRCLE = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";

@@ -47,7 +47,7 @@ const RESKIN_CSS = `
 .lokinai-reskin .fullai-page {
   display: flex; flex-direction: column;
   min-height: calc(100dvh - 9rem);
-  background-size: cover; background-position: center; background-repeat: no-repeat;
+  background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
 }
 .lokinai-reskin .app-header {
   display: flex; align-items: center; justify-content: space-between;
