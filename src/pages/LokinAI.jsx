@@ -23,6 +23,7 @@ const EMBLEM_URL =
   "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/92b953e33_lokin-fullai-emblem.jpg";
 const BG_URL =
   "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3ed491a2b_fullai-background-final.jpg";
+const HEADER_LOCKUP_URL = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/71d6f52bf_official-lokin-fullai-header-lockup_247.jpg";
 
 // Visual system lifted from the locked reskin1v5 Full AI design
 // (Official Lokin app page_reskin1v5), scoped under .lokinai-reskin.
@@ -460,11 +461,7 @@ export default function LokinAI() {
             <button type="button" className="back-button" onClick={goBack} aria-label="Go back">
               <ChevronLeft style={{ width: 20, height: 20 }} />
             </button>
-            <img className="brand-mark" src={EMBLEM_URL} alt="LOKIN lock-clock emblem" />
-            <div>
-              <div className="wordmark"><span className="chrome">LOKIN</span> <span className="ai">AI</span></div>
-              <div className="tagline">UNLOCK YOUR POTENTIAL</div>
-            </div>
+            <img src={HEADER_LOCKUP_URL} alt="LOKIN AI — Unlock your potential" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
           </div>
           <div className="learning-badge">
             <span className={`pulse-dot${learning.enabled ? "" : " off"}`}></span>
