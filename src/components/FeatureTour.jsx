@@ -121,7 +121,7 @@ export default function FeatureTour() {
           <span className="inline-flex items-center justify-center">
             <span className="font-display font-black tracking-[0.1em] leading-none flex items-center">
               <span className="metal-text">L</span>
-              <img src="https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/174118827_official-lokin-clean-idle_no_ticker_247-LOCKCROP.png" alt="LOKIN lock clock" draggable="false" className="mx-0.5 -my-0.5 h-[28px] w-[28px] rounded-full object-cover" />
+              <img src="https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png" alt="LOKIN lock clock" draggable="false" className="mx-0.5 -my-0.5 h-[28px] w-[28px] rounded-full object-cover" />
               <span className="metal-text">KIN</span>
               <span className="text-primary text-glow ml-1.5 text-[0.55em] align-middle font-black tracking-normal">AI</span>
             </span>
