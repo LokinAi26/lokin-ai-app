@@ -325,11 +325,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   // Flat MAP mode uses the local SVG projection. 4D uses a Mapbox-native
   // marker embedded in the same pitched static image as the route, eliminating
   // the detached/hidden driver marker seen when the 4D camera was panned.
-  const overlayViewport = imageViewportRef.current || viewport;
+  // Project the flat marker with the DISPLAYED image's viewport, not the
+  // newest camera.
+  const markerViewport = imageViewportRef.current || viewport;
   const driverPoint = perspective
     ? null
-    : overlayViewport ? project(displayCoord || coords[0], overlayViewport, renderW, renderH) : null;
-  const markerRotation = heading - Number(overlayViewport?.bearing || 0);
+    : markerViewport ? project(displayCoord || coords[0], markerViewport, renderW, renderH) : null;
+  const markerRotation = heading - Number(markerViewport?.bearing || 0);
 
   function touchDistance(touches) {
     if (!touches || touches.length < 2) return 0;
