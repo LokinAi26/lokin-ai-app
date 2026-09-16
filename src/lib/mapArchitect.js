@@ -30,6 +30,9 @@ const WATER_ANIMATION_FPS = 20;
 const WATER_SHADE_DEEP = "#1873CC";
 const WATER_SHADE_LIGHT = "#7FD4FF";
 const BRIDGE_SCALE_TRANSITION_MS = 320;
+const BRIDGE_ANIMATION_FPS = 20;
+const BRIDGE_RISE_MS = 900;
+const BRIDGE_SHIMMER_PERIOD_MS = 3400;
 
 // Arch bridge generation: procedural spans aligned with navigation road segments.
 const ARCH_SEGMENT_COUNT = 14;
@@ -459,9 +462,13 @@ export class MeshBuilder {
     this.running = false;
     this.frameRef = null;
     this.lastWaterFrameAt = 0;
+    this.lastBridgeFrameAt = 0;
     this.lastBridgeScale = null;
     this.moveHandler = null;
     this.bridges = [];
+    this.riseStartedAt = null;
+    this.routeSignature = null;
+    this.routeBridgeCount = 0;
   }
 
   // One shimmer cycle per ~2 s: the water color breathes between deep and
@@ -557,12 +564,20 @@ export class MeshBuilder {
     const coords = (coordinates?.coordinates || coordinates || [])
       .map((point) => (Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]) ? point : null))
       .filter(Boolean);
-    this.bridges = this.bridges.filter((feature) => !feature.properties.routeAligned);
     if (coords.length < 2) {
+      this.routeSignature = null;
+      this.routeBridgeCount = 0;
+      this.bridges = this.bridges.filter((feature) => !feature.properties.routeAligned);
       this.syncBridgeLayer();
       return 0;
     }
 
+    // Same road segments: keep the placed spans where they are so repeated
+    // route updates while driving never pop or re-animate the bridges.
+    const signature = coords.map((p) => `${p[0].toFixed(6)},${p[1].toFixed(6)}`).join("|");
+    if (signature === this.routeSignature) return this.routeBridgeCount;
+
+    this.bridges = this.bridges.filter((feature) => !feature.properties.routeAligned);
     const placed = [];
     for (let i = 0; i < coords.length - 1 && placed.length < MAX_ROUTE_BRIDGES; i += 1) {
       const a = coords[i];
@@ -580,27 +595,73 @@ export class MeshBuilder {
       }
     }
 
+    this.routeSignature = signature;
+    this.routeBridgeCount = placed.length;
     this.syncBridgeLayer();
-    this.lastBridgeScale = null;
-    this.renderBridgeScale();
+    if (placed.length > 0 && this.running) {
+      // New spans rise from the road they sit on instead of popping in.
+      this.beginBridgeRise();
+    } else {
+      this.lastBridgeScale = null;
+      this.renderBridgeScale();
+    }
     return placed.length;
   }
 
-  // Scales the bridge geometry with camera zoom. Each update eases through a
-  // paint transition so the geometry scales smoothly while you move.
-  renderBridgeScale() {
-    const map = this.map;
-    if (!map || !map.getLayer(BRIDGE_LAYER_ID)) return;
+  // Resets the arch animation so newly placed spans ease up from the road.
+  beginBridgeRise() {
     try {
-      const scale = Math.max(0.3, Math.min(1, (map.getZoom() - 13) / 4));
-      const rounded = Math.round(scale * 100) / 100;
-      if (rounded === this.lastBridgeScale) return;
-      this.lastBridgeScale = rounded;
-      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height-transition", { duration: BRIDGE_SCALE_TRANSITION_MS, delay: 0 });
-      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height", ["*", ["get", "height"], rounded]);
+      this.map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height-transition", { duration: 0, delay: 0 });
+      this.map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height", ["*", ["get", "height"], 0]);
     } catch {
-      // Style may be mid-switch.
+      // Style may be mid-switch; the next animation frame picks the rise up.
     }
+    this.riseStartedAt = performance.now();
+    this.lastBridgeScale = 0;
+  }
+
+  // Camera-zoom scale for the bridge geometry.
+  bridgeZoomScale() {
+    return Math.max(0.3, Math.min(1, (this.map.getZoom() - 13) / 4));
+  }
+
+  // Combined scale factor: zoom scale eased in by the rise animation that plays
+  // whenever new spans are placed on the route's road segments.
+  bridgeScaleFactor(timestamp) {
+    const zoomScale = this.bridgeZoomScale();
+    if (this.riseStartedAt == null) return zoomScale;
+    const progress = Math.min(1, (timestamp - this.riseStartedAt) / BRIDGE_RISE_MS);
+    if (progress >= 1) {
+      this.riseStartedAt = null;
+      return zoomScale;
+    }
+    const eased = progress * progress * (3 - 2 * progress);
+    return zoomScale * eased;
+  }
+
+  // Drives the arch bridge animation each frame: spans rise from the road when
+  // placed, the geometry tracks camera zoom through short paint transitions,
+  // and the arches shimmer subtly so the spans read as part of the living scene.
+  renderBridgeFrame(timestamp) {
+    const map = this.map;
+    if (!map || !map.getLayer(BRIDGE_LAYER_ID) || this.bridges.length === 0) return;
+    try {
+      const scale = Math.round(this.bridgeScaleFactor(timestamp) * 100) / 100;
+      if (scale !== this.lastBridgeScale) {
+        this.lastBridgeScale = scale;
+        map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height-transition", { duration: BRIDGE_SCALE_TRANSITION_MS, delay: 0 });
+        map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height", ["*", ["get", "height"], scale]);
+      }
+      const shimmer = (Math.sin((timestamp / BRIDGE_SHIMMER_PERIOD_MS) * Math.PI * 2) + 1) / 2;
+      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-opacity", 0.9 + shimmer * 0.1);
+    } catch {
+      // Style may be mid-switch; the next frame retries.
+    }
+  }
+
+  // Camera-move hook: keeps scaling smooth between animation frames.
+  renderBridgeScale() {
+    this.renderBridgeFrame(performance.now());
   }
 
   startAnimations() {
@@ -611,6 +672,10 @@ export class MeshBuilder {
       if (timestamp - this.lastWaterFrameAt >= 1000 / WATER_ANIMATION_FPS) {
         this.lastWaterFrameAt = timestamp;
         this.renderWaterFrame(timestamp);
+      }
+      if (timestamp - this.lastBridgeFrameAt >= 1000 / BRIDGE_ANIMATION_FPS) {
+        this.lastBridgeFrameAt = timestamp;
+        this.renderBridgeFrame(timestamp);
       }
       this.frameRef = window.requestAnimationFrame(tick);
     };
@@ -636,6 +701,9 @@ export class MeshBuilder {
     this.stopAnimations();
     this.bridges = [];
     this.lastBridgeScale = null;
+    this.riseStartedAt = null;
+    this.routeSignature = null;
+    this.routeBridgeCount = 0;
   }
 }
 
