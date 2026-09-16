@@ -7,6 +7,7 @@ import { LkIconOnline, LkIconScooter } from "@/components/brand/LkIcons";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
+import ShiftMileageCard from "@/components/ShiftMileageCard";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
@@ -166,6 +167,8 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      <ShiftMileageCard workStatus={workStatus} />
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
