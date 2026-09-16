@@ -7,7 +7,7 @@ import {
   rendererInterpolationBudgetMs,
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
-import { mapArchitect } from "@/lib/mapArchitect";
+import { mapArchitect, baggz247Master } from "@/lib/mapArchitect";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -354,16 +354,22 @@ export default function LiveVectorMap({
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
-          mapArchitect.map = map;
-          if (style3dRef.current) {
-            mapArchitect.enable3DBuildings();
-            mapArchitect.enable3DLandmarks();
-          }
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
             setStatus("ready");
             callbacksRef.current.onReady?.();
+          }
+        });
+
+        map.on("load", () => {
+          if (disposed) return;
+          mapArchitect.map = map;
+          baggz247Master.map = map;
+          if (style3dRef.current) {
+            mapArchitect.enable3DBuildings();
+            mapArchitect.enable3DLandmarks();
+            baggz247Master.enhanceVisibleArea(map.getBounds());
           }
         });
 
@@ -415,13 +421,7 @@ export default function LiveVectorMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    if (style3d) {
-      mapArchitect.setQuality("balanced");
-      mapArchitect.enable3DBuildings();
-      mapArchitect.enable3DLandmarks();
-    } else {
-      mapArchitect.setQuality("performance");
-    }
+    mapArchitect.setQuality(style3d ? "balanced" : "performance");
   }, [style3d]);
 
   useEffect(() => {
