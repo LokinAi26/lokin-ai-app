@@ -112,7 +112,7 @@ export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604
 // The one and only Home center artwork: cut exactly from the approved concept image.
 export const LOKIN_CENTER = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/983c19285_official-lokin-clean-idle_no_ticker_247.png";
 // Paused-state center artwork: vivid lock emblem only (no START WORK pill), from Kendall's color reference 2026-09-15.
-export const LOKIN_CENTER_PAUSED = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5510dac45_lokin-center-paused-v2.png";
+export const LOKIN_CENTER_PAUSED = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/ff2958bee_official-lokin-clean-lock_no_ticker_247.png";
 
 // LOKIN AI brand logo from the workspace brand kit — chrome padlock-clock emblem
 // with the "Unlock your potential" wordmark. Used for sticky logo headers.
