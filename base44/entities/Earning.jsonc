@@ -9,6 +9,10 @@
     "amount": {
       "type": "number"
     },
+    "zone": {
+      "type": "string",
+      "description": "Delivery zone this income was earned in (e.g. a LOKIN hotspot zone name)."
+    },
     "base_pay": {
       "type": "number",
       "default": 0
