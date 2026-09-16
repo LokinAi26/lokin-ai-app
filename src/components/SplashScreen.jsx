@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 const SPLASH_SEEN_KEY = "lokin_splash_seen";
 
 const SPLASH_LOGO_URL =
-  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/b4f085791_lokin-splash-logo.jpg";
+  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/ff2958bee_official-lokin-clean-lock_no_ticker_247.png";
 
 export default function SplashScreen() {
   const [done, setDone] = useState(() => {
