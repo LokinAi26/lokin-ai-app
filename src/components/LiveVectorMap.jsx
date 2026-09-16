@@ -7,6 +7,7 @@ import {
   rendererInterpolationBudgetMs,
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
+import { mapArchitect } from "@/lib/mapArchitect";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -242,6 +243,7 @@ export default function LiveVectorMap({
   perspective = false,
   followDriver = true,
   style = "dark-v11",
+  style3d = true,
   heading = 0,
   speedMps = 0,
   resetRevision = 0,
@@ -260,6 +262,7 @@ export default function LiveVectorMap({
   const horizonGestureRef = useRef({ active: false, pointerId: null, startY: 0, startPitch: 78, startZoom: 16.6 });
   const preferredPitchRef = useRef(perspective ? 78 : 0);
   const styleRef = useRef(style);
+  const style3dRef = useRef(style3d);
   const displayedRef = useRef({
     coordinate: normalizeCoordinate(snappedPosition?.coordinate),
     bearing: Number(heading || 0),
@@ -272,6 +275,7 @@ export default function LiveVectorMap({
 
   routeRef.current = routeGeometry;
   styleRef.current = style;
+  style3dRef.current = style3d;
   callbacksRef.current = { onReady, onUnavailable };
 
   useEffect(() => {
@@ -350,6 +354,11 @@ export default function LiveVectorMap({
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
+          mapArchitect.map = map;
+          if (style3dRef.current) {
+            mapArchitect.enable3DBuildings();
+            mapArchitect.enable3DLandmarks();
+          }
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -388,6 +397,7 @@ export default function LiveVectorMap({
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
       markerRef.current?.remove();
       markerRef.current = null;
+      mapArchitect.destroy();
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
@@ -401,6 +411,18 @@ export default function LiveVectorMap({
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
   }, [routeGeometry]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    if (style3d) {
+      mapArchitect.setQuality("balanced");
+      mapArchitect.enable3DBuildings();
+      mapArchitect.enable3DLandmarks();
+    } else {
+      mapArchitect.setQuality("performance");
+    }
+  }, [style3d]);
 
   useEffect(() => {
     const map = mapRef.current;
