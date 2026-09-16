@@ -19,6 +19,16 @@ const DEFAULT_BUILDING_COLOR = "#6E7884";
 const DEFAULT_BUILDING_HEIGHT_M = 10;
 const LEVEL_HEIGHT_M = 3;
 
+// MeshBuilder animation targets and tuning.
+const FOUNTAIN_WATER_LAYER = "masterbuilder-water-fill";
+const FOUNTAIN_TIER_LAYER = "masterbuilder-fountain-3d";
+const BRIDGE_SOURCE_ID = "meshbuilder-bridges";
+const BRIDGE_LAYER_ID = "meshbuilder-bridges-3d";
+const WATER_ANIMATION_FPS = 20;
+const WATER_SHADE_DEEP = "#1873CC";
+const WATER_SHADE_LIGHT = "#7FD4FF";
+const BRIDGE_SCALE_TRANSITION_MS = 320;
+
 async function fetchOverpass(query) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
@@ -68,6 +78,13 @@ function ringCentroid(ring) {
   ring.slice(0, -1).forEach(([x, y]) => { lng += x; lat += y; });
   const count = Math.max(1, ring.length - 1);
   return [lng / count, lat / count];
+}
+
+function lerpColor(hexA, hexB, t) {
+  const clamped = Math.max(0, Math.min(1, Number(t) || 0));
+  const channel = (hex, start) => parseInt(hex.slice(start, start + 2), 16);
+  const rgb = [1, 3, 5].map((start) => Math.round(channel(hexA, start) + (channel(hexB, start) - channel(hexA, start)) * clamped));
+  return `#${rgb.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
 }
 
 export class MapArchitect {
@@ -343,6 +360,9 @@ export class MasterBuilder {
       },
       { type: "FeatureCollection", features: this.water },
     );
+
+    // Span the pool with an animated procedural bridge.
+    meshBuilder.buildBridge(lng, lat);
   }
 
   // Registers and places a custom GLB landmark model at exact coordinates.
@@ -389,5 +409,137 @@ export class MasterBuilder {
   }
 }
 
+// Procedural animated meshes: shimmering fountain water plus a bridge whose
+// geometry scales smoothly with camera movement.
+export class MeshBuilder {
+  constructor() {
+    this.map = null;
+    this.running = false;
+    this.frameRef = null;
+    this.lastWaterFrameAt = 0;
+    this.lastBridgeScale = null;
+    this.moveHandler = null;
+    this.bridges = [];
+  }
+
+  // One shimmer cycle per ~2 s: the water color breathes between deep and
+  // light blue while the tier heights pulse so the water reads as active.
+  renderWaterFrame(timestamp) {
+    const map = this.map;
+    if (!map) return;
+    try {
+      if (map.getLayer(FOUNTAIN_WATER_LAYER)) {
+        const shimmer = (Math.sin((timestamp / 1000) * Math.PI) + 1) / 2;
+        map.setPaintProperty(FOUNTAIN_WATER_LAYER, "fill-color", lerpColor(WATER_SHADE_DEEP, WATER_SHADE_LIGHT, shimmer));
+        map.setPaintProperty(FOUNTAIN_WATER_LAYER, "fill-opacity", 0.62 + shimmer * 0.26);
+      }
+      if (map.getLayer(FOUNTAIN_TIER_LAYER)) {
+        const pulse = 1 + Math.sin((timestamp / 1000) * Math.PI * 2) * 0.05;
+        map.setPaintProperty(FOUNTAIN_TIER_LAYER, "fill-extrusion-height", ["*", ["get", "height"], pulse]);
+      }
+    } catch {
+      // Style may be mid-switch; the next frame retries.
+    }
+  }
+
+  // Procedural bridge: a deck spanning the water with pylons at both ends.
+  buildBridge(lng, lat, spanDeg = 0.00012) {
+    if (!this.map || !Number.isFinite(lng) || !Number.isFinite(lat)) return;
+    const halfWidth = spanDeg * 0.22;
+    const pylonSpan = spanDeg * 0.16;
+    const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+    this.bridges.push(
+      {
+        type: "Feature",
+        properties: { height: 3, base: 0.6, color: "#9AA3AB" },
+        geometry: { type: "Polygon", coordinates: [rect(lng - spanDeg, lat - halfWidth, lng + spanDeg, lat + halfWidth)] },
+      },
+      {
+        type: "Feature",
+        properties: { height: 6.5, base: 0, color: "#6E7884" },
+        geometry: { type: "Polygon", coordinates: [rect(lng - spanDeg * 0.95, lat - halfWidth * 0.8, lng - spanDeg * 0.95 + pylonSpan, lat + halfWidth * 0.8)] },
+      },
+      {
+        type: "Feature",
+        properties: { height: 6.5, base: 0, color: "#6E7884" },
+        geometry: { type: "Polygon", coordinates: [rect(lng + spanDeg * 0.95 - pylonSpan, lat - halfWidth * 0.8, lng + spanDeg * 0.95, lat + halfWidth * 0.8)] },
+      },
+    );
+    const data = { type: "FeatureCollection", features: this.bridges };
+    if (this.map.getSource(BRIDGE_SOURCE_ID)) {
+      this.map.getSource(BRIDGE_SOURCE_ID).setData(data);
+    } else {
+      this.map.addSource(BRIDGE_SOURCE_ID, { type: "geojson", data });
+      this.map.addLayer({
+        id: BRIDGE_LAYER_ID,
+        source: BRIDGE_SOURCE_ID,
+        type: "fill-extrusion",
+        paint: {
+          "fill-extrusion-color": ["get", "color"],
+          "fill-extrusion-height": ["get", "height"],
+          "fill-extrusion-base": ["get", "base"],
+          "fill-extrusion-opacity": 0.95,
+          "fill-extrusion-vertical-gradient": true,
+        },
+      });
+    }
+    this.lastBridgeScale = null;
+    this.renderBridgeScale();
+  }
+
+  // Scales the bridge geometry with camera zoom. Each update eases through a
+  // paint transition so the geometry scales smoothly while you move.
+  renderBridgeScale() {
+    const map = this.map;
+    if (!map || !map.getLayer(BRIDGE_LAYER_ID)) return;
+    try {
+      const scale = Math.max(0.3, Math.min(1, (map.getZoom() - 13) / 4));
+      const rounded = Math.round(scale * 100) / 100;
+      if (rounded === this.lastBridgeScale) return;
+      this.lastBridgeScale = rounded;
+      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height-transition", { duration: BRIDGE_SCALE_TRANSITION_MS, delay: 0 });
+      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height", ["*", ["get", "height"], rounded]);
+    } catch {
+      // Style may be mid-switch.
+    }
+  }
+
+  startAnimations() {
+    if (!this.map || this.running) return;
+    this.running = true;
+    const tick = (timestamp) => {
+      if (!this.running) return;
+      if (timestamp - this.lastWaterFrameAt >= 1000 / WATER_ANIMATION_FPS) {
+        this.lastWaterFrameAt = timestamp;
+        this.renderWaterFrame(timestamp);
+      }
+      this.frameRef = window.requestAnimationFrame(tick);
+    };
+    this.frameRef = window.requestAnimationFrame(tick);
+    this.moveHandler = () => this.renderBridgeScale();
+    this.map.on("move", this.moveHandler);
+    this.renderBridgeScale();
+  }
+
+  stopAnimations() {
+    this.running = false;
+    if (this.frameRef != null) {
+      window.cancelAnimationFrame(this.frameRef);
+      this.frameRef = null;
+    }
+    if (this.map && this.moveHandler) {
+      try { this.map.off("move", this.moveHandler); } catch { /* map may be gone */ }
+      this.moveHandler = null;
+    }
+  }
+
+  destroy() {
+    this.stopAnimations();
+    this.bridges = [];
+    this.lastBridgeScale = null;
+  }
+}
+
 export const mapArchitect = new MapArchitect();
 export const baggz247Master = new MasterBuilder();
+export const meshBuilder = new MeshBuilder();

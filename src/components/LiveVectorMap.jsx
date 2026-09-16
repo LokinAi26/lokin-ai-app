@@ -7,7 +7,7 @@ import {
   rendererInterpolationBudgetMs,
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
-import { mapArchitect, baggz247Master } from "@/lib/mapArchitect";
+import { mapArchitect, baggz247Master, meshBuilder } from "@/lib/mapArchitect";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -369,11 +369,13 @@ export default function LiveVectorMap({
           if (disposed) return;
           mapArchitect.map = map;
           baggz247Master.map = map;
+          meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();
             mapArchitect.enable3DLandmarks();
             mapArchitect.setQuality(qualityRef.current);
             baggz247Master.enhanceVisibleArea(map.getBounds());
+            meshBuilder.startAnimations();
           }
         });
 
@@ -408,6 +410,7 @@ export default function LiveVectorMap({
       markerRef.current?.remove();
       markerRef.current = null;
       mapArchitect.destroy();
+      meshBuilder.destroy();
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
