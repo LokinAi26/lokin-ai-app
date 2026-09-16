@@ -290,7 +290,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         const dataUrl = response.data?.map?.data_url || "";
         if (!dataUrl) throw new Error("Map provider returned no basemap image");
-        imageViewportRef.current = { ...viewport };
+        // Remember which camera this image was rendered for; the flat-mode
+        // marker is projected with it so the two cannot detach in flight.
+        imageViewportRef.current = viewport;
         setImage(dataUrl);
       }).catch((e) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
