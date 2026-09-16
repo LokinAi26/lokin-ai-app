@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Layers3, Map, Maximize2, Satellite } from "lucide-react";
+import { Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
 import LiveVectorMap from "@/components/LiveVectorMap";
@@ -485,7 +485,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
-              {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
               {driverPoint && (
                 <g
@@ -507,11 +507,6 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
         {!fullscreen && (
           <>
-            <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur">
-              <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
-                <Map className="h-3.5 w-3.5" /> {perspective ? "REAL 4D MAP · ROAD MATCHED" : "REAL MAP · ROAD MATCHED"}
-              </div>
-            </div>
             <div className="absolute right-3 top-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur">
               {perspective ? (
                 <>
@@ -525,9 +520,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
                 </>
               )}
             </div>
-            {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">IMMERSIVE 3D · HEADING UP</div>}
             <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
-              <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">DRAG · PINCH</div>
               <button type="button" aria-label="Reset and follow driver" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
               {onEnterFullscreen && (
                 <button type="button" aria-label="Open fullscreen navigation" onClick={onEnterFullscreen} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/85 text-white/75 shadow-lg backdrop-blur active:scale-95"><Maximize2 className="h-4 w-4" /></button>

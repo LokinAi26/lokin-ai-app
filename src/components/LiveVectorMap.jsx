@@ -73,14 +73,17 @@ function styleUrl(style) {
 }
 
 function configureImmersiveStyle(map, style) {
+  // Keep the basemap quiet while driving: buildings stay for spatial context,
+  // but landmark models, trees, and POI labels are muted so the glowing route
+  // is the dominant feature of the view.
   const settings = {
     lightPreset: style === "satellite-streets-v12" ? "dusk" : "night",
     show3dObjects: true,
     show3dBuildings: true,
-    show3dTrees: true,
-    show3dLandmarks: true,
-    show3dFacades: true,
-    showPointOfInterestLabels: true,
+    show3dTrees: false,
+    show3dLandmarks: false,
+    show3dFacades: false,
+    showPointOfInterestLabels: false,
   };
   Object.entries(settings).forEach(([property, value]) => {
     try {
@@ -127,11 +130,11 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
-      "line-opacity": 0.42,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 24],
-      "line-blur": 7,
-      "line-emissive-strength": 2,
+      // Dark casing under the neon line: the active route reads clearly over
+      // night basemaps and busy satellite texture while driving.
+      "line-color": "#060B04",
+      "line-opacity": 0.92,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 13, 17, 26],
     },
   });
   map.addLayer({
@@ -145,9 +148,9 @@ function addNavigationLayers(map, routeGeometry) {
     },
     paint: {
       "line-color": LOKIN_NEON_ROUTE,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 5, 17, 10],
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
-      "line-emissive-strength": 2.4,
+      "line-emissive-strength": 2.6,
     },
   });
 }
