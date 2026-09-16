@@ -244,6 +244,7 @@ export default function LiveVectorMap({
   followDriver = true,
   style = "dark-v11",
   style3d = true,
+  quality = "balanced",
   heading = 0,
   speedMps = 0,
   resetRevision = 0,
@@ -263,6 +264,7 @@ export default function LiveVectorMap({
   const preferredPitchRef = useRef(perspective ? 78 : 0);
   const styleRef = useRef(style);
   const style3dRef = useRef(style3d);
+  const qualityRef = useRef(quality);
   const displayedRef = useRef({
     coordinate: normalizeCoordinate(snappedPosition?.coordinate),
     bearing: Number(heading || 0),
@@ -276,6 +278,7 @@ export default function LiveVectorMap({
   routeRef.current = routeGeometry;
   styleRef.current = style;
   style3dRef.current = style3d;
+  qualityRef.current = quality;
   callbacksRef.current = { onReady, onUnavailable };
 
   useEffect(() => {
@@ -366,9 +369,10 @@ export default function LiveVectorMap({
           if (disposed) return;
           mapArchitect.map = map;
           baggz247Master.map = map;
-          if (style3dRef.current) {
+          if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();
             mapArchitect.enable3DLandmarks();
+            mapArchitect.setQuality(qualityRef.current);
             baggz247Master.enhanceVisibleArea(map.getBounds());
           }
         });
@@ -421,8 +425,8 @@ export default function LiveVectorMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    mapArchitect.setQuality(style3d ? "balanced" : "performance");
-  }, [style3d]);
+    mapArchitect.setQuality(!style3d ? "performance" : quality);
+  }, [style3d, quality]);
 
   useEffect(() => {
     const map = mapRef.current;
