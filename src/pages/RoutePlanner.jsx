@@ -10,6 +10,7 @@ import LocalOfferCapture from "@/components/LocalOfferCapture";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { saveOptimizedRouteSession } from "@/lib/optimizedRouteSession";
+import MultiDropPlanner from "@/components/route/MultiDropPlanner";
 
 export default function RoutePlanner() {
   const navigate = useNavigate();
@@ -153,6 +154,8 @@ export default function RoutePlanner() {
       </div>
 
       {error && <div className="text-sm text-destructive">{error}</div>}
+
+      <MultiDropPlanner />
 
       {loading && (
         <div className="lokin-card p-4 space-y-3">

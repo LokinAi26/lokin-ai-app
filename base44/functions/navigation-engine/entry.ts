@@ -12,12 +12,10 @@ function json(body: unknown, status = 200) {
 }
 
 function token() {
-  return (Deno.env.get("MAPBOX_ACCESS_TOKEN") || Deno.env.get("MAPBOX_TOKEN") || "").trim();
+  return (Deno.env.get("MAPBOX_ACCESS_TOKEN") || "").trim();
 }
 
 function publicMapToken() {
-  const dedicated = (Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "").trim();
-  if (dedicated.startsWith("pk.")) return dedicated;
   const configured = token();
   return configured.startsWith("pk.") ? configured : "";
 }
@@ -400,21 +398,26 @@ async function directions(
   if (coordinates.length > MAX_COORDINATES) throw new Error(`LOKIN navigation supports up to ${MAX_COORDINATES - 1} route destinations per request`);
 
   const profile = opts.profile === "driving" ? "driving" : DEFAULT_PROFILE;
+  // "light" planning requests skip geometry/steps/voice payloads and only need
+  // per-leg distance + duration for sequencing.
+  const light = opts.light === true;
   const coordPath = coordinates.map((c) => `${c.longitude},${c.latitude}`).join(";");
   const params = new URLSearchParams({
     access_token: accessToken,
     alternatives: "false",
     geometries: "geojson",
-    overview: "full",
-    steps: "true",
-    voice_instructions: "true",
-    banner_instructions: "true",
+    overview: light ? "false" : "full",
+    steps: light ? "false" : "true",
+    voice_instructions: light ? "false" : "true",
+    banner_instructions: light ? "false" : "true",
     voice_units: "imperial",
     language: "en",
     roundabout_exits: "true",
-    annotations: profile === "driving-traffic"
-      ? "distance,duration,congestion_numeric,maxspeed"
-      : "distance,duration,maxspeed",
+    annotations: light
+      ? (profile === "driving-traffic" ? "distance,duration,congestion_numeric" : "distance,duration")
+      : (profile === "driving-traffic"
+        ? "distance,duration,congestion_numeric,maxspeed"
+        : "distance,duration,maxspeed"),
   });
 
   if (opts.curbApproach !== false) {
@@ -424,9 +427,10 @@ async function directions(
   const data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${params.toString()}`);
   if (data?.code && data.code !== "Ok") throw new Error(data?.message || data.code);
   const route = data?.routes?.[0];
-  if (!route?.geometry?.coordinates?.length) throw new Error("No drivable road route was returned");
+  if (!light && !route?.geometry?.coordinates?.length) throw new Error("No drivable road route was returned");
+  if (!Array.isArray(route?.legs) || route.legs.length !== coordinates.length - 1) throw new Error("No drivable road route was returned");
 
-  const maneuvers = (route.legs || []).flatMap((leg: any, legIndex: number) =>
+  const maneuvers = light ? [] : (route.legs || []).flatMap((leg: any, legIndex: number) =>
     (leg.steps || []).map((step: any, stepIndex: number) => normalizeStep(step, legIndex, stepIndex))
   );
 
@@ -445,7 +449,7 @@ async function directions(
     generated_at: new Date().toISOString(),
     distance_m: Number(route.distance || 0),
     duration_s: Number(route.duration || 0),
-    geometry: {
+    geometry: light ? null : {
       type: "LineString",
       coordinates: route.geometry.coordinates.map((pair: any) => [Number(pair[0]), Number(pair[1])]),
     },
@@ -587,6 +591,109 @@ export default async function navigationEngine(req: Request) {
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
       return json({ ok: true, engine_version: "2026.09.03-live-vector-phase1", geocoded_destinations: geocoded, route });
+    }
+
+    if (action === "plan_drops") {
+      // LOKIN AI multi-drop planner: sequence custom drop-off addresses into
+      // the fastest driving order (nearest-neighbor + 2-opt on straight-line
+      // distance), measure the winning order against live traffic, and compare
+      // it with the order the driver entered.
+      const drops = (body?.drops || [])
+        .map((x: any) => String(x || "").trim())
+        .filter(Boolean)
+        .slice(0, 10);
+      if (drops.length < 2) return json({ error: "Enter at least two drop-off addresses to plan a multi-stop route" }, 400);
+
+      let origin = validCoord(body?.origin_coordinate);
+      if (!origin && body?.origin_address) {
+        const g = await geocodeAddress(body.origin_address, accessToken, null);
+        origin = { longitude: g.longitude, latitude: g.latitude };
+      }
+      if (!origin) return json({ error: "A starting point is required — allow GPS or enter a starting address" }, 400);
+
+      const geocoded = await Promise.all(drops.map((d: any) => geocodeAddress(d, accessToken, origin)));
+      const stops = geocoded.map((g: any, i: number) => ({
+        input: drops[i],
+        name: g.name || "",
+        full_address: g.full_address || drops[i],
+        longitude: g.longitude,
+        latitude: g.latitude,
+      }));
+      const points = [origin, ...stops.map((s: any) => ({ longitude: s.longitude, latitude: s.latitude }))];
+
+      // Nearest-neighbor construction, then 2-opt segment reversal until no
+      // straight-line improvement remains.
+      const remaining = stops.map((_: any, i: number) => i);
+      const order: number[] = [];
+      let current: any = origin;
+      while (remaining.length) {
+        let best = 0;
+        for (let k = 1; k < remaining.length; k++) {
+          if (milesBetween(current, points[remaining[k] + 1]) < milesBetween(current, points[remaining[best] + 1])) best = k;
+        }
+        order.push(remaining[best]);
+        current = points[remaining[best] + 1];
+        remaining.splice(best, 1);
+      }
+      let improved = true;
+      while (improved) {
+        improved = false;
+        for (let i = 0; i < order.length - 1; i++) {
+          for (let j = i + 1; j < order.length; j++) {
+            const prev = i === 0 ? origin : points[order[i - 1] + 1];
+            const a = points[order[i] + 1];
+            const b = points[order[j] + 1];
+            const next = j + 1 < order.length ? points[order[j + 1] + 1] : null;
+            const before = milesBetween(prev, a) + (next ? milesBetween(b, next) : 0);
+            const after = milesBetween(prev, b) + (next ? milesBetween(a, next) : 0);
+            if (after < before - 1e-9) {
+              const segment = order.slice(i, j + 1).reverse();
+              order.splice(i, segment.length, ...segment);
+              improved = true;
+            }
+          }
+        }
+      }
+
+      const bestCoords = [origin, ...order.map((i: number) => points[i + 1])];
+      const bestRoute = await directions(bestCoords, accessToken, { light: true });
+      const enteredEta = await trafficEta([origin, ...points.slice(1)], accessToken).catch(() => null);
+
+      let prefs: any = {};
+      try { prefs = (await base44.entities.DriverPreference.filter({}))[0] || {}; } catch { prefs = {}; }
+      const mpg = Number(prefs?.vehicle_mpg) > 0 ? Number(prefs.vehicle_mpg) : 26;
+      const gasPrice = Number(prefs?.gas_price) > 0 ? Number(prefs.gas_price) : 3.45;
+      const toMiles = (m: number) => Number(m || 0) / 1609.344;
+      const miles = toMiles(bestRoute.distance_m);
+      const fuel = (miles / mpg) * gasPrice;
+
+      let baseline: any = null;
+      if (enteredEta) {
+        const enteredMiles = toMiles(enteredEta.distance_m);
+        baseline = {
+          minutes: Math.round(enteredEta.duration_s / 60),
+          miles: Math.round(enteredMiles * 10) / 10,
+          fuel: Math.round(((enteredMiles / mpg) * gasPrice) * 100) / 100,
+          saved_minutes: Math.max(0, Math.round((enteredEta.duration_s - bestRoute.duration_s) / 60)),
+          saved_miles: Math.max(0, Math.round((enteredMiles - miles) * 10) / 10),
+        };
+      }
+
+      return json({
+        ok: true,
+        plan: {
+          origin,
+          stops: order.map((stopIndex: number, position: number) => ({ ...stops[stopIndex], sequence: position + 1 })),
+          legs: bestRoute.legs.map((leg: any) => ({ distance_m: leg.distance_m, duration_s: leg.duration_s })),
+          totals: {
+            stops: stops.length,
+            minutes: Math.round(bestRoute.duration_s / 60),
+            miles: Math.round(miles * 10) / 10,
+            fuel: Math.round(fuel * 100) / 100,
+          },
+          baseline,
+        },
+      });
     }
 
     return json({ error: `Unsupported navigation action: ${action}` }, 400);
