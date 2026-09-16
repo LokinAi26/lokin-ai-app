@@ -130,6 +130,11 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const mapRequestRef = useRef(0);
   const mapInFlightRef = useRef(false);
   const pendingMapRefreshRef = useRef(false);
+  // Viewport the currently DISPLAYED basemap image was rendered for.
+  // The SVG route/driver overlay must project against this viewport — not the
+  // live one — so it stays glued to the displayed image while a refresh for
+  // the next viewport is still in flight.
+  const imageViewportRef = useRef(null);
   const desiredViewportKeyRef = useRef("");
   const [mapRefreshNonce, setMapRefreshNonce] = useState(0);
   const lastMapRequestAtRef = useRef(0);
@@ -239,6 +244,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     }
     if (!viewport) {
       mapRequestRef.current += 1;
+      imageViewportRef.current = null;
       setImage("");
       setLoading(false);
       return undefined;
@@ -274,6 +280,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         const dataUrl = response.data?.map?.data_url || "";
         if (!dataUrl) throw new Error("Map provider returned no basemap image");
+        imageViewportRef.current = { ...viewport };
         setImage(dataUrl);
       }).catch((e) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
@@ -292,21 +299,25 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode]);
 
   const routePoints = useMemo(() => {
-    if (!viewport || !Array.isArray(activeCoords)) return "";
+    // Project against the viewport the DISPLAYED image was rendered for; the
+    // live viewport can already be ahead of the image still on screen.
+    const overlayViewport = imageViewportRef.current || viewport;
+    if (!overlayViewport || !Array.isArray(activeCoords)) return "";
     return activeCoords
-      .map((coord) => project(coord, viewport, renderW, renderH))
+      .map((coord) => project(coord, overlayViewport, renderW, renderH))
       .filter(Boolean)
       .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
       .join(" ");
-  }, [activeRouteGeometry, viewportKey]);
+  }, [activeRouteGeometry, viewportKey, image]);
 
   // Flat MAP mode uses the local SVG projection. 4D uses a Mapbox-native
   // marker embedded in the same pitched static image as the route, eliminating
   // the detached/hidden driver marker seen when the 4D camera was panned.
+  const overlayViewport = imageViewportRef.current || viewport;
   const driverPoint = perspective
     ? null
-    : viewport ? project(snappedPosition?.coordinate || coords[0], viewport, renderW, renderH) : null;
-  const markerRotation = heading - Number(viewport?.bearing || 0);
+    : overlayViewport ? project(snappedPosition?.coordinate || coords[0], overlayViewport, renderW, renderH) : null;
+  const markerRotation = heading - Number(overlayViewport?.bearing || 0);
 
   function touchDistance(touches) {
     if (!touches || touches.length < 2) return 0;
