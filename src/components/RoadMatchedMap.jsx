@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Gauge, Layers3, Maximize2, Satellite } from "lucide-react";
+import { Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
+import MapQualityMenu from "@/components/map/MapQualityMenu";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
 import LiveVectorMap from "@/components/LiveVectorMap";
 
 const MAP_W = 640;
 const MAP_H = 420;
-// 3D scene quality cycle: ultra (shadows + landmarks) > balanced > performance (battery saver).
-const QUALITY_LABELS = { ultra: "3D ULTRA", balanced: "3D BALANCED", performance: "3D PERF" };
 const TILE_SIZE = 512;
 const MAP_REFRESH_MIN_MS = 650;
 const MAP_REFRESH_DEBOUNCE_MS = 80;
@@ -433,12 +432,9 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     finishPinch();
   }
 
-  function cycleQuality() {
-    setQuality((current) => {
-      const next = current === "ultra" ? "balanced" : current === "balanced" ? "performance" : "ultra";
-      localStorage.setItem("lokin_map_3d_quality", next);
-      return next;
-    });
+  function changeQuality(next) {
+    localStorage.setItem("lokin_map_3d_quality", next);
+    setQuality(next);
   }
 
   function resetView() {
@@ -536,9 +532,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               )}
             </div>
             <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
-              <button type="button" aria-label="Cycle 3D map quality" onClick={cycleQuality} className="flex h-10 items-center rounded-xl border border-primary/30 bg-black/85 px-2.5 text-[9px] font-extrabold tracking-[0.06em] text-primary shadow-lg backdrop-blur active:scale-95">
-                <Gauge className="mr-1.5 h-3.5 w-3.5" />{QUALITY_LABELS[quality]}
-              </button>
+              <MapQualityMenu quality={quality} onChange={changeQuality} />
               <button type="button" aria-label="Reset and follow driver" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
               {onEnterFullscreen && (
                 <button type="button" aria-label="Open fullscreen navigation" onClick={onEnterFullscreen} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/85 text-white/75 shadow-lg backdrop-blur active:scale-95"><Maximize2 className="h-4 w-4" /></button>
@@ -553,9 +547,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
               <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
             </div>
-            <button type="button" aria-label="Cycle 3D map quality" onClick={cycleQuality} className="flex h-10 items-center rounded-full border border-primary/30 bg-black/75 px-3 text-[9px] font-extrabold tracking-[0.08em] text-primary shadow-lg backdrop-blur active:scale-95">
-              <Gauge className="mr-1.5 h-3.5 w-3.5" />{QUALITY_LABELS[quality]}
-            </button>
+            <MapQualityMenu quality={quality} onChange={changeQuality} />
             {(rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
               <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
             )}
