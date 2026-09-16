@@ -201,12 +201,18 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     dragRef.current = { active: false, moved: false, startX: 0, startY: 0, dx: 0, dy: 0, viewport: null };
   }, [perspective]);
 
+  // Off-route, the marker and follow camera track the TRUE GPS position, not
+  // the on-route projection.
+  const displayCoord = snappedPosition?.off_route && Array.isArray(snappedPosition?.raw_coordinate)
+    ? snappedPosition.raw_coordinate
+    : snappedPosition?.coordinate;
+
   const viewport = useMemo(() => {
     if (!Array.isArray(coords) || coords.length < 2) return null;
-    const snap = snappedPosition?.coordinate;
+    const snap = displayCoord;
     const cameraBearing = (perspective || headingForward) ? Math.round(heading / 5) * 5 : 0;
     if (followDriver && snap) {
-      const anchor = followCenter || snap;
+      const anchor = snappedPosition?.off_route ? snap : followCenter || snap;
       // Keep the driver in the lower navigation field while reserving the upper
       // field for the road ahead. A fine bucket limits Static Images requests
       // without the 15–40 m camera jumps produced by the old coarse grid.
@@ -231,7 +237,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
       bearing: cameraBearing,
       pitch: perspective ? 70 : 0,
     };
-  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]]);
+  }, [routeGeometry, followDriver, perspective, headingForward, heading, zoomOffset, manualCenter?.longitude, manualCenter?.latitude, followCenter?.[0], followCenter?.[1], displayCoord?.[0], displayCoord?.[1], snappedPosition?.off_route]);
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
@@ -274,7 +280,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           // source remains screen-sharp without transferring a 2× image each fix.
           retina: !fullscreen,
           route_geometry: perspective ? staticRouteGeometry : null,
-          driver_coordinate: perspective ? snappedPosition?.coordinate || null : null,
+          driver_coordinate: perspective ? displayCoord || null : null,
         },
       }).then((response) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
@@ -316,7 +322,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
   const overlayViewport = imageViewportRef.current || viewport;
   const driverPoint = perspective
     ? null
-    : overlayViewport ? project(snappedPosition?.coordinate || coords[0], overlayViewport, renderW, renderH) : null;
+    : overlayViewport ? project(displayCoord || coords[0], overlayViewport, renderW, renderH) : null;
   const markerRotation = heading - Number(overlayViewport?.bearing || 0);
 
   function touchDistance(touches) {
