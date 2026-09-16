@@ -442,7 +442,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
 const HEADER_URL =
   "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/2306bf887_lokin-voice-header.jpg";
 const CENTERPIECE_URL =
-  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/3c4e6171c_IMG_3538.jpeg";
+  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/079c3a913_official-lokin-ticker-clock_247.jpg";
 
 // Visual system lifted from the locked reskin1v5 Voice design
 // (Official Lokin app page_reskin1v5), scoped under .lokinvoice-reskin.
