@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
 import BeepSeekScanner from "@/components/locator/BeepSeekScanner";
+import ScanToSearch from "@/components/locator/ScanToSearch";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
@@ -30,18 +31,27 @@ export default function Locator() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [beepSeek, setBeepSeek] = useState(false);
+  const [scanSearch, setScanSearch] = useState(false);
   const [tripItems, setTripItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
   });
 
-  async function locate() {
-    if (!query.trim()) return;
+  async function locate(searchValue = query) {
+    if (!String(searchValue).trim()) return;
     setLoading(true); setError(""); setResult(null);
     try {
-      const res = await guardedInvoke(base44, "locateItem", { query }, { userInitiated: true });
+      const res = await guardedInvoke(base44, "locateItem", { query: String(searchValue).trim() }, { userInitiated: true });
       setResult(res.data);
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
+  }
+
+  function handleScanned(code) {
+    setScanSearch(false);
+    const value = String(code || "").trim();
+    if (!value) return;
+    setQuery(value);
+    locate(value);
   }
 
   useEffect(() => { localStorage.setItem("lokin_smart_shop", JSON.stringify(tripItems)); }, [tripItems]);
@@ -85,7 +95,8 @@ export default function Locator() {
 
       <div className="flex gap-2">
         <div className="relative flex-1"><ScanLine className="absolute left-3 top-3 h-4 w-4 text-primary/60"/><input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && locate()} placeholder="Barcode, item code, or product name" className="w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-9 pr-3 py-3 text-sm text-white placeholder:text-white/30"/></div>
-        <button onClick={locate} disabled={loading || !query.trim()} className="rounded-2xl bg-primary text-primary-foreground px-5 text-sm font-bold glow-primary disabled:opacity-50"><Crosshair className="h-4 w-4"/></button>
+        <button onClick={() => locate()} disabled={loading || !query.trim()} className="rounded-2xl bg-primary text-primary-foreground px-5 text-sm font-bold glow-primary disabled:opacity-50"><Crosshair className="h-4 w-4"/></button>
+        <button type="button" aria-label="Scan barcode with camera" onClick={() => setScanSearch(true)} className="rounded-2xl border border-primary/30 bg-primary/[0.06] px-5 text-primary active:scale-95"><ScanLine className="h-4 w-4"/></button>
       </div>
 
       {error && <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-3 text-sm text-red-300">{error}</div>}
@@ -136,6 +147,10 @@ export default function Locator() {
         <div className="mt-3 space-y-2">{optimizedTrip.map((x) => <div key={x.id || x.barcode || x.name} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5"><div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold flex items-center justify-center">{x.route_order}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">{x.name}</div><div className="text-[10px] text-white/40">Aisle {x.aisle || "?"} · Shelf {x.shelf || "?"}{x._point?.estimated ? " · estimated map point" : " · store map point"}</div></div><div className="text-right"><div className={`text-[9px] font-bold ${substitutionRisk(x) === "high" ? "text-red-400" : substitutionRisk(x) === "medium" ? "text-amber-300" : "text-primary/70"}`}>{substitutionRisk(x) === "high" ? "SUB NEEDED" : substitutionRisk(x) === "medium" ? "LOW STOCK" : "READY"}</div><button onClick={() => removeFromTrip(x)} className="mt-1 text-[9px] text-white/30">REMOVE</button></div></div>)}</div>
         <div className="mt-3 text-[10px] text-white/35">LOKIN orders stops from the entrance using available store coordinates. Low/out-of-stock items are surfaced before you waste time walking to them.</div>
       </div>}
+
+      {scanSearch && (
+        <ScanToSearch onCode={handleScanned} onClose={() => setScanSearch(false)} />
+      )}
 
       {beepSeek && item && (
         <BeepSeekScanner
