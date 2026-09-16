@@ -189,8 +189,12 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     ? Math.max(85, Math.min(220, 90 + speedMps * 5.2))
     : Math.max(55, Math.min(155, 55 + speedMps * 4.0));
   const followCenter = useMemo(
-    () => pointAheadOnRoute(activeCoords, lookAheadM) || snappedPosition?.coordinate || null,
-    [activeRouteGeometry, lookAheadM, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1]],
+    // Off-route, don't look ahead on the stale route — center the true driver
+    // position instead.
+    () => snappedPosition?.off_route
+      ? null
+      : pointAheadOnRoute(activeCoords, lookAheadM) || snappedPosition?.coordinate || null,
+    [activeRouteGeometry, lookAheadM, snappedPosition?.coordinate?.[0], snappedPosition?.coordinate?.[1], snappedPosition?.off_route],
   );
 
   useEffect(() => {
