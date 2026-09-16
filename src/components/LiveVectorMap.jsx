@@ -147,10 +147,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
+      "line-color": "#8FE44E",
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
-      "line-emissive-strength": 2.6,
+      "line-blur": 2,
     },
   });
 }
