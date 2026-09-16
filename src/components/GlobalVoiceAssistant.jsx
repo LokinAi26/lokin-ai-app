@@ -276,6 +276,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     const rec = new SR();
     rec.lang = "en-US";
     rec.interimResults = false;
+    rec.continuous = true;
     rec.onstart = () => setListening(true);
     rec.onend = () => {
       setListening(false);
