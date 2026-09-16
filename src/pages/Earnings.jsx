@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
+import EarningsSummary from "@/components/earnings/EarningsSummary";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
@@ -170,6 +171,8 @@ export default function Earnings() {
           </div>
         ))}
       </div>
+
+      {!loading && <EarningsSummary records={filtered} />}
 
       {score && <LockInScore score={score} />}
 
