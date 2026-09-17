@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 
-// Partner delivery platforms this copilot pairs with.
+// Driver apps this copilot works alongside. No partnership or account linking — one tap opens the app.
 // Root-cause fix (2026-09-17 road test): old custom schemes were wrong —
 // "doordash://" is the CONSUMER app (opens Grocery, not Dasher); the other six
 // schemes don't exist as registered iOS schemes, so taps silently did nothing.
@@ -31,9 +31,9 @@ export default function PartnerApps() {
   return (
     <div className="space-y-3">
       <div>
-        <div className="text-sm font-semibold text-white/80">Pair with delivery apps</div>
+        <div className="text-sm font-semibold text-white/80">Your driver apps</div>
         <div className="text-xs text-white/45">
-          One tap opens the partner app on your phone — keep this copilot running alongside.
+          LOKIN works alongside your gig apps. One tap opens the app — if it is not installed, you will land on its App Store page.
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2.5">
