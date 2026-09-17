@@ -63,7 +63,8 @@ export default function Locator() {
   const item = result?.item ? normalizeInventoryItem(result.item) : null;
   const stock = stockMeta(item);
   const freshness = inventoryFreshness(item?.last_inventory_update);
-  const [px, py] = derivePoint(item);
+  const mapPoint = derivePoint(item);
+  const hasRealMap = !!mapPoint;
   const optimizedTrip = optimizeStoreRoute(tripItems);
 
   function addToTrip() {
