@@ -19,10 +19,13 @@ function stockMeta(item) {
 }
 
 function derivePoint(item) {
-  if (Number.isFinite(item?.map_x) && Number.isFinite(item?.map_y)) return [item.map_x, item.map_y];
-  const aisle = parseInt(String(item?.aisle || "").replace(/\D/g, "")) || 1;
-  const shelf = parseInt(String(item?.shelf || "").replace(/\D/g, "")) || 1;
-  return [12 + ((aisle * 13) % 72), 15 + ((shelf * 17 + aisle * 5) % 68)];
+  // Real coordinates only: must be finite AND flagged verified. Otherwise
+  // return null so the UI shows aisle/shelf text instead of a fake pin.
+  // Kendall's rule: real and true in detail only — no invented locations.
+  if (Number.isFinite(item?.map_x) && Number.isFinite(item?.map_y) && item?.map_verified) {
+    return [item.map_x, item.map_y];
+  }
+  return null;
 }
 
 export default function Locator() {
