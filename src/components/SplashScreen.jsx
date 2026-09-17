@@ -23,6 +23,8 @@ export default function SplashScreen() {
     if (done) return undefined;
 
     playChime();
+    // Auto-dismiss: real loading motion, no tap required.
+    const auto = window.setTimeout(() => dismiss(), 2800);
 
     const retryChime = () => {
       if (!playedRef.current) playChime();
@@ -32,6 +34,7 @@ export default function SplashScreen() {
 
     return () => {
       window.removeEventListener("pointerdown", retryChime);
+      window.clearTimeout(auto);
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
   }, [done]);
@@ -98,11 +101,34 @@ export default function SplashScreen() {
             src={SPLASH_LOGO_URL}
             alt="LOKIN AI — Unlock your potential"
             className="absolute inset-0 h-full w-full bg-black object-contain"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 1.12 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 2.6, ease: "easeOut" }}
             draggable={false}
           />
+          {/* Shimmer sweep across the artwork */}
+          <motion.div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: "linear-gradient(105deg, transparent 40%, rgba(143,228,78,0.14) 50%, transparent 60%)" }}
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 1.8, ease: "easeInOut", delay: 0.4 }}
+          />
+          {/* Loading progress bar */}
+          <div className="absolute bottom-[16%] left-1/2 w-[52%] -translate-x-1/2">
+            <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                className="h-full rounded-full bg-[#8FE44E]"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 2.4, ease: "easeInOut" }}
+                style={{ boxShadow: "0 0 12px rgba(143,228,78,0.9)" }}
+              />
+            </div>
+            <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8FE44E]/80">
+              Locking in
+            </div>
+          </div>
 
           <button
             type="button"
