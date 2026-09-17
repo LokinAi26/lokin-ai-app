@@ -9,6 +9,7 @@ import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakText, loadVoices } from "@/lib/lokinVoice";
+import VoicePicker from "@/components/VoicePicker";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
@@ -778,6 +779,11 @@ const VOICE_CSS = `
                           />
                         </div>
                         <p className="wake-help">Keep LOKIN ready while the app is open. Tap the centerpiece whenever you want to speak.</p>
+                      </section>
+
+                      <section className="wake-card" aria-label="Voice settings">
+                        <div className="kicker">LOKIN voice</div>
+                        <VoicePicker compact />
                       </section>
 
                       <section className="action-grid" aria-label="Work controls">
