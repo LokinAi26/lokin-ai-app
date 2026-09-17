@@ -44,7 +44,7 @@ export function guardianDecision({ essential = false, userInitiated = false, cac
 
 export async function guardedInvoke(base44, name, payload = {}, { force = false, userInitiated = false } = {}) {
   const policy = guardianPolicyFor(name);
-  const externalAi = new Set(["external-ai-gateway", "lokinAssistant", "lokinSupport", "aiTextAssist", "learning-intelligence", "tax-advisor", "opportunity-recommend"]);
+  const externalAi = new Set(["external-ai-gateway", "voice-pipeline", "lokinAssistant", "lokinSupport", "aiTextAssist", "learning-intelligence", "tax-advisor", "opportunity-recommend"]);
   if (externalAi.has(name) && !hasAiConsent()) {
     const err = new Error("AI processing permission is required. Enable it in LOKIN before using this AI feature.");
     err.code = "LOKIN_AI_CONSENT_REQUIRED";
