@@ -8,7 +8,7 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
-import { speakText } from "@/lib/lokinVoice";
+import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
 
 // Navigation intents — broad matching so drivers don't need exact phrasing.
@@ -122,6 +122,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     return s.platform || s.activeApp || "mixed";
   } catch { return "mixed"; } })();
   const voiceSupported = Boolean(speechRecognitionCtor());
+  const voiceInputAvailable = voiceSupported || canRecordVoice();
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
   // Presentation: full-screen hero when opened from the LOKIN tab;
@@ -133,8 +134,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [drivingMode]);
 
   function speak(text) {
-    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
-    speakText(text, { rate: 1.05 });
+    // Gateway voice pipeline: real speech audio that plays inside the native iOS
+    // app (browser speechSynthesis is silent there). Falls back to device speech
+    // where the pipeline is unreachable.
+    speakLokin(text, { rate: 1.05 });
   }
 
   async function handleCommand(command) {
@@ -364,6 +367,70 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     setTimeout(beginOnce, wake ? 400 : 0);
   }
 
+  // Gateway voice pipeline — tap-to-talk recording for the native iOS app, where
+  // the browser Web Speech recognition API is unavailable/unreliable. Tap the
+  // watch face to start, tap again (or 15s max) to stop and transcribe.
+  const pipelineRecRef = useRef(null);
+
+  async function startPipelineOnce() {
+    unlockVoiceAudio();
+    setOpen(true);
+    setReply("");
+    setListening(true);
+    setBusy(true);
+    const startedAt = Date.now();
+    try {
+      const rec = await startVoiceRecording({ maxMs: 15000 });
+      pipelineRecRef.current = rec;
+      setBusy(false);
+      let blob;
+      try {
+        blob = await rec.done;
+      } finally {
+        if (pipelineRecRef.current === rec) pipelineRecRef.current = null;
+      }
+      setListening(false);
+      if (!blob || blob.size < 800) {
+        setReply("I didn't catch that. Tap the watch face and try again.");
+        return;
+      }
+      setBusy(true);
+      setTranscript("\u2026");
+      const text = await transcribeVoiceBlob(blob, Date.now() - startedAt);
+      if (!text.trim()) {
+        setBusy(false);
+        setReply("I didn't catch that. Tap the watch face and try again.");
+        return;
+      }
+      handleCommand(text);
+    } catch (e) {
+      pipelineRecRef.current = null;
+      setListening(false);
+      setBusy(false);
+      if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
+        setConsentRequired(true);
+        setReply("Voice needs AI processing permission. Enable it to talk to LOKIN.");
+      } else if (e?.name === "NotAllowedError" || /permission/i.test(String(e?.message || ""))) {
+        setReply("Microphone access is required for LOKIN voice. Enable it in iPhone Settings, then tap the microphone again.");
+      } else {
+        setReply("Voice service hit a snag. Tap the watch face to retry.");
+      }
+    }
+  }
+
+  function onMicTap() {
+    // Tap toggles: tap to talk, tap again to stop early and send.
+    if (canRecordVoice()) {
+      if (pipelineRecRef.current) { try { pipelineRecRef.current.stop(); } catch {} return; }
+      if (listening) return;
+      startPipelineOnce();
+      return;
+    }
+    startOnce();
+  }
+
+  useEffect(() => () => { try { pipelineRecRef.current?.stop(); } catch {} stopSpeaking(); }, []);
+
   // One command ingress for UI controls, deep links, Siri/App Intents,
   // Android App Actions, widgets, hardware buttons, and future integrations.
   useEffect(() => {
@@ -399,8 +466,14 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   useEffect(() => {
     const SR = speechRecognitionCtor();
     if (wakeRestartRef.current) { clearTimeout(wakeRestartRef.current); wakeRestartRef.current = null; }
-    if (!SR || !wakeEnabled) {
+    if (!wakeEnabled || (!SR && !canRecordVoice())) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
+      return;
+    }
+    if (!SR && canRecordVoice()) {
+      // Native app: no true wake-word (browser recognition is unavailable), so the
+      // toggle arms tap-to-talk on the watch face instead of a broken listener.
+      wakeRef.current = null;
       return;
     }
     const wake = new SR();
@@ -468,7 +541,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [wakeEnabled, drivingMode]);
 
   function toggleAlwaysOn() {
-    if (!voiceSupported) {
+    if (!voiceInputAvailable) {
       setOpen(true);
       setReply("Always Listening is unavailable in this app environment. Use the microphone button or Siri shortcuts.");
       return;
@@ -764,12 +837,12 @@ const VOICE_CSS = `
                           type="button"
                           aria-label="Tap the LOKIN clock face to speak"
                           aria-pressed={listening ? "true" : "false"}
-                          onClick={startOnce}
+                          onClick={onMicTap}
                           disabled={busy}
                         />
                         <span className="centerpiece-caption right">Discipline Unlocks a Better You</span>
                         <span className="listen-state">
-                          {listening ? "LISTENING…" : busy ? "THINKING…" : voiceSupported ? "Tap Watch Face to Speak" : "VOICE UNAVAILABLE"}
+                          {listening ? "LISTENING…" : busy ? "THINKING…" : voiceInputAvailable ? "Tap Watch Face to Speak" : "VOICE UNAVAILABLE"}
                         </span>
                       </div>
 
@@ -810,7 +883,7 @@ const VOICE_CSS = `
                         <div className="wake-row">
                           <div>
                             <div className="kicker">Wake word</div>
-                            <div className="wake-title">Hey LOKIN · <span>{!voiceSupported ? "Unavailable" : alwaysOn ? "App Open" : "Off"}</span></div>
+                            <div className="wake-title">Hey LOKIN · <span>{!voiceInputAvailable ? "Unavailable" : alwaysOn ? "App Open" : "Off"}</span></div>
                           </div>
                           <button
                             className="toggle"
@@ -857,14 +930,14 @@ const VOICE_CSS = `
                 <>
                   <div className="flex flex-col items-center py-4">
                     <button
-                      onClick={startOnce}
+                      onClick={onMicTap}
                       disabled={busy}
                       className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
                     >
                       {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                     </button>
                     <div className="mt-2 text-xs text-white/55">
-                      {listening ? "Listening…" : busy ? "Thinking…" : voiceSupported ? "Tap to speak" : "Voice unavailable · use controls"}
+                      {listening ? "Listening…" : busy ? "Thinking…" : voiceInputAvailable ? "Tap to speak" : "Voice unavailable · use controls"}
                     </div>
                   </div>
 
@@ -913,7 +986,7 @@ const VOICE_CSS = `
                       Hey LOKIN · App Open
                     </span>
                     <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                      {!voiceSupported ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
+                      {!voiceInputAvailable ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
                     </span>
                   </button>
                   <div className="mt-1.5 text-center text-[10px] text-white/50">
