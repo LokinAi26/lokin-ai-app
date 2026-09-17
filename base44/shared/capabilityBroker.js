@@ -10,6 +10,9 @@ const POLICIES = Object.freeze({
   'production.publish': { risk: 'HIGH', approval: true, scopes: ['production:publish'] },
   'infrastructure.modify': { risk: 'HIGH', approval: true, scopes: ['infrastructure:write'] },
   'credential.access': { risk: 'HIGH', approval: true, scopes: ['credential:use'] },
+  'agent.external_communication': { risk: 'MEDIUM', approval: false, scopes: ['external:communicate'] },
+  'agent.persistent_instructions.write': { risk: 'HIGH', approval: true, scopes: ['agent:instructions:write'] },
+  'agent.privilege.escalate': { risk: 'HIGH', approval: true, scopes: ['agent:privilege:escalate'] },
   'asset.delete': { risk: 'HIGH', approval: true, scopes: ['asset:delete'] },
 });
 
