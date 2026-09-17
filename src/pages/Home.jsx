@@ -143,9 +143,12 @@ export default function Home() {
             </Link>
           </div>
           <div className="amt">${dailyGoal}</div>
-          <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
+          <div className="track">
+            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--brand-secondary), var(--brand-lime))", boxShadow: "0 0 14px rgba(124,252,30,.7)" }} />
+            <span style={{ left: `calc(${pct}% - 8px)` }} />
+          </div>
           <div className="row">
-            <div className="text-primary"><b>${today.toFixed(2)}</b> earned</div>
+            <div className="text-primary"><b>${today.toFixed(2)}</b> earned · <b>{pct}%</b></div>
             <div className="text-white"><b className="text-white">${remaining.toFixed(2)}</b> remaining</div>
           </div>
         </div>
