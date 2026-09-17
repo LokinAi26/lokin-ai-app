@@ -216,6 +216,9 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
+      const now = new Date();
+      const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const history = (transcriptHistoryRef.current || []).slice(-6).map((h) => `${h.role}: ${h.text}`).join("\n");
       const res = await guardedInvoke(base44, "external-ai-gateway", {
         mode: "assistant",
         command,
@@ -223,8 +226,11 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
           netPerHour: p.min_per_hour || 22,
-          hoursWorked: 0,
-          platform: "mixed",
+          hoursWorked: sessionHours || 0,
+          platform: activePlatform || "mixed",
+          localTime: now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          dayOfWeek: dayNames[now.getDay()],
+          conversationHistory: history || "(none yet)",
         },
       });
       const data = res.data;
