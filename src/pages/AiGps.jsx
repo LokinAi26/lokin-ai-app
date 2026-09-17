@@ -315,6 +315,7 @@ export default function AiGps() {
           ) : (
             <RoadMatchedMap
               routeGeometry={nav.route.geometry}
+              deliveryStops={deliveryStops}
               snappedPosition={nav.snappedPosition}
               maneuver={nav.maneuver}
               remainingDurationS={nav.remainingDurationS}
@@ -381,7 +382,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -390,6 +391,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       {nav.route ? (
         <RoadMatchedMap
           routeGeometry={nav.route.geometry}
+          deliveryStops={deliveryStops}
           snappedPosition={nav.snappedPosition}
           maneuver={nav.maneuver}
           remainingDurationS={nav.remainingDurationS}
