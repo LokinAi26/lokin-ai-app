@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, TrendingUp } from "lucide-react";
 import { SEEDS } from "@/lib/heatData";
+import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
 
 export default function IncomeSection() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), amount: "", trips: 1, platform: "mixed", zone: "" });
+  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), amount: "", trips: 1, platform: "mixed", zone: "", vehicle: "" });
+
+  // Default the vehicle tag to the driver's profile vehicle class.
+  useEffect(() => {
+    base44.entities.DriverPreference.filter({}).then((p) => {
+      setForm((f) => (f.vehicle ? f : { ...f, vehicle: tagFromProfileType(p[0]?.vehicle_type) }));
+    }).catch(() => {});
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -19,7 +27,7 @@ export default function IncomeSection() {
   async function add(e) {
     e.preventDefault();
     if (!form.amount) return;
-    await base44.entities.Earning.create({ date: form.date, amount: Number(form.amount), trips: Number(form.trips) || 0, platform: form.platform, ...(form.zone ? { zone: form.zone } : {}) });
+    await base44.entities.Earning.create({ date: form.date, amount: Number(form.amount), trips: Number(form.trips) || 0, platform: form.platform, ...(form.zone ? { zone: form.zone } : {}), ...(form.vehicle ? { vehicle: form.vehicle } : {}) });
     setForm({ ...form, amount: "" });
     load();
   }
@@ -50,6 +58,10 @@ export default function IncomeSection() {
           <option value="">Delivery zone — none</option>
           {SEEDS.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
         </select>
+        <select value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
+          <option value="">Vehicle — none</option>
+          {VEHICLES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+        </select>
         <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold active:scale-95 transition-transform flex items-center justify-center gap-1.5">
           <Plus className="h-4 w-4" /> Log income
         </button>
@@ -62,7 +74,7 @@ export default function IncomeSection() {
           <div key={i.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5">
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-white">${Number(i.amount).toFixed(2)}</div>
-              <div className="text-[10px] text-white/40">{i.date} · {i.trips || 0} trips · {i.platform || "mixed"}</div>
+              <div className="text-[10px] text-white/40">{i.date} · {i.trips || 0} trips · {i.platform || "mixed"}{i.vehicle ? ` · ${vehicleLabel(i.vehicle)}` : ""}</div>
             </div>
             <button onClick={() => del(i.id)} className="text-white/30 active:scale-90"><Trash2 className="h-4 w-4" /></button>
           </div>

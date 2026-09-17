@@ -13,6 +13,17 @@
       "type": "string",
       "description": "Delivery zone this income was earned in (e.g. a LOKIN hotspot zone name)."
     },
+    "vehicle": {
+      "type": "string",
+      "enum": [
+        "car",
+        "motorcycle",
+        "cargo_van",
+        "box_truck",
+        "other"
+      ],
+      "description": "Vehicle these earnings were made with, so per-vehicle $/hr can be compared."
+    },
     "base_pay": {
       "type": "number",
       "default": 0
