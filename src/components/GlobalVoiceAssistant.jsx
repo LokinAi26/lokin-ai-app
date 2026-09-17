@@ -8,6 +8,7 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
+import { speakText, loadVoices } from "@/lib/lokinVoice";
 
 // Navigation intents the assistant can execute hands-free.
 const NAV_COMMANDS = [
