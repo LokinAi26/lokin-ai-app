@@ -38,6 +38,12 @@
     "budgets": {
       "type": "object"
     },
+    "granted_scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "freeze_reason": {
       "type": "string"
     },
