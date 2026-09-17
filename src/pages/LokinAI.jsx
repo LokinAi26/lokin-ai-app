@@ -431,14 +431,8 @@ export default function LokinAI() {
   }
 
   function speak(text) {
-    try {
-      const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ""));
-      u.rate = 1.05;
-      const v = voices.find((x) => x.voiceURI === voiceURI);
-      if (v) u.voice = v;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch {}
+    // Shared LOKIN voice: respects the global male/female pick + iOS workarounds.
+    speakText(text, { rate: 1.05 });
   }
 
   function pickVoice(uri) {
