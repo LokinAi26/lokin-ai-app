@@ -1055,3 +1055,47 @@ body {
     border-radius: 16px;
   }
 }
+
+/* NATIVE FEEL — App Store scan fixes (2026-09-17). Behavioral only; no visual-lock changes. */
+html, body {
+  overscroll-behavior: none; /* kill rubber-band page bounce (iOS) */
+  -webkit-user-select: none;
+  user-select: none; /* disable system text selection/callout on chrome */
+  -webkit-touch-callout: none; /* disable iOS long-press callout */
+  -webkit-tap-highlight-color: transparent; /* no grey tap flash */
+  touch-action: manipulation; /* no double-tap zoom delay */
+}
+input, textarea, select, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text; /* typing surfaces keep selection */
+  -webkit-touch-callout: default;
+}
+img, svg { -webkit-user-drag: none; }
+/* Inner scroll regions contain their own bounce instead of chaining to the page */
+.lokin-scroll, [data-scroll-region] { overscroll-behavior: contain; }
+
+/* Native-styled dropdowns: dark LOKIN treatment replaces default browser chrome.
+   On iOS the option list is still the native wheel picker. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  padding: 0.625rem 2.25rem 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+select:focus {
+  outline: none;
+  border-color: rgba(143, 228, 78, 0.6);
+  box-shadow: 0 0 0 2px rgba(143, 228, 78, 0.25);
+}
+select option, select optgroup { background-color: #101311; color: #fff; }
+select:disabled { opacity: 0.5; cursor: not-allowed; }
