@@ -36,6 +36,7 @@ import {
   recordRerouteAllowed,
   recordRerouteBlocked,
 } from "@/lib/navFusion";
+import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -84,6 +85,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
   const lastAcceptedSampleRef = useRef(null);
+  const [gpsModeVersion, setGpsModeVersion] = useState(() => gpsSuperAgent.getModeVersion());
+  const [gpsRestartCounter, setGpsRestartCounter] = useState(0);
   const fusionEngineRef = useRef(null);
   if (!fusionEngineRef.current) fusionEngineRef.current = new FusionEngine();
 
@@ -105,6 +108,20 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     arrivalSamplesRef.current = 0;
     arrivedRef.current = false;
   }, [destinationsKey]);
+  // GPS Super Agent wiring (additive only — default mode preserves verified behavior).
+  // The agent never owns the location engine; it subscribes to mode changes and
+  // restart requests, and this hook re-acquires through its existing session.
+  useEffect(() => {
+    gpsSuperAgent.startMonitoring();
+    const offMode = gpsSuperAgent.onModeChange((_mode, version) => setGpsModeVersion(version));
+    gpsSuperAgent.registerRestartHandler(async () => {
+      setGpsRestartCounter((n) => n + 1);
+    });
+    return () => {
+      offMode();
+      gpsSuperAgent.registerRestartHandler(null);
+    };
+  }, []);
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
   useEffect(() => { snappedRef.current = snapped; }, [snapped]);
@@ -287,6 +304,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const acceptedSample = { ...sample, interval_ms: intervalMs };
     lastAcceptedSampleRef.current = acceptedSample;
     if (source === "native") nativeSeenAtRef.current = Date.now();
+    // GPS Super Agent monitoring: read-only sample report (never alters the pipeline).
+    try { gpsSuperAgent.ingest(acceptedSample); } catch {}
 
     // Nav Fusion v3.5 — pass the accepted sample through the fusion engine and
     // render the map marker from the +render-horizon prediction, not the raw fix.
@@ -433,7 +452,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (["always", "whenInUse"].includes(authStatus) && !nativeStartedRef.current) {
         nativeStartedRef.current = true;
         setError("");
-        startNativeLocation({ mode: "activeNavigation", sessionId: nativeSessionId });
+        startNativeLocation({ mode: gpsSuperAgent.getNativeMode(), sessionId: nativeSessionId });
         return;
       }
       if (["denied", "restricted"].includes(authStatus)) {
@@ -480,7 +499,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (nativeStartedRef.current) stopNativeLocation();
       nativeStartedRef.current = false;
     };
-  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
 
   useEffect(() => {
     if (!enabled || !normalizedDestinations.length || nativeLocationAvailable()) return;
@@ -514,11 +533,11 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
           : geoError?.message || "LOKIN could not read the current GPS position.";
         setError(message);
       },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 },
+      gpsSuperAgent.getWebOptions(),
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
 
   useEffect(() => {
     if (!voiceGuidance || !voiceSupported() || !maneuver) return;
