@@ -7,6 +7,7 @@ import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
 import EarningsSummary from "@/components/earnings/EarningsSummary";
 import WeeklyZoneTrend from "@/components/earnings/WeeklyZoneTrend";
+import ZoneComparison from "@/components/earnings/ZoneComparison";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
@@ -193,6 +194,7 @@ export default function Earnings() {
       </div>
 
       {!loading && <WeeklyZoneTrend records={records} />}
+      {!loading && <ZoneComparison records={records} />}
 
       <div className="lokin-card p-4">
         <div className="lokin-kicker mb-2">Breakdown</div>
