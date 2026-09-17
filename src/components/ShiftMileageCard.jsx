@@ -17,7 +17,10 @@ export default function ShiftMileageCard({ workStatus }) {
     async function loadToday() {
       try {
         const rows = await base44.entities.MileageLog.filter({ date: localDateString() });
-        if (alive) setLoggedMiles(rows.reduce((sum, row) => sum + (Number(row.miles) || 0), 0));
+        if (alive) {
+          setLoggedMiles(rows.reduce((sum, row) => sum + (Number(row.miles) || 0), 0));
+          setLoggedSavings(rows.reduce((sum, row) => sum + (Number(row.deduction) || 0), 0));
+        }
       } catch {
         if (alive) setLoggedMiles(0);
       }
