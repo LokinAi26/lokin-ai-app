@@ -129,12 +129,21 @@ export default function Locator() {
           <div className="relative aspect-[4/3] bg-[linear-gradient(rgba(162,235,27,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(162,235,27,.04)_1px,transparent_1px)] bg-[size:24px_24px]">
             {[18,34,50,66,82].map((x,i)=><div key={x} className="absolute top-[12%] bottom-[12%] w-[9%] rounded-xl border border-white/10 bg-white/[0.03]" style={{left:`${x}%`}}><div className="text-center text-[9px] text-white/25 pt-1">A{i+1}</div></div>)}
             <div className="absolute left-[4%] bottom-[4%] rounded-lg border border-white/10 bg-black/80 px-2 py-1 text-[9px] text-white/40">ENTRANCE</div>
-            <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{left:`${px}%`,top:`${py}%`}}>
-              <div className="absolute -inset-4 rounded-full bg-primary/10 animate-ping"/><div className="relative h-8 w-8 rounded-full bg-primary text-black border-4 border-black flex items-center justify-center glow-primary"><MapPin className="h-4 w-4"/></div>
-            </div>
+            {hasRealMap ? (
+              <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{left:`${mapPoint[0]}%`,top:`${mapPoint[1]}%`}}>
+                <div className="absolute -inset-4 rounded-full bg-primary/10 animate-ping"/><div className="relative h-8 w-8 rounded-full bg-primary text-black border-4 border-black flex items-center justify-center glow-primary"><MapPin className="h-4 w-4"/></div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="rounded-2xl border border-amber-400/25 bg-black/80 px-4 py-3 text-center">
+                  <div className="text-xs font-bold text-amber-300">No verified store map on file</div>
+                  <div className="mt-1 text-[10px] text-white/45">Head to Aisle {item.aisle || "?"} · Shelf {item.shelf || "?"}</div>
+                </div>
+              </div>
+            )}
             <div className="absolute right-3 top-3 rounded-xl border border-primary/25 bg-black/80 px-3 py-2 text-right"><div className="text-[9px] text-white/40">TARGET</div><div className="text-xs font-bold text-primary">{item.aisle || "?"} · {item.shelf || "?"}</div></div>
           </div>
-          <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
+          <div className="p-3 text-[10px] text-white/35">Pin shows only with a verified store layout on file. Otherwise LOKIN guides by aisle and shelf — never an invented map position. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
         <div className="rounded-3xl border border-primary/20 lokin-panel lokin-card p-4">
