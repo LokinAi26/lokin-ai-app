@@ -14,6 +14,14 @@ function sourceConfidence(offer) {
   return 0.48;
 }
 
+export function pruneNulls(value) {
+  if (Array.isArray(value)) return value.map(pruneNulls).filter((item) => item !== null && item !== undefined);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== null && item !== undefined).map(([key, item]) => [key, pruneNulls(item)]));
+  }
+  return value;
+}
+
 export function normalizeOffer(offer = {}, context = {}) {
   const payout = finiteOrNull(offer.payout);
   const tip = finiteOrNull(offer.tip);
