@@ -46,6 +46,22 @@ export default function SessionSummaryModal({ summary, onClose }) {
           ))}
         </div>
 
+        {summary.preTrip && summary.preTrip.total > 0 && (
+          <div className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold tracking-[0.14em] text-white/50">PRE-TRIP CHECK</span>
+              <span className={`font-display font-black text-lg ${summary.preTrip.passed >= summary.preTrip.total ? "text-primary" : "text-white"}`}>
+                {summary.preTrip.passed}/{summary.preTrip.total}
+              </span>
+            </div>
+            <div className="mt-1 text-[10px] text-white/40">
+              {summary.preTrip.items.filter((i) => !i.ok).length === 0
+                ? "All checks passed ✓"
+                : `Needs attention: ${summary.preTrip.items.filter((i) => !i.ok).map((i) => i.label).join(", ")}`}
+            </div>
+          </div>
+        )}
+
         <SessionEfficiencyMap
           actualPath={summary.path || []}
           optimizedGeometry={summary.optimizedRoute?.geometry || []}

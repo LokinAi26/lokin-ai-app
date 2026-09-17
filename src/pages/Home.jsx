@@ -74,7 +74,18 @@ export default function Home() {
         /* recap still shows with $0 earnings if the read fails */
       }
     }
-    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute });
+    // Pre-trip checklist logged at session start — include it in the recap.
+    let preTrip = null;
+    try {
+      const checkRows = await base44.entities.TripCheck.filter({}, "-created_date", 1);
+      const rec = checkRows[0];
+      if (rec && snap.startedAt && new Date(rec.created_date).getTime() >= snap.startedAt - 60000) {
+        preTrip = { passed: rec.passed_count || 0, total: rec.total_count || 0, items: rec.items || [] };
+      }
+    } catch {
+      /* recap still renders without the checklist if the read fails */
+    }
+    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip });
   }
 
   async function resumeWork() {

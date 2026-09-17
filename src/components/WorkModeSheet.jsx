@@ -4,6 +4,7 @@ import { X, Radar, Move } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS } from "@/lib/deliveryLabels";
+import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
 
 export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   const [saving, setSaving] = useState(false);
   const [locked, setLocked] = useState(false);
   const [focusMode, setFocusMode] = useState("locked");
+  const [checks, setChecks] = useState([]);
 
   useEffect(() => {
     if (open) {
@@ -19,6 +21,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       setFilters(prefs?.work_filters || []);
       setLocked(false);
       setFocusMode("locked");
+      setChecks([]);
     }
   }, [open, prefs]);
 
@@ -39,6 +42,13 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       };
       if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, data);
       else await base44.entities.DriverPreference.create(data);
+      // Log the pre-trip checklist state as part of this session's notes.
+      await base44.entities.TripCheck.create({
+        checked_at: new Date().toISOString(),
+        items: PRE_TRIP_ITEMS.map((i) => ({ key: i.key, label: i.label, ok: checks.includes(i.key) })),
+        passed_count: checks.length,
+        total_count: PRE_TRIP_ITEMS.length,
+      });
       setLocked(true);
       onStarted?.();
       setTimeout(() => {
@@ -113,6 +123,12 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
                 );
               })}
             </div>
+
+            <PreTripChecklist
+              checked={checks}
+              onToggle={(key) => setChecks(checks.includes(key) ? checks.filter((k) => k !== key) : [...checks, key])}
+              onCheckAll={() => setChecks(PRE_TRIP_ITEMS.map((i) => i.key))}
+            />
 
             <button onClick={start} disabled={saving}
               className="w-full rounded-2xl glow-border lokin-panel radial-fade py-4 font-bold disabled:opacity-60 flex items-center justify-center gap-2">
