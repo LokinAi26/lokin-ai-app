@@ -9,46 +9,51 @@ import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
 
-// Navigation intents the assistant can execute hands-free.
+// Navigation intents — broad matching so drivers don't need exact phrasing.
+// Each entry lists loose keywords; any hit triggers the intent.
 const NAV_COMMANDS = [
-  { keys: ["earnings", "how much", "made today"], to: "/earnings", label: "Opening Earnings" },
-  { keys: ["go home", "home screen", "open home"], to: "/", label: "Going Home" },
-  { keys: ["route", "optimize", "best route", "plan my"], to: "/route", label: "Opening Route Optimizer" },
-  { keys: ["gas", "fuel", "find gas", "cheapest gas"], to: "/fuel", label: "Finding Gas" },
-  { keys: ["break", "play music", "music", "chill", "relax"], to: "/break-time", label: "Opening Break Time" },
-  { keys: ["safety", "sos", "emergency", "help me now"], to: "/safety", label: "Opening Safety" },
-  { keys: ["support", "report a bug", "billing"], to: "/support", label: "Opening Support" },
-  { keys: ["on the road", "truck stop", "rest area", "rv park"], to: "/on-the-road", label: "On The Road" },
-  { keys: ["vehicle", "mechanic", "maintenance", "car care"], to: "/vehicle-care", label: "Vehicle Care" },
-  { keys: ["brand", "merch", "apparel", "shiesty"], to: "/brand", label: "Opening Brand" },
-  { keys: ["settings", "preferences", "goals"], to: "/settings", label: "Opening Settings" },
-  { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode"], to: "/drive", label: "Opening Drive Mode" },
-  { keys: ["find item", "item locator", "locate item", "where is this item", "smart shop", "find everything"], to: "/locator", label: "Opening Smart Shop Item Locator" },
-  { keys: ["shop and deliver", "shopping orders", "shopping route"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
+  { keys: ["earning", "earn", "pay", "paid", "money made", "how much", "made today", "profit", "income", "take home", "payout", "dollars"], to: "/earnings", label: "Opening Earnings" },
+  { keys: ["go home", "home screen", "open home", "back home", "main screen", "dashboard"], to: "/", label: "Going Home" },
+  { keys: ["route", "routing", "optimize", "optimise", "best route", "plan my", "directions", "navigate", "fastest way", "shortest"], to: "/route", label: "Opening Route Optimizer" },
+  { keys: ["gas", "fuel", "petrol", "find gas", "cheapest gas", "gas station", "fill up", "diesel"], to: "/fuel", label: "Finding Gas" },
+  { keys: ["break", "break time", "play music", "music", "chill", "relax", "rest", "pause for"], to: "/break-time", label: "Opening Break Time" },
+  { keys: ["safety", "sos", "emergency", "help me", "help now", "danger", "unsafe", "911"], to: "/safety", label: "Opening Safety" },
+  { keys: ["support", "help", "report", "bug", "billing", "issue", "problem", "contact"], to: "/support", label: "Opening Support" },
+  { keys: ["on the road", "truck stop", "rest area", "rest stop", "rv park", "parking", "overnight"], to: "/on-the-road", label: "On The Road" },
+  { keys: ["vehicle", "car", "mechanic", "maintenance", "car care", "oil", "tire", "repair", "service"], to: "/vehicle-care", label: "Vehicle Care" },
+  { keys: ["brand", "merch", "apparel", "shiesty", "gear", "store", "shop brand"], to: "/brand", label: "Opening Brand" },
+  { keys: ["setting", "preference", "goal", "config", "options"], to: "/settings", label: "Opening Settings" },
+  { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode", "ride along", "chat with me"], to: "/drive", label: "Opening Drive Mode" },
+  { keys: ["find item", "item locator", "locate item", "where is", "smart shop", "find everything", "grocery", "shopping list", "locate product"], to: "/locator", label: "Opening Smart Shop Item Locator" },
+  { keys: ["shop and deliver", "shopping order", "shopping route", "grocery delivery", "instacart order", "spark order"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
 ];
 
+function normalizeText(text) {
+  return String(text || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function includesAny(text, phrases) {
-  const t = text.toLowerCase();
-  return phrases.some((p) => t.includes(p));
+  const t = normalizeText(text);
+  return phrases.some((p) => t.includes(normalizeText(p)));
 }
 
 const MUSIC_ACTIONS = [
-  { keys: ["play music", "play driving music", "start music", "play a station", "play some music"], action: "play", label: "Playing your drive music", nav: "/drive" },
-  { keys: ["pause music", "stop the music", "stop music", "pause the music"], action: "pause", label: "Pausing the music" },
-  { keys: ["next station", "next song", "skip this", "skip song", "next track", "skip"], action: "next", label: "Skipping to the next station" },
-  { keys: ["previous station", "last station", "previous song", "go back a station"], action: "prev", label: "Previous station" },
+  { keys: ["play music", "play driving music", "start music", "play a station", "play some music", "music on", "turn on music"], action: "play", label: "Playing your drive music", nav: "/drive" },
+  { keys: ["pause music", "stop the music", "stop music", "pause the music", "music off", "turn off music", "quiet"], action: "pause", label: "Pausing the music" },
+  { keys: ["next station", "next song", "skip this", "skip song", "next track", "skip", "next one"], action: "next", label: "Skipping to the next station" },
+  { keys: ["previous station", "last station", "previous song", "go back", "last song", "prev"], action: "prev", label: "Previous station" },
 ];
 
 function matchMusic(text) {
-  const t = text.toLowerCase();
-  for (const c of MUSIC_ACTIONS) if (c.keys.some((k) => t.includes(k))) return c;
+  const t = normalizeText(text);
+  for (const c of MUSIC_ACTIONS) if (c.keys.some((k) => t.includes(normalizeText(k)))) return c;
   return null;
 }
 
 function matchCommand(text) {
-  const t = text.toLowerCase();
+  const t = normalizeText(text);
   for (const c of NAV_COMMANDS) {
-    if (c.keys.some((k) => t.includes(k))) return c;
+    if (c.keys.some((k) => t.includes(normalizeText(k)))) return c;
   }
   return null;
 }
@@ -136,21 +141,21 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const prefs = prefsList[0] || null;
       const me = await base44.auth.me().catch(() => null);
 
-      if (includesAny(t, ["level up", "start work", "start my shift", "begin work"])) {
+      if (includesAny(t, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
         const next = { work_status: "working", break_active: false };
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
         if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
-        const msg = "Leveling up. You're locked in. AI GPS is ready.";
+        const msg = "Locked in. You're live — let's get it.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lock in", "locked in", "focus mode"])) {
+      if (includesAny(t, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
         const msg = "Locked in. Distractions minimized.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause"])) {
+      if (includesAny(t, ["pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
@@ -158,15 +163,15 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["resume", "resume work", "continue work", "lock back in"])) {
+      if (includesAny(t, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
-        const msg = "Welcome back. Recalculating and locking you back in.";
+        const msg = "Back at it. Locked in.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["tap out", "end work", "end my shift", "finish work"])) {
+      if (includesAny(t, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
