@@ -23,7 +23,7 @@ export default function ShiftMileageTracker() {
         miles,
         type: "business",
         purpose: "Work shift (auto-tracked)",
-        deduction: Math.round(miles * BUSINESS_RATE * 100) / 100,
+        deduction: Math.round(miles * DEDUCTION_RATE_PER_MILE * 100) / 100,
       }).catch(() => {});
     }
 

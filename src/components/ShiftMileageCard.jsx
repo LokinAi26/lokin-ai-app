@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Gauge } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { getShiftSnapshot, localDateString, subscribeShift } from "@/lib/shiftMileage";
+import { DEDUCTION_RATE_PER_MILE, getShiftSnapshot, localDateString, subscribeShift } from "@/lib/shiftMileage";
 
-// Home card: live shift mileage plus the day's total logged miles.
+// Home card: live shift mileage plus the day's total logged miles and the
+// potential tax savings those miles represent at the deduction rate.
 export default function ShiftMileageCard({ workStatus }) {
   const [shiftMiles, setShiftMiles] = useState(() => getShiftSnapshot().miles);
   const [loggedMiles, setLoggedMiles] = useState(null);
+  const [loggedSavings, setLoggedSavings] = useState(0);
 
   useEffect(() => subscribeShift((snap) => setShiftMiles(snap.miles)), []);
 
