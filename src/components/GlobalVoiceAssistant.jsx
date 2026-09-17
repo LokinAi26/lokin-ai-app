@@ -144,12 +144,20 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     setReply("");
 
     const t = command.toLowerCase();
+    // Strip a leading wake phrase ("hey lokin" / "hey lock in" / "ok lokin") before
+    // action matching, so "Hey lock in, I wanna make $200 today..." is heard as a
+    // question for the AI, not as the LOCK IN action.
+    const core = t.replace(/^(hey|ok|okay)\s+(lokin|lock\s*in)\b[\s,.]*/i, "").trim();
+    // Session actions (lock in / pause / resume / tap out / start work) only fire on
+    // short commands. A full sentence that merely CONTAINS one of those phrases is
+    // a question for the AI, not a button press.
+    const actionText = core.split(/\s+/).filter(Boolean).length <= 6 ? core : "";
     try {
       const prefsList = await base44.entities.DriverPreference.filter({});
       const prefs = prefsList[0] || null;
       const me = await base44.auth.me().catch(() => null);
 
-      if (includesAny(t, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
+      if (includesAny(actionText, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
         const next = { work_status: "working", break_active: false };
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
@@ -158,12 +166,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
+      if (includesAny(actionText, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
         const msg = "Locked in.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
+      if (includesAny(actionText, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
@@ -171,7 +179,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
+      if (includesAny(actionText, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
@@ -179,7 +187,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
+      if (includesAny(actionText, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
