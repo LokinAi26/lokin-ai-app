@@ -30,7 +30,7 @@ export const GPS_ACCURACY_MODES = {
     id: "high",
     label: "High Accuracy",
     nativeMode: "activeNavigation",
-    webOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+    webOptions: { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 },
     description: "Best fix quality for active turn-by-turn navigation.",
   },
   balanced: {
