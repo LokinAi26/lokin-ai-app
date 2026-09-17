@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { authorizeCapability, CAPABILITY_BROKER_VERSION } from '../../shared/capabilityBroker.js';
 import { AGENT_CIRCUIT_BREAKER_VERSION, AGENT_SESSION_STATUS, defaultAgentBudgets, evaluateAgentSession, summarizeAgentEvents } from '../../shared/agentCircuitBreaker.js';
-import { normalizeOffer, OFFER_NORMALIZER_VERSION } from '../../shared/offerNormalizer.js';
+import { normalizeOffer, pruneNulls, OFFER_NORMALIZER_VERSION } from '../../shared/offerNormalizer.js';
 import { authorizePhysicalCapability, listPhysicalCapabilityPolicies, PHYSICAL_CAPABILITY_BROKER_VERSION } from '../../shared/physicalCapabilityBroker.js';
 import { offerVisibleToUser } from '../../shared/offerAccess.js';
 
@@ -134,7 +134,7 @@ export default async function(req:Request){
       if(!offer)return Response.json({error:'OFFER_REQUIRED'},{status:400});
       const normalized=normalizeOffer(offer,{...(body.context||{}),owner_user_id:user.id});
       if(body.persist===true){
-        const created=await base44.asServiceRole.entities.NormalizedOffer.create({...normalized,owner_user_id:user.id,visibility:'private'});
+        const created=await base44.asServiceRole.entities.NormalizedOffer.create(pruneNulls({...normalized,owner_user_id:user.id,visibility:'private'}));
         return Response.json({ok:true,normalized:created});
       }
       return Response.json({ok:true,normalized});
