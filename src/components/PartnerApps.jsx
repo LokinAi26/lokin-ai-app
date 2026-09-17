@@ -5,14 +5,16 @@ import { ExternalLink } from "lucide-react";
 // "doordash://" is the CONSUMER app (opens Grocery, not Dasher); the other six
 // schemes don't exist as registered iOS schemes, so taps silently did nothing.
 // Verified: Grubhub universal link (AASA confirmed) + App Store URLs for rest.
+// 2026-09-17: Shipt Shopper added (Kendall accepted as Shipt shopper); App Store id 976353472 verified via appadvice/similarweb.
 const PARTNERS = [
   { name: "DoorDash Dasher", deep: "", store: "https://apps.apple.com/app/id1451754591", color: "text-red-400", letter: "D" },
   { name: "Uber Driver", deep: "", store: "https://apps.apple.com/app/id1131342792", color: "text-white", letter: "U" },
   { name: "Amazon Flex", deep: "", store: "https://apps.apple.com/app/id1454725763", color: "text-amber-400", letter: "A" },
   { name: "Instacart Shopper", deep: "", store: "https://apps.apple.com/app/id1454056744", color: "text-emerald-400", letter: "I" },
   { name: "Grubhub Driver", deep: "https://driver.grubhub.com/launch/", store: "https://apps.apple.com/app/id1452071632", color: "text-orange-400", letter: "G" },
-  { name: "Spark (Walmart)", deep: "", store: "https://apps.apple.com/app/id1483998235", color: "text-blue-400", letter: "S" },
+  { name: "Spark (Walmart)", deep: "", store: "https://apps.apple.com/app/id1483998235", color: "text-blue-400", letter: "W" },
   { name: "Veho Driver", deep: "", store: "https://apps.apple.com/app/id1457078986", color: "text-teal-400", letter: "V" },
+  { name: "Shipt Shopper", deep: "", store: "https://apps.apple.com/app/id976353472", color: "text-green-400", letter: "S" },
 ];
 
 export default function PartnerApps() {
