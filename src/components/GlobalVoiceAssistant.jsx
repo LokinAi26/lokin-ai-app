@@ -313,11 +313,19 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply("Voice recognition stopped. Tap the microphone to retry.");
       }
     };
-    recRef.current = rec;
-    try { rec.start(); } catch {
-      setListening(false);
-      setReply("Voice recognition could not start. Tap the microphone to retry.");
-    }
+      recRef.current = rec;
+      try { rec.start(); } catch {
+        setListening(false);
+        setReply("Voice recognition could not start. Tap the microphone to retry.");
+      }
+    };
+
+    // Stop the wake recognizer first. iOS stop() is asynchronous — starting the
+    // one-shot immediately causes mic-session contention (the "only works with
+    // wake toggle off" bug). A 400ms release window fixes it.
+    const wake = wakeRef.current;
+    if (wake) { try { wake.stop(); } catch {} }
+    setTimeout(beginOnce, wake ? 400 : 0);
   }
 
   // One command ingress for UI controls, deep links, Siri/App Intents,
