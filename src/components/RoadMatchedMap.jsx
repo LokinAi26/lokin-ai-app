@@ -4,6 +4,7 @@ import MapQualityMenu from "@/components/map/MapQualityMenu";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
 import LiveVectorMap from "@/components/LiveVectorMap";
+import FuelDealsOverlay from "@/components/map/FuelDealsOverlay";
 
 const MAP_W = 640;
 const MAP_H = 420;
@@ -564,6 +565,8 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             )}
           </div>
         )}
+
+        <FuelDealsOverlay fullscreen={fullscreen} />
 
         {rerouting && (
           <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(4.9rem+env(safe-area-inset-top))]" : "top-14"}`}>
