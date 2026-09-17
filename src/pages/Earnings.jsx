@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
 import EarningsSummary from "@/components/earnings/EarningsSummary";
+import HourlyProfitability from "@/components/earnings/HourlyProfitability";
 import WeeklyZoneTrend from "@/components/earnings/WeeklyZoneTrend";
 import ZoneComparison from "@/components/earnings/ZoneComparison";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -192,6 +193,8 @@ export default function Earnings() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {!loading && <HourlyProfitability records={records} />}
 
       {!loading && <WeeklyZoneTrend records={records} />}
       {!loading && <ZoneComparison records={records} />}
