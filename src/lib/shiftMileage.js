@@ -8,6 +8,10 @@ const MIN_STEP_M = 6; // discard GPS jitter under ~6 m
 const MAX_SPEED_MPS = 42; // discard impossible jumps (~94 mph)
 const METERS_PER_MILE = 1609.344;
 
+// IRS-style business mileage deduction rate ($/mile) — the single source for
+// auto-log entries and the potential-tax-savings display.
+export const DEDUCTION_RATE_PER_MILE = 0.7;
+
 function haversineMeters(a, b) {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const R = 6371000;

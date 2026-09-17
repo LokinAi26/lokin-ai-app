@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus } from "@/lib/sessionState";
-import { beginShiftTracking, endShiftTracking, localDateString, suspendShiftTracking } from "@/lib/shiftMileage";
+import { beginShiftTracking, DEDUCTION_RATE_PER_MILE, endShiftTracking, localDateString, suspendShiftTracking } from "@/lib/shiftMileage";
 
 const MIN_COMMIT_MILES = 0.05;
-const BUSINESS_RATE = 0.7; // matches the Tax mileage deduction rate
 
 // Invisible controller that keeps GPS shift tracking aligned with the
 // persisted work session: working → track, paused → suspend, off → commit
