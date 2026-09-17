@@ -4,6 +4,9 @@ import { createFreshEvaluationSuite } from '../../shared/dynamicEvaluation.js';
 import { evaluateResponse, routeModel, MODEL_ROUTER_VERSION } from '../../shared/modelRouter.js';
 import { chooseSpeechProvider, SPEECH_ROUTER_VERSION } from '../../shared/speechRouter.js';
 import { authorizeCapability, listCapabilityPolicies, CAPABILITY_BROKER_VERSION } from '../../shared/capabilityBroker.js';
+import { AGENT_CIRCUIT_BREAKER_VERSION } from '../../shared/agentCircuitBreaker.js';
+import { OFFER_NORMALIZER_VERSION } from '../../shared/offerNormalizer.js';
+import { PHYSICAL_CAPABILITY_BROKER_VERSION } from '../../shared/physicalCapabilityBroker.js';
 import { adapterStatus, buildGatewayPlan } from '../../shared/externalIntelligenceAdapters.js';
 import { searchMemoryRows, memoryTimeline, getMemoryObservations, MEMORY_RETRIEVAL_VERSION } from '../../shared/memoryRetrieval.js';
 import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
@@ -31,7 +34,7 @@ export default async function(req:Request){
     headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),
     claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')
    });
-   return Response.json({status:'READY',versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION,memory_retrieval:MEMORY_RETRIEVAL_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},external_adapters:adapters,gateway_plan:buildGatewayPlan({omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')},{capability:'ai.infer'}),capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
+   return Response.json({status:'READY',versions:{model_router:MODEL_ROUTER_VERSION,speech_router:SPEECH_ROUTER_VERSION,capability_broker:CAPABILITY_BROKER_VERSION,memory_retrieval:MEMORY_RETRIEVAL_VERSION,agent_circuit_breaker:AGENT_CIRCUIT_BREAKER_VERSION,offer_normalizer:OFFER_NORMALIZER_VERSION,physical_capability_broker:PHYSICAL_CAPABILITY_BROKER_VERSION},model_evaluation:{status:evaluations.length?'READY':'NO_EVALUATION_DATA',recent:evaluations},speech:{status:configured.length?'READY':'SETUP_REQUIRED',providers:speech},external_adapters:adapters,gateway_plan:buildGatewayPlan({omniroute_base_url:secrets.get('OMNIROUTE_BASE_URL'),omniroute_token:secrets.get('OMNIROUTE_TOKEN'),headroom_base_url:secrets.get('HEADROOM_BASE_URL'),headroom_token:secrets.get('HEADROOM_API_KEY'),claude_code_observer_token:secrets.get('LOKIN_AGENT_OBSERVER_TOKEN')},{capability:'ai.infer'}),agent_execution_control:{policy_status:'READY',persistent_sessions:true,append_only_audit:true,executor_preflight_integration:'REQUIRED',strict_distributed_atomic_counter:'NOT_CLAIMED'},mobility_normalization:{status:'READY',operator_neutral:true,automatic_platform_action:false},vision_physical_policy:{status:'READY',direct_hardware_execution:false},capabilities:listCapabilityPolicies(),automatic_promotion:false,arbitrary_shell:false});
   }
 
   if(action==='generate_dynamic_suite'){
