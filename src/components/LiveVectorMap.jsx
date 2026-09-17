@@ -131,11 +131,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      // Dark casing under the neon line: the active route reads clearly over
-      // night basemaps and busy satellite texture while driving.
+      // Thin dark edge for definition — narrow so the neon dominates.
       "line-color": "#060B04",
-      "line-opacity": 0.92,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 13, 17, 26],
+      "line-opacity": 0.95,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 16],
     },
   });
   map.addLayer({
@@ -307,7 +306,7 @@ export default function LiveVectorMap({
           style: styleUrl(style),
           center: initial,
           zoom: snappedPosition?.coordinate ? (perspective ? 16.6 : 16.8) : 13,
-          bearing: perspective ? Number(heading || 0) : 0,
+          bearing: Number(heading || 0),
           pitch: perspective ? 78 : 0,
           antialias: true,
           attributionControl: false,
@@ -504,7 +503,7 @@ export default function LiveVectorMap({
         center: target,
         offset: driverLockOffset(map, perspective),
         zoom: targetZoom,
-        bearing: perspective ? Number(heading || 0) : 0,
+        bearing: Number(heading || 0),
         pitch: perspective ? preferredPitchRef.current : 0,
         duration,
         easing: (value) => value * value * (3 - 2 * value),
