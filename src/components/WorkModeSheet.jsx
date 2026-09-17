@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { X, Radar, Move } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
-import { WORK_MODES, WORK_FILTERS } from "@/lib/deliveryLabels";
+import { WORK_MODES, WORK_FILTERS, CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
+import { setShiftCategory } from "@/lib/shiftMileage";
 import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
 
 export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
@@ -13,6 +14,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   const [saving, setSaving] = useState(false);
   const [locked, setLocked] = useState(false);
   const [focusMode, setFocusMode] = useState("locked");
+  const [category, setCategory] = useState("mixed");
   const [checks, setChecks] = useState([]);
 
   useEffect(() => {
@@ -21,6 +23,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       setFilters(prefs?.work_filters || []);
       setLocked(false);
       setFocusMode("locked");
+      setCategory("mixed");
       setChecks([]);
     }
   }, [open, prefs]);
@@ -34,6 +37,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   async function start() {
     setSaving(true);
     try {
+      setShiftCategory(category);
       const data = {
         work_status: "working",
         break_active: false,
@@ -90,6 +94,20 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
                   <button key={m.value} onClick={() => toggle(modes, setModes, m.value)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${on ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
                     {m.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80 mb-2">Session Category</div>
+            <div className="text-[11px] text-white/40 mb-2">Tag this session — LOKIN tracks which categories earn the most over time.</div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[{ value: "mixed", label: "Mixed" }, ...CATEGORY_OPTIONS].map((c) => {
+                const on = category === c.value;
+                return (
+                  <button key={c.value} onClick={() => setCategory(c.value)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${on ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50"}`}>
+                    {c.label}
                   </button>
                 );
               })}

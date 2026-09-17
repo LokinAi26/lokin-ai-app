@@ -3,6 +3,7 @@
 // across navigation/app restarts, and hands the shift's miles to the caller
 // when the shift ends so they can be logged.
 const STORAGE_KEY = "lokin_shift_mileage";
+const PENDING_CATEGORY_KEY = "lokin_shift_category";
 const MAX_ACCURACY_M = 60; // discard weak fixes entirely
 const MIN_STEP_M = 6; // discard GPS jitter under ~6 m
 const MAX_SPEED_MPS = 42; // discard impossible jumps (~94 mph)
@@ -38,6 +39,30 @@ function writeState(state) {
     else localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* storage unavailable */
+  }
+}
+
+// Tag the current (or next) shift with a delivery category, e.g. 'Food' or
+// 'Grocery'. The pending key lets the Work Mode sheet set the tag before the
+// session status flips to working and tracking begins.
+export function setShiftCategory(category) {
+  try {
+    localStorage.setItem(PENDING_CATEGORY_KEY, JSON.stringify(category || null));
+    const state = readState();
+    if (state) writeState({ ...state, category: category || null });
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function takePendingCategory() {
+  try {
+    const raw = localStorage.getItem(PENDING_CATEGORY_KEY);
+    if (raw == null) return null;
+    localStorage.removeItem(PENDING_CATEGORY_KEY);
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
 }
 
@@ -103,20 +128,21 @@ function stopWatch() {
 
 export function getShiftSnapshot() {
   const state = readState();
-  if (!state) return { active: false, meters: 0, miles: 0, startedAt: null };
+  if (!state) return { active: false, meters: 0, miles: 0, startedAt: null, category: null };
   const meters = Number(state.meters) || 0;
   return {
     active: true,
     meters,
     miles: meters / METERS_PER_MILE,
     startedAt: state.startedAt || null,
+    category: state.category || null,
     path: Array.isArray(state.path) ? state.path : [],
   };
 }
 
 // Begin (or resume after a reload) tracking the current shift.
 export function beginShiftTracking() {
-  if (!readState()) writeState({ startedAt: Date.now(), meters: 0, lastFix: null });
+  if (!readState()) writeState({ startedAt: Date.now(), meters: 0, lastFix: null, category: takePendingCategory() });
   startWatch();
   notify();
 }

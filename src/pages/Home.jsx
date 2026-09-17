@@ -85,7 +85,19 @@ export default function Home() {
     } catch {
       /* recap still renders without the checklist if the read fails */
     }
-    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip });
+    // Persist the tagged session so category profitability can be tracked over time.
+    if (me?.id) {
+      base44.entities.DriverSession.create({
+        user_id: me.id,
+        status: "ended",
+        category: snap.category || "mixed",
+        started_at: new Date(snap.startedAt || endedAt).toISOString(),
+        ended_at: new Date(endedAt).toISOString(),
+        miles: Math.round((snap.miles || 0) * 100) / 100,
+        earnings: Math.round(earnings * 100) / 100,
+      }).catch(() => {});
+    }
+    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip, category: snap.category || "mixed" });
   }
 
   async function resumeWork() {

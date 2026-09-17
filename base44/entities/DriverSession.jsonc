@@ -36,6 +36,31 @@
     },
     "notes": {
       "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food_pickup",
+        "grocery_shop_deliver",
+        "grocery_pickup",
+        "retail",
+        "package",
+        "alcohol",
+        "pharmacy",
+        "mixed"
+      ],
+      "default": "mixed",
+      "description": "Delivery category tag for this session, used for category profitability analytics."
+    },
+    "miles": {
+      "type": "number",
+      "default": 0,
+      "description": "GPS-tracked miles driven during this session."
+    },
+    "earnings": {
+      "type": "number",
+      "default": 0,
+      "description": "Gross earnings logged during this session."
     }
   },
   "required": [

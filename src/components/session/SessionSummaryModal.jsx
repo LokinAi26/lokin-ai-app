@@ -1,5 +1,6 @@
 import { Banknote, Gauge, TrendingUp } from "lucide-react";
 import SessionEfficiencyMap from "@/components/session/SessionEfficiencyMap";
+import { sessionCategoryLabel } from "@/lib/deliveryLabels";
 
 function fmtDuration(ms) {
   const mins = Math.round(Math.max(0, ms) / 60000);
@@ -34,6 +35,13 @@ export default function SessionSummaryModal({ summary, onClose }) {
             ? `${fmtDuration(summary.endedAt - summary.startedAt)} on the road`
             : "No GPS session recorded"}
         </div>
+        {summary.category && (
+          <div className="mt-2 text-center">
+            <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+              {sessionCategoryLabel(summary.category)}
+            </span>
+          </div>
+        )}
 
         <div className="mt-4 space-y-2">
           {rows.map((r) => (
