@@ -244,8 +244,15 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         },
       });
       const data = res.data;
-      setReply(data.reply || "I didn't catch that.");
-      speak(data.reply || "I didn't catch that.");
+      const replyText = data.reply || "I didn't catch that.";
+      setReply(replyText);
+      speak(replyText);
+      // Conversation memory: last 10 exchanges for context continuity.
+      transcriptHistoryRef.current = [
+        ...transcriptHistoryRef.current,
+        { role: "driver", text: command },
+        { role: "lokin", text: replyText },
+      ].slice(-10);
     } catch (e) {
       if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
         setPendingAiCommand(command);
