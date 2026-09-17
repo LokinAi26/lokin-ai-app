@@ -1,6 +1,7 @@
 import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk";
 import { offerVisibleToUser, privateOfferScope } from "../../shared/offerAccess.js";
+import { normalizeOffer, pruneNulls } from "../../shared/offerNormalizer.js";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
 const CATEGORIES = new Set(["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package", "alcohol", "pharmacy"]);
@@ -173,9 +174,18 @@ export default async function ingestLocalOffer(req: Request) {
       status: "available",
     });
 
+    const normalized = normalizeOffer(offer, { owner_user_id: String(user.id), operator_type: "HUMAN" });
+    const normalizedRow = await base44.asServiceRole.entities.NormalizedOffer.create(
+      pruneNulls({ ...normalized, owner_user_id: String(user.id), visibility: "private" }),
+    ).catch((error: unknown) => {
+      console.error("local offer normalization projection failed", error);
+      return null;
+    });
+
     return json({
       ok: true,
       duplicate: false,
+      normalization: { status: normalizedRow ? "ready" : "pending_retry", normalized_offer_id: normalizedRow?.id || null },
       offer: {
         id: offer.id,
         merchant: offer.merchant,
