@@ -67,6 +67,17 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+
+  // Active delivery points in the already-optimized sequence, for the 3D map's
+  // clustered stop layer (1 → N fastest, fuel-saving order).
+  const deliveryStops = useMemo(() => {
+    return (nav.geocodedDestinations || [])
+      .map((g, i) => ({
+        sequence: i + 1,
+        coordinate: [Number(g.longitude), Number(g.latitude)],
+      }))
+      .filter((s) => Number.isFinite(s.coordinate[0]) && Number.isFinite(s.coordinate[1]));
+  }, [nav.geocodedDestinations]);
   // A nav=1 URL without a resolved destination used to enter the locked GPS
   // surface with no destination field or escape control, which looked frozen.
   // Only activate the locked navigation surface after a real target exists.
@@ -142,6 +153,7 @@ export default function AiGps() {
         setMapView={setMapView}
         routeLoadError={routeLoadError}
         loadingStops={loadingStops}
+        deliveryStops={deliveryStops}
         destinationAddresses={destinationAddresses}
         onOpenAppFreeRoam={openAppFreeRoam}
         onExit={() => navigate("/", { replace: true })}
@@ -284,9 +296,15 @@ export default function AiGps() {
             <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
             <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
           </div>
+          {deliveryStops.length > 1 && (
+            <div className="text-center text-[9px] font-extrabold tracking-[0.14em] text-primary/80">
+              ● PINNED {deliveryStops.length} STOPS · NUMBERED 1–{deliveryStops.length} IN YOUR FASTEST, FUEL-SAVING ORDER · ZOOM OUT TO CLUSTER
+            </div>
+          )}
           {mapView === "real" ? (
             <RoadMatchedMap
               routeGeometry={nav.route.geometry}
+              deliveryStops={deliveryStops}
               snappedPosition={nav.snappedPosition}
               maneuver={nav.maneuver}
               remainingDurationS={nav.remainingDurationS}

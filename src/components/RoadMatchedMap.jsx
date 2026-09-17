@@ -108,7 +108,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -472,6 +472,7 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           {rendererMode !== "fallback" ? (
             <LiveVectorMap
               routeGeometry={activeRouteGeometry}
+              deliveryStops={deliveryStops}
               snappedPosition={snappedPosition}
               perspective={perspective}
               followDriver={followDriver}
@@ -498,6 +499,16 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
+              {!perspective && deliveryStops.map((stop, i) => {
+                const point = markerViewport ? project(stop.coordinate, markerViewport, renderW, renderH) : null;
+                if (!point) return null;
+                return (
+                  <g key={`${stop.sequence ?? i}-${stop.coordinate?.[0] ?? i}`} transform={`translate(${point.x},${point.y})`}>
+                    <circle r="10" fill="#8FE44E" stroke="#06100A" strokeWidth="2.5" />
+                    <text textAnchor="middle" dy="3.5" fontSize="10" fontWeight="800" fill="#06100A">{stop.sequence || i + 1}</text>
+                  </g>
+                );
+              })}
               {driverPoint && (
                 <g
                   style={{
