@@ -682,7 +682,7 @@ const VOICE_CSS = `
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 ${full ? "overflow-y-auto bg-black" : "flex items-end justify-center"}`}
+            className={`fixed inset-0 z-[1100] ${full ? "overflow-y-auto bg-black" : "flex items-end justify-center"}`}
             onClick={() => setOpen(false)}
           >
             <div className={`absolute inset-0 ${full ? "bg-black" : "bg-black/60 backdrop-blur-sm"}`} />
