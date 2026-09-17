@@ -6,6 +6,7 @@ import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
+import { speakText, setStoredVoiceURI, getStoredVoiceURI } from "@/lib/lokinVoice";
 
 const QUICK = [
   "What should I do next?",
