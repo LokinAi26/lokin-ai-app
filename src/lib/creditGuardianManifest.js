@@ -24,6 +24,7 @@ export const CREDIT_GUARDIAN_MANIFEST = {
   "getTicker": { tier: "CACHE", ttl: 300000, reason: "read-only ticker" },
   "scanOpportunities": { tier: "ON_DEMAND", ttl: 900000, reason: "expensive scan; user-triggered/batched" },
   "external-ai-gateway": { tier: "EXTERNAL_PROVIDER", ttl: 0, reason: "owner-controlled AI provider behind Base44 secure backend" },
+  "voice-pipeline": { tier: "EXTERNAL_PROVIDER", ttl: 0, reason: "owner-controlled voice transcription + speech via secure backend" },
   "lokinAssistant": { tier: "EXTERNALIZE", ttl: 0, reason: "legacy Base44 AI path; migrate to external-ai-gateway" },
   "lokinSupport": { tier: "EXTERNALIZE", ttl: 0, reason: "support AI candidate for owner-controlled provider" },
   "aiTextAssist": { tier: "EXTERNALIZE", ttl: 0, reason: "frequent generative AI call" },
