@@ -32,6 +32,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [prefs, setPrefs] = useState(null);
   const [data, setData] = useState(null);
+  const [todayEarnings, setTodayEarnings] = useState(null);
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
@@ -131,8 +132,26 @@ export default function Home() {
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
 
+  // Real-time goal progress: recompute today's earnings whenever a delivery
+  // is logged (or edited), so the progress bar updates without a refresh.
+  async function refreshTodayEarnings() {
+    try {
+      const key = new Date().toISOString().slice(0, 10);
+      const rows = await base44.entities.Earning.filter({ date: key });
+      setTodayEarnings(rows.reduce((s, r) => s + (r.amount || 0), 0));
+    } catch {
+      /* keep the last known value */
+    }
+  }
+
+  useEffect(() => {
+    refreshTodayEarnings();
+    const unsubscribe = base44.entities.Earning.subscribe(() => refreshTodayEarnings());
+    return unsubscribe;
+  }, []);
+
   const dailyGoal = prefs?.daily_goal || 150;
-  const today = data?.todayEarnings || 0;
+  const today = todayEarnings ?? (data?.todayEarnings || 0);
   const remaining = Math.max(0, dailyGoal - today);
   const pct = Math.min(100, Math.round((today / Math.max(1, dailyGoal)) * 100));
   const netPerHour = data?.stats?.perHour || 0;
@@ -188,13 +207,18 @@ export default function Home() {
         <div className="lk-card-goal w-full max-w-none mt-4">
           <div className="flex items-center justify-between">
             <div className="eyebrow"><Activity className="h-3.5 w-3.5 text-primary" /> TODAY&apos;S GOAL</div>
+            {working && (
+              <span className="flex items-center gap-1 text-[9px] font-bold tracking-[0.14em] text-primary">
+                <i className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 6px #7CFC1E" }} /> LIVE
+              </span>
+            )}
             <Link to="/settings" className="inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/[0.07] px-3 py-1.5 font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-primary active:scale-95 transition-transform" style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
               <Settings className="h-3.5 w-3.5" /> GOAL SETTINGS
             </Link>
           </div>
           <div className="amt">${dailyGoal}</div>
           <div className="track">
-            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--brand-secondary), var(--brand-lime))", boxShadow: "0 0 14px rgba(124,252,30,.7)" }} />
+            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--brand-secondary), var(--brand-lime))", boxShadow: "0 0 14px rgba(124,252,30,.7)", transition: "width .4s ease" }} />
             <span style={{ left: `calc(${pct}% - 8px)` }} />
           </div>
           <div className="row">
