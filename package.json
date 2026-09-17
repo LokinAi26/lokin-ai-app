@@ -19,6 +19,7 @@
     "verify:native-location": "node scripts/verify-native-location-packaging.mjs",
     "verify:vision-xr": "node scripts/verify-vision-xr-packaging.mjs",
     "verify:control-plane": "node scripts/verify-control-plane.mjs",
+    "verify:platform": "node scripts/verify-platform-architecture.mjs && node scripts/verify-control-plane.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },
