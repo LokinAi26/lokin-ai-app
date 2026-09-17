@@ -3,7 +3,6 @@ import { Volume2 } from "lucide-react";
 import {
   loadVoices,
   onVoices,
-  getVoiceOptions,
   getStoredVoiceURI,
   setStoredVoiceURI,
   speakText,
