@@ -6,7 +6,7 @@ import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
-import { speakText } from "@/lib/lokinVoice";
+import { speakLokin, TTS_VOICES, getTtsVoice, setTtsVoice, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio } from "@/lib/lokinVoicePipeline";
 
 const QUICK = [
   "What should I do next?",
@@ -291,8 +291,8 @@ export default function LokinAI() {
   const [draft, setDraft] = useState(null);
   const recRef = useRef(null);
   const scrollRef = useRef(null);
-  const [voices, setVoices] = useState([]);
-  const [voiceURI, setVoiceURI] = useState(() => localStorage.getItem("lokin_voice") || "");
+  const [voiceId, setVoiceId] = useState(() => getTtsVoice());
+  const pipeRecRef = useRef(null);
   const [learning, setLearning] = useState({ enabled: true, memoryCount: 0, profileVersion: 1 });
   const [consentRequired, setConsentRequired] = useState(false);
   const [pendingAiCommand, setPendingAiCommand] = useState("");
@@ -311,13 +311,6 @@ export default function LokinAI() {
         profileVersion: res.data?.profile?.version || 1,
       }))
       .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    function loadVoices() { setVoices(window.speechSynthesis?.getVoices() || []); }
-    loadVoices();
-    window.speechSynthesis?.addEventListener?.("voiceschanged", loadVoices);
-    return () => window.speechSynthesis?.removeEventListener?.("voiceschanged", loadVoices);
   }, []);
 
   useEffect(() => {
@@ -410,7 +403,29 @@ export default function LokinAI() {
     }
   }
 
-  function startListening() {
+  async function startListening() {
+    // Gateway voice pipeline first: tap to talk, tap again to stop early.
+    if (canRecordVoice()) {
+      if (pipeRecRef.current) { try { pipeRecRef.current.stop(); } catch {} return; }
+      unlockVoiceAudio();
+      setListening(true);
+      try {
+        const rec = await startVoiceRecording({ maxMs: 15000 });
+        pipeRecRef.current = rec;
+        const blob = await rec.done;
+        pipeRecRef.current = null;
+        setListening(false);
+        if (!blob || blob.size < 800) return;
+        const text = await transcribeVoiceBlob(blob);
+        if (!text.trim()) return;
+        setTranscript(text);
+        ask(text);
+      } catch {
+        pipeRecRef.current = null;
+        setListening(false);
+      }
+      return;
+    }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       ask("What should I do next?");
@@ -432,13 +447,13 @@ export default function LokinAI() {
   }
 
   function speak(text) {
-    // Shared LOKIN voice: respects the global male/female pick + iOS workarounds.
-    speakText(text, { rate: 1.05 });
+    // Gateway voice pipeline: real speech audio that plays in the native iOS app.
+    speakLokin(text, { rate: 1.05 });
   }
 
-  function pickVoice(uri) {
-    setVoiceURI(uri);
-    localStorage.setItem("lokin_voice", uri);
+  function pickVoice(id) {
+    setVoiceId(id);
+    setTtsVoice(id);
     speak("LOKIN online. Locked in.");
   }
 
@@ -472,13 +487,12 @@ export default function LokinAI() {
             </div>
             <label className="select-wrap">
               <select
-                value={voiceURI || "default"}
-                onChange={(e) => pickVoice(e.target.value === "default" ? "" : e.target.value)}
+                value={voiceId}
+                onChange={(e) => pickVoice(e.target.value)}
                 aria-label="Voice selection"
               >
-                <option value="default">System default</option>
-                {voices.map((v) => (
-                  <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
+                {TTS_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>{v.label} — {v.hint}</option>
                 ))}
               </select>
             </label>
