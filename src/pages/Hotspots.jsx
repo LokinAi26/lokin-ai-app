@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap, Polyline } from
 import "leaflet/dist/leaflet.css";
 import { Flame, Crosshair, TrendingUp, MapPin } from "lucide-react";
 import ZoneAlertMonitor from "@/components/ZoneAlertMonitor";
+import TimeHeatGrid from "@/components/hotspots/TimeHeatGrid";
 import HeadHereBeacon, { pickHeadZones } from "@/components/hotspots/HeadHereBeacon";
 import {
   PLATFORMS, METRICS, DEFAULT_CENTER, buildHotspots, heatColor, metricValue, metricDisplay,
@@ -184,6 +185,9 @@ export default function Hotspots() {
           HOTSPOTS · NOT NAVIGATION
         </div>
       </div>
+
+      {/* Best times to drive per zone — shift-planning heat grid */}
+      <TimeHeatGrid zones={visible} onFocus={(coords) => setFlyTo(coords)} />
 
       {/* Zone ranking */}
       <div>
