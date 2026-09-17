@@ -62,6 +62,10 @@ export default function ShowcaseFooter() {
         </div>
         <div className="mt-5 font-display text-sm tracking-[0.28em] text-primary text-glow">LOCK IN. LEVEL UP.</div>
         <div className="mt-1 text-[10px] tracking-[0.2em] text-white/30">DRIVE SAFER. WORK SMARTER. LIVE SIMPLER.</div>
+        <div className="mt-5 border-t border-white/10 pt-4">
+          <div className="text-xs text-white/60 max-w-md mx-auto leading-relaxed">Built by a highly decorated Dasher — to build highly decorated drivers all around the world.</div>
+          <div className="mt-2 text-[10px] tracking-[0.24em] text-primary/80 font-display">PLATINUM DASHER · 5.0 RATING</div>
+        </div>
       </div>
     </section>
   );
