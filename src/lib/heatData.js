@@ -82,12 +82,13 @@ export function buildHotspots(center) {
 }
 
 // Shift-planning time blocks (model data, same simulated preview as the seeds).
+// startHour/endHour are local clock hours; "late" runs 21–25 (past midnight).
 export const TIME_BLOCKS = [
-  { id: "early", label: "5–9 AM" },
-  { id: "lunch", label: "10–2" },
-  { id: "afternoon", label: "2–5 PM" },
-  { id: "dinner", label: "5–9 PM" },
-  { id: "late", label: "9 PM–1 AM" },
+  { id: "early", label: "5–9 AM", startHour: 5, endHour: 9 },
+  { id: "lunch", label: "10 AM–2 PM", startHour: 10, endHour: 14 },
+  { id: "afternoon", label: "2–5 PM", startHour: 14, endHour: 17 },
+  { id: "dinner", label: "5–9 PM", startHour: 17, endHour: 21 },
+  { id: "late", label: "9 PM–1 AM", startHour: 21, endHour: 25 },
 ];
 
 // Relative demand multiplier per zone per time block — how each area's $/hr
