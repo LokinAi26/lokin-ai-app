@@ -10,6 +10,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
 import { getShiftSnapshot } from "@/lib/shiftMileage";
+import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
@@ -54,6 +55,7 @@ export default function Home() {
     if (!prefs?.id) return;
     // Capture the live shift before the status change ends GPS tracking.
     const snap = getShiftSnapshot();
+    const optimizedRoute = loadSessionRouteRecord();
     const endedAt = Date.now();
     const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
     setPrefs(updated);
@@ -72,7 +74,7 @@ export default function Home() {
         /* recap still shows with $0 earnings if the read fails */
       }
     }
-    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt });
+    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute });
   }
 
   async function resumeWork() {

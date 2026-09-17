@@ -9,6 +9,7 @@ import useLokinNavigation from "@/hooks/useLokinNavigation";
 import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
+import { saveSessionRouteRecord } from "@/lib/sessionRouteRecord";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -78,6 +79,12 @@ export default function AiGps() {
       }))
       .filter((s) => Number.isFinite(s.coordinate[0]) && Number.isFinite(s.coordinate[1]));
   }, [nav.geocodedDestinations]);
+
+  // Persist the AI-optimized route while navigating so the end-of-session
+  // Shift Recap can draw the efficiency map (driven path vs planned route).
+  useEffect(() => {
+    if (nav.route) saveSessionRouteRecord({ geometry: nav.route.geometry, stops: deliveryStops });
+  }, [nav.route?.generated_at, deliveryStops]);
   // A nav=1 URL without a resolved destination used to enter the locked GPS
   // surface with no destination field or escape control, which looked frozen.
   // Only activate the locked navigation surface after a real target exists.

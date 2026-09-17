@@ -7,6 +7,7 @@ const MAX_ACCURACY_M = 60; // discard weak fixes entirely
 const MIN_STEP_M = 6; // discard GPS jitter under ~6 m
 const MAX_SPEED_MPS = 42; // discard impossible jumps (~94 mph)
 const METERS_PER_MILE = 1609.344;
+const MAX_PATH_POINTS = 1500; // cap on persisted trail points for the shift map
 
 // IRS-style business mileage deduction rate ($/mile) — the single source for
 // auto-log entries and the potential-tax-savings display.
@@ -54,6 +55,14 @@ function notify() {
   });
 }
 
+// Append an accepted fix to the shift's driven-path trail, downsampling when
+// the cap is reached so the stored polyline stays bounded.
+function appendPath(path, fix) {
+  let p = Array.isArray(path) ? path : [];
+  if (p.length >= MAX_PATH_POINTS) p = p.filter((_, i) => i % 2 === 0);
+  return [...p, [fix.lon, fix.lat]];
+}
+
 function handleFix(position) {
   const state = readState();
   if (!state) return; // shift ended between fixes
@@ -64,7 +73,7 @@ function handleFix(position) {
   const fix = { lat: latitude, lon: longitude, acc, t: position.timestamp || Date.now() };
   const last = state.lastFix;
   if (!last) {
-    writeState({ ...state, lastFix: fix });
+    writeState({ ...state, lastFix: fix, path: appendPath(state.path, fix) });
     notify();
     return;
   }
@@ -72,7 +81,7 @@ function handleFix(position) {
   const elapsed = Math.max(1, (fix.t - last.t) / 1000);
   if (distance < Math.max(MIN_STEP_M, acc * 0.75)) return; // jitter — keep the anchor
   if (distance / elapsed > MAX_SPEED_MPS) return; // impossible jump
-  writeState({ ...state, meters: (Number(state.meters) || 0) + distance, lastFix: fix });
+  writeState({ ...state, meters: (Number(state.meters) || 0) + distance, lastFix: fix, path: appendPath(state.path, fix) });
   notify();
 }
 
@@ -96,7 +105,13 @@ export function getShiftSnapshot() {
   const state = readState();
   if (!state) return { active: false, meters: 0, miles: 0, startedAt: null };
   const meters = Number(state.meters) || 0;
-  return { active: true, meters, miles: meters / METERS_PER_MILE, startedAt: state.startedAt || null };
+  return {
+    active: true,
+    meters,
+    miles: meters / METERS_PER_MILE,
+    startedAt: state.startedAt || null,
+    path: Array.isArray(state.path) ? state.path : [],
+  };
 }
 
 // Begin (or resume after a reload) tracking the current shift.

@@ -1,4 +1,5 @@
 import { Banknote, Gauge, TrendingUp } from "lucide-react";
+import SessionEfficiencyMap from "@/components/session/SessionEfficiencyMap";
 
 function fmtDuration(ms) {
   const mins = Math.round(Math.max(0, ms) / 60000);
@@ -44,6 +45,13 @@ export default function SessionSummaryModal({ summary, onClose }) {
             </div>
           ))}
         </div>
+
+        <SessionEfficiencyMap
+          actualPath={summary.path || []}
+          optimizedGeometry={summary.optimizedRoute?.geometry || []}
+          stops={summary.optimizedRoute?.stops || []}
+          actualMiles={summary.miles}
+        />
 
         <button onClick={onClose} className="lokin-cta w-full mt-5">
           DONE
