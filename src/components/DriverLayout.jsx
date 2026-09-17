@@ -95,6 +95,22 @@ export default function DriverLayout() {
     }
   }, [loc.pathname, currentTab]);
 
+  // Preserve scroll position per path so switching tabs restores where you were (iOS stack behavior)
+  useEffect(() => {
+    const key = `lokin_scroll_${loc.pathname}`;
+    const save = () => {
+      try { sessionStorage.setItem(key, String(window.scrollY)); } catch (e) { /* noop */ }
+    };
+    window.addEventListener("scroll", save, { passive: true });
+    return () => window.removeEventListener("scroll", save);
+  }, [loc.pathname]);
+
+  useEffect(() => {
+    let y = 0;
+    try { y = parseInt(sessionStorage.getItem(`lokin_scroll_${loc.pathname}`) || "0", 10) || 0; } catch (e) { /* noop */ }
+    if (y > 0) requestAnimationFrame(() => window.scrollTo(0, y));
+  }, [loc.pathname]);
+
   function resumeGps() {
     const resumeUrl = sessionStorage.getItem("lokin_gps_resume_url") || "/ai-gps?focus=locked&nav=1&view=real";
     sessionStorage.removeItem("lokin_app_free_roam");
@@ -156,7 +172,7 @@ export default function DriverLayout() {
             if (center) {
               return (
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
-                  className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
+                  className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium transition-transform active:scale-95">
                   <div className={`chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 transition-all ${active ? "" : ""} glow-primary`}>
                     <img src={LOKIN_NAV_CIRCLE} alt="LOKIN" draggable="false" className="h-12 w-12 rounded-full object-cover" />
                   </div>
@@ -166,7 +182,7 @@ export default function DriverLayout() {
             }
             return (
               <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
-                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-colors ${active ? "text-primary lokin-tab-active" : "text-white/45"}`}>
+                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-all active:scale-95 ${active ? "text-primary lokin-tab-active" : "text-white/45"}`}>
                 <Icon className="h-5 w-5" />
                 {label}
               </button>
