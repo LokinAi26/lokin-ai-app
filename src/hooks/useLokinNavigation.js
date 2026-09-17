@@ -37,6 +37,7 @@ import {
   recordRerouteBlocked,
 } from "@/lib/navFusion";
 import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
+import { speakText } from "@/lib/lokinVoice";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -548,14 +549,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const text = maneuver?.maneuver?.instruction;
     if (!text) return;
     lastSpokenRef.current = key;
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.02;
-      utterance.pitch = 0.96;
-      utterance.volume = 0.9;
-      window.speechSynthesis.speak(utterance);
-    } catch {}
+    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
+    speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
   }, [maneuver?.leg_index, maneuver?.step_index, maneuver?.distance_from_driver_m, voiceGuidance]);
 
   const retry = useCallback(() => {
