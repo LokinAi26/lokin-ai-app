@@ -3,6 +3,8 @@ import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause,
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
+import RouteImprovementAlert from "@/components/nav/RouteImprovementAlert";
+import { speakText } from "@/lib/lokinVoice";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
@@ -68,6 +70,13 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+
+  // Voice-announce faster-route finds so the driver never has to check the map.
+  useEffect(() => {
+    if (!nav.routeImprovement || !voiceGuidance) return;
+    const mins = Math.max(1, Math.round(nav.routeImprovement.savings_s / 60));
+    speakText(`Faster route available. You can save about ${mins} minutes.`, { rate: 1.02, pitch: 0.96, volume: 0.9 });
+  }, [nav.routeImprovement?.received_at_ms, voiceGuidance]);
 
   // Active delivery points in the already-optimized sequence, for the 3D map's
   // clustered stop layer (1 → N fastest, fuel-saving order).
@@ -257,6 +266,8 @@ export default function AiGps() {
           </div>
         </div>
       )}
+
+      <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} />
 
       {(routeLoadError || nav.error) && (
         <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] p-3">
@@ -453,6 +464,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           </button>
         ) : <span className="w-10" />}
       </div>
+
+      <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 
       {error && !nav.route && (
         <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">

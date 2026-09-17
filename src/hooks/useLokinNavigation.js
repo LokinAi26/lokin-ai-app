@@ -48,6 +48,14 @@ function voiceSupported() {
   return typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 }
 
+// Proactive faster-route detection: how often to look while mid-delivery, the
+// minimum savings worth alerting for (absolute + relative), and how long to
+// stay quiet after the driver declines an offered route.
+const IMPROVEMENT_CHECK_INTERVAL_MS = 180_000;
+const IMPROVEMENT_MIN_SAVINGS_S = 120;
+const IMPROVEMENT_MIN_SAVINGS_PCT = 0.1;
+const IMPROVEMENT_DISMISS_COOLDOWN_MS = 600_000;
+
 function addressHasGeographicContext(address) {
   const q = String(address || "").trim();
   return /\b\d{5}(?:-\d{4})?\b/.test(q) || /,\s*[A-Za-z .'-]{2,}(?:\s+[A-Z]{2})?(?:\s+\d{5}(?:-\d{4})?)?(?:,|$)/i.test(q);
@@ -69,6 +77,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [liveVectorConfigured, setLiveVectorConfigured] = useState(null);
   const [providerProbeError, setProviderProbeError] = useState("");
   const [trafficEta, setTrafficEta] = useState(null);
+  const [routeImprovement, setRouteImprovement] = useState(null);
   const [nativeRuntime, setNativeRuntime] = useState(null);
   const routeRef = useRef(null);
   const geocodedRef = useRef([]);
@@ -77,6 +86,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const snappedRef = useRef(null);
   const etaRequestRef = useRef(0);
   const routeRequestRef = useRef(0);
+  const improvementRequestRef = useRef(0);
+  const improvementDismissedAtRef = useRef(0);
   const offRouteSamplesRef = useRef(0);
   const arrivalSamplesRef = useRef(0);
   const arrivedRef = useRef(false);
@@ -106,6 +117,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setManeuver(null);
     setRerouteCount(0);
     setTrafficEta(null);
+    setRouteImprovement(null);
     arrivalSamplesRef.current = 0;
     arrivedRef.current = false;
   }, [destinationsKey]);
@@ -216,6 +228,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       lastSpokenRef.current = "";
       setStatus("navigating");
       if (reason !== "initial") setRerouteCount((n) => n + 1);
+      setRouteImprovement(null);
       return prepared;
     } catch (e) {
       const detail = e?.response?.data;
@@ -262,6 +275,82 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const timer = window.setInterval(refreshTrafficEta, 30000);
     return () => window.clearInterval(timer);
   }, [enabled, route?.generated_at, refreshTrafficEta]);
+
+  // Proactive faster-route detection: while mid-delivery, periodically request a
+  // fresh traffic-aware route from the live position to the remaining stops and
+  // compare it with the current plan. A meaningfully faster route raises an
+  // alert the driver can apply — the route never swaps without an explicit tap.
+  const checkForRouteImprovement = useCallback(async () => {
+    const activeRoute = routeRef.current;
+    const snap = snappedRef.current;
+    if (!activeRoute || !snap?.coordinate || snap.off_route === true || arrivedRef.current) return;
+    const geometry = activeRoute.geometry?.coordinates || [];
+    if (geometry.length < 2 || !destinationsRef.current.length) return;
+    const currentIndex = Number(snap.segment_index || 0);
+    const remaining = destinationsRef.current.filter((address, i) => {
+      const g = geocodedRef.current?.[i];
+      if (!g) return true;
+      const idx = nearestGeometryIndex([g.longitude, g.latitude], geometry);
+      return idx >= currentIndex - 2;
+    });
+    if (!remaining.length) return;
+    const requestId = ++improvementRequestRef.current;
+    try {
+      const response = await base44LiveFunctions.functions.invoke("navigation-engine", {
+        action: "route_addresses",
+        origin: { longitude: snap.coordinate[0], latitude: snap.coordinate[1] },
+        destination_addresses: remaining,
+        options: { profile: "driving-traffic", curbApproach: true },
+      });
+      if (requestId !== improvementRequestRef.current) return;
+      const candidate = response.data?.route;
+      if (!candidate?.geometry?.coordinates?.length || !Number.isFinite(Number(candidate.duration_s))) return;
+      const currentRemainingS = Math.max(0, Number(activeRoute.duration_s || 0) * (1 - Number(snap.progress || 0)));
+      const savingsS = currentRemainingS - Number(candidate.duration_s);
+      if (savingsS >= IMPROVEMENT_MIN_SAVINGS_S && savingsS >= IMPROVEMENT_MIN_SAVINGS_PCT * currentRemainingS) {
+        setRouteImprovement({ savings_s: Math.round(savingsS), eta_s: Math.round(Number(candidate.duration_s)), received_at_ms: Date.now() });
+      } else {
+        setRouteImprovement(null);
+      }
+    } catch {
+      /* detection is best-effort; keep the current plan */
+    }
+  }, []);
+
+  // Apply re-requests the route from the driver's live position through the
+  // same verified pipeline used for off-route recovery, so the swap is always
+  // fresh and road-matched.
+  const applyRouteImprovement = useCallback(() => {
+    const snap = snappedRef.current;
+    improvementDismissedAtRef.current = Date.now();
+    setRouteImprovement(null);
+    if (!snap?.coordinate) return;
+    const activeRoute = routeRef.current;
+    const geometry = activeRoute?.geometry?.coordinates || [];
+    const currentIndex = Number(snap.segment_index || 0);
+    const remaining = destinationsRef.current.filter((address, i) => {
+      const g = geocodedRef.current?.[i];
+      if (!g) return true;
+      const idx = nearestGeometryIndex([g.longitude, g.latitude], geometry);
+      return idx >= currentIndex - 2;
+    });
+    requestRoute(snap.coordinate, remaining.length ? remaining : destinationsRef.current.slice(-1), "off_route");
+  }, [requestRoute]);
+
+  const dismissRouteImprovement = useCallback(() => {
+    improvementDismissedAtRef.current = Date.now();
+    setRouteImprovement(null);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !route) return;
+    const timer = window.setInterval(() => {
+      if (Date.now() - improvementDismissedAtRef.current < IMPROVEMENT_DISMISS_COOLDOWN_MS) return;
+      if (Date.now() - lastRerouteAtRef.current < 90_000) return;
+      checkForRouteImprovement();
+    }, IMPROVEMENT_CHECK_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [enabled, route?.generated_at, checkForRouteImprovement]);
 
   useEffect(() => {
     if (!enabled) setStatus("idle");
@@ -597,6 +686,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     etaUpdatedAt: trafficEta?.generated_at || route?.generated_at || null,
     etaLiveTraffic: trafficEta?.live_traffic === true || route?.live_traffic === true,
     refreshTrafficEta,
+    routeImprovement,
+    applyRouteImprovement,
+    dismissRouteImprovement,
     voiceSupported: voiceSupported(),
     nativeRuntime,
   };
