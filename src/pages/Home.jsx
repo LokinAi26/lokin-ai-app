@@ -12,6 +12,7 @@ import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import PeakWindowAlerts from "@/components/peak/PeakWindowAlerts";
+import GoalMilestoneAlerts from "@/components/earnings/GoalMilestoneAlerts";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
@@ -157,6 +158,7 @@ export default function Home() {
 
       {/* Peak-window alerts — best earning hours beginning in the driver's area */}
       <PeakWindowAlerts />
+      <GoalMilestoneAlerts />
 
       {/* Stat tile grid — design-system compact metrics */}
       <div className="grid grid-cols-4 gap-2 relative z-10 shrink-0">
