@@ -866,7 +866,6 @@ const VOICE_CSS = `
                     className={`lokin-card rounded-2xl mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
                   >
                     <span className="flex items-center gap-2 text-sm text-white/80">
-                      <Mic className={`h-4 w-4 ${alwaysOn ? "text-accent" : "text-white/40"}`} />
                       Hey LOKIN · App Open
                     </span>
                     <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
