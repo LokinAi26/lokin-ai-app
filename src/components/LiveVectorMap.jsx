@@ -13,6 +13,9 @@ const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
+const STOPS_SOURCE = "lokin-delivery-stops";
+const STOPS_INK = "#06100A";
+const STOPS_FONT = ["Noto Sans Regular"];
 
 // AERIAL mode is daytime satellite photography. The dusk treatment below is
 // what makes it read as night: a dark fill above the raster (but below the
