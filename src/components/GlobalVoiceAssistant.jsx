@@ -106,6 +106,16 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const wakeRestartRef = useRef(null);
   const wakeTriggerAtRef = useRef(0);
   const alwaysOnRef = useRef(alwaysOn);
+  const transcriptHistoryRef = useRef([]);
+  // Session-derived context (falls back to 0/"mixed" when no session state).
+  const sessionHours = (() => { try {
+    const s = JSON.parse(localStorage.getItem("lokin_session") || "{}");
+    return s.hoursWorked || s.elapsedHours || 0;
+  } catch { return 0; } })();
+  const activePlatform = (() => { try {
+    const s = JSON.parse(localStorage.getItem("lokin_session") || "{}");
+    return s.platform || s.activeApp || "mixed";
+  } catch { return "mixed"; } })();
   const voiceSupported = Boolean(speechRecognitionCtor());
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
