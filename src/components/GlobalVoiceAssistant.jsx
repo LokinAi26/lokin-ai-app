@@ -116,12 +116,8 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [drivingMode]);
 
   function speak(text) {
-    try {
-      const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ""));
-      u.rate = 1.05;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch {}
+    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
+    speakText(text, { rate: 1.05 });
   }
 
   async function handleCommand(command) {
