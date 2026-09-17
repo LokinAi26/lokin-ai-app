@@ -121,6 +121,23 @@ function addNavigationLayers(map, routeGeometry) {
     data,
     lineMetrics: true,
   });
+  // Neon glow halo under the route (bloom for true LOKIN Green neon).
+  map.addLayer({
+    id: "lokin-live-route-glow",
+    type: "line",
+    source: ROUTE_SOURCE,
+    slot: "top",
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-color": LOKIN_NEON_ROUTE,
+      "line-opacity": 0.35,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
+      "line-blur": 6,
+    },
+  });
   map.addLayer({
     id: ROUTE_CASING,
     type: "line",
@@ -147,10 +164,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": "#8FE44E",
+      "line-color": LOKIN_NEON_ROUTE,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
-      "line-blur": 2,
+      "line-blur": 0,
     },
   });
 }
