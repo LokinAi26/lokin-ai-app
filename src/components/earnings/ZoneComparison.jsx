@@ -26,9 +26,9 @@ function trendOf(values) {
   return pct > 0 ? "up" : "down";
 }
 
-// Side-by-side weekly income comparison across the delivery zones the driver
-// toggles. Each selected zone gets its own color-coded trend line and a
-// summary row (total, average per week, trend direction).
+// Side-by-side hourly income comparison for two delivery zones the driver
+// selects. Each zone gets its own color-coded $/hr trend line and a summary
+// row (total earned, average $/hr, trend direction).
 export default function ZoneComparison({ records = [] }) {
   const [zones, setZones] = useState([]);
 
@@ -39,11 +39,11 @@ export default function ZoneComparison({ records = [] }) {
     return fromData.length > 0 ? fromData.slice(0, 6) : SEEDS.slice(0, 3).map((s) => s.name);
   }, [tagged]);
 
-  // Default comparison set: the top 3 zones by total tagged earnings.
+  // Default comparison set: the top 2 zones by total tagged earnings.
   const defaultZones = useMemo(() => {
     const totals = new Map();
     tagged.forEach((r) => totals.set(r.zone, (totals.get(r.zone) || 0) + (r.amount || 0)));
-    return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([z]) => z);
+    return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([z]) => z);
   }, [tagged]);
 
   const selected = useMemo(() => (zones.length > 0 ? zones : defaultZones), [zones, defaultZones]);
@@ -51,7 +51,10 @@ export default function ZoneComparison({ records = [] }) {
   function toggleZone(zone) {
     setZones((prev) => {
       const current = prev.length > 0 ? prev : defaultZones;
-      return current.includes(zone) ? current.filter((z) => z !== zone) : [...current, zone];
+      if (current.includes(zone)) return current.filter((z) => z !== zone);
+      // Two-zone comparison: picking a third replaces the oldest selection.
+      const next = [...current, zone];
+      return next.length > 2 ? next.slice(next.length - 2) : next;
     });
   }
 
@@ -69,9 +72,12 @@ export default function ZoneComparison({ records = [] }) {
       to.setDate(from.getDate() + 7);
       const row = { label: w === 0 ? "This wk" : `${w}w ago` };
       selected.forEach((z) => {
-        row[z] = Math.round(tagged
-          .filter((r) => r.zone === z && r.date >= dayKey(from) && r.date < dayKey(to))
-          .reduce((s, r) => s + (r.amount || 0), 0) * 100) / 100;
+        const weekRows = tagged.filter((r) => r.zone === z && r.date >= dayKey(from) && r.date < dayKey(to));
+        const amount = weekRows.reduce((s, r) => s + (r.amount || 0), 0);
+        // Estimated driving hours: same trips × 0.4 heuristic as the Earnings page.
+        const hours = weekRows.reduce((s, r) => s + (r.trips || 0), 0) * 0.4;
+        // Hourly income that week; weeks with no trip data gap out of the line.
+        row[z] = hours > 0 ? Math.round((amount / hours) * 100) / 100 : null;
       });
       out.push(row);
     }
@@ -79,16 +85,18 @@ export default function ZoneComparison({ records = [] }) {
   }, [tagged, selected]);
 
   const summaries = useMemo(() => selected.map((z) => {
-    const values = weekly.map((row) => row[z] || 0);
-    const total = values.reduce((s, v) => s + v, 0);
+    const zoneRows = tagged.filter((r) => r.zone === z);
+    const total = zoneRows.reduce((s, r) => s + (r.amount || 0), 0);
+    const hours = zoneRows.reduce((s, r) => s + (r.trips || 0), 0) * 0.4;
+    const values = weekly.map((row) => row[z]).filter((v) => v != null);
     return {
       zone: z,
       color: colorOf(z),
       total,
-      avg: total / values.length,
+      perHour: hours > 0 ? total / hours : 0,
       trend: trendOf(values),
     };
-  }).sort((a, b) => b.total - a.total), [weekly, selected, zoneOptions]);
+  }).sort((a, b) => b.perHour - a.perHour), [tagged, weekly, selected, zoneOptions]);
 
   const TrendIcon = { up: TrendingUp, down: TrendingDown, flat: Minus };
   const trendClass = { up: "text-primary", down: "text-amber-300", flat: "text-white/45" };
@@ -97,7 +105,8 @@ export default function ZoneComparison({ records = [] }) {
     <div className="lokin-card p-4">
       <div className="mb-3 flex items-center gap-2">
         <GitCompareArrows className="h-4 w-4 text-primary" />
-        <div className="lokin-kicker lokin-kicker-lime">ZONE COMPARISON</div>
+        <div className="lokin-kicker lokin-kicker-lime">ZONE COMPARISON · $/HR</div>
+        <div className="ml-auto text-[10px] text-white/40">pick two zones · last {WEEK_WINDOW} weeks</div>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-1.5">
@@ -125,20 +134,21 @@ export default function ZoneComparison({ records = [] }) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weekly} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} interval={0} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}`} />
-                <Tooltip cursor={{ stroke: "hsl(0 0% 100% / 0.2)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v, name) => [`$${Number(v).toFixed(2)}`, name]} />
-                {selected.map((z) => (
-                  <Line
-                    key={z}
-                    type="monotone"
-                    dataKey={z}
-                    stroke={colorOf(z)}
-                    strokeWidth={2.5}
-                    dot={{ r: 2.5, fill: colorOf(z) }}
-                    activeDot={{ r: 4 }}
-                    style={{ filter: `drop-shadow(0 0 5px ${colorOf(z)}80)` }}
-                  />
-                ))}
+                <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 100% / 0.45)" }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `$${v}/hr`} />
+                <Tooltip cursor={{ stroke: "hsl(0 0% 100% / 0.2)", strokeWidth: 1 }} contentStyle={{ borderRadius: 12, background: "#0a0a0a", border: "1px solid hsl(0 0% 100% / 0.12)", fontSize: 12, color: "#fff" }} formatter={(v, name) => (v == null ? ["no trip data", name] : [`$${Number(v).toFixed(2)}/hr`, name])} />
+                  {selected.map((z) => (
+                    <Line
+                      key={z}
+                      type="monotone"
+                      dataKey={z}
+                      connectNulls
+                      stroke={colorOf(z)}
+                      strokeWidth={2.5}
+                      dot={{ r: 2.5, fill: colorOf(z) }}
+                      activeDot={{ r: 4 }}
+                      style={{ filter: `drop-shadow(0 0 5px ${colorOf(z)}80)` }}
+                    />
+                  ))}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -154,14 +164,14 @@ export default function ZoneComparison({ records = [] }) {
                   </span>
                   <span className="flex shrink-0 items-center gap-3 text-[11px]">
                     <span className="font-semibold text-white/85">${s.total.toFixed(0)}</span>
-                    <span className="text-white/45">${s.avg.toFixed(0)}/wk</span>
+                    <span className="text-primary font-semibold">${s.perHour.toFixed(2)}/hr</span>
                     <Icon className={`h-3.5 w-3.5 ${trendClass[s.trend]}`} />
                   </span>
                 </div>
               );
             })}
             {summaries.length === 0 && (
-              <div className="py-2 text-center text-[11px] text-white/45">Toggle zones above to compare their weekly income trends.</div>
+              <div className="py-2 text-center text-[11px] text-white/45">Pick two zones above to compare their hourly income trends.</div>
             )}
           </div>
         </>
