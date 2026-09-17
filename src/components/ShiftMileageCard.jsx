@@ -37,6 +37,8 @@ export default function ShiftMileageCard({ workStatus }) {
 
   const tracking = workStatus === "working" || workStatus === "paused";
   const total = (loggedMiles || 0) + (tracking ? shiftMiles : 0);
+  // Potential tax savings: today's stored deductions plus the live shift's miles.
+  const taxSavings = loggedSavings + (tracking ? shiftMiles * DEDUCTION_RATE_PER_MILE : 0);
 
   return (
     <div className="relative z-10 flex items-center gap-3 rounded-2xl border border-primary/20 lokin-panel lokin-card p-3">
@@ -47,6 +49,9 @@ export default function ShiftMileageCard({ workStatus }) {
         <div className="text-[10px] tracking-[0.18em] text-primary/80">AUTO MILEAGE · TODAY</div>
         <div className="mt-0.5 font-display text-xl font-black leading-none text-primary">
           {loggedMiles == null && !tracking ? <span className="inline-block h-5 w-16 rounded bg-white/10 animate-pulse" /> : `${total.toFixed(1)} MI`}
+        </div>
+        <div className="mt-0.5 text-[10px] text-white/40">
+          ≈ ${taxSavings.toFixed(2)} tax savings @ ${DEDUCTION_RATE_PER_MILE.toFixed(2)}/mi
         </div>
       </div>
       <div className="shrink-0 text-right text-[10px] leading-tight">
