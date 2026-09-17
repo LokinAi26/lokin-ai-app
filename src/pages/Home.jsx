@@ -8,6 +8,8 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
+import SessionSummaryModal from "@/components/session/SessionSummaryModal";
+import { getShiftSnapshot } from "@/lib/shiftMileage";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
@@ -32,6 +34,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
   const [showType, setShowType] = useState(false);
+  const [summary, setSummary] = useState(null);
   const [locking, setLocking] = useState(false);
   const lockStartRef = useRef(false);
 
