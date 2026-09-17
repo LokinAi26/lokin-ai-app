@@ -51,8 +51,27 @@ export default function Home() {
 
   async function tapOut() {
     if (!prefs?.id) return;
+    // Capture the live shift before the status change ends GPS tracking.
+    const snap = getShiftSnapshot();
+    const endedAt = Date.now();
     const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
     setPrefs(updated);
+    // Earnings logged while the session was live: records created since the shift started.
+    let earnings = 0;
+    if (snap.startedAt) {
+      try {
+        const rows = await base44.entities.Earning.filter({}, "-created_date", 50);
+        earnings = rows
+          .filter((r) => {
+            const t = r.created_date ? new Date(r.created_date).getTime() : null;
+            return t != null && t >= snap.startedAt && t <= endedAt + 60000;
+          })
+          .reduce((s, r) => s + (r.amount || 0), 0);
+      } catch {
+        /* recap still shows with $0 earnings if the read fails */
+      }
+    }
+    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt });
   }
 
   async function resumeWork() {
