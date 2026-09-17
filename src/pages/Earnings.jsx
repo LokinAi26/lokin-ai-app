@@ -10,6 +10,7 @@ import HourlyProfitability from "@/components/earnings/HourlyProfitability";
 import WeeklyZoneTrend from "@/components/earnings/WeeklyZoneTrend";
 import ZoneComparison from "@/components/earnings/ZoneComparison";
 import VehicleComparison from "@/components/earnings/VehicleComparison";
+import TaxExport from "@/components/earnings/TaxExport";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
@@ -201,6 +202,8 @@ export default function Earnings() {
       {!loading && <ZoneComparison records={records} />}
 
       {!loading && <VehicleComparison records={records} />}
+
+      {!loading && <TaxExport />}
 
       <div className="lokin-card p-4">
         <div className="lokin-kicker mb-2">Breakdown</div>
