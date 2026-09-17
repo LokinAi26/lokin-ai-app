@@ -269,12 +269,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       setReply("Voice recognition is not available in this app environment. Use the on-screen controls or Siri shortcuts instead.");
       return;
     }
-    if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} }
-    setListening(true);
-    const rec = new SR();
-    rec.lang = "en-US";
-    rec.interimResults = false;
-    rec.continuous = true;
+    const beginOnce = () => {
+      setListening(true);
+      const rec = new SR();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      rec.continuous = true;
     rec.onstart = () => setListening(true);
     rec.onend = () => {
       setListening(false);
