@@ -8,7 +8,7 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
-import { speakText, loadVoices } from "@/lib/lokinVoice";
+import { speakText } from "@/lib/lokinVoice";
 import VoicePicker from "@/components/VoicePicker";
 
 // Navigation intents — broad matching so drivers don't need exact phrasing.
