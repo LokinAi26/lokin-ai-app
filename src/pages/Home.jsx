@@ -8,8 +8,6 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
-import SessionSummaryModal from "@/components/session/SessionSummaryModal";
-import { getShiftSnapshot } from "@/lib/shiftMileage";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
@@ -230,6 +228,7 @@ export default function Home() {
       {/* LOKIN stands with — awareness dedication, restored 2026-09-13 per Kendall. */}
       <AwarenessBanner />
 
+      <SessionSummaryModal summary={summary} onClose={() => setSummary(null)} />
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
       <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />
