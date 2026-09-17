@@ -1,36 +1,30 @@
 import { ExternalLink } from "lucide-react";
 
 // Partner delivery platforms this copilot pairs with.
+// Root-cause fix (2026-09-17 road test): old custom schemes were wrong —
+// "doordash://" is the CONSUMER app (opens Grocery, not Dasher); the other six
+// schemes don't exist as registered iOS schemes, so taps silently did nothing.
+// Verified: Grubhub universal link (AASA confirmed) + App Store URLs for rest.
 const PARTNERS = [
-  { name: "DoorDash Dasher", scheme: "doordash://", web: "https://drivers.doordash.com", color: "text-red-400", letter: "D" },
-  { name: "Uber Driver", scheme: "uberdash://", web: "https://drivers.uber.com", color: "text-white", letter: "U" },
-  { name: "Amazon Flex", scheme: "amazonflex://", web: "https://flex.amazon.com", color: "text-amber-400", letter: "A" },
-  { name: "Instacart Shopper", scheme: "instacartshopper://", web: "https://shoppers.instacart.com", color: "text-emerald-400", letter: "I" },
-  { name: "Grubhub Driver", scheme: "grubhubdriver://", web: "https://driver.grubhub.com", color: "text-orange-400", letter: "G" },
-  { name: "Spark (Walmart)", scheme: "sparkdriver://", web: "https://sparkdriver.walmart.com", color: "text-blue-400", letter: "S" },
-  { name: "Veho Driver", scheme: "veho://", web: "https://app.veho.com/driver", color: "text-teal-400", letter: "V" },
+  { name: "DoorDash Dasher", deep: "", store: "https://apps.apple.com/app/id1451754591", color: "text-red-400", letter: "D" },
+  { name: "Uber Driver", deep: "", store: "https://apps.apple.com/app/id1131342792", color: "text-white", letter: "U" },
+  { name: "Amazon Flex", deep: "", store: "https://apps.apple.com/app/id1454725763", color: "text-amber-400", letter: "A" },
+  { name: "Instacart Shopper", deep: "", store: "https://apps.apple.com/app/id1454056744", color: "text-emerald-400", letter: "I" },
+  { name: "Grubhub Driver", deep: "https://driver.grubhub.com/launch/", store: "https://apps.apple.com/app/id1452071632", color: "text-orange-400", letter: "G" },
+  { name: "Spark (Walmart)", deep: "", store: "https://apps.apple.com/app/id1483998235", color: "text-blue-400", letter: "S" },
+  { name: "Veho Driver", deep: "", store: "https://apps.apple.com/app/id1457078986", color: "text-teal-400", letter: "V" },
 ];
 
 export default function PartnerApps() {
   function launch(p) {
-    let opened = false;
+    // Prefer the verified deep/universal link; fall back to the App Store URL
+    // (opens the app directly when installed). _system lets the OS resolve
+    // universal links outside the WebView.
+    const target = p.deep || p.store;
     try {
-      const start = Date.now();
-      window.location.href = p.scheme;
-      const timer = setTimeout(() => {
-        if (Date.now() - start < 1800) {
-          window.open(p.web, "_blank", "noopener,noreferrer");
-        }
-      }, 700);
-      const onVis = () => {
-        if (document.hidden) {
-          clearTimeout(timer);
-          opened = true;
-        }
-      };
-      document.addEventListener("visibilitychange", onVis, { once: true });
+      window.open(target, "_system") || window.open(target, "_blank", "noopener,noreferrer");
     } catch {
-      window.open(p.web, "_blank", "noopener,noreferrer");
+      window.location.href = target;
     }
   }
 
