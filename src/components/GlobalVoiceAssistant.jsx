@@ -8,6 +8,8 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { setAiConsent } from "@/lib/aiConsent";
+import { speakText, loadVoices } from "@/lib/lokinVoice";
+import VoicePicker from "@/components/VoicePicker";
 
 // Navigation intents — broad matching so drivers don't need exact phrasing.
 // Each entry lists loose keywords; any hit triggers the intent.
@@ -109,6 +111,16 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const wakeRestartRef = useRef(null);
   const wakeTriggerAtRef = useRef(0);
   const alwaysOnRef = useRef(alwaysOn);
+  const transcriptHistoryRef = useRef([]);
+  // Session-derived context (falls back to 0/"mixed" when no session state).
+  const sessionHours = (() => { try {
+    const s = JSON.parse(localStorage.getItem("lokin_session") || "{}");
+    return s.hoursWorked || s.elapsedHours || 0;
+  } catch { return 0; } })();
+  const activePlatform = (() => { try {
+    const s = JSON.parse(localStorage.getItem("lokin_session") || "{}");
+    return s.platform || s.activeApp || "mixed";
+  } catch { return "mixed"; } })();
   const voiceSupported = Boolean(speechRecognitionCtor());
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
@@ -121,12 +133,8 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [drivingMode]);
 
   function speak(text) {
-    try {
-      const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ""));
-      u.rate = 1.05;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch {}
+    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
+    speakText(text, { rate: 1.05 });
   }
 
   async function handleCommand(command) {
@@ -146,20 +154,20 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
         if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
-        const msg = "Locked in. You're live — let's get it.";
+        const msg = "Locked in. You're live \u2014 let's get it.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
       if (includesAny(t, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
-        const msg = "Locked in. Distractions minimized.";
+        const msg = "Locked in.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
+      if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
-        const msg = "Paused. Take your time. Say LOKIN, resume when you're ready to lock back in.";
+        const msg = "Paused. Say resume when you're back.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
       }
 
@@ -175,7 +183,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
-        const msg = "You're tapped out. Nice work today. I'll have your recap ready on the home screen.";
+        const msg = "Tapped out. Nice work \u2014 recap's on the home screen.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/"), 400); setBusy(false); return;
       }
     } catch (e) {
@@ -223,6 +231,9 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
+      const now = new Date();
+      const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const history = (transcriptHistoryRef.current || []).slice(-6).map((h) => `${h.role}: ${h.text}`).join("\n");
       const res = await guardedInvoke(base44, "external-ai-gateway", {
         mode: "assistant",
         command,
@@ -230,13 +241,23 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
           netPerHour: p.min_per_hour || 22,
-          hoursWorked: 0,
-          platform: "mixed",
+          hoursWorked: sessionHours || 0,
+          platform: activePlatform || "mixed",
+          localTime: now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          dayOfWeek: dayNames[now.getDay()],
+          conversationHistory: history || "(none yet)",
         },
       });
       const data = res.data;
-      setReply(data.reply || "I didn't catch that.");
-      speak(data.reply || "I didn't catch that.");
+      const replyText = data.reply || "I didn't catch that.";
+      setReply(replyText);
+      speak(replyText);
+      // Conversation memory: last 10 exchanges for context continuity.
+      transcriptHistoryRef.current = [
+        ...transcriptHistoryRef.current,
+        { role: "driver", text: command },
+        { role: "lokin", text: replyText },
+      ].slice(-10);
     } catch (e) {
       if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
         setPendingAiCommand(command);
@@ -276,11 +297,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       setReply("Voice recognition is not available in this app environment. Use the on-screen controls or Siri shortcuts instead.");
       return;
     }
-    if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} }
-    setListening(true);
-    const rec = new SR();
-    rec.lang = "en-US";
-    rec.interimResults = false;
+    const beginOnce = () => {
+      setListening(true);
+      const rec = new SR();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      rec.continuous = true;
     rec.onstart = () => setListening(true);
     rec.onend = () => {
       setListening(false);
@@ -319,11 +341,19 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply("Voice recognition stopped. Tap the microphone to retry.");
       }
     };
-    recRef.current = rec;
-    try { rec.start(); } catch {
-      setListening(false);
-      setReply("Voice recognition could not start. Tap the microphone to retry.");
-    }
+      recRef.current = rec;
+      try { rec.start(); } catch {
+        setListening(false);
+        setReply("Voice recognition could not start. Tap the microphone to retry.");
+      }
+    };
+
+    // Stop the wake recognizer first. iOS stop() is asynchronous — starting the
+    // one-shot immediately causes mic-session contention (the "only works with
+    // wake toggle off" bug). A 400ms release window fixes it.
+    const wake = wakeRef.current;
+    if (wake) { try { wake.stop(); } catch {} }
+    setTimeout(beginOnce, wake ? 400 : 0);
   }
 
   // One command ingress for UI controls, deep links, Siri/App Intents,
@@ -447,7 +477,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
 const HEADER_URL =
   "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/2306bf887_lokin-voice-header.jpg";
 const CENTERPIECE_URL =
-  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/3c4e6171c_IMG_3538.jpeg";
+  "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/079c3a913_official-lokin-ticker-clock_247.jpg";
 
 // Visual system lifted from the locked reskin1v5 Voice design
 // (Official Lokin app page_reskin1v5), scoped under .lokinvoice-reskin.
@@ -686,7 +716,7 @@ const VOICE_CSS = `
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 ${full ? "overflow-y-auto bg-black" : "flex items-end justify-center"}`}
+            className={`fixed inset-0 z-[1100] ${full ? "overflow-y-auto bg-black" : "flex items-end justify-center"}`}
             onClick={() => setOpen(false)}
           >
             <div className={`absolute inset-0 ${full ? "bg-black" : "bg-black/60 backdrop-blur-sm"}`} />
@@ -787,6 +817,11 @@ const VOICE_CSS = `
                         <p className="wake-help">Keep LOKIN ready while the app is open. Tap the centerpiece whenever you want to speak.</p>
                       </section>
 
+                      <section className="wake-card" aria-label="Voice settings">
+                        <div className="kicker">LOKIN voice</div>
+                        <VoicePicker compact />
+                      </section>
+
                       <section className="action-grid" aria-label="Work controls">
                         <button className="action-tile primary" type="button" onClick={() => handleCommand("lock in")}>
                           <Lock style={{ width: 23, height: 23 }} strokeWidth={1.6} />
@@ -867,7 +902,6 @@ const VOICE_CSS = `
                     className={`lokin-card rounded-2xl mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
                   >
                     <span className="flex items-center gap-2 text-sm text-white/80">
-                      <Mic className={`h-4 w-4 ${alwaysOn ? "text-accent" : "text-white/40"}`} />
                       Hey LOKIN · App Open
                     </span>
                     <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
