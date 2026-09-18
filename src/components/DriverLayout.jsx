@@ -11,6 +11,7 @@ import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 import ShiftMileageTracker from "@/components/ShiftMileageTracker";
+import StoreEntrySheet from "@/components/StoreEntrySheet";
 import OfflineSyncMonitor from "@/components/OfflineSyncMonitor";
 
 const NESTED_PATHS = [
@@ -215,6 +216,7 @@ export default function DriverLayout() {
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <ShiftMileageTracker />
+      <StoreEntrySheet />
       <OfflineSyncMonitor showPill={!lockedGps} />
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation || (working && appFreeRoam)} />
     </div>
