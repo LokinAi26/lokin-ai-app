@@ -211,14 +211,20 @@ async function callClaude({ apiKey, model, system, userText }) {
   return { text: String(data?.content?.[0]?.text || ""), inputTokens: Number(usage.input_tokens || 0), outputTokens: Number(usage.output_tokens || 0) };
 }
 
-async function callGemini({ apiKey, model, system, userText }) {
+async function callGemini({ apiKey, model, system, userText, images }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const parts = [{ text: userText }];
+  for (const img of images || []) {
+    if (img && typeof img.data === "string") {
+      parts.push({ inlineData: { mimeType: img.mimeType || "image/jpeg", data: img.data } });
+    }
+  }
   const r = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: "user", parts: [{ text: userText }] }],
+      contents: [{ role: "user", parts }],
     }),
   });
   const data = await r.json().catch(() => ({}));
@@ -228,11 +234,17 @@ async function callGemini({ apiKey, model, system, userText }) {
   return { text, inputTokens: Number(usage.promptTokenCount || 0), outputTokens: Number(usage.candidatesTokenCount || 0) };
 }
 
-async function callFusionGpt({ apiKey, model, system, userText }) {
+async function callFusionGpt({ apiKey, model, system, userText, images }) {
+  const content = [{ type: "text", text: userText }];
+  for (const img of images || []) {
+    if (img && typeof img.data === "string") {
+      content.push({ type: "image_url", image_url: { url: `data:${img.mimeType || "image/jpeg"};base64,${img.data}` } });
+    }
+  }
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: userText }] }),
+    body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content }] }),
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(`gpt HTTP ${r.status}: ${JSON.stringify(data).slice(0, 300)}`);
@@ -331,6 +343,79 @@ export default async function(req) {
         : "LOKIN is in credit-preservation mode. Core navigation, routing, commerce, and safety systems remain available; richer generative replies will activate when an external AI provider key is configured.";
       return Response.json({ reply, draftedMessage: "", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
     }
+
+        // ---- Earnings screenshot OCR: vision parse of a gig earnings screenshot ----
+        // task:"earnings_ocr" + images:[{mimeType,data}]. Gemini first (cheap vision),
+        // GPT fallback. Returns { parsed, reply, engine, model, usage }.
+        const ocrImages = (Array.isArray(body.images) ? body.images : [])
+          .filter((i) => i && typeof i.data === "string" && i.data.length > 100)
+          .slice(0, 2)
+          .map((i) => ({
+            mimeType: String(i.mimeType || "image/jpeg").slice(0, 80),
+            data: String(i.data).slice(0, 7000000),
+          }));
+        const isOcrTask = String(body.task || "") === "earnings_ocr" && ocrImages.length > 0;
+        if (isOcrTask) {
+          const paidOk = paidAiFallbackAllowed();
+          const gKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+          const oKey = paidOk ? secrets.get("OPENAI_API_KEY") : "";
+          if (!gKey && !oKey) {
+            return Response.json({ error: "No vision provider key configured", provider: "none" }, { status: 503 });
+          }
+          const ocrSystem = [
+            "You are an earnings-receipt parser for a gig-driver app.",
+            "Read the screenshot of a gig driver earnings screen (DoorDash, Uber Driver, Instacart, Spark, Shipt, Grubhub, Amazon Flex, Veho).",
+            "Extract ONLY what is visibly shown. Reply with STRICT JSON only, no prose, no markdown fences:",
+            '{"amount": number|null, "platform": string|null, "date": "YYYY-MM-DD"|null, "trips": number|null, "currency": "USD", "confidence": "high"|"medium"|"low", "note": string}',
+            "Rules: amount = the total earnings figure shown (never a per-delivery amount).",
+            "platform = the app name visible in the screenshot. date = the earnings date shown, else null.",
+            "trips = deliveries/trips count if shown, else null. Never invent a number — use null when unsure.",
+            "note = one short line describing what you saw.",
+          ].join("\n");
+          const ocrText = `${String(body.message || "Parse this gig-driver earnings screenshot into JSON.").slice(0, 300)}\nnonce:${Date.now().toString(36)}`;
+          const ocrFeature = "ocr:earnings_screenshot";
+          const ocrTries = [];
+          if (gKey) ocrTries.push(["gemini", DECK_ENGINE_MODELS.gemini, gKey]);
+          if (oKey) ocrTries.push(["gpt", secrets.get("OPENAI_MODEL") || "gpt-5.6", oKey]);
+          let ocrOut = null, ocrEngine = "", ocrModel = "", ocrErr = "";
+          for (const [eng, mdl, key] of ocrTries) {
+            try {
+              const op = eng === "gemini" ? `gemini_${ocrFeature}` : `openai_${ocrFeature}`;
+              const prov = eng === "gemini" ? "google" : "openai";
+              const est = eng === "gemini" ? 0.005 : 0.01;
+              ocrOut = await withEcosystemAdmission(base44, {
+                sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: op,
+                provider: prov, priority: 55, estimatedMs: 25000, estimatedCost: est, realtime: false, tags: ["credits", "ai", "ocr"],
+              }, () => eng === "gemini"
+                ? callGemini({ apiKey: key, model: mdl, system: ocrSystem, userText: ocrText, images: ocrImages })
+                : callFusionGpt({ apiKey: key, model: mdl, system: ocrSystem, userText: ocrText, images: ocrImages }));
+              ocrEngine = eng; ocrModel = mdl;
+              break;
+            } catch (e) { ocrErr = e?.message || String(e); console.warn("ocr engine failed", eng, ocrErr); }
+          }
+          if (!ocrOut) {
+            return Response.json({ error: `Earnings OCR failed: ${ocrErr || "no vision engine available"}`, provider: "none" }, { status: 502 });
+          }
+          let parsed = null;
+          try {
+            const m = String(ocrOut.text || "").match(/\{[\s\S]*\}/);
+            if (m) parsed = JSON.parse(m[0]);
+          } catch { /* client falls back to manual entry */ }
+          const ocrCost = estimateCost({ input_tokens: ocrOut.inputTokens, output_tokens: ocrOut.outputTokens }, guardianConfig, ocrModel);
+          try {
+            await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+              user_id: user.id, request_id: "", model: ocrModel, mode: ocrFeature,
+              input_tokens: Number(ocrOut.inputTokens || 0), output_tokens: Number(ocrOut.outputTokens || 0),
+              total_tokens: Number(ocrOut.inputTokens || 0) + Number(ocrOut.outputTokens || 0),
+              estimated_cost_usd: ocrCost, status: "success", occurred_at: new Date().toISOString(),
+            });
+          } catch (e) { console.warn("ocr usage telemetry unavailable", e?.message || e); }
+          return Response.json({
+            parsed, reply: ocrOut.text, provider: "external", engine: ocrEngine, model: ocrModel,
+            usage: { input_tokens: Number(ocrOut.inputTokens || 0), output_tokens: Number(ocrOut.outputTokens || 0), estimated_cost_usd: Number(ocrCost.toFixed(6)) },
+            guardian: { mode: guardianMode, api_key_exposed: false },
+          });
+        }
 
         // ---- Jarvis fusion routing: only when the caller asked for a bot/engine ----
     const requestedBotId = String(body.bot || "").toLowerCase();
