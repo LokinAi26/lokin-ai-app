@@ -12,6 +12,7 @@ import ZoneComparison from "@/components/earnings/ZoneComparison";
 import VehicleComparison from "@/components/earnings/VehicleComparison";
 import TaxExport from "@/components/earnings/TaxExport";
 import CategoryComparison from "@/components/earnings/CategoryComparison";
+import MonthlyTrends from "@/components/earnings/MonthlyTrends";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
@@ -196,6 +197,8 @@ export default function Earnings() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {!loading && <MonthlyTrends records={records} />}
 
       {!loading && <HourlyProfitability records={records} />}
 
