@@ -2,6 +2,7 @@
 // Accumulates real device-GPS distance while the driver is working, persists
 // across navigation/app restarts, and hands the shift's miles to the caller
 // when the shift ends so they can be logged.
+import { checkStoreGeofence } from "@/lib/storeGeofence";
 const STORAGE_KEY = "lokin_shift_mileage";
 const PENDING_CATEGORY_KEY = "lokin_shift_category";
 const PENDING_ODO_START_KEY = "lokin_shift_odometer_start";
@@ -130,6 +131,8 @@ function handleFix(position) {
   if (acc > MAX_ACCURACY_M) return; // weak fix — wait for a better one
   lastFixAt = Date.now();
   const fix = { lat: latitude, lon: longitude, acc, t: position.timestamp || Date.now() };
+  // Store geofence: fire-and-forget, never blocks the mileage pipeline.
+  try { checkStoreGeofence(fix.lat, fix.lon); } catch { /* geofence is best-effort */ }
   const last = state.lastFix;
   if (!last) {
     writeState({ ...state, lastFix: fix, path: appendPath(state.path, fix) });
