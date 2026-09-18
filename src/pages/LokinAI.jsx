@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
-import { guardedInvoke } from "@/lib/creditGuardian";
+import { askBrain } from "@/lib/lokinBrain";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, TTS_VOICES, getTtsVoice, setTtsVoice, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio } from "@/lib/lokinVoicePipeline";
 
@@ -328,9 +328,11 @@ export default function LokinAI() {
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
-      const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: "assistant",
-        command,
+      // Jarvis fusion: Full AI chat goes to the Ask LOKIN brain
+      // (multi-engine, same auth/consent/budget guardrails).
+      const res = await askBrain({
+        bot: "asklokin",
+        message: command,
         context: {
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
