@@ -2,9 +2,11 @@
 // Accumulates real device-GPS distance while the driver is working, persists
 // across navigation/app restarts, and hands the shift's miles to the caller
 // when the shift ends so they can be logged.
+import { checkStoreGeofence } from "@/lib/storeGeofence";
 const STORAGE_KEY = "lokin_shift_mileage";
 const PENDING_CATEGORY_KEY = "lokin_shift_category";
 const PENDING_ODO_START_KEY = "lokin_shift_odometer_start";
+const SHIFT_PRESETS_KEY = "lokin_shift_presets"; // driver settings pinned for the shift (until tap-out)
 const MAX_ACCURACY_M = 60; // discard weak fixes entirely
 const MIN_STEP_M = 6; // discard GPS jitter under ~6 m
 const MAX_SPEED_MPS = 42; // discard impossible jumps (~94 mph)
@@ -118,6 +120,8 @@ function appendPath(path, fix) {
   return [...p, [fix.lon, fix.lat]];
 }
 
+let lastFixAt = 0; // timestamp of the last accepted GPS fix (drives the dead-watch watchdog)
+
 function handleFix(position) {
   const state = readState();
   if (!state) return; // shift ended between fixes
@@ -125,7 +129,10 @@ function handleFix(position) {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
   const acc = Number(accuracy) || 0;
   if (acc > MAX_ACCURACY_M) return; // weak fix — wait for a better one
+  lastFixAt = Date.now();
   const fix = { lat: latitude, lon: longitude, acc, t: position.timestamp || Date.now() };
+  // Store geofence: fire-and-forget, never blocks the mileage pipeline.
+  try { checkStoreGeofence(fix.lat, fix.lon); } catch { /* geofence is best-effort */ }
   const last = state.lastFix;
   if (!last) {
     writeState({ ...state, lastFix: fix, path: appendPath(state.path, fix) });
@@ -171,11 +178,39 @@ export function getShiftSnapshot() {
   };
 }
 
+// Timestamp of the last accepted GPS fix (any fix, parked or moving).
+// Lets the shift controller detect a silently-dead watch and re-register it.
+export function getLastFixAt() {
+  return lastFixAt;
+}
+
 // Begin (or resume after a reload) tracking the current shift.
-export function beginShiftTracking() {
+// `presets` (optional) snapshots the driver's shift settings — category,
+// goal, voice level, active modes — pinned for the whole shift and cleared
+// at tap-out, so bouncing between gig apps never resets them.
+export function beginShiftTracking(presets) {
   if (!readState()) writeState({ startedAt: Date.now(), meters: 0, lastFix: null, category: takePendingCategory(), odometerStart: takePendingOdometerStart() });
+  if (presets && typeof presets === "object") {
+    try {
+      localStorage.setItem(SHIFT_PRESETS_KEY, JSON.stringify({ ...presets, savedAt: Date.now() }));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+  // Always re-register: a webview backgrounded while another app is
+  // foregrounded can leave a zombie watch id whose callbacks never fire.
+  stopWatch();
   startWatch();
   notify();
+}
+
+// Driver settings pinned for the active shift (until tap-out).
+export function getShiftPresets() {
+  try {
+    return JSON.parse(localStorage.getItem(SHIFT_PRESETS_KEY)) || null;
+  } catch {
+    return null;
+  }
 }
 
 // Pause: stop the GPS watch but keep the accumulated distance for the shift.
@@ -192,6 +227,7 @@ export function endShiftTracking(odometerEnd) {
   stopWatch();
   const snap = getShiftSnapshot();
   writeState(null);
+  try { localStorage.removeItem(SHIFT_PRESETS_KEY); } catch { /* noop */ }
   notify();
   if (!snap.active) return null;
   const odoEnd = Number(odometerEnd);

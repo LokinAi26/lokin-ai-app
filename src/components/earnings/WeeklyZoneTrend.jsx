@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
-import { SEEDS } from "@/lib/heatData";
 
 const WEEK_WINDOW = 8;
 
@@ -22,7 +21,7 @@ export default function WeeklyZoneTrend({ records = [] }) {
 
   const zoneOptions = useMemo(() => {
     const tagged = records.map((r) => r.zone).filter(Boolean);
-    return [...new Set([...SEEDS.map((s) => s.name), ...tagged])];
+    return [...new Set(tagged)];
   }, [records]);
 
   function toggleZone(zone) {

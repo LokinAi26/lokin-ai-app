@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { GitCompareArrows, Minus, TrendingDown, TrendingUp } from "lucide-react";
-import { SEEDS } from "@/lib/heatData";
 
 const WEEK_WINDOW = 8;
 const ZONE_COLORS = ["#8FE44E", "#22D3EE", "#C8FF3D", "#FF8A00", "#9B5DE5", "#FF3B3B"];
@@ -36,7 +35,7 @@ export default function ZoneComparison({ records = [] }) {
 
   const zoneOptions = useMemo(() => {
     const fromData = [...new Set(tagged.map((r) => r.zone))];
-    return fromData.length > 0 ? fromData.slice(0, 6) : SEEDS.slice(0, 3).map((s) => s.name);
+    return fromData.slice(0, 6);
   }, [tagged]);
 
   // Default comparison set: the top 2 zones by total tagged earnings.

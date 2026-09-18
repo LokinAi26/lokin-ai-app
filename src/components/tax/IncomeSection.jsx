@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
 import { Plus, Trash2, TrendingUp } from "lucide-react";
 import SyncStatusBadge from "@/components/ui/SyncStatusBadge";
 import SelectSheet from "@/components/ui/SelectSheet";
-import { SEEDS } from "@/lib/heatData";
 import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
 
 export default function IncomeSection() {
@@ -42,6 +41,13 @@ export default function IncomeSection() {
 
   const ytd = items.filter((i) => (i.date || "").startsWith(String(new Date().getFullYear()))).reduce((s, i) => s + (Number(i.amount) || 0), 0);
 
+  // Zone options come only from zones the driver has actually tagged on
+  // their own earning records — never from seeded sample names.
+  const knownZones = useMemo(
+    () => [...new Set(items.map((i) => i.zone).filter(Boolean))],
+    [items]
+  );
+
   return (
     <div className="space-y-3">
       <div className="rounded-2xl border border-primary/25 lokin-panel radial-fade p-4 flex items-center justify-between">
@@ -64,7 +70,7 @@ export default function IncomeSection() {
         <SelectSheet
           value={form.zone}
           onChange={(v) => setForm({ ...form, zone: v })}
-          options={[{ value: "", label: "Delivery zone — none" }, ...SEEDS.map((s) => ({ value: s.name, label: s.name }))]}
+          options={[{ value: "", label: "Delivery zone — none" }, ...knownZones.map((z) => ({ value: z, label: z }))]}
           label="Delivery zone"
           className="bg-black/50 border-white/10"
         />

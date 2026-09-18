@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS, CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
 import { setShiftCategory, setShiftOdometerStart, beginShiftTracking } from "@/lib/shiftMileage";
+import { getTtsVolume } from "@/lib/lokinVoicePipeline";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { setWorkStatusOptimistic } from "@/lib/workStatusStore";
 import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
@@ -42,8 +43,14 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
     setSaving(true);
     setShiftCategory(category);
     setShiftOdometerStart(odoStart);
-    // Begin automatic GPS mileage tracking for this shift.
-    beginShiftTracking();
+    // Begin automatic GPS mileage tracking for this shift, pinning the
+    // driver presets (category, goal, voice level, modes) until tap-out.
+    beginShiftTracking({
+      category: category || null,
+      dailyGoal: prefs?.daily_goal ?? null,
+      modes: modes.length ? modes : ["delivery"],
+      voiceLevel: getTtsVolume(),
+    });
     // Optimistic: the session flips to working instantly; the preference
     // write syncs in the background while the lock-in animation plays.
     setWorkStatusOptimistic(prefs, "working", {

@@ -417,6 +417,144 @@ export default async function(req) {
           });
         }
 
+        // ---- Offer screenshot OCR: vision parse of a delivery-offer screen ----
+        // task:"offer_ocr" + images:[{mimeType,data}]. Gemini first (cheap vision),
+        // GPT fallback. Returns { parsed, reply, engine, model, usage }.
+        // parsed: { amount, platform, miles, minutes, merchant, destination,
+        //           stops, peak_pay, confidence, note } (fields null when unsure).
+        const isOfferTask = String(body.task || "") === "offer_ocr" && ocrImages.length > 0;
+        if (isOfferTask) {
+          const paidOk = paidAiFallbackAllowed();
+          const gKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+          const oKey = paidOk ? secrets.get("OPENAI_API_KEY") : "";
+          if (!gKey && !oKey) {
+            return Response.json({ error: "No vision provider key configured", provider: "none" }, { status: 503 });
+          }
+          const offerSystem = [
+            "You are an offer parser for a gig-driver copilot app.",
+            "Read the screenshot of a delivery offer screen (DoorDash, Uber Eats, Instacart, Spark, Shipt, Grubhub, Amazon Flex).",
+            "Extract ONLY what is visibly shown. Reply with STRICT JSON only, no prose, no markdown fences:",
+            '{"amount": number|null, "platform": string|null, "miles": number|null, "minutes": number|null, "merchant": string|null, "destination": string|null, "stops": number|null, "peak_pay": boolean, "confidence": "high"|"medium"|"low", "note": string}',
+            "Rules: amount = the total payout offered for the whole delivery (base + tips + peak pay as shown).",
+            "platform = the app name visible. miles = the estimated delivery distance shown. minutes = the estimated time shown.",
+            "merchant = restaurant/store name shown. destination = the delivery area or neighborhood shown.",
+            "stops = the number of orders/deliveries shown, else null. peak_pay = true only if busy/peak pay is visibly indicated.",
+            "Never invent a number — use null when unsure. note = one short line describing what you saw.",
+          ].join("\n");
+          const offerText = `${String(body.message || "Parse this delivery offer screenshot into JSON.").slice(0, 300)}\nnonce:${Date.now().toString(36)}`;
+          const offerFeature = "ocr:offer_screenshot";
+          const offerTries = [];
+          if (gKey) offerTries.push(["gemini", DECK_ENGINE_MODELS.gemini, gKey]);
+          if (oKey) offerTries.push(["gpt", secrets.get("OPENAI_MODEL") || "gpt-5.6", oKey]);
+          let offerOut = null, offerEngine = "", offerModel = "", offerErr = "";
+          for (const [eng, mdl, key] of offerTries) {
+            try {
+              const op = eng === "gemini" ? `gemini_${offerFeature}` : `openai_${offerFeature}`;
+              const prov = eng === "gemini" ? "google" : "openai";
+              const est = eng === "gemini" ? 0.005 : 0.01;
+              offerOut = await withEcosystemAdmission(base44, {
+                sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: op,
+                provider: prov, priority: 55, estimatedMs: 25000, estimatedCost: est, realtime: false, tags: ["credits", "ai", "ocr"],
+              }, () => eng === "gemini"
+                ? callGemini({ apiKey: key, model: mdl, system: offerSystem, userText: offerText, images: ocrImages })
+                : callFusionGpt({ apiKey: key, model: mdl, system: offerSystem, userText: offerText, images: ocrImages }));
+              offerEngine = eng; offerModel = mdl;
+              break;
+            } catch (e) { offerErr = e?.message || String(e); console.warn("offer ocr engine failed", eng, offerErr); }
+          }
+          if (!offerOut) {
+            return Response.json({ error: `Offer OCR failed: ${offerErr || "no vision engine available"}`, provider: "none" }, { status: 502 });
+          }
+          let offerParsed = null;
+          try {
+            const m = String(offerOut.text || "").match(/\{[\s\S]*\}/);
+            if (m) offerParsed = JSON.parse(m[0]);
+          } catch { /* client falls back to manual review */ }
+          const offerCost = estimateCost({ input_tokens: offerOut.inputTokens, output_tokens: offerOut.outputTokens }, guardianConfig, offerModel);
+          try {
+            await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+              user_id: user.id, request_id: "", model: offerModel, mode: offerFeature,
+              input_tokens: Number(offerOut.inputTokens || 0), output_tokens: Number(offerOut.outputTokens || 0),
+              total_tokens: Number(offerOut.inputTokens || 0) + Number(offerOut.outputTokens || 0),
+              estimated_cost_usd: offerCost, status: "success", occurred_at: new Date().toISOString(),
+            });
+          } catch (e) { console.warn("offer ocr usage telemetry unavailable", e?.message || e); }
+          return Response.json({
+            parsed: offerParsed, reply: offerOut.text, provider: "external", engine: offerEngine, model: offerModel,
+            usage: { input_tokens: Number(offerOut.inputTokens || 0), output_tokens: Number(offerOut.outputTokens || 0), estimated_cost_usd: Number(offerCost.toFixed(6)) },
+            guardian: { mode: guardianMode, api_key_exposed: false },
+          });
+        }
+
+        // ---- Order-items screenshot OCR: vision parse of a gig shopping-list screen ----
+        // task:"order_items_ocr" + images:[{mimeType,data}] (up to 2 screenshots for
+        // long lists across screens). Gemini first (cheap vision), GPT fallback.
+        // Returns { parsed, reply, engine, model, usage }.
+        // parsed: { items: [{name, quantity, unit}], store, confidence, note }.
+        const isOrderItemsTask = String(body.task || "") === "order_items_ocr" && ocrImages.length > 0;
+        if (isOrderItemsTask) {
+          const paidOk = paidAiFallbackAllowed();
+          const gKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+          const oKey = paidOk ? secrets.get("OPENAI_API_KEY") : "";
+          if (!gKey && !oKey) {
+            return Response.json({ error: "No vision provider key configured", provider: "none" }, { status: 503 });
+          }
+          const itemsSystem = [
+            "You are a shopping-list parser for a gig-driver grocery copilot.",
+            "Read the screenshot(s) of a grocery/retail shopping order (DoorDash, Instacart, Shipt, Spark, Uber Eats).",
+            "Extract every shoppable item visibly shown, in order. Reply with STRICT JSON only, no prose, no markdown fences:",
+            '{"items": [{"name": string, "quantity": number, "unit": string|null}], "store": string|null, "confidence": "high"|"medium"|"low", "note": string}',
+            "Rules: name = the item name as shown (include size/flavor when visible, e.g. 'Whole Milk 1 gal').",
+            "quantity = the requested count shown, else 1. unit = unit shown (each, lb, oz, pack) else null.",
+            "Skip UI chrome, headers, totals, and delivery instructions — items only.",
+            "When two screenshots show one continuous list, merge them and de-duplicate repeated items.",
+            "Never invent an item — only what is visibly shown. note = one short line describing what you saw.",
+          ].join("\n");
+          const itemsText = `${String(body.message || "Parse this shopping order screenshot into JSON.").slice(0, 300)}\nnonce:${Date.now().toString(36)}`;
+          const itemsFeature = "ocr:order_items_screenshot";
+          const itemsTries = [];
+          if (gKey) itemsTries.push(["gemini", DECK_ENGINE_MODELS.gemini, gKey]);
+          if (oKey) itemsTries.push(["gpt", secrets.get("OPENAI_MODEL") || "gpt-5.6", oKey]);
+          let itemsOut = null, itemsEngine = "", itemsModel = "", itemsErr = "";
+          for (const [eng, mdl, key] of itemsTries) {
+            try {
+              const op = eng === "gemini" ? `gemini_${itemsFeature}` : `openai_${itemsFeature}`;
+              const prov = eng === "gemini" ? "google" : "openai";
+              const est = eng === "gemini" ? 0.005 : 0.01;
+              itemsOut = await withEcosystemAdmission(base44, {
+                sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: op,
+                provider: prov, priority: 55, estimatedMs: 30000, estimatedCost: est, realtime: false, tags: ["credits", "ai", "ocr"],
+              }, () => eng === "gemini"
+                ? callGemini({ apiKey: key, model: mdl, system: itemsSystem, userText: itemsText, images: ocrImages })
+                : callFusionGpt({ apiKey: key, model: mdl, system: itemsSystem, userText: itemsText, images: ocrImages }));
+              itemsEngine = eng; itemsModel = mdl;
+              break;
+            } catch (e) { itemsErr = e?.message || String(e); console.warn("order items ocr engine failed", eng, itemsErr); }
+          }
+          if (!itemsOut) {
+            return Response.json({ error: `Order-items OCR failed: ${itemsErr || "no vision engine available"}`, provider: "none" }, { status: 502 });
+          }
+          let itemsParsed = null;
+          try {
+            const m = String(itemsOut.text || "").match(/\{[\s\S]*\}/);
+            if (m) itemsParsed = JSON.parse(m[0]);
+          } catch { /* client falls back to manual entry */ }
+          const itemsCost = estimateCost({ input_tokens: itemsOut.inputTokens, output_tokens: itemsOut.outputTokens }, guardianConfig, itemsModel);
+          try {
+            await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+              user_id: user.id, request_id: "", model: itemsModel, mode: itemsFeature,
+              input_tokens: Number(itemsOut.inputTokens || 0), output_tokens: Number(itemsOut.outputTokens || 0),
+              total_tokens: Number(itemsOut.inputTokens || 0) + Number(itemsOut.outputTokens || 0),
+              estimated_cost_usd: itemsCost, status: "success", occurred_at: new Date().toISOString(),
+            });
+          } catch (e) { console.warn("order items ocr usage telemetry unavailable", e?.message || e); }
+          return Response.json({
+            parsed: itemsParsed, reply: itemsOut.text, provider: "external", engine: itemsEngine, model: itemsModel,
+            usage: { input_tokens: Number(itemsOut.inputTokens || 0), output_tokens: Number(itemsOut.outputTokens || 0), estimated_cost_usd: Number(itemsCost.toFixed(6)) },
+            guardian: { mode: guardianMode, api_key_exposed: false },
+          });
+        }
+
         // ---- Jarvis fusion routing: only when the caller asked for a bot/engine ----
     const requestedBotId = String(body.bot || "").toLowerCase();
     const requestedBot = DECK_BOTS[requestedBotId] || null;
