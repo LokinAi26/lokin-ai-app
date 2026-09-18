@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car, ChevronRight, ChevronLeft, Package, HeartPulse, Wrench } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -196,12 +197,13 @@ export default function Insurance() {
                   <input value={form.vehicle_make} onChange={(e) => set("vehicle_make", e.target.value)} placeholder="Make" className={inputCls()} />
                   <input value={form.vehicle_model} onChange={(e) => set("vehicle_model", e.target.value)} placeholder="Model" className={inputCls()} />
                 </div>
-                <select value={form.vehicle_type} onChange={(e) => set("vehicle_type", e.target.value)} className={inputCls()}>
-                  <option value="personal_car">Personal car</option>
-                  <option value="cargo_van">Cargo van</option>
-                  <option value="box_truck">Box truck</option>
-                  <option value="other">Other</option>
-                </select>
+                <SelectSheet
+                  value={form.vehicle_type}
+                  onChange={(v) => set("vehicle_type", v)}
+                  options={[{ value: "personal_car", label: "Personal car" }, { value: "cargo_van", label: "Cargo van" }, { value: "box_truck", label: "Box truck" }, { value: "other", label: "Other" }]}
+                  label="Vehicle type"
+                  className={inputCls()}
+                />
               </div>
             </div>
           )}

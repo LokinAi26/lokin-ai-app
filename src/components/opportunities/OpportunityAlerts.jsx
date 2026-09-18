@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, BellRing, Car, MapPin, ChevronDown, ChevronUp, Check, DollarSign } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
 
 const VEHICLES = [
@@ -101,13 +102,13 @@ export default function OpportunityAlerts({ prefs, onPrefsChange }) {
 
           <div>
             <span className="flex items-center gap-1.5 text-[11px] font-semibold text-white/55 mb-1"><Car className="h-3 w-3" /> Vehicle type</span>
-            <select
+            <SelectSheet
               value={vehicle}
-              onChange={(e) => setVehicle(e.target.value)}
-              className="w-full min-h-11 rounded-xl border border-white/12 bg-black/40 px-3 py-2 text-sm text-white outline-none"
-            >
-              {VEHICLES.map((v) => <option key={v.value} value={v.value} className="bg-black">{v.label}</option>)}
-            </select>
+              onChange={setVehicle}
+              options={VEHICLES}
+              label="Vehicle type"
+              className="rounded-xl border-white/12 bg-black/40 px-3 py-2"
+            />
           </div>
 
           <div>

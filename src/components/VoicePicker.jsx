@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Volume2 } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import {
   TTS_VOICES,
   getTtsVoice,
@@ -33,16 +34,14 @@ export default function VoicePicker({ compact = false }) {
   return (
     <div className={compact ? "flex items-center gap-2" : "space-y-2"}>
       <Volume2 className="h-4 w-4 shrink-0 text-[#8FE44E]" />
-      <select
+      <SelectSheet
         value={voiceId}
-        onChange={(e) => pick(e.target.value)}
-        aria-label="LOKIN voice"
-        className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/60 px-2.5 py-2 text-xs text-white/90 outline-none focus:border-[#8FE44E]/60"
-      >
-        {TTS_VOICES.map((v) => (
-          <option key={v.id} value={v.id}>{v.label} — {v.hint}</option>
-        ))}
-      </select>
+        onChange={pick}
+        options={TTS_VOICES.map((v) => ({ value: v.id, label: `${v.label} — ${v.hint}` }))}
+        placeholder="LOKIN voice"
+        label="LOKIN voice"
+        className="min-w-0 flex-1 rounded-xl border-white/15 bg-black/60 px-2.5 py-2 text-xs"
+      />
       <button
         onClick={preview}
         disabled={previewing}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, Receipt } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 
 const CATEGORIES = ["phone", "supplies", "equipment", "fuel", "maintenance", "insurance", "parking", "tolls", "meals", "software", "other"];
 
@@ -43,9 +44,7 @@ export default function DeductionsSection() {
           <input type="number" step="0.01" placeholder="Amount $" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="min-h-11 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <SelectSheet value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={CATEGORIES.map((c) => ({ value: c, label: c }))} label="Category" className="bg-black/50 border-white/10" />
           <input type="text" placeholder="Vendor" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
         <label className="flex items-center gap-2 text-xs text-white/60">

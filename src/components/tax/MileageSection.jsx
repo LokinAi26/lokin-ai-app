@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, Route } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 
 const RATE = { business: 0.7, medical: 0.21, charitable: 0.14, moving: 0.21, personal: 0 };
 const TYPES = [["business", "Business $0.70/mi"], ["medical", "Medical $0.21/mi"], ["charitable", "Charitable $0.14/mi"], ["moving", "Moving $0.21/mi"], ["personal", "Personal $0"]];
@@ -55,9 +56,7 @@ export default function MileageSection() {
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
           <input type="number" step="0.1" placeholder="Miles" value={form.miles} onChange={(e) => setForm({ ...form, miles: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full min-h-11 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
-          {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
+        <SelectSheet value={form.type} onChange={(v) => setForm({ ...form, type: v })} options={TYPES.map(([value, label]) => ({ value, label }))} label="Mileage type" className="bg-black/50 border-white/10" />
         <input type="text" placeholder="Purpose (e.g. pickup → dropoff)" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold active:scale-95 transition-transform flex items-center justify-center gap-1.5">
           <Plus className="h-4 w-4" /> Log miles

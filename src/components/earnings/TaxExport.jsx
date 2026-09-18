@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, FileSpreadsheet } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
 
 // IRS standard mileage rate — matches the rate used when shift mileage is
@@ -98,15 +99,13 @@ export default function TaxExport() {
       <div className="mb-3 flex items-center gap-2">
         <FileSpreadsheet className="h-4 w-4 text-primary" />
         <div className="lokin-kicker lokin-kicker-lime">TAX EXPORT</div>
-        <select
+        <SelectSheet
           value={year}
-          onChange={(e) => setYear(e.target.value)}
-          className="ml-auto rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs text-white"
-        >
-          {years.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+          onChange={setYear}
+          options={years.map((y) => ({ value: y, label: String(y) }))}
+          label="Tax year"
+          className="ml-auto w-28 rounded-full border-white/15 bg-black/60 px-3 py-1 text-xs"
+        />
       </div>
 
       {loading ? (

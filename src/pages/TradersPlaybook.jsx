@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, BookOpen, BrainCircuit, Calculator, CheckCircle2, ChevronRight, CircleOff, ClipboardCheck, LockKeyhole, Save, ShieldCheck, TrendingUp } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
 import { LESSONS, PLAYBOOK_VERSION, SAMPLE_CANDLES, calculatePositionSize, evaluateSetup } from "@/lib/traderPlaybookEngine";
 
@@ -264,7 +265,18 @@ function Field({ label, value, onChange, type = "text" }) {
 }
 
 function Select({ label, value, onChange, options }) {
-  return <label className="block text-[9px] uppercase tracking-wider text-white/35">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black px-3 py-2.5 text-xs text-white outline-none focus:border-primary/50">{options.map(([key,text]) => <option key={key} value={key}>{text}</option>)}</select></label>;
+  return (
+    <label className="block text-[9px] uppercase tracking-wider text-white/35">
+      <span className="block mb-1">{label}</span>
+      <SelectSheet
+        value={value}
+        onChange={onChange}
+        options={options.map(([key, text]) => ({ value: key, label: text }))}
+        label={label}
+        className="rounded-xl border-white/10 bg-black px-3 py-2.5 text-xs"
+      />
+    </label>
+  );
 }
 
 function Metric({ label, value, accent = false }) {

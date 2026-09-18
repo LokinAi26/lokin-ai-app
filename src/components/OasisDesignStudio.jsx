@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Clock3, Image as ImageIcon, Palette, Package, Rocket, Sparkles, XCircle } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 
 const STUDIES = [
   { key: "product_concept", label: "Product concept", icon: Sparkles },
@@ -51,10 +52,7 @@ export default function OasisDesignStudio({
         <div className="border-t border-white/10 p-3">
           <label className="block">
             <span className="text-[9px] uppercase tracking-[0.14em] text-white/35">Colorway direction</span>
-            <select value={colorway} onChange={(event) => setColorway(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-white/10 bg-black px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-300/50">
-              {COLORWAYS.map((option) => <option key={option}>{option}</option>)}
-            </select>
+            <SelectSheet value={colorway} onChange={setColorway} options={COLORWAYS.map((o) => ({ value: o, label: o }))} label="Colorway direction" className="mt-1 rounded-lg border-white/10 bg-black px-3 py-2.5 text-xs" />
           </label>
 
           <div className="mt-3 grid grid-cols-2 gap-2">

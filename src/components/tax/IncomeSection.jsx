@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
 import { Plus, Trash2, TrendingUp, CloudUpload } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { SEEDS } from "@/lib/heatData";
 import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
 
@@ -59,14 +60,20 @@ export default function IncomeSection() {
           <input type="number" placeholder="Trips" value={form.trips} onChange={(e) => setForm({ ...form, trips: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
           <input type="text" placeholder="Platform" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
         </div>
-        <select value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
-          <option value="">Delivery zone — none</option>
-          {SEEDS.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-        </select>
-        <select value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
-          <option value="">Vehicle — none</option>
-          {VEHICLES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-        </select>
+        <SelectSheet
+          value={form.zone}
+          onChange={(v) => setForm({ ...form, zone: v })}
+          options={[{ value: "", label: "Delivery zone — none" }, ...SEEDS.map((s) => ({ value: s.name, label: s.name }))]}
+          label="Delivery zone"
+          className="bg-black/50 border-white/10"
+        />
+        <SelectSheet
+          value={form.vehicle}
+          onChange={(v) => setForm({ ...form, vehicle: v })}
+          options={[{ value: "", label: "Vehicle — none" }, ...VEHICLES.map((v) => ({ value: v.value, label: v.label }))]}
+          label="Vehicle"
+          className="bg-black/50 border-white/10"
+        />
         <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-bold active:scale-95 transition-transform flex items-center justify-center gap-1.5">
           <Plus className="h-4 w-4" /> Log income
         </button>

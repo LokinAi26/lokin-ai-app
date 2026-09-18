@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, MapPinned, Plus, ShieldCheck } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
 
 const DEFAULT_FORM = {
@@ -105,16 +106,12 @@ export default function LocalOfferCapture({ onSaved }) {
               <input required value={form.merchant} onChange={(event) => set("merchant", event.target.value)} placeholder="Restaurant/store" className="input" />
             </Field>
             <Field label="Platform">
-              <select value={form.platform} onChange={(event) => set("platform", event.target.value)} className="input">
-                {PLATFORMS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              <SelectSheet value={form.platform} onChange={(v) => set("platform", v)} options={PLATFORMS.map(([value, label]) => ({ value, label }))} label="Platform" className="input" />
             </Field>
           </div>
 
           <Field label="Category">
-            <select value={form.category} onChange={(event) => set("category", event.target.value)} className="input">
-              {CATEGORIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
+            <SelectSheet value={form.category} onChange={(v) => set("category", v)} options={CATEGORIES.map(([value, label]) => ({ value, label }))} label="Category" className="input" />
           </Field>
 
           <div className="grid grid-cols-2 gap-2">
@@ -140,13 +137,13 @@ export default function LocalOfferCapture({ onSaved }) {
           </Field>
 
           <Field label="Offer expires">
-            <select value={form.expires_in_minutes} onChange={(event) => set("expires_in_minutes", event.target.value)} className="input">
-              <option value="30">30 minutes</option>
-              <option value="60">1 hour</option>
-              <option value="90">90 minutes</option>
-              <option value="120">2 hours</option>
-              <option value="240">4 hours</option>
-            </select>
+            <SelectSheet
+              value={form.expires_in_minutes}
+              onChange={(v) => set("expires_in_minutes", v)}
+              options={[{ value: "30", label: "30 minutes" }, { value: "60", label: "1 hour" }, { value: "90", label: "90 minutes" }, { value: "120", label: "2 hours" }, { value: "240", label: "4 hours" }]}
+              label="Offer expires"
+              className="input"
+            />
           </Field>
 
           <div className="flex items-start gap-2 rounded-2xl border border-white/10 bg-black/35 p-3 text-[10px] leading-relaxed text-white/45">

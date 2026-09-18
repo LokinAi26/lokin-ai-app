@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import {
   CheckCircle2,
   ChevronDown,
@@ -286,10 +287,13 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
             <div className="text-[10px] tracking-widest text-white/40">NEW DRAFT ORDER</div>
             <button type="button" onClick={() => setShowForm(false)} aria-label="Close new draft order form" className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl text-white/40 hover:text-white"><X className="h-4 w-4" /></button>
           </div>
-          <select value={form.variantId} onChange={(e) => setForm((f) => ({ ...f, variantId: e.target.value }))} className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white">
-            <option value="">Select product…</option>
-            {variantOptions.map((o) => <option key={o.id} value={o.id}>{o.title} — {o.variant} ({money(o.price, currency)})</option>)}
-          </select>
+          <SelectSheet
+            value={form.variantId}
+            onChange={(v) => setForm((f) => ({ ...f, variantId: v }))}
+            options={[{ value: "", label: "Select product…" }, ...variantOptions.map((o) => ({ value: o.id, label: `${o.title} — ${o.variant} (${money(o.price, currency)})` }))]}
+            label="Product"
+            className="rounded-xl bg-black/60 border-white/10 px-3 py-2"
+          />
           <div className="grid grid-cols-2 gap-2">
             <input type="number" min="1" value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: Math.max(1, Number(e.target.value) || 1) }))} placeholder="Qty" className="rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
             <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="Customer email" className="rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-sm text-white" />
@@ -365,10 +369,13 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
                           </div>
                         ))}
                         <div className="flex gap-2">
-                          <select value={edit.addVariantId} onChange={(e) => setEdit((f) => ({ ...f, addVariantId: e.target.value }))} className="min-w-0 flex-1 min-h-11 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-[10px] text-white">
-                            <option value="">Add product…</option>
-                            {variantOptions.map((o) => <option key={o.id} value={o.id}>{o.title} — {o.variant}</option>)}
-                          </select>
+                          <SelectSheet
+                            value={edit.addVariantId}
+                            onChange={(v) => setEdit((f) => ({ ...f, addVariantId: v }))}
+                            options={[{ value: "", label: "Add product…" }, ...variantOptions.map((o) => ({ value: o.id, label: `${o.title} — ${o.variant}` }))]}
+                            label="Add product"
+                            className="min-w-0 flex-1 rounded-xl bg-black/50 border-white/10 px-2 py-2 text-[10px]"
+                          />
                           <button onClick={addVariantToEdit} className="rounded-xl border border-white/10 px-3 text-white/60"><Plus className="h-3.5 w-3.5" /></button>
                         </div>
                       </div>
@@ -376,9 +383,13 @@ export default function ShopifyDraftOrders({ invokeShopify, products, currency, 
                       <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-xl border border-white/10 bg-black/30 p-2 space-y-1.5">
                           <div className="flex items-center gap-1 text-[9px] tracking-widest text-white/35"><Percent className="h-3 w-3" /> DISCOUNT</div>
-                          <select value={edit.discountType} onChange={(e) => setEdit((f) => ({ ...f, discountType: e.target.value }))} className="w-full min-h-11 rounded-lg bg-black/50 border border-white/10 px-2 py-1.5 text-[10px]">
-                            <option value="percentage">Percentage</option><option value="fixed_amount">Fixed amount</option>
-                          </select>
+                          <SelectSheet
+                            value={edit.discountType}
+                            onChange={(v) => setEdit((f) => ({ ...f, discountType: v }))}
+                            options={[{ value: "percentage", label: "Percentage" }, { value: "fixed_amount", label: "Fixed amount" }]}
+                            label="Discount type"
+                            className="rounded-lg bg-black/50 border-white/10 px-2 py-1.5 text-[10px]"
+                          />
                           <input type="number" min="0" step="0.01" value={edit.discountValue} onChange={(e) => setEdit((f) => ({ ...f, discountValue: e.target.value }))} placeholder="0" className="w-full rounded-lg bg-black/50 border border-white/10 px-2 py-1.5 text-[10px]" />
                         </div>
                         <div className="rounded-xl border border-white/10 bg-black/30 p-2 space-y-1.5">

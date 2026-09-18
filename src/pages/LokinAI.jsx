@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, ChevronLeft } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
@@ -488,15 +489,12 @@ export default function LokinAI() {
               <span className="kicker">Voice</span>
             </div>
             <label className="select-wrap">
-              <select
+              <SelectSheet
                 value={voiceId}
-                onChange={(e) => pickVoice(e.target.value)}
-                aria-label="Voice selection"
-              >
-                {TTS_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label} — {v.hint}</option>
-                ))}
-              </select>
+                onChange={pickVoice}
+                options={TTS_VOICES.map((v) => ({ value: v.id, label: `${v.label} — ${v.hint}` }))}
+                label="Voice selection"
+              />
             </label>
             <button className="ghost-button" type="button" onClick={() => speak("LOKIN online. Locked in.")}>
               Preview

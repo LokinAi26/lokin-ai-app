@@ -5,6 +5,7 @@ import {
   TrendingUp, X
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import SelectSheet from "@/components/ui/SelectSheet";
 import OasisDesignStudio from "@/components/OasisDesignStudio";
 import OasisProductization from "@/components/OasisProductization";
 import OasisProductionFabric from "@/components/OasisProductionFabric";
@@ -773,10 +774,13 @@ export default function Oasis() {
                 <div className="grid grid-cols-2 gap-3">
                   <label>
                     <span className="text-xs font-semibold text-white/65">Category</span>
-                    <select value={idea.category} onChange={(e) => setIdea({ ...idea, category: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none">
-                      {["Apparel", "Driver gear", "Accessory", "Technology", "Packaging", "Media", "Other"].map((option) => <option key={option}>{option}</option>)}
-                    </select>
+                    <SelectSheet
+                      value={idea.category}
+                      onChange={(v) => setIdea({ ...idea, category: v })}
+                      options={["Apparel", "Driver gear", "Accessory", "Technology", "Packaging", "Media", "Other"].map((o) => ({ value: o, label: o }))}
+                      label="Category"
+                      className="mt-1 rounded-xl border-white/10 bg-black px-3 py-3 text-sm"
+                    />
                   </label>
                   <label>
                     <span className="text-xs font-semibold text-white/65">Audience</span>
