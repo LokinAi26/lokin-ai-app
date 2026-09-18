@@ -9,7 +9,8 @@ import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
-import { endShiftTracking, beginShiftTracking } from "@/lib/shiftMileage";
+import { endShiftTracking, beginShiftTracking, getShiftSnapshot } from "@/lib/shiftMileage";
+import { getTtsVolume } from "@/lib/lokinVoicePipeline";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
@@ -137,16 +138,34 @@ export default function Home() {
     // Optimistic: resume feels instant; the preference write syncs in the background.
     setPrefs({ ...prefs, work_status: "working" });
     setWorkStatusOptimistic(prefs, "working", { break_active: false }).then((r) => setPrefs(r.prefs));
-    // Resume GPS mileage tracking for the shift.
-    beginShiftTracking();
+    // Resume GPS mileage tracking for the shift, pinning the driver
+    // presets so they survive app-switching until tap-out.
+    const snap = getShiftSnapshot();
+    beginShiftTracking({
+      category: snap.category || null,
+      dailyGoal: prefs?.daily_goal ?? null,
+      voiceLevel: getTtsVolume(),
+    });
     sessionStorage.removeItem("lokin_app_free_roam");
     navigate("/ai-gps?focus=locked&nav=1&view=real");
   }
 
   async function loadPrefs() {
     const p = await base44.entities.DriverPreference.filter({});
-    setPrefs(withPendingWorkStatus(p[0] || null));
-    return p[0] || null;
+    let pref = p[0] || null;
+    // Never open on a phantom shift: a stale "working" flag (sign-in,
+    // force-close, failed tap-out write) with no live shift behind it is
+    // reset, so locked-in only ever means a real session is running.
+    const st = normalizeWorkStatus(pref?.work_status);
+    if (pref?.id && (st === "working" || st === "paused") && !getShiftSnapshot().active) {
+      try {
+        pref = await base44.entities.DriverPreference.update(pref.id, { work_status: "off", break_active: false });
+      } catch {
+        pref = { ...pref, work_status: "off" };
+      }
+    }
+    setPrefs(withPendingWorkStatus(pref));
+    return pref;
   }
 
   async function loadCommand(force = false) {
