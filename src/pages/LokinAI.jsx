@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, ChevronLeft } from "lucide-react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
-import { guardedInvoke } from "@/lib/creditGuardian";
+import { askBrain } from "@/lib/lokinBrain";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, TTS_VOICES, getTtsVoice, setTtsVoice, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio } from "@/lib/lokinVoicePipeline";
 
@@ -113,17 +114,7 @@ const RESKIN_CSS = `
   letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5);
 }
 .lokinai-reskin .select-wrap { position: relative; border-left: 1px solid var(--line); padding-left: 16px; min-width: 0; }
-.lokinai-reskin .select-wrap:after {
-  content: "\u2304"; position: absolute; right: 2px; top: -2px;
-  color: rgba(255,255,255,.5); pointer-events: none;
-}
-.lokinai-reskin select {
-  appearance: none; -webkit-appearance: none;
-  width: 100%; min-width: 0; border: 0; outline: 0;
-  color: #f5f8f5; background: transparent; font-size: 14px; cursor: pointer;
-  padding: 2px 18px 2px 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
-}
-.lokinai-reskin select option { background: #0d1214; color: #f5f8f5; }
+.lokinai-reskin .select-wrap:after { display: none; }
 .lokinai-reskin .ghost-button {
   border: 1px solid rgba(49,231,243,.48); background: rgba(49,231,243,.06); color: var(--cyan);
   padding: 10px 14px; border-radius: 999px; cursor: pointer;
@@ -337,9 +328,11 @@ export default function LokinAI() {
       const today = new Date().toISOString().slice(0, 10);
       const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
       const p = prefsList[0] || {};
-      const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: "assistant",
-        command,
+      // Jarvis fusion: Full AI chat goes to the Ask LOKIN brain
+      // (multi-engine, same auth/consent/budget guardrails).
+      const res = await askBrain({
+        bot: "asklokin",
+        message: command,
         context: {
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
@@ -488,15 +481,13 @@ export default function LokinAI() {
               <span className="kicker">Voice</span>
             </div>
             <label className="select-wrap">
-              <select
+              <SelectSheet
                 value={voiceId}
-                onChange={(e) => pickVoice(e.target.value)}
-                aria-label="Voice selection"
-              >
-                {TTS_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label} — {v.hint}</option>
-                ))}
-              </select>
+                onChange={pickVoice}
+                options={TTS_VOICES.map((v) => ({ value: v.id, label: `${v.label} — ${v.hint}` }))}
+                label="Voice selection"
+                className="border-transparent bg-transparent px-0 py-1 text-sm"
+              />
             </label>
             <button className="ghost-button" type="button" onClick={() => speak("LOKIN online. Locked in.")}>
               Preview

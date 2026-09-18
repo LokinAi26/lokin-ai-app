@@ -6,9 +6,10 @@ import { base44 } from "@/api/base44Client";
 import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
-import { guardedInvoke } from "@/lib/creditGuardian";
+import { askBrain } from "@/lib/lokinBrain";
+import { createOrQueue } from "@/lib/offlineQueue";
 import { setAiConsent } from "@/lib/aiConsent";
-import { speakText, loadVoices } from "@/lib/lokinVoice";
+import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
 
 // Navigation intents — broad matching so drivers don't need exact phrasing.
@@ -122,6 +123,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     return s.platform || s.activeApp || "mixed";
   } catch { return "mixed"; } })();
   const voiceSupported = Boolean(speechRecognitionCtor());
+  const voiceInputAvailable = voiceSupported || canRecordVoice();
   const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
   // Presentation: full-screen hero when opened from the LOKIN tab;
@@ -133,8 +135,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [drivingMode]);
 
   function speak(text) {
-    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
-    speakText(text, { rate: 1.05 });
+    // Gateway voice pipeline: real speech audio that plays inside the native iOS
+    // app (browser speechSynthesis is silent there). Falls back to device speech
+    // where the pipeline is unreachable.
+    speakLokin(text, { rate: 1.05 });
   }
 
   async function handleCommand(command) {
@@ -144,26 +148,36 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     setReply("");
 
     const t = command.toLowerCase();
+    // Strip a leading wake phrase ("hey lokin" / "hey lock in" / "ok lokin") before
+    // action matching, so "Hey lock in, I wanna make $200 today..." is heard as a
+    // question for the AI, not as the LOCK IN action.
+    const core = t.replace(/^(hey|ok|okay)\s+(lokin|lock\s*in)\b[\s,.]*/i, "").trim();
+    // Session actions (lock in / pause / resume / tap out / start work) only fire on
+    // short commands. A full sentence that merely CONTAINS one of those phrases is
+    // a question for the AI, not a button press.
+    const actionText = core.split(/\s+/).filter(Boolean).length <= 6 ? core : "";
     try {
       const prefsList = await base44.entities.DriverPreference.filter({});
       const prefs = prefsList[0] || null;
       const me = await base44.auth.me().catch(() => null);
 
-      if (includesAny(t, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
+      if (includesAny(actionText, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
         const next = { work_status: "working", break_active: false };
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
-        if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
+        // Offline-safe: the voice-started session is stored locally if there's
+        // no signal and syncs automatically once the connection returns.
+        if (me?.id) await createOrQueue("DriverSession", { user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
         const msg = "Locked in. You're live \u2014 let's get it.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
+      if (includesAny(actionText, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
         const msg = "Locked in.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
+      if (includesAny(actionText, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
@@ -171,7 +185,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
       }
 
-      if (includesAny(t, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
+      if (includesAny(actionText, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
@@ -179,7 +193,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }
 
-      if (includesAny(t, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
+      if (includesAny(actionText, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
         const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
         if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
@@ -234,9 +248,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const now = new Date();
       const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
       const history = (transcriptHistoryRef.current || []).slice(-6).map((h) => `${h.role}: ${h.text}`).join("\n");
-      const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: "assistant",
-        command,
+      // Jarvis fusion: open-ended voice questions go to the Ask LOKIN brain
+      // (multi-engine, same auth/consent/budget guardrails). Short app
+      // commands were already handled above and never reach here.
+      const res = await askBrain({
+        bot: "asklokin",
+        message: command,
         context: {
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
@@ -356,6 +373,70 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     setTimeout(beginOnce, wake ? 400 : 0);
   }
 
+  // Gateway voice pipeline — tap-to-talk recording for the native iOS app, where
+  // the browser Web Speech recognition API is unavailable/unreliable. Tap the
+  // watch face to start, tap again (or 15s max) to stop and transcribe.
+  const pipelineRecRef = useRef(null);
+
+  async function startPipelineOnce() {
+    unlockVoiceAudio();
+    setOpen(true);
+    setReply("");
+    setListening(true);
+    setBusy(true);
+    const startedAt = Date.now();
+    try {
+      const rec = await startVoiceRecording({ maxMs: 15000 });
+      pipelineRecRef.current = rec;
+      setBusy(false);
+      let blob;
+      try {
+        blob = await rec.done;
+      } finally {
+        if (pipelineRecRef.current === rec) pipelineRecRef.current = null;
+      }
+      setListening(false);
+      if (!blob || blob.size < 800) {
+        setReply("I didn't catch that. Tap the watch face and try again.");
+        return;
+      }
+      setBusy(true);
+      setTranscript("\u2026");
+      const text = await transcribeVoiceBlob(blob, Date.now() - startedAt);
+      if (!text.trim()) {
+        setBusy(false);
+        setReply("I didn't catch that. Tap the watch face and try again.");
+        return;
+      }
+      handleCommand(text);
+    } catch (e) {
+      pipelineRecRef.current = null;
+      setListening(false);
+      setBusy(false);
+      if (e?.code === "LOKIN_AI_CONSENT_REQUIRED") {
+        setConsentRequired(true);
+        setReply("Voice needs AI processing permission. Enable it to talk to LOKIN.");
+      } else if (e?.name === "NotAllowedError" || /permission/i.test(String(e?.message || ""))) {
+        setReply("Microphone access is required for LOKIN voice. Enable it in iPhone Settings, then tap the microphone again.");
+      } else {
+        setReply("Voice service hit a snag. Tap the watch face to retry.");
+      }
+    }
+  }
+
+  function onMicTap() {
+    // Tap toggles: tap to talk, tap again to stop early and send.
+    if (canRecordVoice()) {
+      if (pipelineRecRef.current) { try { pipelineRecRef.current.stop(); } catch {} return; }
+      if (listening) return;
+      startPipelineOnce();
+      return;
+    }
+    startOnce();
+  }
+
+  useEffect(() => () => { try { pipelineRecRef.current?.stop(); } catch {} stopSpeaking(); }, []);
+
   // One command ingress for UI controls, deep links, Siri/App Intents,
   // Android App Actions, widgets, hardware buttons, and future integrations.
   useEffect(() => {
@@ -391,8 +472,14 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   useEffect(() => {
     const SR = speechRecognitionCtor();
     if (wakeRestartRef.current) { clearTimeout(wakeRestartRef.current); wakeRestartRef.current = null; }
-    if (!SR || !wakeEnabled) {
+    if (!wakeEnabled || (!SR && !canRecordVoice())) {
       if (wakeRef.current) { try { wakeRef.current.stop(); } catch {} wakeRef.current = null; }
+      return;
+    }
+    if (!SR && canRecordVoice()) {
+      // Native app: no true wake-word (browser recognition is unavailable), so the
+      // toggle arms tap-to-talk on the watch face instead of a broken listener.
+      wakeRef.current = null;
       return;
     }
     const wake = new SR();
@@ -460,7 +547,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   }, [wakeEnabled, drivingMode]);
 
   function toggleAlwaysOn() {
-    if (!voiceSupported) {
+    if (!voiceInputAvailable) {
       setOpen(true);
       setReply("Always Listening is unavailable in this app environment. Use the microphone button or Siri shortcuts.");
       return;
@@ -756,12 +843,12 @@ const VOICE_CSS = `
                           type="button"
                           aria-label="Tap the LOKIN clock face to speak"
                           aria-pressed={listening ? "true" : "false"}
-                          onClick={startOnce}
+                          onClick={onMicTap}
                           disabled={busy}
                         />
                         <span className="centerpiece-caption right">Discipline Unlocks a Better You</span>
                         <span className="listen-state">
-                          {listening ? "LISTENING…" : busy ? "THINKING…" : voiceSupported ? "Tap Watch Face to Speak" : "VOICE UNAVAILABLE"}
+                          {listening ? "LISTENING…" : busy ? "THINKING…" : voiceInputAvailable ? "Tap Watch Face to Speak" : "VOICE UNAVAILABLE"}
                         </span>
                       </div>
 
@@ -802,7 +889,7 @@ const VOICE_CSS = `
                         <div className="wake-row">
                           <div>
                             <div className="kicker">Wake word</div>
-                            <div className="wake-title">Hey LOKIN · <span>{!voiceSupported ? "Unavailable" : alwaysOn ? "App Open" : "Off"}</span></div>
+                            <div className="wake-title">Hey LOKIN · <span>{!voiceInputAvailable ? "Unavailable" : alwaysOn ? "App Open" : "Off"}</span></div>
                           </div>
                           <button
                             className="toggle"
@@ -849,14 +936,14 @@ const VOICE_CSS = `
                 <>
                   <div className="flex flex-col items-center py-4">
                     <button
-                      onClick={startOnce}
+                      onClick={onMicTap}
                       disabled={busy}
                       className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all disabled:opacity-60 ${listening ? "border-accent bg-accent/20 glow-cyan animate-pulse" : "border-primary bg-primary/10 glow-primary"}`}
                     >
                       {listening ? <Radio className="h-8 w-8 text-accent animate-pulse" /> : <Mic className="h-8 w-8 text-primary" />}
                     </button>
                     <div className="mt-2 text-xs text-white/55">
-                      {listening ? "Listening…" : busy ? "Thinking…" : voiceSupported ? "Tap to speak" : "Voice unavailable · use controls"}
+                      {listening ? "Listening…" : busy ? "Thinking…" : voiceInputAvailable ? "Tap to speak" : "Voice unavailable · use controls"}
                     </div>
                   </div>
 
@@ -905,7 +992,7 @@ const VOICE_CSS = `
                       Hey LOKIN · App Open
                     </span>
                     <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                      {!voiceSupported ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
+                      {!voiceInputAvailable ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
                     </span>
                   </button>
                   <div className="mt-1.5 text-center text-[10px] text-white/50">
