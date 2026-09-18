@@ -46,10 +46,16 @@ const RESKIN_CSS = `
 }
 .lokinai-reskin button, .lokinai-reskin input, .lokinai-reskin select { font: inherit; }
 .lokinai-reskin button { -webkit-tap-highlight-color: transparent; }
+.lokinai-reskin { position: relative; }
+.lokinai-reskin .fullai-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('${BG_URL}');
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
 .lokinai-reskin .fullai-page {
+  position: relative; z-index: 1;
   display: flex; flex-direction: column;
   min-height: calc(100dvh - 9rem);
-  background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
 }
 .lokinai-reskin .app-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -460,12 +466,8 @@ export default function LokinAI() {
   return (
     <div className="lokinai-reskin">
       <style>{RESKIN_CSS}</style>
-      <div
-        className="fullai-page"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('${BG_URL}')`,
-        }}
-      >
+      <div aria-hidden="true" className="fullai-bg" />
+      <div className="fullai-page">
         <header className="app-header">
           <div className="brand">
             <button type="button" className="back-button" onClick={goBack} aria-label="Go back">
