@@ -4,7 +4,7 @@ import { X, Radar, Move } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS, CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
-import { setShiftCategory } from "@/lib/shiftMileage";
+import { setShiftCategory, setShiftOdometerStart, beginShiftTracking } from "@/lib/shiftMileage";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { setWorkStatusOptimistic } from "@/lib/workStatusStore";
 import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
@@ -18,6 +18,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   const [focusMode, setFocusMode] = useState("locked");
   const [category, setCategory] = useState("mixed");
   const [checks, setChecks] = useState([]);
+  const [odoStart, setOdoStart] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -27,6 +28,7 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       setFocusMode("locked");
       setCategory("mixed");
       setChecks([]);
+      setOdoStart("");
     }
   }, [open, prefs]);
 
@@ -39,6 +41,9 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
   function start() {
     setSaving(true);
     setShiftCategory(category);
+    setShiftOdometerStart(odoStart);
+    // Begin automatic GPS mileage tracking for this shift.
+    beginShiftTracking();
     // Optimistic: the session flips to working instantly; the preference
     // write syncs in the background while the lock-in animation plays.
     setWorkStatusOptimistic(prefs, "working", {
@@ -146,6 +151,17 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
               onToggle={(key) => setChecks(checks.includes(key) ? checks.filter((k) => k !== key) : [...checks, key])}
               onCheckAll={() => setChecks(PRE_TRIP_ITEMS.map((i) => i.key))}
             />
+
+            <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80 mb-1">Odometer at start <span className="text-white/35 normal-case tracking-normal">(optional)</span></div>
+              <div className="text-[11px] text-white/40 mb-2">IRS-grade mileage backup — LOKIN still tracks GPS automatically.</div>
+              <input
+                type="number" inputMode="decimal" min="0" step="0.1" value={odoStart}
+                onChange={(e) => setOdoStart(e.target.value)}
+                placeholder="e.g. 84213.5"
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-primary/60"
+              />
+            </div>
 
             <button onClick={start} disabled={saving}
               className="w-full rounded-2xl glow-border lokin-panel radial-fade py-4 font-bold disabled:opacity-60 flex items-center justify-center gap-2">
