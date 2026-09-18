@@ -72,7 +72,7 @@ export default function HeadHereBeacon({ zones, center, metric, onFocus }) {
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-white/50">
               <span>{bearing.toFixed(0)}° {compassLabel(bearing)}</span>
               <span className="text-white/20">·</span>
-              <span>{lead.dist.toFixed(1)} mi away</span>
+              <span>{lead.dist == null ? "distance n/a" : `${lead.dist.toFixed(1)} mi away`}</span>
               <span className="text-white/20">·</span>
               <span>{lead.volume} vol</span>
             </div>
@@ -102,7 +102,7 @@ export default function HeadHereBeacon({ zones, center, metric, onFocus }) {
                 >
                   <MapPin className="h-3 w-3 shrink-0" style={{ color: c }} />
                   <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white/85">{zone.name}</span>
-                  <span className="text-[10px] text-white/45">{zone.dist.toFixed(1)} mi</span>
+                  <span className="text-[10px] text-white/45">{zone.dist == null ? "—" : `${zone.dist.toFixed(1)} mi`}</span>
                   <span className="font-display font-bold text-sm" style={{ color: c }}>{metricDisplay(zone, metric)}</span>
                 </button>
               );

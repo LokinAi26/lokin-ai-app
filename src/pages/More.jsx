@@ -16,7 +16,7 @@ const SECTIONS = [
       { to: "/opportunities", icon: Radar, title: "Live Jobs", desc: "Verified current openings" },
       { to: "/driver-platforms", icon: Link2, title: "Driver Data Sources", desc: "Official APIs, partner feeds & verified capture" },
       { to: "/gigs", icon: ClipboardList, title: "Live Paid Research", desc: "Mystery shops, food reviews & tests" },
-      { to: "/hotspots", icon: Flame, title: "Hotspot Model Preview", desc: "Simulated earning-zone scenarios" },
+      { to: "/hotspots", icon: Flame, title: "Hotspots", desc: "Real earning zones from your offer history" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage & deductions" },
       { to: "/traders-playbook", icon: CandlestickChart, title: "Trader's Playbook", desc: "Learn, paper practice & journal" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history" },

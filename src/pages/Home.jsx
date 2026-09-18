@@ -17,7 +17,6 @@ import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
-import PeakWindowAlerts from "@/components/peak/PeakWindowAlerts";
 import GoalMilestoneAlerts from "@/components/earnings/GoalMilestoneAlerts";
 import ShiftNudgeMonitor from "@/components/ShiftNudgeMonitor";
 import { getRoleMeta } from "@/lib/userTypes";
@@ -283,8 +282,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Peak-window alerts — best earning hours beginning in the driver's area */}
-      <PeakWindowAlerts />
+      {/* Peak-window alerts are disabled until they can run on real offer
+          data — the old time-of-day model used seeded sample zones. */}
       <GoalMilestoneAlerts />
       <ShiftNudgeMonitor workStatus={workStatus} />
 
