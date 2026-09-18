@@ -5,6 +5,7 @@ import MileageSection from "@/components/tax/MileageSection";
 import DeductionsSection from "@/components/tax/DeductionsSection";
 import AdvisorSection from "@/components/tax/AdvisorSection";
 import CreditSection from "@/components/tax/CreditSection";
+import TaxPdfReport from "@/components/tax/TaxPdfReport";
 
 const TABS = [
   { id: "income", label: "Income", icon: Wallet },
@@ -49,6 +50,8 @@ export default function Tax() {
       {tab === "deductions" && <DeductionsSection />}
       {tab === "advisor" && <AdvisorSection />}
       {tab === "credit" && <CreditSection />}
+
+      <TaxPdfReport />
 
       <div className="text-center text-[10px] tracking-[0.2em] text-white/30 pt-1">
         LOKIN AI · NOT A CPA — ESTIMATES ONLY

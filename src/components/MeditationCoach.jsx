@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Wind, Play, Square, Volume2, VolumeX } from "lucide-react";
+import { speakText } from "@/lib/lokinVoice";
 
 // Guided breathing to regroup and reset between shifts.
 const PRESETS = {
@@ -63,12 +64,8 @@ export default function MeditationCoach() {
   }
 
   function speak(text) {
-    if (!voice || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.82;
-    u.pitch = 1;
-    window.speechSynthesis.speak(u);
+    if (!voice) return;
+    speakText(text, { rate: 0.82, pitch: 1 });
   }
 
   function start() {

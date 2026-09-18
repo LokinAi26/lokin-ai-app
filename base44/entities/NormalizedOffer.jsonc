@@ -1,0 +1,98 @@
+{
+  "name": "NormalizedOffer",
+  "type": "object",
+  "properties": {
+    "source_offer_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "private",
+        "market"
+      ]
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_offer_id": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "merchant": {
+      "type": "string"
+    },
+    "pickup_address": {
+      "type": "string"
+    },
+    "dropoff_address": {
+      "type": "string"
+    },
+    "cargo_or_passenger_type": {
+      "type": "string"
+    },
+    "vehicle_requirement": {
+      "type": "string"
+    },
+    "operator_type": {
+      "type": "string",
+      "enum": [
+        "HUMAN",
+        "HUMAN_ASSISTED",
+        "REMOTE",
+        "AUTONOMOUS"
+      ]
+    },
+    "route": {
+      "type": "object"
+    },
+    "economics": {
+      "type": "object"
+    },
+    "item_complexity": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "provenance": {
+      "type": "object"
+    },
+    "observed_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider",
+    "operator_type",
+    "confidence",
+    "version"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.owner_user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.owner_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.owner_user_id": "{{user.id}}"
+    }
+  }
+}

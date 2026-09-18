@@ -5,6 +5,18 @@ const SERVER_URL = new URL("/api/mcp", window.location.origin).toString();
 
 const CLIENTS = [
   {
+    key: "claude",
+    label: "Claude",
+    icon: Bot,
+    color: "text-accent",
+    steps: [
+      "Open Claude → profile menu → Settings → Connectors.",
+      "Click “Add custom connector”.",
+      "Name it (e.g. LOKIN AI), paste the MCP server URL below, then Add.",
+      "Approve: Claude opens LOKIN’s consent page — sign in with your LOKIN account and approve. The assistant only ever acts as you.",
+    ],
+  },
+  {
     key: "chatgpt",
     label: "ChatGPT",
     icon: MessageSquare,
@@ -15,18 +27,6 @@ const CLIENTS = [
       "Paste the MCP server URL below, then Create.",
       "Enable the app from the chat composer before prompting it.",
       "Approve: ChatGPT opens LOKIN’s consent page — sign in with your LOKIN account and approve. The assistant only ever acts as you.",
-    ],
-  },
-  {
-    key: "claude",
-    label: "Claude",
-    icon: Bot,
-    color: "text-accent",
-    steps: [
-      "Open Claude → profile menu → Settings → Connectors.",
-      "Click “Add custom connector”.",
-      "Name it (e.g. LOKIN AI), paste the MCP server URL below, then Add.",
-      "Approve: Claude opens LOKIN’s consent page — sign in with your LOKIN account and approve. The assistant only ever acts as you.",
     ],
   },
   {
@@ -56,7 +56,7 @@ const CLIENTS = [
 ];
 
 export default function Connect() {
-  const [tab, setTab] = useState("chatgpt");
+  const [tab, setTab] = useState("claude");
   const [copied, setCopied] = useState(false);
   const active = CLIENTS.find((c) => c.key === tab);
 

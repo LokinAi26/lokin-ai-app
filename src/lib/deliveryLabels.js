@@ -15,6 +15,14 @@ export const CATEGORY_OPTIONS = Object.entries(
   }
 ).map(([value, label]) => ({ value, label }));
 
+// Human label for a tagged session category ('mixed' when no single category applies).
+export function sessionCategoryLabel(value) {
+  if (!value || value === "mixed") return "Mixed";
+  const found = CATEGORY_OPTIONS.find((c) => c.value === value);
+  if (found) return found.label;
+  return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, " ");
+}
+
 export const AVOID_TYPES = [
   { value: "customer", label: "Customer" },
   { value: "restaurant", label: "Restaurant" },

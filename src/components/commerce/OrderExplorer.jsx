@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { money, badge } from "./format";
+import SelectSheet from "@/components/ui/SelectSheet";
 
 export default function OrderExplorer({ orders, currency }) {
   const [q, setQ] = useState("");
@@ -52,25 +53,9 @@ export default function OrderExplorer({ orders, currency }) {
             className="w-full rounded-xl bg-black/50 border border-white/10 pl-8 pr-3 py-2 text-xs text-white"
           />
         </div>
-        <select value={fin} onChange={(e) => setFin(e.target.value)} className="min-h-11 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-xs text-white">
-          <option value="">All payments</option>
-          <option value="paid">Paid</option>
-          <option value="partially_paid">Partially paid</option>
-          <option value="refunded">Refunded</option>
-          <option value="voided">Voided</option>
-        </select>
-        <select value={ful} onChange={(e) => setFul(e.target.value)} className="min-h-11 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-xs text-white">
-          <option value="">All fulfillment</option>
-          <option value="fulfilled">Fulfilled</option>
-          <option value="partial">Partial</option>
-          <option value="unfulfilled">Unfulfilled</option>
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className="min-h-11 rounded-xl bg-black/50 border border-white/10 px-2 py-2 text-xs text-white">
-          <option value="date_desc">Newest</option>
-          <option value="date_asc">Oldest</option>
-          <option value="value_desc">Value ↓</option>
-          <option value="value_asc">Value ↑</option>
-        </select>
+        <SelectSheet value={fin} onChange={setFin} options={[{ value: "", label: "All payments" }, { value: "paid", label: "Paid" }, { value: "partially_paid", label: "Partially paid" }, { value: "refunded", label: "Refunded" }, { value: "voided", label: "Voided" }]} label="Payment status" className="rounded-xl bg-black/50 border-white/10 px-2 py-2 text-xs" />
+        <SelectSheet value={ful} onChange={setFul} options={[{ value: "", label: "All fulfillment" }, { value: "fulfilled", label: "Fulfilled" }, { value: "partial", label: "Partial" }, { value: "unfulfilled", label: "Unfulfilled" }]} label="Fulfillment status" className="rounded-xl bg-black/50 border-white/10 px-2 py-2 text-xs" />
+        <SelectSheet value={sort} onChange={setSort} options={[{ value: "date_desc", label: "Newest" }, { value: "date_asc", label: "Oldest" }, { value: "value_desc", label: "Value ↓" }, { value: "value_asc", label: "Value ↑" }]} label="Sort orders" className="rounded-xl bg-black/50 border-white/10 px-2 py-2 text-xs" />
       </div>
       <div className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
         {filtered.map((o) => (

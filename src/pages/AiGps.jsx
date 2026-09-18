@@ -3,12 +3,16 @@ import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause,
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
+import RouteImprovementAlert from "@/components/nav/RouteImprovementAlert";
+import { speakText } from "@/lib/lokinVoice";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
 import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
+import { saveSessionRouteRecord } from "@/lib/sessionRouteRecord";
+import useRouteImprovementPush from "@/hooks/useRouteImprovementPush";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -67,6 +71,33 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+
+  // Instant faster-route alerts: web notification + native push (one per detection).
+  useRouteImprovementPush(nav.routeImprovement);
+
+  // Voice-announce faster-route finds so the driver never has to check the map.
+  useEffect(() => {
+    if (!nav.routeImprovement || !voiceGuidance) return;
+    const mins = Math.max(1, Math.round(nav.routeImprovement.savings_s / 60));
+    speakText(`Faster route available. You can save about ${mins} minutes.`, { rate: 1.02, pitch: 0.96, volume: 0.9 });
+  }, [nav.routeImprovement?.received_at_ms, voiceGuidance]);
+
+  // Active delivery points in the already-optimized sequence, for the 3D map's
+  // clustered stop layer (1 → N fastest, fuel-saving order).
+  const deliveryStops = useMemo(() => {
+    return (nav.geocodedDestinations || [])
+      .map((g, i) => ({
+        sequence: i + 1,
+        coordinate: [Number(g.longitude), Number(g.latitude)],
+      }))
+      .filter((s) => Number.isFinite(s.coordinate[0]) && Number.isFinite(s.coordinate[1]));
+  }, [nav.geocodedDestinations]);
+
+  // Persist the AI-optimized route while navigating so the end-of-session
+  // Shift Recap can draw the efficiency map (driven path vs planned route).
+  useEffect(() => {
+    if (nav.route) saveSessionRouteRecord({ geometry: nav.route.geometry, stops: deliveryStops });
+  }, [nav.route?.generated_at, deliveryStops]);
   // A nav=1 URL without a resolved destination used to enter the locked GPS
   // surface with no destination field or escape control, which looked frozen.
   // Only activate the locked navigation surface after a real target exists.
@@ -142,6 +173,7 @@ export default function AiGps() {
         setMapView={setMapView}
         routeLoadError={routeLoadError}
         loadingStops={loadingStops}
+        deliveryStops={deliveryStops}
         destinationAddresses={destinationAddresses}
         onOpenAppFreeRoam={openAppFreeRoam}
         onExit={() => navigate("/", { replace: true })}
@@ -239,6 +271,8 @@ export default function AiGps() {
         </div>
       )}
 
+      <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} />
+
       {(routeLoadError || nav.error) && (
         <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] p-3">
           <div className="flex items-start gap-2 text-sm text-red-300"><AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" /><span>{nav.error || routeLoadError}</span></div>
@@ -284,9 +318,15 @@ export default function AiGps() {
             <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
             <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
           </div>
+          {deliveryStops.length > 1 && (
+            <div className="text-center text-[9px] font-extrabold tracking-[0.14em] text-primary/80">
+              ● PINNED {deliveryStops.length} STOPS · NUMBERED 1–{deliveryStops.length} IN YOUR FASTEST, FUEL-SAVING ORDER · ZOOM OUT TO CLUSTER
+            </div>
+          )}
           {mapView === "real" ? (
             <RoadMatchedMap
               routeGeometry={nav.route.geometry}
+              deliveryStops={deliveryStops}
               snappedPosition={nav.snappedPosition}
               maneuver={nav.maneuver}
               remainingDurationS={nav.remainingDurationS}
@@ -297,6 +337,7 @@ export default function AiGps() {
           ) : (
             <RoadMatchedMap
               routeGeometry={nav.route.geometry}
+              deliveryStops={deliveryStops}
               snappedPosition={nav.snappedPosition}
               maneuver={nav.maneuver}
               remainingDurationS={nav.remainingDurationS}
@@ -363,7 +404,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -372,6 +413,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       {nav.route ? (
         <RoadMatchedMap
           routeGeometry={nav.route.geometry}
+          deliveryStops={deliveryStops}
           snappedPosition={nav.snappedPosition}
           maneuver={nav.maneuver}
           remainingDurationS={nav.remainingDurationS}
@@ -426,6 +468,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           </button>
         ) : <span className="w-10" />}
       </div>
+
+      <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 
       {error && !nav.route && (
         <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">

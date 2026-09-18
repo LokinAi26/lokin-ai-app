@@ -3,9 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { hasInternalJobKey } from '../../shared/internalJobKey.ts';
 
 // Matches a newly created OpportunityScan against drivers opted into alerts.
-// Matching criteria: vehicle type (opportunity.role_type vs driver vehicle_type)
-// and region (opportunity.region vs driver region). For each match, writes an
-// in-app OpportunityAlert and emails the driver. Runs as service role so it can
+// Matching criteria: vehicle type (opportunity.role_type vs driver vehicle_type),
+// region (opportunity.region vs driver region), and the driver's high-value pay
+// threshold (opportunity_alert_min_pay vs opportunity.pay_amount). For each
+// match, writes an in-app OpportunityAlert and emails the driver. Service role.
 // read every driver's preferences and email across all users.
 export default async function(req) {
   try {
@@ -32,6 +33,8 @@ export default async function(req) {
 
     const oppRole = (opp.role_type || 'any').toLowerCase();
     const oppRegion = (opp.region || '').trim().toLowerCase();
+    // Normalized pay figure compared against each driver's high-value bar.
+    const oppPay = Number(opp.pay_amount || 0);
 
     const prefs = await base44.asServiceRole.entities.DriverPreference.filter(
       { alert_enabled: true },
@@ -55,7 +58,18 @@ export default async function(req) {
         driverVehicle === oppRole;
 
       // Region match: if either side is blank, treat as a match (broadest reach).
-      const regionOk = !oppRegion || !driverRegion || oppRegion === driverRegion;
+      // Containment covers "Hampton Roads" vs "Hampton Roads, VA" style labels.
+      const regionOk =
+        !oppRegion ||
+        !driverRegion ||
+        oppRegion === driverRegion ||
+        oppRegion.includes(driverRegion) ||
+        driverRegion.includes(oppRegion);
+
+      // High-value filter: when the driver sets a minimum-pay bar, only
+      // opportunities whose normalized pay figure clears it trigger an alert.
+      const minPay = Number(pref.opportunity_alert_min_pay || 0);
+      if (minPay > 0 && oppPay < minPay) continue;
 
       if (!vehicleOk || !regionOk) continue;
 
@@ -70,6 +84,7 @@ export default async function(req) {
       }
 
       const reasons = [];
+      if (minPay > 0) reasons.push(`high-value ${opp.pay || '$' + oppPay}`);
       if (oppRegion && driverRegion) reasons.push(`region "${opp.region}"`);
       if (oppRole !== 'any' && driverVehicle && driverVehicle !== 'other') {
         reasons.push(`vehicle ${driverVehicle.replace(/_/g, ' ')}`);

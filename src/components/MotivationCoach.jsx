@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Flame, Volume2, Square, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { applyVoice } from "@/lib/lokinVoice";
 
 const MOODS = [
   { id: "in a slump", label: "In a slump" },
@@ -32,14 +33,16 @@ export default function MotivationCoach() {
 
   function speak() {
     if (!window.speechSynthesis || !msg) return;
+    try { window.speechSynthesis.resume(); } catch {}
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(msg);
+    applyVoice(u);
     u.rate = 0.98;
     u.pitch = 1.05;
     u.onstart = () => setSpeaking(true);
     u.onend = () => setSpeaking(false);
     u.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(u);
+    setTimeout(() => { try { window.speechSynthesis.speak(u); } catch {} }, 60);
   }
 
   function stopSpeak() {

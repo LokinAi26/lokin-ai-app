@@ -80,3 +80,34 @@ export function buildHotspots(center) {
     return { ...s, id: i, lat, lng, perHour, dist: haversineMi(center, [lat, lng]) };
   });
 }
+
+// Shift-planning time blocks (model data, same simulated preview as the seeds).
+// startHour/endHour are local clock hours; "late" runs 21–25 (past midnight).
+export const TIME_BLOCKS = [
+  { id: "early", label: "5–9 AM", startHour: 5, endHour: 9 },
+  { id: "lunch", label: "10 AM–2 PM", startHour: 10, endHour: 14 },
+  { id: "afternoon", label: "2–5 PM", startHour: 14, endHour: 17 },
+  { id: "dinner", label: "5–9 PM", startHour: 17, endHour: 21 },
+  { id: "late", label: "9 PM–1 AM", startHour: 21, endHour: 25 },
+];
+
+// Relative demand multiplier per zone per time block — how each area's $/hr
+// shifts through the day. Model estimate only, not live demand.
+const TIME_PROFILES = {
+  "Downtown Core": { early: 0.7, lunch: 1.25, afternoon: 0.95, dinner: 1.15, late: 0.85 },
+  "Midtown Plaza": { early: 0.75, lunch: 1.2, afternoon: 1.0, dinner: 1.0, late: 0.7 },
+  "University Strip": { early: 0.6, lunch: 1.0, afternoon: 0.85, dinner: 1.1, late: 1.35 },
+  "Hospital District": { early: 1.15, lunch: 1.0, afternoon: 1.05, dinner: 0.9, late: 0.6 },
+  "Stadium Zone": { early: 0.55, lunch: 0.8, afternoon: 0.9, dinner: 1.3, late: 1.1 },
+  "Riverside Shops": { early: 0.65, lunch: 1.05, afternoon: 0.95, dinner: 0.9, late: 0.6 },
+  "Tech Park Loop": { early: 1.1, lunch: 1.15, afternoon: 0.95, dinner: 0.7, late: 0.5 },
+  "Old Town Square": { early: 0.6, lunch: 1.05, afternoon: 1.0, dinner: 1.2, late: 0.9 },
+  "Harbor Point": { early: 0.7, lunch: 0.9, afternoon: 0.85, dinner: 1.05, late: 1.15 },
+  "Greenview Mall": { early: 0.65, lunch: 1.1, afternoon: 1.2, dinner: 0.95, late: 0.6 },
+};
+
+// Estimated $/hr for a zone during a time block.
+export function blockPerHour(hotspot, blockId) {
+  const mult = TIME_PROFILES[hotspot.name]?.[blockId] ?? 1;
+  return Math.round(hotspot.perHour * mult * 10) / 10;
+}

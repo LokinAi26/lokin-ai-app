@@ -7,11 +7,15 @@ import {
   rendererInterpolationBudgetMs,
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
+import { mapArchitect, baggz247Master, meshBuilder } from "@/lib/mapArchitect";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
+const STOPS_SOURCE = "lokin-delivery-stops";
+const STOPS_INK = "#06100A";
+const STOPS_FONT = ["Noto Sans Regular"];
 
 // AERIAL mode is daytime satellite photography. The dusk treatment below is
 // what makes it read as night: a dark fill above the raster (but below the
@@ -73,14 +77,17 @@ function styleUrl(style) {
 }
 
 function configureImmersiveStyle(map, style) {
+  // Keep the basemap quiet while driving: buildings stay for spatial context,
+  // but landmark models, trees, and POI labels are muted so the glowing route
+  // is the dominant feature of the view.
   const settings = {
     lightPreset: style === "satellite-streets-v12" ? "dusk" : "night",
     show3dObjects: true,
     show3dBuildings: true,
-    show3dTrees: true,
-    show3dLandmarks: true,
-    show3dFacades: true,
-    showPointOfInterestLabels: true,
+    show3dTrees: false,
+    show3dLandmarks: false,
+    show3dFacades: false,
+    showPointOfInterestLabels: false,
   };
   Object.entries(settings).forEach(([property, value]) => {
     try {
@@ -105,6 +112,111 @@ function routeFeature(routeGeometry) {
   };
 }
 
+// Active delivery stops: each point carries its position in the optimized
+// (fastest, fuel-saving) sequence. Nearby stops visually merge into a lime
+// cluster bubble while the map is zoomed out; zooming in splits them back
+// into individually numbered pins so the efficient order always reads.
+function stopsFeatureCollection(stops) {
+  const features = (Array.isArray(stops) ? stops : [])
+    .map((stop) => {
+      const coordinate = normalizeCoordinate(stop?.coordinate);
+      if (!coordinate) return null;
+      return {
+        type: "Feature",
+        properties: {
+          sequence: Number(stop?.sequence) || 0,
+        },
+        geometry: { type: "Point", coordinates: coordinate },
+      };
+    })
+    .filter(Boolean);
+  return { type: "FeatureCollection", features };
+}
+
+function addDeliveryStopLayers(map, stops) {
+  const data = stopsFeatureCollection(stops);
+  if (map.getSource(STOPS_SOURCE)) {
+    map.getSource(STOPS_SOURCE).setData(data);
+    return;
+  }
+  map.addSource(STOPS_SOURCE, {
+    type: "geojson",
+    data,
+    cluster: true,
+    clusterRadius: 46,
+    clusterMaxZoom: 15,
+  });
+  map.addLayer({
+    id: "lokin-stop-cluster-halo",
+    type: "circle",
+    source: STOPS_SOURCE,
+    slot: "top",
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": LOKIN_NEON_ROUTE,
+      "circle-opacity": 0.24,
+      "circle-blur": 0.85,
+      "circle-radius": ["step", ["get", "point_count"], 15, 3, 20, 6, 24],
+    },
+  });
+  map.addLayer({
+    id: "lokin-stop-cluster",
+    type: "circle",
+    source: STOPS_SOURCE,
+    slot: "top",
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": LOKIN_NEON_ROUTE,
+      "circle-radius": ["step", ["get", "point_count"], 10, 3, 12, 6, 14],
+      "circle-stroke-color": STOPS_INK,
+      "circle-stroke-width": 2.5,
+    },
+  });
+  map.addLayer({
+    id: "lokin-stop-cluster-count",
+    type: "symbol",
+    source: STOPS_SOURCE,
+    slot: "top",
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": ["get", "point_count"],
+      "text-font": STOPS_FONT,
+      "text-size": 11,
+      "text-allow-overlap": true,
+    },
+    paint: { "text-color": STOPS_INK },
+  });
+  map.addLayer({
+    id: "lokin-stop-pin",
+    type: "circle",
+    source: STOPS_SOURCE,
+    slot: "top",
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-color": LOKIN_NEON_ROUTE,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5.5, 17, 8.5],
+      "circle-stroke-color": STOPS_INK,
+      "circle-stroke-width": 2.5,
+      "circle-opacity": 0.98,
+    },
+  });
+  map.addLayer({
+    id: "lokin-stop-number",
+    type: "symbol",
+    source: STOPS_SOURCE,
+    slot: "top",
+    filter: ["!", ["has", "point_count"]],
+    layout: {
+      "text-field": ["get", "sequence"],
+      "text-font": STOPS_FONT,
+      "text-size": 11,
+      "text-allow-overlap": true,
+      "text-ignore-placement": true,
+    },
+    paint: { "text-color": STOPS_INK },
+  });
+}
+
 function addNavigationLayers(map, routeGeometry) {
   const data = routeFeature(routeGeometry);
   if (map.getSource(ROUTE_SOURCE)) {
@@ -117,6 +229,23 @@ function addNavigationLayers(map, routeGeometry) {
     data,
     lineMetrics: true,
   });
+  // Neon glow halo under the route (bloom for true LOKIN Green neon).
+  map.addLayer({
+    id: "lokin-live-route-glow",
+    type: "line",
+    source: ROUTE_SOURCE,
+    slot: "top",
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-color": LOKIN_NEON_ROUTE,
+      "line-opacity": 0.35,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
+      "line-blur": 6,
+    },
+  });
   map.addLayer({
     id: ROUTE_CASING,
     type: "line",
@@ -127,11 +256,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
-      "line-opacity": 0.42,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 24],
-      "line-blur": 7,
-      "line-emissive-strength": 2,
+      // Thin dark edge for definition — narrow so the neon dominates.
+      "line-color": "#060B04",
+      "line-opacity": 0.95,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 16],
     },
   });
   map.addLayer({
@@ -145,9 +273,9 @@ function addNavigationLayers(map, routeGeometry) {
     },
     paint: {
       "line-color": LOKIN_NEON_ROUTE,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 5, 17, 10],
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
-      "line-emissive-strength": 2.4,
+      "line-blur": 0,
     },
   });
 }
@@ -235,10 +363,13 @@ function createDriverMarker() {
 
 export default function LiveVectorMap({
   routeGeometry,
+  deliveryStops = [],
   snappedPosition,
   perspective = false,
   followDriver = true,
   style = "dark-v11",
+  style3d = true,
+  quality = "balanced",
   heading = 0,
   speedMps = 0,
   resetRevision = 0,
@@ -250,6 +381,7 @@ export default function LiveVectorMap({
   const markerRef = useRef(null);
   const animationRef = useRef(null);
   const routeRef = useRef(routeGeometry);
+  const stopsRef = useRef(deliveryStops);
   const callbacksRef = useRef({ onReady, onUnavailable });
   const loadedRef = useRef(false);
   const interactingRef = useRef(false);
@@ -257,6 +389,8 @@ export default function LiveVectorMap({
   const horizonGestureRef = useRef({ active: false, pointerId: null, startY: 0, startPitch: 78, startZoom: 16.6 });
   const preferredPitchRef = useRef(perspective ? 78 : 0);
   const styleRef = useRef(style);
+  const style3dRef = useRef(style3d);
+  const qualityRef = useRef(quality);
   const displayedRef = useRef({
     coordinate: normalizeCoordinate(snappedPosition?.coordinate),
     bearing: Number(heading || 0),
@@ -268,7 +402,10 @@ export default function LiveVectorMap({
   const [cameraPitch, setCameraPitch] = useState(perspective ? 78 : 0);
 
   routeRef.current = routeGeometry;
+  stopsRef.current = deliveryStops;
   styleRef.current = style;
+  style3dRef.current = style3d;
+  qualityRef.current = quality;
   callbacksRef.current = { onReady, onUnavailable };
 
   useEffect(() => {
@@ -297,7 +434,7 @@ export default function LiveVectorMap({
           style: styleUrl(style),
           center: initial,
           zoom: snappedPosition?.coordinate ? (perspective ? 16.6 : 16.8) : 13,
-          bearing: perspective ? Number(heading || 0) : 0,
+          bearing: Number(heading || 0),
           pitch: perspective ? 78 : 0,
           antialias: true,
           attributionControl: false,
@@ -346,12 +483,30 @@ export default function LiveVectorMap({
           if (disposed) return;
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
+          addDeliveryStopLayers(map, stopsRef.current);
+          if (style3dRef.current && qualityRef.current !== "performance") {
+            meshBuilder.alignWithRoute(routeRef.current);
+          }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
             setStatus("ready");
             callbacksRef.current.onReady?.();
+          }
+        });
+
+        map.on("load", () => {
+          if (disposed) return;
+          mapArchitect.map = map;
+          baggz247Master.map = map;
+          meshBuilder.map = map;
+          if (style3dRef.current && qualityRef.current !== "performance") {
+            mapArchitect.enable3DBuildings();
+            mapArchitect.enable3DLandmarks();
+            mapArchitect.setQuality(qualityRef.current);
+            baggz247Master.enhanceVisibleArea(map.getBounds());
+            meshBuilder.startAnimations();
           }
         });
 
@@ -385,6 +540,8 @@ export default function LiveVectorMap({
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
       markerRef.current?.remove();
       markerRef.current = null;
+      mapArchitect.destroy();
+      meshBuilder.destroy();
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
@@ -394,10 +551,29 @@ export default function LiveVectorMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    const apply = () => addNavigationLayers(map, routeGeometry);
+    const apply = () => {
+      addNavigationLayers(map, routeGeometry);
+      if (style3dRef.current && qualityRef.current !== "performance") {
+        meshBuilder.alignWithRoute(routeGeometry);
+      }
+    };
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
   }, [routeGeometry]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    const apply = () => addDeliveryStopLayers(map, deliveryStops);
+    if (map.isStyleLoaded()) apply();
+    else map.once("style.load", apply);
+  }, [deliveryStops]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    mapArchitect.setQuality(!style3d ? "performance" : quality);
+  }, [style3d, quality]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -464,7 +640,7 @@ export default function LiveVectorMap({
         center: target,
         offset: driverLockOffset(map, perspective),
         zoom: targetZoom,
-        bearing: perspective ? Number(heading || 0) : 0,
+        bearing: Number(heading || 0),
         pitch: perspective ? preferredPitchRef.current : 0,
         duration,
         easing: (value) => value * value * (3 - 2 * value),

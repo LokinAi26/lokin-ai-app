@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import SelectSheet from "@/components/ui/SelectSheet";
 import {
   AlertTriangle,
   BrainCircuit,
@@ -495,4 +496,17 @@ function Address({ value, accent = false }) { return <div className="flex gap-2"
 function Empty({ text }) { return <div className="rounded-2xl border border-white/10 p-4 text-sm text-white/40">{text}</div>; }
 function Field({ label, value = "", onChange, wide = false }) { return <label className={`${wide ? "col-span-2" : ""} text-[10px] text-white/45`}>{label}<input value={value ?? ""} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/45 px-3 py-2.5 text-xs text-white outline-none focus:border-primary/35"/></label>; }
 function NumberField({ label, value = "", onChange, step = "1" }) { return <label className="text-[10px] text-white/45">{label}<input type="number" step={step} value={value ?? ""} onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} className="mt-1 w-full rounded-xl border border-white/10 bg-black/45 px-3 py-2.5 text-xs text-white outline-none focus:border-primary/35"/></label>; }
-function Select({ label, value, options, onChange }) { return <label className="text-[10px] text-white/45">{label}<select value={value || options[0]} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/80 px-3 py-2.5 text-xs text-white outline-none">{options.map((o) => <option key={o} value={o}>{title(o)}</option>)}</select></label>; }
+function Select({ label, value, options, onChange }) {
+  return (
+    <label className="text-[10px] text-white/45">
+      <span className="block mb-1">{label}</span>
+      <SelectSheet
+        value={value || options[0]}
+        onChange={onChange}
+        options={options.map((o) => ({ value: o, label: title(o) }))}
+        label={label}
+        className="rounded-xl border-white/10 bg-black/80 px-3 py-2.5 text-xs"
+      />
+    </label>
+  );
+}

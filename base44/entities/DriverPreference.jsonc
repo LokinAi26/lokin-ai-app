@@ -76,6 +76,11 @@
       "default": 22,
       "type": "number"
     },
+    "opportunity_alert_min_pay": {
+      "default": 0,
+      "description": "High-value bar for match alerts: the minimum normalized pay (per hour/day as listed) an opportunity must reach before this driver is alerted. 0 alerts on every match.",
+      "type": "number"
+    },
     "optimization_mode": {
       "default": "most_profit",
       "enum": [

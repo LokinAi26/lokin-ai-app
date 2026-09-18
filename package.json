@@ -19,12 +19,13 @@
     "verify:native-location": "node scripts/verify-native-location-packaging.mjs",
     "verify:vision-xr": "node scripts/verify-vision-xr-packaging.mjs",
     "verify:control-plane": "node scripts/verify-control-plane.mjs",
+    "verify:platform": "node scripts/verify-platform-architecture.mjs && node scripts/verify-control-plane.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.48",
-    "@base44/vite-plugin": "^1.0.37",
+    "@base44/vite-plugin": "^1.0.41",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",

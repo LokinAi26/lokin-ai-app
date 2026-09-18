@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { getDriverProvider, normalizeDriverProviderKey } from "../../shared/driverProviderRegistry.js";
+import { normalizeOffer, pruneNulls, OPERATOR_TYPES } from "../../shared/offerNormalizer.js";
 
 const CATEGORIES = new Set(["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package", "alcohol", "pharmacy"]);
 const PLATFORMS = new Set(["doordash", "uber_eats", "instacart", "spark", "shipt", "grubhub", "amazon_flex", "roadie", "other"]);
@@ -162,7 +163,25 @@ export default async function ingestAuthorizedProviderOffer(req: Request) {
           continue;
         }
         const created = await db.entities.Offer.create(normalized);
-        accepted.push({ index, provider_event_id: normalized.provider_event_id, id: created.id });
+        const rawOperator = String(inputs[index]?.operator_type || "HUMAN").toUpperCase();
+        const operatorType = OPERATOR_TYPES.includes(rawOperator) ? rawOperator : "HUMAN";
+        const canonical = normalizeOffer(created, {
+          owner_user_id: normalized.owner_user_id,
+          operator_type: operatorType,
+          cargo_or_passenger_type: inputs[index]?.cargo_or_passenger_type || "CARGO",
+          vehicle_requirement: inputs[index]?.vehicle_requirement,
+          deadhead_miles: inputs[index]?.deadhead_miles,
+          route_compatibility: inputs[index]?.route_compatibility,
+        });
+        const normalizedRow = await db.entities.NormalizedOffer.create(pruneNulls({
+          ...canonical,
+          owner_user_id: normalized.owner_user_id,
+          visibility: normalized.visibility,
+        })).catch((error: unknown) => {
+          console.error("provider offer normalization projection failed", error);
+          return null;
+        });
+        accepted.push({ index, provider_event_id: normalized.provider_event_id, id: created.id, normalized_offer_id: normalizedRow?.id || null, normalization_status: normalizedRow ? "ready" : "pending_retry" });
       } catch (error) {
         rejected.push({ index, error: error instanceof Error ? error.message : "Invalid provider offer" });
       }

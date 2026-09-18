@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, CreditCard, MessageCircle, Route as RouteIcon, ScanLine, ShieldCheck, X } from "lucide-react";
-import { LOKIN_SKYLINE_BG, LokinWordmark } from "@/components/Brand";
+import { LOKIN_SKYLINE_BG } from "@/components/Brand";
 import { useAuth } from "@/lib/AuthContext";
 
 // First-run marketing feature tour, shown once per signed-in user
@@ -118,13 +118,20 @@ export default function FeatureTour() {
           <X className="h-5 w-5" />
         </button>
         <div className="absolute inset-x-0 bottom-3 text-center">
-          <LokinWordmark size={30} className="justify-center" />
-          <div className="lokin-kicker mt-1.5">UNLOCK YOUR POTENTIAL • LEVEL UP</div>
+          <span className="inline-flex items-center justify-center">
+            <span className="font-display font-black tracking-[0.1em] leading-none flex items-center">
+              <span className="metal-text">L</span>
+              <img src="https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png" alt="LOKIN lock clock" draggable="false" className="mx-0.5 -my-0.5 h-[28px] w-[28px] rounded-full object-cover" />
+              <span className="metal-text">KIN</span>
+              <span className="text-primary text-glow ml-1.5 text-[0.55em] align-middle font-black tracking-normal">AI</span>
+            </span>
+          </span>
+          <div className="lokin-kicker mt-1.5" style={{ color: "rgba(255,255,255,0.92)" }}>UNLOCK YOUR POTENTIAL • LEVEL UP</div>
         </div>
       </div>
 
       <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        <div className="lokin-kicker text-center">MORE MILES · BRIGHTER FUTURES</div>
+        <div className="lokin-kicker text-center" style={{ color: "rgba(255,255,255,0.92)" }}>MORE MILES · BRIGHTER FUTURES</div>
 
         {/* Swipeable cards */}
         <div

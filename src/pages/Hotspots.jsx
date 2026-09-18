@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Flame, Crosshair, TrendingUp, MapPin } from "lucide-react";
 import ZoneAlertMonitor from "@/components/ZoneAlertMonitor";
+import TimeHeatGrid from "@/components/hotspots/TimeHeatGrid";
+import HeadHereBeacon, { pickHeadZones } from "@/components/hotspots/HeadHereBeacon";
 import {
   PLATFORMS, METRICS, DEFAULT_CENTER, buildHotspots, heatColor, metricValue, metricDisplay,
 } from "@/lib/heatData";
@@ -54,6 +56,8 @@ export default function Hotspots() {
   }, [hotspots, selected]);
 
   const ranked = [...visible].sort((a, b) => metricValue(b, metric) - metricValue(a, metric));
+  const headZones = useMemo(() => pickHeadZones(visible, metric, 3), [visible, metric]);
+  const leadZone = headZones[0];
 
   function togglePlatform(id) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -122,6 +126,9 @@ export default function Hotspots() {
       {/* Live zone-entry alerts */}
       <ZoneAlertMonitor zones={hotspots} />
 
+      {/* Busiest areas near you — where to head for more orders */}
+      <HeadHereBeacon zones={visible} center={center} metric={metric} onFocus={(coords) => setFlyTo(coords)} />
+
       {/* Map */}
       <div className="relative rounded-3xl border border-primary/20 overflow-hidden glow-border">
         <MapContainer center={center} zoom={13} className="h-[58vh] w-full" zoomControl={false} attributionControl={false}>
@@ -149,6 +156,20 @@ export default function Hotspots() {
           {/* Your location */}
           <CircleMarker center={center} radius={6} pathOptions={{ color: "#8FE44E", fillColor: "#8FE44E", fillOpacity: 1, weight: 2 }} />
           <CircleMarker center={center} radius={14} pathOptions={{ color: "#8FE44E", fillColor: "#8FE44E", fillOpacity: 0.15, weight: 0 }} />
+
+          {/* Beam to the busiest nearby zone */}
+          {leadZone && (
+            <span>
+              <Polyline
+                positions={[[center[0], center[1]], [leadZone.lat, leadZone.lng]]}
+                pathOptions={{ color: heatColor(metric, metricValue(leadZone, metric)), weight: 10, opacity: 0.16 }}
+              />
+              <Polyline
+                positions={[[center[0], center[1]], [leadZone.lat, leadZone.lng]]}
+                pathOptions={{ color: heatColor(metric, metricValue(leadZone, metric)), weight: 2.5, opacity: 0.95, dashArray: "2 9", lineCap: "round" }}
+              />
+            </span>
+          )}
         </MapContainer>
 
         {/* Legend overlay */}
@@ -164,6 +185,9 @@ export default function Hotspots() {
           HOTSPOTS · NOT NAVIGATION
         </div>
       </div>
+
+      {/* Best times to drive per zone — shift-planning heat grid */}
+      <TimeHeatGrid zones={visible} onFocus={(coords) => setFlyTo(coords)} />
 
       {/* Zone ranking */}
       <div>

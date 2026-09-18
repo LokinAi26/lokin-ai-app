@@ -1,0 +1,65 @@
+{
+  "name": "TripCheck",
+  "type": "object",
+  "properties": {
+    "checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the pre-trip checklist was logged at session start."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "Checklist entries as {key, label, ok} pairs."
+    },
+    "passed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "total_count": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

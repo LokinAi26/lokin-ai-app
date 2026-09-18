@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Layers3, Map, Maximize2, Satellite } from "lucide-react";
+import { Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
+import MapQualityMenu from "@/components/map/MapQualityMenu";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
 import LiveVectorMap from "@/components/LiveVectorMap";
+import FuelDealsOverlay from "@/components/map/FuelDealsOverlay";
 
 const MAP_W = 640;
 const MAP_H = 420;
@@ -107,12 +109,16 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
   const defaultStyle = perspective ? "dark-v11" : "dark-v11";
   const [style, setStyle] = useState(defaultStyle);
+  const [quality, setQuality] = useState(() => {
+    const saved = localStorage.getItem("lokin_map_3d_quality");
+    return ["ultra", "balanced", "performance"].includes(saved) ? saved : "balanced";
+  });
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -427,6 +433,11 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
     finishPinch();
   }
 
+  function changeQuality(next) {
+    localStorage.setItem("lokin_map_3d_quality", next);
+    setQuality(next);
+  }
+
   function resetView() {
     if (gestureFrameRef.current != null) {
       window.cancelAnimationFrame(gestureFrameRef.current);
@@ -462,11 +473,13 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
           {rendererMode !== "fallback" ? (
             <LiveVectorMap
               routeGeometry={activeRouteGeometry}
+              deliveryStops={deliveryStops}
               snappedPosition={snappedPosition}
               perspective={perspective}
               followDriver={followDriver}
               style={style}
               heading={heading}
+              quality={quality}
               speedMps={speedMps}
               resetRevision={resetRevision}
               onReady={() => {
@@ -485,8 +498,18 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
-              {!perspective && <polyline points={routePoints} fill="none" stroke="rgba(168,255,0,0.24)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
               {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
+              {!perspective && deliveryStops.map((stop, i) => {
+                const point = markerViewport ? project(stop.coordinate, markerViewport, renderW, renderH) : null;
+                if (!point) return null;
+                return (
+                  <g key={`${stop.sequence ?? i}-${stop.coordinate?.[0] ?? i}`} transform={`translate(${point.x},${point.y})`}>
+                    <circle r="10" fill="#8FE44E" stroke="#06100A" strokeWidth="2.5" />
+                    <text textAnchor="middle" dy="3.5" fontSize="10" fontWeight="800" fill="#06100A">{stop.sequence || i + 1}</text>
+                  </g>
+                );
+              })}
               {driverPoint && (
                 <g
                   style={{
@@ -507,11 +530,6 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
 
         {!fullscreen && (
           <>
-            <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/75 px-3 py-1.5 backdrop-blur">
-              <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] text-accent">
-                <Map className="h-3.5 w-3.5" /> {perspective ? "REAL 4D MAP · ROAD MATCHED" : "REAL MAP · ROAD MATCHED"}
-              </div>
-            </div>
             <div className="absolute right-3 top-3 flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 backdrop-blur">
               {perspective ? (
                 <>
@@ -525,9 +543,8 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
                 </>
               )}
             </div>
-            {perspective && <div className="absolute left-3 top-12 rounded-full border border-accent/20 bg-black/70 px-2.5 py-1 text-[9px] font-bold tracking-[0.14em] text-accent backdrop-blur">IMMERSIVE 3D · HEADING UP</div>}
             <div className={`absolute right-3 z-20 flex flex-col items-end gap-1 ${perspective ? "top-24" : "top-14"}`}>
-              <div className="rounded-xl border border-white/10 bg-black/75 px-2.5 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white/70 backdrop-blur">DRAG · PINCH</div>
+              <MapQualityMenu quality={quality} onChange={changeQuality} />
               <button type="button" aria-label="Reset and follow driver" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
               {onEnterFullscreen && (
                 <button type="button" aria-label="Open fullscreen navigation" onClick={onEnterFullscreen} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-black/85 text-white/75 shadow-lg backdrop-blur active:scale-95"><Maximize2 className="h-4 w-4" /></button>
@@ -542,11 +559,14 @@ export default function RoadMatchedMap({ routeGeometry, snappedPosition, maneuve
               <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
               <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
             </div>
+            <MapQualityMenu quality={quality} onChange={changeQuality} />
             {(rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
               <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
             )}
           </div>
         )}
+
+        <FuelDealsOverlay fullscreen={fullscreen} />
 
         {rerouting && (
           <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(4.9rem+env(safe-area-inset-top))]" : "top-14"}`}>

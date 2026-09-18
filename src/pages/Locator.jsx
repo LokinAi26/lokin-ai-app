@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Radio } from "lucide-react";
+import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Volume2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
+import BeepSeekScanner from "@/components/locator/BeepSeekScanner";
+import ScanToSearch from "@/components/locator/ScanToSearch";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
@@ -17,10 +19,13 @@ function stockMeta(item) {
 }
 
 function derivePoint(item) {
-  if (Number.isFinite(item?.map_x) && Number.isFinite(item?.map_y)) return [item.map_x, item.map_y];
-  const aisle = parseInt(String(item?.aisle || "").replace(/\D/g, "")) || 1;
-  const shelf = parseInt(String(item?.shelf || "").replace(/\D/g, "")) || 1;
-  return [12 + ((aisle * 13) % 72), 15 + ((shelf * 17 + aisle * 5) % 68)];
+  // Real coordinates only: must be finite AND flagged verified. Otherwise
+  // return null so the UI shows aisle/shelf text instead of a fake pin.
+  // Kendall's rule: real and true in detail only — no invented locations.
+  if (Number.isFinite(item?.map_x) && Number.isFinite(item?.map_y) && item?.map_verified) {
+    return [item.map_x, item.map_y];
+  }
+  return null;
 }
 
 export default function Locator() {
@@ -28,18 +33,28 @@ export default function Locator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [beepSeek, setBeepSeek] = useState(false);
+  const [scanSearch, setScanSearch] = useState(false);
   const [tripItems, setTripItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
   });
 
-  async function locate() {
-    if (!query.trim()) return;
+  async function locate(searchValue = query) {
+    if (!String(searchValue).trim()) return;
     setLoading(true); setError(""); setResult(null);
     try {
-      const res = await guardedInvoke(base44, "locateItem", { query }, { userInitiated: true });
+      const res = await guardedInvoke(base44, "locateItem", { query: String(searchValue).trim() }, { userInitiated: true });
       setResult(res.data);
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
+  }
+
+  function handleScanned(code) {
+    setScanSearch(false);
+    const value = String(code || "").trim();
+    if (!value) return;
+    setQuery(value);
+    locate(value);
   }
 
   useEffect(() => { localStorage.setItem("lokin_smart_shop", JSON.stringify(tripItems)); }, [tripItems]);
@@ -48,7 +63,8 @@ export default function Locator() {
   const item = result?.item ? normalizeInventoryItem(result.item) : null;
   const stock = stockMeta(item);
   const freshness = inventoryFreshness(item?.last_inventory_update);
-  const [px, py] = derivePoint(item);
+  const mapPoint = derivePoint(item);
+  const hasRealMap = !!mapPoint;
   const optimizedTrip = optimizeStoreRoute(tripItems);
 
   function addToTrip() {
@@ -83,7 +99,8 @@ export default function Locator() {
 
       <div className="flex gap-2">
         <div className="relative flex-1"><ScanLine className="absolute left-3 top-3 h-4 w-4 text-primary/60"/><input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && locate()} placeholder="Barcode, item code, or product name" className="w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-9 pr-3 py-3 text-sm text-white placeholder:text-white/30"/></div>
-        <button onClick={locate} disabled={loading || !query.trim()} className="rounded-2xl bg-primary text-primary-foreground px-5 text-sm font-bold glow-primary disabled:opacity-50"><Crosshair className="h-4 w-4"/></button>
+        <button onClick={() => locate()} disabled={loading || !query.trim()} className="rounded-2xl bg-primary text-primary-foreground px-5 text-sm font-bold glow-primary disabled:opacity-50"><Crosshair className="h-4 w-4"/></button>
+        <button type="button" aria-label="Scan barcode with camera" onClick={() => setScanSearch(true)} className="rounded-2xl border border-primary/30 bg-primary/[0.06] px-5 text-primary active:scale-95"><ScanLine className="h-4 w-4"/></button>
       </div>
 
       {error && <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-3 text-sm text-red-300">{error}</div>}
@@ -112,18 +129,28 @@ export default function Locator() {
           <div className="relative aspect-[4/3] bg-[linear-gradient(rgba(162,235,27,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(162,235,27,.04)_1px,transparent_1px)] bg-[size:24px_24px]">
             {[18,34,50,66,82].map((x,i)=><div key={x} className="absolute top-[12%] bottom-[12%] w-[9%] rounded-xl border border-white/10 bg-white/[0.03]" style={{left:`${x}%`}}><div className="text-center text-[9px] text-white/25 pt-1">A{i+1}</div></div>)}
             <div className="absolute left-[4%] bottom-[4%] rounded-lg border border-white/10 bg-black/80 px-2 py-1 text-[9px] text-white/40">ENTRANCE</div>
-            <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{left:`${px}%`,top:`${py}%`}}>
-              <div className="absolute -inset-4 rounded-full bg-primary/10 animate-ping"/><div className="relative h-8 w-8 rounded-full bg-primary text-black border-4 border-black flex items-center justify-center glow-primary"><MapPin className="h-4 w-4"/></div>
-            </div>
+            {hasRealMap ? (
+              <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{left:`${mapPoint[0]}%`,top:`${mapPoint[1]}%`}}>
+                <div className="absolute -inset-4 rounded-full bg-primary/10 animate-ping"/><div className="relative h-8 w-8 rounded-full bg-primary text-black border-4 border-black flex items-center justify-center glow-primary"><MapPin className="h-4 w-4"/></div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="rounded-2xl border border-amber-400/25 bg-black/80 px-4 py-3 text-center">
+                  <div className="text-xs font-bold text-amber-300">No verified store map on file</div>
+                  <div className="mt-1 text-[10px] text-white/45">Head to Aisle {item.aisle || "?"} · Shelf {item.shelf || "?"}</div>
+                </div>
+              </div>
+            )}
             <div className="absolute right-3 top-3 rounded-xl border border-primary/25 bg-black/80 px-3 py-2 text-right"><div className="text-[9px] text-white/40">TARGET</div><div className="text-xs font-bold text-primary">{item.aisle || "?"} · {item.shelf || "?"}</div></div>
           </div>
-          <div className="p-3 text-[10px] text-white/35">Map position uses an approved merchant/store layout feed when available; otherwise LOKIN estimates from aisle/shelf data. Inventory is only labeled verified when a connected source supplies freshness data.</div>
+          <div className="p-3 text-[10px] text-white/35">Pin shows only with a verified store layout on file. Otherwise LOKIN guides by aisle and shelf — never an invented map position. Inventory is only labeled verified when a connected source supplies freshness data.</div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 lokin-panel lokin-card p-4">
+        <div className="rounded-3xl border border-primary/20 lokin-panel lokin-card p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><Radio className="h-4 w-4 text-white/45" /></div>
-            <div><div className="text-sm font-semibold text-white">Precision proximity not enabled</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Automatic “getting closer” beeps require a real indoor-positioning source such as supported merchant beacons, UWB, or another verified store-position feed. LOKIN does not simulate distance in this build.</div></div>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/[0.06]"><Volume2 className="h-4 w-4 text-primary" /></div>
+            <div className="min-w-0 flex-1"><div className="text-sm font-semibold text-white">Beep Seek — audio homing</div><div className="mt-1 text-[11px] leading-relaxed text-white/45">Point your camera along the shelf. LOKIN listens for the target barcode and beeps faster the closer it fills the frame — a continuous rapid chirp means you're on it. Distance comes from the real camera signal, never simulated.</div>
+            <button type="button" onClick={() => setBeepSeek(true)} disabled={!item.barcode && !item.item_code} className="mt-3 w-full rounded-xl border border-primary/25 bg-primary/[0.06] py-2.5 text-xs font-bold text-primary disabled:opacity-40"><Volume2 className="mr-1 inline h-3.5 w-3.5" />{item.barcode || item.item_code ? "START BEEP SEEK" : "NO TARGET CODE ON RECORD"}</button></div>
           </div>
         </div>
       </>}
@@ -133,6 +160,17 @@ export default function Locator() {
         <div className="mt-3 space-y-2">{optimizedTrip.map((x) => <div key={x.id || x.barcode || x.name} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5"><div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold flex items-center justify-center">{x.route_order}</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">{x.name}</div><div className="text-[10px] text-white/40">Aisle {x.aisle || "?"} · Shelf {x.shelf || "?"}{x._point?.estimated ? " · estimated map point" : " · store map point"}</div></div><div className="text-right"><div className={`text-[9px] font-bold ${substitutionRisk(x) === "high" ? "text-red-400" : substitutionRisk(x) === "medium" ? "text-amber-300" : "text-primary/70"}`}>{substitutionRisk(x) === "high" ? "SUB NEEDED" : substitutionRisk(x) === "medium" ? "LOW STOCK" : "READY"}</div><button onClick={() => removeFromTrip(x)} className="mt-1 text-[9px] text-white/30">REMOVE</button></div></div>)}</div>
         <div className="mt-3 text-[10px] text-white/35">LOKIN orders stops from the entrance using available store coordinates. Low/out-of-stock items are surfaced before you waste time walking to them.</div>
       </div>}
+
+      {scanSearch && (
+        <ScanToSearch onCode={handleScanned} onClose={() => setScanSearch(false)} />
+      )}
+
+      {beepSeek && item && (
+        <BeepSeekScanner
+          target={{ name: item.name, codes: [item.barcode, item.item_code] }}
+          onClose={() => setBeepSeek(false)}
+        />
+      )}
 
       {!result && <div className="rounded-3xl border border-dashed border-white/12 p-8 text-center text-sm text-white/40"><Store className="h-8 w-8 mx-auto mb-2 text-primary/50"/><div className="font-semibold text-white/65">Store intelligence, not just a barcode scanner.</div><div className="mt-1">LOKIN can show where the item should be and how many units the connected store says are available.</div></div>}
     </div>

@@ -22,6 +22,42 @@
     },
     "price": {
       "type": "number"
+    },
+    "department": {
+      "type": "string"
+    },
+    "inventory_count": {
+      "type": "number"
+    },
+    "inventory_status": {
+      "type": "string"
+    },
+    "inventory_source": {
+      "type": "string"
+    },
+    "inventory_updated_at": {
+      "type": "string"
+    },
+    "map_x": {
+      "type": "number"
+    },
+    "map_y": {
+      "type": "number"
+    },
+    "map_zone": {
+      "type": "string"
+    },
+    "map_verified": {
+      "type": "boolean"
+    },
+    "verification": {
+      "type": "string"
+    },
+    "reported_by": {
+      "type": "string"
+    },
+    "report_count": {
+      "type": "number"
     }
   },
   "required": [

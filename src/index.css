@@ -1055,3 +1055,23 @@ body {
     border-radius: 16px;
   }
 }
+
+/* NATIVE FEEL — App Store scan fixes (2026-09-17). Behavioral only; no visual-lock changes. */
+html, body {
+  overscroll-behavior: none; /* kill rubber-band page bounce (iOS) */
+  -webkit-user-select: none;
+  user-select: none; /* disable system text selection/callout on chrome */
+  -webkit-touch-callout: none; /* disable iOS long-press callout */
+  -webkit-tap-highlight-color: transparent; /* no grey tap flash */
+  touch-action: manipulation; /* no double-tap zoom delay */
+}
+input, textarea, select, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text; /* typing surfaces keep selection */
+  -webkit-touch-callout: default;
+}
+img, svg { -webkit-user-drag: none; }
+/* Inner scroll regions contain their own bounce instead of chaining to the page */
+.lokin-scroll, [data-scroll-region] { overscroll-behavior: contain; }
+
+/* All dropdowns use the SelectSheet bottom-sheet component (src/components/ui/SelectSheet.jsx). */

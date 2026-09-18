@@ -1,14 +1,2683 @@
 {
   "auth": "oauth",
+  "login_path": null,
+  "consent_path": null,
   "tools": {
+    "excluded_agents": [],
+    "entity_overrides": {
+      "AIModelEvaluation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "AvoidPlace": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Base44BuildTask": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Base44PlatformStatusSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Base44Purchase": {
+        "operations": [
+          "read"
+        ],
+        "description": null
+      },
+      "BlockedCustomer": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CannabisMarketConfig": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CannabisOrder": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CannabisProduct": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CapabilityDecision": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAIAction": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAbandonedCheckout": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAddressIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAdminNotification": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAlertSubscription": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAudit": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAudit2": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAuditLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAutomationCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAutomationLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAutomationRule": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceAutomationState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCampaignAttribution": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCancellation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCartEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCatalogCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCatalogHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCatalogSync": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCheckoutEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCommand": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCommandResult": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceConversionCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceConversionSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCostSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerAlert": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerConsent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerExperienceScore": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerJourney": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerMessage": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerPreference": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerPromise": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerRecovery": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerSatisfaction": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerSegment": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerStatus": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceCustomerTimeline": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDailyDigest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDashboardPreference": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDataQualityIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDataRetention": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDeadLetter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDeliveryEstimate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDeliveryProof": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDeliveryRisk": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceDeliveryWindow": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceEscalation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceException": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceExceptionCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceExceptionRule": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceExperiment": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceExperimentResult": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFeatureFlag": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFinancialCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFraudReview": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillment": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentDecision": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentEstimate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentItem": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentPerformance": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentPolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceFulfillmentQueue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceIdempotencyKey": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceIncident": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceIncidentEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceInsight": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceInsightEngineState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceInsightFeedback": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceIntelligenceCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceInventoryAlert": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceJobRun": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceKPI": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceLoyaltySignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceMarginAlert": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceMessageTemplate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceMessagingCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceMessagingSync": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNextBestAction": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotification": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotificationEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotificationPolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotificationPreference": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotificationQueue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceNotificationSuppression": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsAlert": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsAnomaly": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsCapacity": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsDigestSubscriber": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsForecast": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsHeartbeat": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsNote": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsObjective": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsObjectiveHistory": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsPreference": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsRunbook": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsScore": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsSession": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsSummary": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOpsTask": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderAction": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderCommunicationState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderForecast": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderItemSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderMilestone": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderNotificationPlan": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderProfit": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderResolution": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderSource": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderStateMachine": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderSync": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderSyncState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderTag": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceOrderTimeline": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommercePayoutSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommercePinnedOrder": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommercePriceSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommercePrivacyRequest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProductMapping": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProductPerformance": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProfitGoal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProfitGoalProgress": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderCapability": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderCost": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderCounter": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderCredentialStatus": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderIncident": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderLatency": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderMappingIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderOrderLink": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderRateLimit": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderRouting": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderSLA": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderShippingRate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceProviderSync": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceRecommendation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceReconciliation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceReconciliationIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceRecoveryAction": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceRefundSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceReprint": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceReturn": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceRevenueForecast": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceRevenueGoalProgress": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "CommerceReviewRequest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOpsMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOpsSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOpsState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOptimization": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOptimizationState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOrchestration": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOrderMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceOrderState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePerfBudget": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePerfectionGate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePerformance": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePerformanceState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePipelineState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePolishLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePolishState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePreference": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommercePriceSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceProbe": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceProductMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceProvider": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceProviderHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceQualityGate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceQueue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceReadiness": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRecommendation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRecovery": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRegistry": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRelease": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceReliabilityState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceResourceState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRevenueSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRoadmap": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRollup": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRun": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceRuntime": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSLA": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSchemaVersion": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSecurityEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceServiceState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceStatus": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceStoreMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSummary": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSyncIssue": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSyncLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSyncMap": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSyncSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSystemEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSystemScore": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceSystemState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceTelemetry": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceTestResult": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceTimeline": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceTrace": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceTrackingState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceUXMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceUXState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceVersion": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceVisualMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceVisualState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceVisualToken": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCommerceWatch": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinControlEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinControlState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinCreditGuardianPolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinDeliveryStatus": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinFulfillmentEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinFulfillmentHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinFulfillmentSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinIntegrationAudit": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinIntegrationState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinLearningEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinLearningMemory": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinLearningProfile": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinOpsRun": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinOrderHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinOrderLink": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinOrderTimeline": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinOutcomeLearning": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinProductLink": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinProductPerformance": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinProductSyncState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinProductView": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinStoreEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinStorefrontHealth": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinStorefrontRelease": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinStrategyPerformance": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinSystemPulse": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinTrackingEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "LokinVisionTelemetry": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "MaintenanceLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "MerchantLocation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "MerchantOrder": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "MerchantPartner": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "MileageLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationAnchorLineage": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationCalibrationPolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationCalibrationRun": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationDeviceProfile": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationDriftMetric": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationFieldTest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationFusionPolicy": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationNativeBuildStatus": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationPowerSample": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationQualityEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationRecoveryEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationRerouteDecision": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationRouteMatchStat": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationSessionV2": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "NavigationTelemetryBatch": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisApproval": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisAssetLineage": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisBrandDNA": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisDesignAsset": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisDirectorRun": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisProductSpec": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisProductionJob": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisProfitSnapshot": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisProject": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisProviderCapability": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisSampleRequest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisSupplierCandidate": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OasisWorkflowDefinition": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Offer": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OpenAIGuardianConfig": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OpenAIUsageEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OpportunityAlert": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OpportunityDecision": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "OpportunityScan": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "PaperTrade": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "PrintfulConnection": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "PrintfulShipment": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "ProductionNativeConfig": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "RegulatedDelivery": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "RetailAccessRequest": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "RetailPartnerApplication": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "RetailSyncLog": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "RetailerConnection": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SealDecision": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SealFeedback": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SmartShopList": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SpeechProviderState": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "StoreLayout": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "StoreObservation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SupportFeedback": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "SystemHealthEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TaskObservation": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Temp": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Temp2": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Temp3": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "Temp4": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TradeJournalEntry": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TraderLessonProgress": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TraderProfile": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TruckDriverProfile": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "TruckVehicle": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "UserFeedbackSignal": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "VirginiaReadinessItem": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "WorkOpportunity": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "_NoOp": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "_NoOp2": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "_NoOp3": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "AgentExecutionEvent": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      },
+      "AgentExecutionSession": {
+        "operations": [
+          "read",
+          "create",
+          "update"
+        ],
+        "description": null
+      }
+    },
     "functions": [
       {
         "name": "lokin_command_status",
         "title": "LOKIN Command Server status",
         "description": "Checks the shared LOKIN AI and ChatGPT command layer, including Credit Guardian posture, learning counts, open plans, security protections, and connection surfaces. Read-only.",
-        "input_schema": { "type": "object", "properties": { "action": { "type": "string", "const": "status", "default": "status" } }, "required": ["action"] },
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "const": "status",
+              "default": "status"
+            }
+          },
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
+        },
         "handler": "lokin-command-server",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "lokin_list_skills",
@@ -17,21 +2686,60 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "const": "skills", "default": "skills" },
-            "area": { "type": "string", "enum": ["base44", "openai", "business", "combined"], "description": "Optional skill area filter." }
+            "action": {
+              "type": "string",
+              "const": "skills",
+              "default": "skills"
+            },
+            "area": {
+              "type": "string",
+              "enum": [
+                "base44",
+                "openai",
+                "business",
+                "combined"
+              ],
+              "description": "Optional skill area filter."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "lokin-command-server",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "lokin_daily_brief",
         "title": "Create LOKIN daily command brief",
         "description": "Returns a concise cross-system briefing with credit posture, open priorities, active project memory, and the next planned action. Read-only.",
-        "input_schema": { "type": "object", "properties": { "action": { "type": "string", "const": "brief", "default": "brief" } }, "required": ["action"] },
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "const": "brief",
+              "default": "brief"
+            }
+          },
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
+        },
         "handler": "lokin-command-server",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "lokin_create_action_plan",
@@ -40,16 +2748,58 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "const": "plan", "default": "plan" },
-            "goal": { "type": "string", "description": "The outcome to plan." },
-            "area": { "type": "string", "enum": ["base44", "openai", "business", "combined"], "default": "combined" },
-            "priority": { "type": "string", "enum": ["low", "normal", "high", "urgent"], "default": "normal" },
-            "source": { "type": "string", "enum": ["lokin", "chatgpt", "mcp"], "default": "mcp" }
+            "action": {
+              "type": "string",
+              "const": "plan",
+              "default": "plan"
+            },
+            "goal": {
+              "type": "string",
+              "description": "The outcome to plan."
+            },
+            "area": {
+              "type": "string",
+              "enum": [
+                "base44",
+                "openai",
+                "business",
+                "combined"
+              ],
+              "default": "combined"
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "high",
+                "urgent"
+              ],
+              "default": "normal"
+            },
+            "source": {
+              "type": "string",
+              "enum": [
+                "lokin",
+                "chatgpt",
+                "mcp"
+              ],
+              "default": "mcp"
+            }
           },
-          "required": ["action", "goal"]
+          "required": [
+            "action",
+            "goal"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "lokin-command-server",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "lokin_remember_explicit",
@@ -58,23 +2808,64 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "const": "remember", "default": "remember" },
-            "topic": { "type": "string", "description": "Short stable memory topic." },
-            "summary": { "type": "string", "description": "The exact useful fact or preference to remember." },
-            "memory_type": { "type": "string", "enum": ["preference", "goal", "context", "strategy", "correction", "pattern"], "default": "context" }
+            "action": {
+              "type": "string",
+              "const": "remember",
+              "default": "remember"
+            },
+            "topic": {
+              "type": "string",
+              "description": "Short stable memory topic."
+            },
+            "summary": {
+              "type": "string",
+              "description": "The exact useful fact or preference to remember."
+            },
+            "memory_type": {
+              "type": "string",
+              "enum": [
+                "preference",
+                "goal",
+                "context",
+                "strategy",
+                "correction",
+                "pattern"
+              ],
+              "default": "context"
+            }
           },
-          "required": ["action", "topic", "summary"]
+          "required": [
+            "action",
+            "topic",
+            "summary"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "lokin-command-server",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "check_commerce_health",
         "title": "Check commerce credentials status",
-        "description": "Reports the live connection status for Printful, Printify, Shopify and Gmail — which API secrets are configured, which resolve to a real store/shop, and which are in demo/sandbox fallback mode. Call this to verify the commerce integration configuration before testing catalog or order flows.",
-        "input_schema": { "type": "object", "properties": {}, "required": [] },
+        "description": "Reports the live connection status for Printful, Printify, Shopify and Gmail \u2014 which API secrets are configured, which resolve to a real store/shop, and which are in demo/sandbox fallback mode. Call this to verify the commerce integration configuration before testing catalog or order flows.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
+        },
         "handler": "commerce-health",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "read_printify_catalog",
@@ -83,15 +2874,35 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: shops, products, product, catalog. Read-only storefront reads." },
-            "shop_id": { "type": "string", "description": "Printify shop id; required for products/product/catalog. Use the id returned by the 'shops' action." },
-            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
-            "limit": { "type": "number", "description": "Max products for 'catalog'; 1–200, defaults to 200." }
+            "action": {
+              "type": "string",
+              "description": "One of: shops, products, product, catalog. Read-only storefront reads."
+            },
+            "shop_id": {
+              "type": "string",
+              "description": "Printify shop id; required for products/product/catalog. Use the id returned by the 'shops' action."
+            },
+            "id": {
+              "type": "string",
+              "description": "Product id; required for the 'product' action."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max products for 'catalog'; 1\u2013200, defaults to 200."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printify-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "read_shopify_catalog",
@@ -100,14 +2911,31 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: shop, products, product, catalog. Read-only storefront reads." },
-            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
-            "limit": { "type": "number", "description": "Max products for 'products'/'catalog'; 1–250, defaults to 50/250." }
+            "action": {
+              "type": "string",
+              "description": "One of: shop, products, product, catalog. Read-only storefront reads."
+            },
+            "id": {
+              "type": "string",
+              "description": "Product id; required for the 'product' action."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max products for 'products'/'catalog'; 1\u2013250, defaults to 50/250."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "shopify-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_account_status",
@@ -116,13 +2944,27 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: stores, store. 'stores' is open to any user; 'store' is admin only." },
-            "storeId": { "type": "string", "description": "Printful store id; required for 'store' when the token owns more than one store. Use the id returned by the 'stores' action." }
+            "action": {
+              "type": "string",
+              "description": "One of: stores, store. 'stores' is open to any user; 'store' is admin only."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id; required for 'store' when the token owns more than one store. Use the id returned by the 'stores' action."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "read_printful_catalog",
@@ -131,16 +2973,39 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: products, product, catalog. Read-only storefront reads." },
-            "storeId": { "type": "string", "description": "Printful store id; required for products/product/catalog when the token owns more than one store." },
-            "id": { "type": "string", "description": "Product id; required for the 'product' action." },
-            "limit": { "type": "number", "description": "Max products for 'products' (1–100, default 50) or 'catalog' (1–200, default 200)." },
-            "offset": { "type": "number", "description": "Pagination offset for 'products' (default 0)." }
+            "action": {
+              "type": "string",
+              "description": "One of: products, product, catalog. Read-only storefront reads."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id; required for products/product/catalog when the token owns more than one store."
+            },
+            "id": {
+              "type": "string",
+              "description": "Product id; required for the 'product' action."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max products for 'products' (1\u2013100, default 50) or 'catalog' (1\u2013200, default 200)."
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset for 'products' (default 0)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_stock",
@@ -149,14 +3014,36 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "Must be 'availability'.", "default": "availability" },
-            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
-            "ids": { "type": "array", "items": { "type": "number" }, "description": "Array of Printful sync_variant ids to check (1–100)." }
+            "action": {
+              "type": "string",
+              "description": "Must be 'availability'.",
+              "default": "availability"
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the token owns more than one store."
+            },
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Array of Printful sync_variant ids to check (1\u2013100)."
+            }
           },
-          "required": ["action", "ids"]
+          "required": [
+            "action",
+            "ids"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_orders",
@@ -165,17 +3052,43 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: orders, order." },
-            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
-            "id": { "type": "string", "description": "Order id or external id; required for the 'order' action." },
-            "limit": { "type": "number", "description": "Max orders for 'orders' (1–100, default 50)." },
-            "offset": { "type": "number", "description": "Pagination offset for 'orders' (default 0)." },
-            "status": { "type": "string", "description": "Optional order status filter for 'orders' (e.g. draft, pending, inprocess, fulfilled, canceled)." }
+            "action": {
+              "type": "string",
+              "description": "One of: orders, order."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the token owns more than one store."
+            },
+            "id": {
+              "type": "string",
+              "description": "Order id or external id; required for the 'order' action."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max orders for 'orders' (1\u2013100, default 50)."
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset for 'orders' (default 0)."
+            },
+            "status": {
+              "type": "string",
+              "description": "Optional order status filter for 'orders' (e.g. draft, pending, inprocess, fulfilled, canceled)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_warehouse",
@@ -184,14 +3097,32 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "Must be 'warehouse'.", "default": "warehouse" },
-            "limit": { "type": "number", "description": "Max blank products (1–100, default 50)." },
-            "offset": { "type": "number", "description": "Pagination offset (default 0)." }
+            "action": {
+              "type": "string",
+              "description": "Must be 'warehouse'.",
+              "default": "warehouse"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max blank products (1\u2013100, default 50)."
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset (default 0)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_create_product",
@@ -200,18 +3131,51 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "Must be 'createProduct'.", "default": "createProduct" },
-            "storeId": { "type": "string", "description": "Printful store id when the token owns more than one store." },
-            "name": { "type": "string", "description": "Display name for the new sync product." },
-            "variant_id": { "type": "number", "description": "Printful warehouse blank variant_id to base the product on (from printful_warehouse)." },
-            "retail_price": { "type": "string", "description": "Retail price as a string, e.g. '24.99'. Must be >= 0.50 in the store currency." },
-            "file_url": { "type": "string", "description": "Optional design artwork file URL. Omit to create a blank product and add art later in Printful." },
-            "placement": { "type": "string", "description": "Optional print placement when file_url is set (e.g. front, back). Defaults to 'front'." }
+            "action": {
+              "type": "string",
+              "description": "Must be 'createProduct'.",
+              "default": "createProduct"
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the token owns more than one store."
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name for the new sync product."
+            },
+            "variant_id": {
+              "type": "number",
+              "description": "Printful warehouse blank variant_id to base the product on (from printful_warehouse)."
+            },
+            "retail_price": {
+              "type": "string",
+              "description": "Retail price as a string, e.g. '24.99'. Must be >= 0.50 in the store currency."
+            },
+            "file_url": {
+              "type": "string",
+              "description": "Optional design artwork file URL. Omit to create a blank product and add art later in Printful."
+            },
+            "placement": {
+              "type": "string",
+              "description": "Optional print placement when file_url is set (e.g. front, back). Defaults to 'front'."
+            }
           },
-          "required": ["action", "name", "variant_id", "retail_price"]
+          "required": [
+            "action",
+            "name",
+            "variant_id",
+            "retail_price"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "printful-catalog",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "printful_file_library",
@@ -220,16 +3184,39 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: addFile, file." },
-            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
-            "id": { "type": "string", "description": "File id; required for the 'file' action." },
-            "file_url": { "type": "string", "description": "Public URL of the file to add; required for 'addFile'." },
-            "file_name": { "type": "string", "description": "Optional display name for the new file." }
+            "action": {
+              "type": "string",
+              "description": "One of: addFile, file."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the account owns more than one store."
+            },
+            "id": {
+              "type": "string",
+              "description": "File id; required for the 'file' action."
+            },
+            "file_url": {
+              "type": "string",
+              "description": "Public URL of the file to add; required for 'addFile'."
+            },
+            "file_name": {
+              "type": "string",
+              "description": "Optional display name for the new file."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "printful-tools",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "printful_templates",
@@ -238,38 +3225,102 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: templates, template." },
-            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
-            "id": { "type": "string", "description": "Template id; required for the 'template' action." },
-            "limit": { "type": "number", "description": "Max templates for 'templates' (1–100, default 50)." },
-            "offset": { "type": "number", "description": "Pagination offset (default 0)." }
+            "action": {
+              "type": "string",
+              "description": "One of: templates, template."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the account owns more than one store."
+            },
+            "id": {
+              "type": "string",
+              "description": "Template id; required for the 'template' action."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max templates for 'templates' (1\u2013100, default 50)."
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset (default 0)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "printful-tools",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "printful_mockups",
         "title": "Printful mockup generator",
-        "description": "Generates product mockup images via the connected Printful account (Printful V1 Mockup Generator API). action 'mockupTask' creates a generation task for a catalog product (pass product_id, variant_ids[], files[] with placements/layers); action 'mockupResult' polls a task by task_key for status + mockup URLs; action 'layoutTemplates' lists layout templates for a product (pass product_id, optional orientation/technique). Mockup generation is asynchronous — create a task then poll mockupResult until done.",
+        "description": "Generates product mockup images via the connected Printful account (Printful V1 Mockup Generator API). action 'mockupTask' creates a generation task for a catalog product (pass product_id, variant_ids[], files[] with placements/layers); action 'mockupResult' polls a task by task_key for status + mockup URLs; action 'layoutTemplates' lists layout templates for a product (pass product_id, optional orientation/technique). Mockup generation is asynchronous \u2014 create a task then poll mockupResult until done.",
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: mockupTask, mockupResult, layoutTemplates." },
-            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
-            "product_id": { "type": "number", "description": "Printful catalog product id; required for mockupTask and layoutTemplates." },
-            "variant_ids": { "type": "array", "items": { "type": "number" }, "description": "Catalog variant ids to generate mockups for (mockupTask)." },
-            "files": { "type": "array", "items": { "type": "object" }, "description": "Design file placements for mockupTask (each {placement, technique, layers:[{type,url,...}]} per Printful docs)." },
-            "format": { "type": "string", "description": "Output format for mockupTask (jpg/png). Defaults to jpg." },
-            "task_key": { "type": "string", "description": "Mockup task key; required for mockupResult (returned by mockupTask)." },
-            "orientation": { "type": "string", "description": "Optional orientation filter for layoutTemplates." },
-            "technique": { "type": "string", "description": "Optional print technique for layoutTemplates (e.g. dtg, embroidery)." }
+            "action": {
+              "type": "string",
+              "description": "One of: mockupTask, mockupResult, layoutTemplates."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the account owns more than one store."
+            },
+            "product_id": {
+              "type": "number",
+              "description": "Printful catalog product id; required for mockupTask and layoutTemplates."
+            },
+            "variant_ids": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Catalog variant ids to generate mockups for (mockupTask)."
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "Design file placements for mockupTask (each {placement, technique, layers:[{type,url,...}]} per Printful docs)."
+            },
+            "format": {
+              "type": "string",
+              "description": "Output format for mockupTask (jpg/png). Defaults to jpg."
+            },
+            "task_key": {
+              "type": "string",
+              "description": "Mockup task key; required for mockupResult (returned by mockupTask)."
+            },
+            "orientation": {
+              "type": "string",
+              "description": "Optional orientation filter for layoutTemplates."
+            },
+            "technique": {
+              "type": "string",
+              "description": "Optional print technique for layoutTemplates (e.g. dtg, embroidery)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "printful-tools",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "printful_webhooks",
@@ -278,15 +3329,38 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: getWebhook, setWebhook." },
-            "storeId": { "type": "string", "description": "Printful store id when the account owns more than one store." },
-            "url": { "type": "string", "description": "Webhook receiver URL; required for setWebhook." },
-            "events": { "type": "array", "items": { "type": "string" }, "description": "Webhook events to subscribe for setWebhook (e.g. package_shipped, order_created, order_updated, stock_updated)." }
+            "action": {
+              "type": "string",
+              "description": "One of: getWebhook, setWebhook."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Printful store id when the account owns more than one store."
+            },
+            "url": {
+              "type": "string",
+              "description": "Webhook receiver URL; required for setWebhook."
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Webhook events to subscribe for setWebhook (e.g. package_shipped, order_created, order_updated, stock_updated)."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false,
+          "open_world_hint": null
         },
         "handler": "printful-tools",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": false }
+        "disabled": false
       },
       {
         "name": "audit_commerce_schemas",
@@ -295,14 +3369,31 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "action": { "type": "string", "description": "One of: summary, scanBatch, candidate." },
-            "offset": { "type": "number", "description": "Batch offset for scanBatch." },
-            "limit": { "type": "number", "description": "Batch size for scanBatch; max 25." }
+            "action": {
+              "type": "string",
+              "description": "One of: summary, scanBatch, candidate."
+            },
+            "offset": {
+              "type": "number",
+              "description": "Batch offset for scanBatch."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Batch size for scanBatch; max 25."
+            }
           },
-          "required": ["action"]
+          "required": [
+            "action"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "commerce-schema-auditor",
-        "annotations": { "read_only_hint": false, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "optimize_route",
@@ -311,12 +3402,22 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "mode": { "type": "string", "description": "Optimization mode", "default": "most_profit" }
+            "mode": {
+              "type": "string",
+              "description": "Optimization mode",
+              "default": "most_profit"
+            }
           },
           "required": []
         },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
+        },
         "handler": "optimizeRoute",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "ask_lokin",
@@ -325,12 +3426,23 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "command": { "type": "string", "description": "The driver's question or request." }
+            "command": {
+              "type": "string",
+              "description": "The driver's question or request."
+            }
           },
-          "required": ["command"]
+          "required": [
+            "command"
+          ]
+        },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
         },
         "handler": "lokinAssistant",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       },
       {
         "name": "open_lokin",
@@ -339,12 +3451,27 @@
         "input_schema": {
           "type": "object",
           "properties": {
-            "target": { "type": "string", "enum": ["route", "lokin", "earnings", "home"], "description": "Which LOKIN screen to launch. Defaults to route." }
+            "target": {
+              "type": "string",
+              "enum": [
+                "route",
+                "lokin",
+                "earnings",
+                "home"
+              ],
+              "description": "Which LOKIN screen to launch. Defaults to route."
+            }
           },
           "required": []
         },
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true,
+          "open_world_hint": null
+        },
         "handler": "native-launch",
-        "annotations": { "read_only_hint": true, "destructive_hint": false, "idempotent_hint": true }
+        "disabled": false
       }
     ]
   }
