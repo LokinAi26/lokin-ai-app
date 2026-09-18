@@ -85,12 +85,16 @@ export function LokinGlyph({ size = 28, className = "" }) {
   );
 }
 
+// The one and only official LOKIN clock: transparent clean padlock-clock
+// cutout, no glow (LOCKED 2026-09-16). Used as the "O" in the wordmark.
+export const LOKIN_CLOCK_OFFICIAL = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
+
 export function LokinWordmark({ size = 28, className = "" }) {
   return (
     <span className={`inline-flex items-center ${className}`}>
       <span className="font-display font-black tracking-[0.1em] leading-none flex items-center">
         <span className="metal-text">L</span>
-        <LokinGlyph size={size * 0.95} className="mx-0.5 -my-0.5" />
+        <img src={LOKIN_CLOCK_OFFICIAL} alt="O" width={size * 0.95} height={size * 0.95} className="mx-0.5 -my-0.5 inline-block" draggable={false} />
         <span className="metal-text">KIN</span>
         <span className="text-primary text-glow ml-1.5 text-[0.55em] align-middle font-black tracking-normal">AI</span>
       </span>
@@ -105,14 +109,14 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
 }
 
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
-export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/19590ff33_lokin-header-lockup-v2.png";
+export const LOKIN_HEADER_LOCKUP_V2 = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
-export const LOKIN_NAV_CIRCLE = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b1c0667e0_lokin-nav-circle-final.png";
+export const LOKIN_NAV_CIRCLE = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
 // The one and only Home center artwork: cut exactly from the approved concept image.
-export const LOKIN_CENTER = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c02c9c277_lokin-center-fresh.png";
+export const LOKIN_CENTER = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/ff2958bee_official-lokin-clean-lock_no_ticker_247.png";
 // Paused-state center artwork: vivid lock emblem only (no START WORK pill), from Kendall's color reference 2026-09-15.
-export const LOKIN_CENTER_PAUSED = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5510dac45_lokin-center-paused-v2.png";
+export const LOKIN_CENTER_PAUSED = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/ff2958bee_official-lokin-clean-lock_no_ticker_247.png";
 
 // LOKIN AI brand logo from the workspace brand kit — chrome padlock-clock emblem
 // with the "Unlock your potential" wordmark. Used for sticky logo headers.
