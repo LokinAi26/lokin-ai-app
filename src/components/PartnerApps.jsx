@@ -8,9 +8,12 @@ import { ExternalLink } from "lucide-react";
 // 2026-09-17: Shipt Shopper added (Kendall accepted as Shipt shopper); App Store id 976353472 verified via appadvice/similarweb.
 // 2026-09-17 night: window.open("_system"/"_blank") is silently swallowed by the
 // iOS wrapper's WKWebView (no popup delegate -> returns null, no throw), so taps
-// still did nothing on the fresh build. launch() now navigates directly so iOS
-// intercepts at the OS level: apps.apple.com -> App Store (OPEN button when the
+// still did nothing on the fresh build. launch() uses an anchor _blank click so
+// iOS intercepts at the OS level: apps.apple.com -> App Store (OPEN button when the
 // gig app is installed), universal links -> the installed gig app.
+// 2026-09-18: NEVER window.location.href the top page as a fallback — it sailed
+// LOKIN itself to the App Store link and broke the app on return. Fallback is a
+// hidden iframe: same OS interception, LOKIN's page never navigates.
 const PARTNERS = [
   { name: "DoorDash Dasher", deep: "", store: "https://apps.apple.com/app/id1451754591", color: "text-red-400", letter: "D" },
   { name: "Uber Driver", deep: "", store: "https://apps.apple.com/app/id1131342792", color: "text-white", letter: "U" },
@@ -25,8 +28,17 @@ const PARTNERS = [
 export default function PartnerApps() {
   function launch(p) {
     const target = p.deep || p.store;
+    let left = false;
+    const markLeft = () => { left = true; };
+    const onVis = () => { if (document.hidden) left = true; };
+    window.addEventListener("pagehide", markLeft, { once: true });
+    document.addEventListener("visibilitychange", onVis, { once: true });
+    const cleanup = () => {
+      window.removeEventListener("pagehide", markLeft);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     // 1) Anchor click with _blank: lets the wrapper open the link externally
-    //    (Safari / SFSafariViewController) without disturbing LOKIN.
+    //    (App Store app / installed gig app) without disturbing LOKIN.
     try {
       const a = document.createElement("a");
       a.href = target;
@@ -37,20 +49,27 @@ export default function PartnerApps() {
       a.click();
       a.remove();
     } catch {
-      /* fall through to direct navigation */
+      /* fall through to the iframe fallback */
     }
-    // 2) If the tap didn't take us out of the app, navigate directly. iOS
-    //    intercepts App Store and universal links at the OS level and hops
-    //    out of the webview on its own.
-    let left = false;
-    const markLeft = () => { left = true; };
-    const onVis = () => { if (document.hidden) left = true; };
-    window.addEventListener("pagehide", markLeft, { once: true });
-    document.addEventListener("visibilitychange", onVis, { once: true });
+    // 2) 2026-09-18: the old fallback ran window.location.href = target,
+    //    which navigated LOKIN's OWN page to the App Store link — coming back
+    //    from the gig app landed on a broken page ("no connection"). The
+    //    fallback is now a hidden iframe: it triggers the same OS-level
+    //    interception but can never navigate LOKIN's page, so returning from
+    //    the gig app always lands back in LOKIN.
     setTimeout(() => {
-      window.removeEventListener("pagehide", markLeft);
-      document.removeEventListener("visibilitychange", onVis);
-      if (!left) window.location.href = target;
+      cleanup();
+      if (left) return;
+      try {
+        const f = document.createElement("iframe");
+        f.style.display = "none";
+        f.setAttribute("aria-hidden", "true");
+        document.body.appendChild(f);
+        f.src = target;
+        setTimeout(() => { try { f.remove(); } catch {} }, 2000);
+      } catch {
+        /* tap did nothing; LOKIN page untouched */
+      }
     }, 700);
   }
 
