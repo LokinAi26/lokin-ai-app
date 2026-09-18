@@ -6,6 +6,11 @@ import { ExternalLink } from "lucide-react";
 // schemes don't exist as registered iOS schemes, so taps silently did nothing.
 // Verified: Grubhub universal link (AASA confirmed) + App Store URLs for rest.
 // 2026-09-17: Shipt Shopper added (Kendall accepted as Shipt shopper); App Store id 976353472 verified via appadvice/similarweb.
+// 2026-09-17 night: window.open("_system"/"_blank") is silently swallowed by the
+// iOS wrapper's WKWebView (no popup delegate -> returns null, no throw), so taps
+// still did nothing on the fresh build. launch() now navigates directly so iOS
+// intercepts at the OS level: apps.apple.com -> App Store (OPEN button when the
+// gig app is installed), universal links -> the installed gig app.
 const PARTNERS = [
   { name: "DoorDash Dasher", deep: "", store: "https://apps.apple.com/app/id1451754591", color: "text-red-400", letter: "D" },
   { name: "Uber Driver", deep: "", store: "https://apps.apple.com/app/id1131342792", color: "text-white", letter: "U" },
@@ -19,15 +24,34 @@ const PARTNERS = [
 
 export default function PartnerApps() {
   function launch(p) {
-    // Prefer the verified deep/universal link; fall back to the App Store URL
-    // (opens the app directly when installed). _system lets the OS resolve
-    // universal links outside the WebView.
     const target = p.deep || p.store;
+    // 1) Anchor click with _blank: lets the wrapper open the link externally
+    //    (Safari / SFSafariViewController) without disturbing LOKIN.
     try {
-      window.open(target, "_system") || window.open(target, "_blank", "noopener,noreferrer");
+      const a = document.createElement("a");
+      a.href = target;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch {
-      window.location.href = target;
+      /* fall through to direct navigation */
     }
+    // 2) If the tap didn't take us out of the app, navigate directly. iOS
+    //    intercepts App Store and universal links at the OS level and hops
+    //    out of the webview on its own.
+    let left = false;
+    const markLeft = () => { left = true; };
+    const onVis = () => { if (document.hidden) left = true; };
+    window.addEventListener("pagehide", markLeft, { once: true });
+    document.addEventListener("visibilitychange", onVis, { once: true });
+    setTimeout(() => {
+      window.removeEventListener("pagehide", markLeft);
+      document.removeEventListener("visibilitychange", onVis);
+      if (!left) window.location.href = target;
+    }, 700);
   }
 
   return (
