@@ -114,17 +114,7 @@ const RESKIN_CSS = `
   letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5);
 }
 .lokinai-reskin .select-wrap { position: relative; border-left: 1px solid var(--line); padding-left: 16px; min-width: 0; }
-.lokinai-reskin .select-wrap:after {
-  content: "\u2304"; position: absolute; right: 2px; top: -2px;
-  color: rgba(255,255,255,.5); pointer-events: none;
-}
-.lokinai-reskin select {
-  appearance: none; -webkit-appearance: none;
-  width: 100%; min-width: 0; border: 0; outline: 0;
-  color: #f5f8f5; background: transparent; font-size: 14px; cursor: pointer;
-  padding: 2px 18px 2px 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
-}
-.lokinai-reskin select option { background: #0d1214; color: #f5f8f5; }
+.lokinai-reskin .select-wrap:after { display: none; }
 .lokinai-reskin .ghost-button {
   border: 1px solid rgba(49,231,243,.48); background: rgba(49,231,243,.06); color: var(--cyan);
   padding: 10px 14px; border-radius: 999px; cursor: pointer;
@@ -494,6 +484,7 @@ export default function LokinAI() {
                 onChange={pickVoice}
                 options={TTS_VOICES.map((v) => ({ value: v.id, label: `${v.label} — ${v.hint}` }))}
                 label="Voice selection"
+                className="border-transparent bg-transparent px-0 py-1 text-sm"
               />
             </label>
             <button className="ghost-button" type="button" onClick={() => speak("LOKIN online. Locked in.")}>
