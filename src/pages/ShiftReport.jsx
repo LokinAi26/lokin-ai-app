@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Banknote, CalendarDays, Clock, Gauge, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -38,6 +38,7 @@ function shiftHours(s) {
 // Sessions are written automatically on Tap Out; earnings come from manual
 // entries and screenshot scans recorded during the shift window.
 export default function ShiftReport() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [earnings, setEarnings] = useState([]);
   const [range, setRange] = useState("week");
@@ -116,9 +117,9 @@ export default function ShiftReport() {
     <PullToRefresh onRefresh={load}>
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
-          <Link to="/earnings" className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-white/10" aria-label="Back to Earnings">
+          <button onClick={() => navigate(-1)} className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-white/10" aria-label="Back">
             <ArrowLeft className="h-4 w-4 text-white/60" />
-          </Link>
+          </button>
           <div>
             <h1 className="text-2xl font-bold font-heading metal-text">Shift Report</h1>
             <p className="text-sm text-white/45">Automatic mileage + earnings log.</p>
