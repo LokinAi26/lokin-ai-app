@@ -8,6 +8,7 @@ import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
+import OfferEvaluator from "@/components/OfferEvaluator";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
 import { endShiftTracking, beginShiftTracking, getShiftSnapshot } from "@/lib/shiftMileage";
 import { getTtsVolume } from "@/lib/lokinVoicePipeline";
@@ -39,6 +40,7 @@ export default function Home() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
+  const [showOfferEval, setShowOfferEval] = useState(false);
   const [showType, setShowType] = useState(false);
   const [summary, setSummary] = useState(null);
   const [locking, setLocking] = useState(false);
@@ -312,6 +314,22 @@ export default function Home() {
             <div className="font-heading font-black text-xl text-primary uppercase">YOU&apos;RE LOCKED IN</div>
             <div className="text-xs text-white/45 mt-1">Focused AI GPS is ready</div>
           </Link>
+          {/* Offer evaluation — snap a delivery offer screen, LOKIN scores it */}
+          <button
+            onClick={() => setShowOfferEval((s) => !s)}
+            aria-expanded={showOfferEval}
+            className="relative z-10 w-full rounded-2xl border border-primary/40 bg-primary/[0.07] py-3 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"
+          >
+            <ClipboardList className="h-5 w-5 text-primary" strokeWidth={1.8} />
+            <span className="font-heading text-sm font-bold uppercase tracking-[0.08em] text-primary">
+              {showOfferEval ? "Hide offer check" : "Evaluate offer"}
+            </span>
+          </button>
+          {showOfferEval && (
+            <div className="relative z-10 w-full text-left">
+              <OfferEvaluator />
+            </div>
+          )}
           <button onClick={tapOut} className="lk-tile-danger relative z-10 w-full">
             <Power className="h-6 w-6" strokeWidth={1.8} />
             <span>TAP OUT</span>
