@@ -499,7 +499,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
-              {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(168,255,0,1))" }} />}
               {!perspective && deliveryStops.map((stop, i) => {
                 const point = markerViewport ? project(stop.coordinate, markerViewport, renderW, renderH) : null;
                 if (!point) return null;
