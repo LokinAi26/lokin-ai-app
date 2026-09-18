@@ -123,14 +123,25 @@ export default function EarningsScreenshotImport({ onSaved }) {
                   <div className="text-[10px] text-white/35 mb-1">Trips</div>
                   <input type="number" inputMode="numeric" min="0" step="1" value={form.trips} onChange={(e) => set("trips", e.target.value)} placeholder="0" className={inputCls} />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <div className="text-[10px] text-white/35 mb-1">Platform</div>
-                  <select value={form.platform} onChange={(e) => set("platform", e.target.value)} className={inputCls}>
-                    <option value="">Select…</option>
+                  <div className="flex flex-wrap gap-1.5">
                     {EARNING_PLATFORMS.map((p) => (
-                      <option key={p} value={p}>{p}</option>
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => set("platform", p)}
+                        aria-pressed={form.platform === p}
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                          form.platform === p
+                            ? "border-lokin-neon/60 bg-lokin-neon/15 text-white"
+                            : "border-white/10 bg-white/[0.03] text-white/55"
+                        }`}
+                      >
+                        {p}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
                 <div>
                   <div className="text-[10px] text-white/35 mb-1">Date</div>
