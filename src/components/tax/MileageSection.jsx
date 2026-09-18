@@ -19,7 +19,16 @@ export default function MileageSection() {
     setItems(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); return subscribeOfflineQueue(() => setPending(getPendingByEntity("MileageLog"))); }, []);
+  useEffect(() => {
+    let prevPending = getPendingByEntity("MileageLog").length;
+    return subscribeOfflineQueue(() => {
+      const p = getPendingByEntity("MileageLog");
+      setPending(p);
+      // Queued records just synced — reload so they appear in the saved list.
+      if (prevPending > 0 && p.length === 0) load();
+      prevPending = p.length;
+    });
+  }, []);
 
   async function add(e) {
     e.preventDefault();
