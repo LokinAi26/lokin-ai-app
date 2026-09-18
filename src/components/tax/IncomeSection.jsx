@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, TrendingUp } from "lucide-react";
+import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
+import { Plus, Trash2, TrendingUp, CloudUpload } from "lucide-react";
 import { SEEDS } from "@/lib/heatData";
 import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
 
 export default function IncomeSection() {
   const [items, setItems] = useState([]);
+  const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), amount: "", trips: 1, platform: "mixed", zone: "", vehicle: "" });
 
@@ -22,14 +24,17 @@ export default function IncomeSection() {
     setItems(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); return subscribeOfflineQueue(() => setPending(getPendingByEntity("Earning"))); }, []);
 
   async function add(e) {
     e.preventDefault();
     if (!form.amount) return;
-    await base44.entities.Earning.create({ date: form.date, amount: Number(form.amount), trips: Number(form.trips) || 0, platform: form.platform, ...(form.zone ? { zone: form.zone } : {}), ...(form.vehicle ? { vehicle: form.vehicle } : {}) });
+    // Offline-safe: with no signal the delivery is stored locally and
+    // syncs automatically once the connection returns.
+    const res = await createOrQueue("Earning", { date: form.date, amount: Number(form.amount), trips: Number(form.trips) || 0, platform: form.platform, ...(form.zone ? { zone: form.zone } : {}), ...(form.vehicle ? { vehicle: form.vehicle } : {}) });
     setForm({ ...form, amount: "" });
-    load();
+    setPending(getPendingByEntity("Earning"));
+    if (!res.queued) load();
   }
   async function del(id) { await base44.entities.Earning.delete(id); load(); }
 
@@ -68,8 +73,17 @@ export default function IncomeSection() {
       </form>
 
       <div className="space-y-1.5">
+        {pending.map((q) => (
+          <div key={q.id} className="flex items-center gap-3 rounded-xl border border-[#FFD200]/40 bg-[#FFD200]/[0.06] p-2.5">
+            <CloudUpload className="h-4 w-4 text-[#FFD200] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-white">${Number(q.data.amount).toFixed(2)}</div>
+              <div className="text-[10px] text-[#FFD200]/80">{q.data.date} · {q.data.trips || 0} trips · saved offline — syncs when back online</div>
+            </div>
+          </div>
+        ))}
         {loading && <div className="text-xs text-white/40 text-center py-4">Loading…</div>}
-        {!loading && items.length === 0 && <div className="text-xs text-white/40 text-center py-4">No income logged yet.</div>}
+        {!loading && items.length === 0 && pending.length === 0 && <div className="text-xs text-white/40 text-center py-4">No income logged yet.</div>}
         {items.slice(0, 20).map((i) => (
           <div key={i.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5">
             <div className="flex-1 min-w-0">

@@ -10,6 +10,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
 import { getShiftSnapshot } from "@/lib/shiftMileage";
+import { createOrQueue } from "@/lib/offlineQueue";
 import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
@@ -88,7 +89,9 @@ export default function Home() {
     }
     // Persist the tagged session so category profitability can be tracked over time.
     if (me?.id) {
-      base44.entities.DriverSession.create({
+      // Offline-safe: if Tap Out happens with no signal, the session record
+      // is stored locally and syncs automatically once the connection returns.
+      createOrQueue("DriverSession", {
         user_id: me.id,
         status: "ended",
         category: snap.category || "mixed",

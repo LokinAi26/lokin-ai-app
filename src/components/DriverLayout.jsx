@@ -10,6 +10,7 @@ import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel 
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
 import ShiftMileageTracker from "@/components/ShiftMileageTracker";
+import OfflineSyncMonitor from "@/components/OfflineSyncMonitor";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings", "/earnings-intelligence", "/driver-platforms", "/driver-platforms/uber/callback",
@@ -205,6 +206,7 @@ export default function DriverLayout() {
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
       <ShiftMileageTracker />
+      <OfflineSyncMonitor showPill={!lockedGps} />
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation || (working && appFreeRoam)} />
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus } from "@/lib/sessionState";
+import { createOrQueue } from "@/lib/offlineQueue";
 import { beginShiftTracking, DEDUCTION_RATE_PER_MILE, endShiftTracking, localDateString, suspendShiftTracking } from "@/lib/shiftMileage";
 
 const MIN_COMMIT_MILES = 0.05;
@@ -18,7 +19,9 @@ export default function ShiftMileageTracker() {
       const snap = endShiftTracking();
       if (!snap || snap.miles < MIN_COMMIT_MILES) return;
       const miles = Math.round(snap.miles * 100) / 100;
-      base44.entities.MileageLog.create({
+      // Offline-safe: if the shift ends with no signal, the mileage log is
+      // stored locally and syncs automatically once the connection returns.
+      createOrQueue("MileageLog", {
         date: localDateString(),
         miles,
         type: "business",
