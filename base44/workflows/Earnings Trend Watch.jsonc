@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "earnings_trend_watch",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_trend": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "weekly-earnings-trend-check"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check earnings trend",
+            "description": "Trailing 7 days vs last month's weekly average"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Earnings Trend Watch",
+  "description": "Every day at 8am: compares trailing-7-day earnings against the previous month's average week and pushes an alert when the trend drops 20% or more."
+}
