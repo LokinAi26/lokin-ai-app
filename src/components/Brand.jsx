@@ -85,12 +85,16 @@ export function LokinGlyph({ size = 28, className = "" }) {
   );
 }
 
+// The one and only official LOKIN clock: transparent clean padlock-clock
+// cutout, no glow (LOCKED 2026-09-16). Used as the "O" in the wordmark.
+export const LOKIN_CLOCK_OFFICIAL = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
+
 export function LokinWordmark({ size = 28, className = "" }) {
   return (
     <span className={`inline-flex items-center ${className}`}>
       <span className="font-display font-black tracking-[0.1em] leading-none flex items-center">
         <span className="metal-text">L</span>
-        <LokinGlyph size={size * 0.95} className="mx-0.5 -my-0.5" />
+        <img src={LOKIN_CLOCK_OFFICIAL} alt="O" width={size * 0.95} height={size * 0.95} className="mx-0.5 -my-0.5 inline-block" draggable={false} />
         <span className="metal-text">KIN</span>
         <span className="text-primary text-glow ml-1.5 text-[0.55em] align-middle font-black tracking-normal">AI</span>
       </span>
@@ -105,7 +109,7 @@ export default function Brand({ size = 28, withText = true, className = "" }) {
 }
 
 // Header lockup (lock icon + LOKIN AI + tagline), cropped from the approved concept.
-export const LOKIN_HEADER_LOCKUP_V2 = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/aed7b9917_official-lokin-top-left-text-only_247.jpg";
+export const LOKIN_HEADER_LOCKUP_V2 = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
 export const LOKIN_HEADER_LOCKUP = LOKIN_HEADER_LOCKUP_V2;
 export const LOKIN_NAV_CIRCLE = "https://media.base44.com/images/public/6a7a1c830b6bae64604c3139/64627fadc_official-lokin-clean-clock-lock_247_noeffect-SQUARE.png";
 export const LOKIN_SKYLINE_BG = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f962c1480_city-skyline-night.png";
