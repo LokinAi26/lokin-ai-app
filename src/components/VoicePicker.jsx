@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Volume2 } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import SelectSheet from "@/components/ui/SelectSheet";
 import {
   TTS_VOICES,
   getTtsVoice,
   setTtsVoice,
+  getTtsVolume,
+  setTtsVolume,
   speakLokin,
 } from "@/lib/lokinVoicePipeline";
 
@@ -15,6 +17,13 @@ import {
 export default function VoicePicker({ compact = false }) {
   const [voiceId, setVoiceId] = useState(() => getTtsVoice());
   const [previewing, setPreviewing] = useState(false);
+  const [level, setLevel] = useState(() => getTtsVolume());
+
+  function changeLevel(v) {
+    const n = Math.min(150, Math.max(0, Math.round(Number(v) || 0)));
+    setLevel(n);
+    setTtsVolume(n);
+  }
 
   function pick(id) {
     setVoiceId(id);
@@ -49,6 +58,28 @@ export default function VoicePicker({ compact = false }) {
       >
         {previewing ? "Playing…" : "Preview"}
       </button>
+      {!compact && (
+        <div className="pt-1">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-white/40">Voice level</span>
+            <span className="text-[11px] tabular-nums text-white/60">{level}%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <VolumeX className="h-3.5 w-3.5 shrink-0 text-white/40" />
+            <input
+              type="range"
+              min={0}
+              max={150}
+              step={5}
+              value={level}
+              onChange={(e) => changeLevel(e.target.value)}
+              aria-label="Voice level"
+              className="min-w-0 flex-1 accent-[#8FE44E]"
+            />
+            <Volume2 className="h-3.5 w-3.5 shrink-0 text-white/40" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
