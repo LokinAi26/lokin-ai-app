@@ -11,6 +11,7 @@ import WeeklyZoneTrend from "@/components/earnings/WeeklyZoneTrend";
 import ZoneComparison from "@/components/earnings/ZoneComparison";
 import VehicleComparison from "@/components/earnings/VehicleComparison";
 import TaxExport from "@/components/earnings/TaxExport";
+import EarningsScreenshotImport from "@/components/EarningsScreenshotImport";
 import CategoryComparison from "@/components/earnings/CategoryComparison";
 import MonthlyTrends from "@/components/earnings/MonthlyTrends";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -146,6 +147,20 @@ export default function Earnings() {
           <div className="text-[10px] font-display tracking-[0.18em] text-primary">LOKIN DRIVER</div>
           <div className="text-sm font-black text-white">Earnings Intelligence</div>
           <div className="mt-0.5 text-[11px] text-white/45">Optimize the next 60 minutes, destination value, and follow-on order flow.</div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+      </Link>
+
+      <EarningsScreenshotImport onSaved={refresh} />
+
+      <Link to="/shift-report" className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 active:scale-[0.99] transition-transform">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.05]">
+          <Clock className="h-5 w-5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-display tracking-[0.18em] text-primary">SHIFT TRACKER</div>
+          <div className="text-sm font-black text-white">Shift Report</div>
+          <div className="mt-0.5 text-[11px] text-white/45">Miles, hours, $/mile and $/hour per shift — automatic log.</div>
         </div>
         <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
       </Link>
