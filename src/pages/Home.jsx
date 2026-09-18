@@ -7,12 +7,21 @@ import { LkIconOnline, LkIconScooter } from "@/components/brand/LkIcons";
 import WorkModeSheet from "@/components/WorkModeSheet";
 import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
+import ShiftMileageCard from "@/components/ShiftMileageCard";
+import SessionSummaryModal from "@/components/session/SessionSummaryModal";
+import { endShiftTracking, beginShiftTracking } from "@/lib/shiftMileage";
+import { createOrQueue } from "@/lib/offlineQueue";
+import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
 import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
+import PeakWindowAlerts from "@/components/peak/PeakWindowAlerts";
+import GoalMilestoneAlerts from "@/components/earnings/GoalMilestoneAlerts";
+import ShiftNudgeMonitor from "@/components/ShiftNudgeMonitor";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
+import { setWorkStatusOptimistic, withPendingWorkStatus } from "@/lib/workStatusStore";
 
 function greeting() {
   const h = new Date().getHours();
@@ -25,10 +34,12 @@ export default function Home() {
   const navigate = useNavigate();
   const [prefs, setPrefs] = useState(null);
   const [data, setData] = useState(null);
+  const [todayEarnings, setTodayEarnings] = useState(null);
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWork, setShowWork] = useState(false);
   const [showType, setShowType] = useState(false);
+  const [summary, setSummary] = useState(null);
   const [locking, setLocking] = useState(false);
   const lockStartRef = useRef(false);
 
@@ -45,21 +56,96 @@ export default function Home() {
 
   async function tapOut() {
     if (!prefs?.id) return;
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
-    setPrefs(updated);
+    // End GPS mileage tracking for this shift (stops the watch, clears state).
+    const snap = endShiftTracking() || { miles: 0, finalMiles: 0, milesSource: "gps", startedAt: null, category: null, path: [], odometerStart: null, odometerEnd: null };
+    const optimizedRoute = loadSessionRouteRecord();
+    const endedAt = Date.now();
+    // Optimistic: the UI flips to off instantly; the preference write syncs in the background.
+    setPrefs({ ...prefs, work_status: "off" });
+    setWorkStatusOptimistic(prefs, "off", { break_active: false }).then((r) => setPrefs(r.prefs));
+    // Earnings logged while the session was live: records created since the shift started.
+    let earnings = 0;
+    if (snap.startedAt) {
+      try {
+        const rows = await base44.entities.Earning.filter({}, "-created_date", 50);
+        earnings = rows
+          .filter((r) => {
+            const t = r.created_date ? new Date(r.created_date).getTime() : null;
+            return t != null && t >= snap.startedAt && t <= endedAt + 60000;
+          })
+          .reduce((s, r) => s + (r.amount || 0), 0);
+      } catch {
+        /* recap still shows with $0 earnings if the read fails */
+      }
+    }
+    // Pre-trip checklist logged at session start — include it in the recap.
+    let preTrip = null;
+    try {
+      const checkRows = await base44.entities.TripCheck.filter({}, "-created_date", 1);
+      const rec = checkRows[0];
+      if (rec && snap.startedAt && new Date(rec.created_date).getTime() >= snap.startedAt - 60000) {
+        preTrip = { passed: rec.passed_count || 0, total: rec.total_count || 0, items: rec.items || [] };
+      }
+    } catch {
+      /* recap still renders without the checklist if the read fails */
+    }
+    // Persist the tagged session so category profitability can be tracked over time.
+    let sessionId = null;
+    if (me?.id) {
+      // Offline-safe: if Tap Out happens with no signal, the session record
+      // is stored locally and syncs automatically once the connection returns.
+      try {
+        const res = await createOrQueue("DriverSession", {
+          user_id: me.id,
+          status: "ended",
+          category: snap.category || "mixed",
+          started_at: new Date(snap.startedAt || endedAt).toISOString(),
+          ended_at: new Date(endedAt).toISOString(),
+          miles: Math.round((snap.finalMiles || 0) * 100) / 100,
+          gps_miles: Math.round((snap.miles || 0) * 100) / 100,
+          miles_source: snap.milesSource || "gps",
+          odometer_start: snap.odometerStart,
+          odometer_end: snap.odometerEnd,
+          earnings: Math.round(earnings * 100) / 100,
+        });
+        sessionId = res && !res.queued ? res.record?.id || null : null;
+      } catch {
+        /* recap still shows even if the session write fails */
+      }
+    }
+    setSummary({ miles: snap.finalMiles, gpsMiles: snap.miles, milesSource: snap.milesSource, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip, category: snap.category || "mixed", sessionId, odometerStart: snap.odometerStart });
+  }
+
+  // Recap modal finalized the odometer end reading: recompute authoritative
+  // miles and patch the stored DriverSession record.
+  async function finalizeShiftOdometer({ odometerEnd, finalMiles }) {
+    if (!summary?.sessionId) return;
+    try {
+      await base44.entities.DriverSession.update(summary.sessionId, {
+        miles: Math.round((finalMiles || 0) * 100) / 100,
+        miles_source: "odometer",
+        odometer_end: odometerEnd,
+      });
+      setSummary((s) => (s ? { ...s, miles: finalMiles, milesSource: "odometer", odometerEnd } : s));
+    } catch {
+      /* keep the GPS miles if the patch fails */
+    }
   }
 
   async function resumeWork() {
     if (!prefs?.id) return;
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
-    setPrefs(updated);
+    // Optimistic: resume feels instant; the preference write syncs in the background.
+    setPrefs({ ...prefs, work_status: "working" });
+    setWorkStatusOptimistic(prefs, "working", { break_active: false }).then((r) => setPrefs(r.prefs));
+    // Resume GPS mileage tracking for the shift.
+    beginShiftTracking();
     sessionStorage.removeItem("lokin_app_free_roam");
     navigate("/ai-gps?focus=locked&nav=1&view=real");
   }
 
   async function loadPrefs() {
     const p = await base44.entities.DriverPreference.filter({});
-    setPrefs(p[0] || null);
+    setPrefs(withPendingWorkStatus(p[0] || null));
     return p[0] || null;
   }
 
@@ -80,8 +166,26 @@ export default function Home() {
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
 
+  // Real-time goal progress: recompute today's earnings whenever a delivery
+  // is logged (or edited), so the progress bar updates without a refresh.
+  async function refreshTodayEarnings() {
+    try {
+      const key = new Date().toISOString().slice(0, 10);
+      const rows = await base44.entities.Earning.filter({ date: key });
+      setTodayEarnings(rows.reduce((s, r) => s + (r.amount || 0), 0));
+    } catch {
+      /* keep the last known value */
+    }
+  }
+
+  useEffect(() => {
+    refreshTodayEarnings();
+    const unsubscribe = base44.entities.Earning.subscribe(() => refreshTodayEarnings());
+    return unsubscribe;
+  }, []);
+
   const dailyGoal = prefs?.daily_goal || 150;
-  const today = data?.todayEarnings || 0;
+  const today = todayEarnings ?? (data?.todayEarnings || 0);
   const remaining = Math.max(0, dailyGoal - today);
   const pct = Math.min(100, Math.round((today / Math.max(1, dailyGoal)) * 100));
   const netPerHour = data?.stats?.perHour || 0;
@@ -137,18 +241,31 @@ export default function Home() {
         <div className="lk-card-goal w-full max-w-none mt-4">
           <div className="flex items-center justify-between">
             <div className="eyebrow"><Activity className="h-3.5 w-3.5 text-primary" /> TODAY&apos;S GOAL</div>
+            {working && (
+              <span className="flex items-center gap-1 text-[9px] font-bold tracking-[0.14em] text-primary">
+                <i className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 6px #7CFC1E" }} /> LIVE
+              </span>
+            )}
             <Link to="/settings" className="inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/[0.07] px-3 py-1.5 font-heading text-[10px] font-bold uppercase tracking-[0.08em] text-primary active:scale-95 transition-transform" style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
               <Settings className="h-3.5 w-3.5" /> GOAL SETTINGS
             </Link>
           </div>
           <div className="amt">${dailyGoal}</div>
-          <div className="track"><span style={{ left: `calc(${pct}% - 8px)` }} /></div>
+          <div className="track">
+            <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--brand-secondary), var(--brand-lime))", boxShadow: "0 0 14px rgba(124,252,30,.7)", transition: "width .4s ease" }} />
+            <span style={{ left: `calc(${pct}% - 8px)` }} />
+          </div>
           <div className="row">
-            <div className="text-primary"><b>${today.toFixed(2)}</b> earned</div>
+            <div className="text-primary"><b>${today.toFixed(2)}</b> earned · <b>{pct}%</b></div>
             <div className="text-white"><b className="text-white">${remaining.toFixed(2)}</b> remaining</div>
           </div>
         </div>
       </div>
+
+      {/* Peak-window alerts — best earning hours beginning in the driver's area */}
+      <PeakWindowAlerts />
+      <GoalMilestoneAlerts />
+      <ShiftNudgeMonitor workStatus={workStatus} />
 
       {/* Stat tile grid — design-system compact metrics */}
       <div className="grid grid-cols-4 gap-2 relative z-10 shrink-0">
@@ -166,6 +283,8 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      <ShiftMileageCard workStatus={workStatus} />
 
       {/* The lock is the visual center and the single primary action. */}
       {working ? (
@@ -196,6 +315,7 @@ export default function Home() {
       {/* LOKIN stands with — awareness dedication, restored 2026-09-13 per Kendall. */}
       <AwarenessBanner />
 
+      <SessionSummaryModal summary={summary} onClose={() => setSummary(null)} onFinalizeOdometer={finalizeShiftOdometer} />
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
       <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />

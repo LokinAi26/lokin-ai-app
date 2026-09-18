@@ -5,6 +5,15 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import LockInScore from "@/components/LockInScore";
 import PullToRefresh from "@/components/PullToRefresh";
+import EarningsSummary from "@/components/earnings/EarningsSummary";
+import HourlyProfitability from "@/components/earnings/HourlyProfitability";
+import WeeklyZoneTrend from "@/components/earnings/WeeklyZoneTrend";
+import ZoneComparison from "@/components/earnings/ZoneComparison";
+import VehicleComparison from "@/components/earnings/VehicleComparison";
+import TaxExport from "@/components/earnings/TaxExport";
+import EarningsScreenshotImport from "@/components/EarningsScreenshotImport";
+import CategoryComparison from "@/components/earnings/CategoryComparison";
+import MonthlyTrends from "@/components/earnings/MonthlyTrends";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const RANGES = [
@@ -142,6 +151,20 @@ export default function Earnings() {
         <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
       </Link>
 
+      <EarningsScreenshotImport onSaved={refresh} />
+
+      <Link to="/shift-report" className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 active:scale-[0.99] transition-transform">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.05]">
+          <Clock className="h-5 w-5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-display tracking-[0.18em] text-primary">SHIFT TRACKER</div>
+          <div className="text-sm font-black text-white">Shift Report</div>
+          <div className="mt-0.5 text-[11px] text-white/45">Miles, hours, $/mile and $/hour per shift — automatic log.</div>
+        </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+      </Link>
+
       <div className="flex rounded-2xl border border-lokin-neon/20 bg-white/[0.03] p-1 text-sm">
         {RANGES.map((r) => (
           <button key={r.value} onClick={() => setRange(r.value)}
@@ -171,6 +194,8 @@ export default function Earnings() {
         ))}
       </div>
 
+      {!loading && <EarningsSummary records={filtered} />}
+
       {score && <LockInScore score={score} />}
 
       <div className="lokin-card p-4">
@@ -187,6 +212,19 @@ export default function Earnings() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {!loading && <MonthlyTrends records={records} />}
+
+      {!loading && <HourlyProfitability records={records} />}
+
+      {!loading && <WeeklyZoneTrend records={records} />}
+      {!loading && <ZoneComparison records={records} />}
+
+      {!loading && <VehicleComparison records={records} />}
+
+      {!loading && <CategoryComparison />}
+
+      {!loading && <TaxExport />}
 
       <div className="lokin-card p-4">
         <div className="lokin-kicker mb-2">Breakdown</div>

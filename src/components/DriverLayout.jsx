@@ -6,14 +6,18 @@ import { LOKIN_NAV_CIRCLE, LOKIN_LOGO } from "@/components/Brand";
 import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from "@/components/brand/LkIcons";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
+import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore";
 
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
+import ShiftMileageTracker from "@/components/ShiftMileageTracker";
+import OfflineSyncMonitor from "@/components/OfflineSyncMonitor";
 
 const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings", "/earnings-intelligence", "/driver-platforms", "/driver-platforms/uber/callback",
   "/drive", "/brand", "/oasis", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver", "/driver-dispatch", "/vision-bridge",
   "/stash", "/stash/cart", "/green-delivery", "/insurance", "/onboarding",
+  "/shift-report",
 ];
 
 const TAB_ROOTS = {
@@ -28,7 +32,7 @@ function pathToTab(path) {
   if (path === "/") return "home";
   if (path.startsWith("/route") || path.startsWith("/drive") || path.startsWith("/ai-gps")) return "route";
   if (path.startsWith("/lokin")) return "lokin";
-  if (path.startsWith("/earnings")) return "earnings";
+  if (path.startsWith("/earnings") || path.startsWith("/shift-report")) return "earnings";
   return "more";
 }
 
@@ -44,7 +48,14 @@ export default function DriverLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [workStatus, setWorkStatus] = useState("off");
-  const working = workStatus === "working";
+  // Optimistic shift/pause status while a toggle write is still syncing.
+  const [pendingStatus, setPendingStatus] = useState(() => getPendingWorkStatus());
+  useEffect(() => subscribeWorkStatus((evt) => {
+    setPendingStatus(evt.pending);
+    if (evt.confirmed) setWorkStatus(evt.confirmed);
+  }), []);
+  const effectiveStatus = pendingStatus || workStatus;
+  const working = effectiveStatus === "working";
   const [appFreeRoam, setAppFreeRoam] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("lokin_app_free_roam") === "1");
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -94,6 +105,22 @@ export default function DriverLayout() {
     }
   }, [loc.pathname, currentTab]);
 
+  // Preserve scroll position per path so switching tabs restores where you were (iOS stack behavior)
+  useEffect(() => {
+    const key = `lokin_scroll_${loc.pathname}`;
+    const save = () => {
+      try { sessionStorage.setItem(key, String(window.scrollY)); } catch (e) { /* noop */ }
+    };
+    window.addEventListener("scroll", save, { passive: true });
+    return () => window.removeEventListener("scroll", save);
+  }, [loc.pathname]);
+
+  useEffect(() => {
+    let y = 0;
+    try { y = parseInt(sessionStorage.getItem(`lokin_scroll_${loc.pathname}`) || "0", 10) || 0; } catch (e) { /* noop */ }
+    if (y > 0) requestAnimationFrame(() => window.scrollTo(0, y));
+  }, [loc.pathname]);
+
   function resumeGps() {
     const resumeUrl = sessionStorage.getItem("lokin_gps_resume_url") || "/ai-gps?focus=locked&nav=1&view=real";
     sessionStorage.removeItem("lokin_app_free_roam");
@@ -124,10 +151,10 @@ export default function DriverLayout() {
               <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-9 w-auto" />
             </button>
           )}
-          {workStatus !== "off" && (
+          {effectiveStatus !== "off" && (
             <span className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/[0.06] px-4 py-1.5 font-heading text-[13px] font-bold uppercase tracking-[0.07em] text-primary select-none"
               style={{ boxShadow: "0 0 14px rgba(124,252,30,.4)", textShadow: "0 0 8px rgba(124,252,30,.6)" }}>
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 8px #7CFC1E" }} /> {sessionStatusLabel(workStatus)}
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 8px #7CFC1E" }} /> {sessionStatusLabel(effectiveStatus)}
             </span>
           )}
         </div>
@@ -155,7 +182,7 @@ export default function DriverLayout() {
             if (center) {
               return (
                 <button key={key} onClick={() => setVoiceOpen(true)} aria-label="LOKIN command station"
-                  className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium">
+                  className="flex flex-col items-center gap-0.5 pt-1.5 pb-2 text-[11px] font-medium transition-transform active:scale-95">
                   <div className={`chrome-lock-button flex h-12 w-12 items-center justify-center rounded-full -mt-5 transition-all ${active ? "" : ""} glow-primary`}>
                     <img src={LOKIN_NAV_CIRCLE} alt="LOKIN" draggable="false" className="h-12 w-12 rounded-full object-cover" />
                   </div>
@@ -165,7 +192,7 @@ export default function DriverLayout() {
             }
             return (
               <button key={key} onClick={() => handleTabClick(key)} aria-label={label}
-                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-colors ${active ? "text-primary lokin-tab-active" : "text-white/45"}`}>
+                className={`flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[11px] font-medium transition-all active:scale-95 ${active ? "text-primary lokin-tab-active" : "text-white/45"}`}>
                 <Icon className="h-5 w-5" />
                 {label}
               </button>
@@ -187,6 +214,8 @@ export default function DriverLayout() {
       )}
 
       {!lockedGps && <CommandEngine open={cmdOpen} onClose={() => setCmdOpen(false)} />}
+      <ShiftMileageTracker />
+      <OfflineSyncMonitor showPill={!lockedGps} />
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation || (working && appFreeRoam)} />
     </div>
   );
