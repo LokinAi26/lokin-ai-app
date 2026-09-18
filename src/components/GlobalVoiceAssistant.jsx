@@ -7,6 +7,7 @@ import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { createOrQueue } from "@/lib/offlineQueue";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
@@ -164,7 +165,9 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         const next = { work_status: "working", break_active: false };
         if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
         else await base44.entities.DriverPreference.create(next);
-        if (me?.id) await base44.entities.DriverSession.create({ user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
+        // Offline-safe: the voice-started session is stored locally if there's
+        // no signal and syncs automatically once the connection returns.
+        if (me?.id) await createOrQueue("DriverSession", { user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
         const msg = "Locked in. You're live \u2014 let's get it.";
         setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
       }

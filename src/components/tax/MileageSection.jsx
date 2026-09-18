@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Route } from "lucide-react";
+import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
+import { Plus, Trash2, Route, CloudUpload } from "lucide-react";
 import SelectSheet from "@/components/ui/SelectSheet";
 
 const RATE = { business: 0.7, medical: 0.21, charitable: 0.14, moving: 0.21, personal: 0 };
@@ -8,6 +9,7 @@ const TYPES = [["business", "Business $0.70/mi"], ["medical", "Medical $0.21/mi"
 
 export default function MileageSection() {
   const [items, setItems] = useState([]);
+  const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), miles: "", type: "business", purpose: "" });
 
@@ -17,13 +19,15 @@ export default function MileageSection() {
     setItems(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); return subscribeOfflineQueue(() => setPending(getPendingByEntity("MileageLog"))); }, []);
 
   async function add(e) {
     e.preventDefault();
     if (!form.miles) return;
     const miles = Number(form.miles);
-    await base44.entities.MileageLog.create({
+    // Offline-safe: with no signal the miles are stored locally and
+    // sync automatically once the connection returns.
+    const res = await createOrQueue("MileageLog", {
       date: form.date,
       miles,
       type: form.type,
@@ -31,7 +35,8 @@ export default function MileageSection() {
       deduction: Math.round(miles * (RATE[form.type] || 0) * 100) / 100,
     });
     setForm({ ...form, miles: "", purpose: "" });
-    load();
+    setPending(getPendingByEntity("MileageLog"));
+    if (!res.queued) load();
   }
   async function del(id) { await base44.entities.MileageLog.delete(id); load(); }
 
@@ -64,8 +69,17 @@ export default function MileageSection() {
       </form>
 
       <div className="space-y-1.5">
+        {pending.map((q) => (
+          <div key={q.id} className="flex items-center gap-3 rounded-xl border border-[#FFD200]/40 bg-[#FFD200]/[0.06] p-2.5">
+            <CloudUpload className="h-4 w-4 text-[#FFD200] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-white">{Number(q.data.miles).toFixed(1)} mi</div>
+              <div className="text-[10px] text-[#FFD200]/80">{q.data.date} · {q.data.type} · saved offline — syncs when back online</div>
+            </div>
+          </div>
+        ))}
         {loading && <div className="text-xs text-white/40 text-center py-4">Loading…</div>}
-        {!loading && items.length === 0 && <div className="text-xs text-white/40 text-center py-4">No miles logged yet.</div>}
+        {!loading && items.length === 0 && pending.length === 0 && <div className="text-xs text-white/40 text-center py-4">No miles logged yet.</div>}
         {items.slice(0, 20).map((i) => (
           <div key={i.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/30 p-2.5">
             <Route className="h-4 w-4 text-primary shrink-0" />

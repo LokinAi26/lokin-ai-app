@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS, CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
 import { setShiftCategory } from "@/lib/shiftMileage";
+import { createOrQueue } from "@/lib/offlineQueue";
 import { setWorkStatusOptimistic } from "@/lib/workStatusStore";
 import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
 
@@ -46,7 +47,9 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
       work_filters: filters,
     });
     // Log the pre-trip checklist state as part of this session's notes.
-    base44.entities.TripCheck.create({
+    // Offline-safe: the checklist is stored locally if there's no signal and
+    // syncs automatically once the connection returns.
+    createOrQueue("TripCheck", {
       checked_at: new Date().toISOString(),
       items: PRE_TRIP_ITEMS.map((i) => ({ key: i.key, label: i.label, ok: checks.includes(i.key) })),
       passed_count: checks.length,
