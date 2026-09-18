@@ -82,12 +82,21 @@ export default function StoreEntrySheet() {
           <button
             onClick={() => {
               setStore(null);
-              navigate("/locator");
+              navigate("/locator?import=1");
             }}
             className="lokin-cta flex-1 flex items-center justify-center gap-2"
           >
             <PackageSearch className="h-4 w-4" />
-            OPEN LOCATOR
+            IMPORT ITEMS
+          </button>
+          <button
+            onClick={() => {
+              setStore(null);
+              navigate("/locator");
+            }}
+            className="rounded-2xl border border-primary/25 px-4 text-sm font-bold text-primary active:scale-95"
+          >
+            LOCATOR
           </button>
           <button
             onClick={dismiss}
