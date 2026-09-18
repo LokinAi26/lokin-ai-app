@@ -21,6 +21,7 @@ import ShiftNudgeMonitor from "@/components/ShiftNudgeMonitor";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
+import { setWorkStatusOptimistic, withPendingWorkStatus } from "@/lib/workStatusStore";
 
 function greeting() {
   const h = new Date().getHours();
@@ -59,8 +60,9 @@ export default function Home() {
     const snap = getShiftSnapshot();
     const optimizedRoute = loadSessionRouteRecord();
     const endedAt = Date.now();
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
-    setPrefs(updated);
+    // Optimistic: the UI flips to off instantly; the preference write syncs in the background.
+    setPrefs({ ...prefs, work_status: "off" });
+    setWorkStatusOptimistic(prefs, "off", { break_active: false }).then((r) => setPrefs(r.prefs));
     // Earnings logged while the session was live: records created since the shift started.
     let earnings = 0;
     if (snap.startedAt) {
@@ -106,15 +108,16 @@ export default function Home() {
 
   async function resumeWork() {
     if (!prefs?.id) return;
-    const updated = await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
-    setPrefs(updated);
+    // Optimistic: resume feels instant; the preference write syncs in the background.
+    setPrefs({ ...prefs, work_status: "working" });
+    setWorkStatusOptimistic(prefs, "working", { break_active: false }).then((r) => setPrefs(r.prefs));
     sessionStorage.removeItem("lokin_app_free_roam");
     navigate("/ai-gps?focus=locked&nav=1&view=real");
   }
 
   async function loadPrefs() {
     const p = await base44.entities.DriverPreference.filter({});
-    setPrefs(p[0] || null);
+    setPrefs(withPendingWorkStatus(p[0] || null));
     return p[0] || null;
   }
 

@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { LokinGlyph } from "@/components/Brand";
 import { WORK_MODES, WORK_FILTERS, CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
 import { setShiftCategory } from "@/lib/shiftMileage";
+import { setWorkStatusOptimistic } from "@/lib/workStatusStore";
 import PreTripChecklist, { PRE_TRIP_ITEMS } from "@/components/session/PreTripChecklist";
 
 export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
@@ -34,34 +35,29 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
     setList(list.includes(val) ? list.filter((x) => x !== val) : [...list, val]);
   }
 
-  async function start() {
+  function start() {
     setSaving(true);
-    try {
-      setShiftCategory(category);
-      const data = {
-        work_status: "working",
-        break_active: false,
-        active_modes: modes.length ? modes : ["delivery"],
-        work_filters: filters,
-      };
-      if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, data);
-      else await base44.entities.DriverPreference.create(data);
-      // Log the pre-trip checklist state as part of this session's notes.
-      await base44.entities.TripCheck.create({
-        checked_at: new Date().toISOString(),
-        items: PRE_TRIP_ITEMS.map((i) => ({ key: i.key, label: i.label, ok: checks.includes(i.key) })),
-        passed_count: checks.length,
-        total_count: PRE_TRIP_ITEMS.length,
-      });
-      setLocked(true);
-      onStarted?.();
-      setTimeout(() => {
-        onClose();
-        navigate(focusMode === "locked" ? "/ai-gps?focus=locked" : "/ai-gps?focus=free");
-      }, 1200);
-    } finally {
-      setSaving(false);
-    }
+    setShiftCategory(category);
+    // Optimistic: the session flips to working instantly; the preference
+    // write syncs in the background while the lock-in animation plays.
+    setWorkStatusOptimistic(prefs, "working", {
+      break_active: false,
+      active_modes: modes.length ? modes : ["delivery"],
+      work_filters: filters,
+    });
+    // Log the pre-trip checklist state as part of this session's notes.
+    base44.entities.TripCheck.create({
+      checked_at: new Date().toISOString(),
+      items: PRE_TRIP_ITEMS.map((i) => ({ key: i.key, label: i.label, ok: checks.includes(i.key) })),
+      passed_count: checks.length,
+      total_count: PRE_TRIP_ITEMS.length,
+    }).catch(() => {}).finally(() => setSaving(false));
+    setLocked(true);
+    onStarted?.();
+    setTimeout(() => {
+      onClose();
+      navigate(focusMode === "locked" ? "/ai-gps?focus=locked" : "/ai-gps?focus=free");
+    }, 1200);
   }
 
   return (

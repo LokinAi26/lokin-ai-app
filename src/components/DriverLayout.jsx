@@ -6,6 +6,7 @@ import { LOKIN_NAV_CIRCLE, LOKIN_LOGO } from "@/components/Brand";
 import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from "@/components/brand/LkIcons";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
+import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore";
 
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
@@ -46,7 +47,14 @@ export default function DriverLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [workStatus, setWorkStatus] = useState("off");
-  const working = workStatus === "working";
+  // Optimistic shift/pause status while a toggle write is still syncing.
+  const [pendingStatus, setPendingStatus] = useState(() => getPendingWorkStatus());
+  useEffect(() => subscribeWorkStatus((evt) => {
+    setPendingStatus(evt.pending);
+    if (evt.confirmed) setWorkStatus(evt.confirmed);
+  }), []);
+  const effectiveStatus = pendingStatus || workStatus;
+  const working = effectiveStatus === "working";
   const [appFreeRoam, setAppFreeRoam] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("lokin_app_free_roam") === "1");
   const [lastPaths, setLastPaths] = useState(TAB_ROOTS);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -142,10 +150,10 @@ export default function DriverLayout() {
               <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-9 w-auto" />
             </button>
           )}
-          {workStatus !== "off" && (
+          {effectiveStatus !== "off" && (
             <span className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/[0.06] px-4 py-1.5 font-heading text-[13px] font-bold uppercase tracking-[0.07em] text-primary select-none"
               style={{ boxShadow: "0 0 14px rgba(124,252,30,.4)", textShadow: "0 0 8px rgba(124,252,30,.6)" }}>
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 8px #7CFC1E" }} /> {sessionStatusLabel(workStatus)}
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ boxShadow: "0 0 8px #7CFC1E" }} /> {sessionStatusLabel(effectiveStatus)}
             </span>
           )}
         </div>
