@@ -244,9 +244,9 @@ function addNavigationLayers(map, routeGeometry) {
     },
     paint: {
       "line-color": LOKIN_LIME_ROUTE,
-      "line-opacity": 0.35,
+      "line-opacity": 0.55,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
-      "line-blur": 6,
+      "line-blur": 5,
     },
   });
   map.addLayer({
