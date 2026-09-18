@@ -143,7 +143,9 @@ export default async function (req: any) {
 
     if (action === "speak") {
       const voice = ALLOWED_VOICES.includes(String(body.voice)) ? String(body.voice) : "onyx";
-      const input = String(body.text || "").slice(0, 2000).trim();
+      // Official pronunciation: the LOKIN name is always spoken "Lock In".
+      // Normalize before TTS so every voice says it right; written text is untouched.
+      const input = String(body.text || "").replace(/\bLOKIN\b/gi, "Lock In").slice(0, 2000).trim();
       if (!input) return Response.json({ error: "Missing text" }, { status: 400 });
 
       let r: Response;

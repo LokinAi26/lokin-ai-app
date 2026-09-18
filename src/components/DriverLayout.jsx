@@ -17,6 +17,7 @@ const NESTED_PATHS = [
   "/categories", "/locator", "/avoid", "/fuel", "/settings", "/earnings-intelligence", "/driver-platforms", "/driver-platforms/uber/callback",
   "/drive", "/brand", "/oasis", "/support", "/gigs", "/receipts", "/pricing", "/on-the-road", "/shop-deliver", "/driver-dispatch", "/vision-bridge",
   "/stash", "/stash/cart", "/green-delivery", "/insurance", "/onboarding",
+  "/shift-report",
 ];
 
 const TAB_ROOTS = {
@@ -31,7 +32,7 @@ function pathToTab(path) {
   if (path === "/") return "home";
   if (path.startsWith("/route") || path.startsWith("/drive") || path.startsWith("/ai-gps")) return "route";
   if (path.startsWith("/lokin")) return "lokin";
-  if (path.startsWith("/earnings")) return "earnings";
+  if (path.startsWith("/earnings") || path.startsWith("/shift-report")) return "earnings";
   return "more";
 }
 

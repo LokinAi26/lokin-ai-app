@@ -146,6 +146,9 @@ function compactStrategies(strategies) {
 
 const MODEL_PRICING = Object.freeze({
   "gpt-5.6": { input: 5, output: 30 },
+  // Jarvis fusion engines — conservative per-million-token estimates.
+  "claude-sonnet-4-5": { input: 3, output: 15 },
+  "gemini-3.6-flash": { input: 0.3, output: 2.5 },
   "gpt-5.6-sol": { input: 5, output: 30 },
   "gpt-5.6-terra": { input: 2.5, output: 15 },
   "gpt-5.6-luna": { input: 1, output: 6 },
@@ -163,6 +166,90 @@ function estimateCost(usage, cfg, model) {
 function monthStart() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
+}
+
+// ---------------------------------------------------------------------------
+// Jarvis fusion (Phase 1) — the Oasis deck's intelligence engine, ported in.
+// The deck ("Ask LOKIN hub") routes each bot to an engine: gpt | gemini |
+// claude, with per-bot fallback chains. This block adds the same routing to
+// the gateway WITHOUT touching the existing modes: it only activates when
+// the caller passes `bot` and/or `engine`. Everything else falls through to
+// the standard path exactly as before.
+// Bot system prompts are verbatim from the deck (Kendall-approved copy).
+// ---------------------------------------------------------------------------
+const DECK_ENGINE_MODELS = Object.freeze({
+  claude: "claude-sonnet-4-5",
+  gemini: "gemini-3.6-flash",
+});
+
+const DECK_BOTS = Object.freeze({
+  asklokin: {
+    engine: "gpt", fallbackEngine: null, label: "ASK LOKIN",
+    system: "You are Ask LOKIN, the flagship AI assistant inside the LOKIN app. You are direct, sharp, and genuinely helpful \u2014 no filler, no fluff. You help gig and delivery drivers earn more, work smarter, and build their future. Keep answers tight and actionable.",
+  },
+  gigcoach: {
+    engine: "gpt", fallbackEngine: null, label: "GIG COACH",
+    system: "You are Gig Coach, the earnings strategist inside the LOKIN app. You coach gig and delivery drivers (DoorDash, Uber Eats, Instacart, Spark, Shipt) on maximizing earnings: which offers to take, when and where to drive, multi-apping, tax basics, and weekly earnings goals. You are blunt, numbers-driven, and practical. Never invent pay figures \u2014 reason from what the driver tells you.",
+  },
+  manifesto: {
+    engine: "claude", fallbackEngine: "gpt", label: "MANIFESTO",
+    system: "You are Manifesto, the creative brain of LOKIN Manifesto Films. You direct cinematic thinking: concepts, treatments, shot lists, scripts, visual style, and production planning for commercials, short films, and brand content. You think like a director and producer \u2014 bold taste, practical execution, always pushing the idea further.",
+  },
+});
+
+const JARVIS_SAFETY = "Hard rule \u2014 no exceptions: never promote, encourage, or provide instructions for violence, sexual abuse, or crimes of any kind. Refuse those requests plainly and briefly.";
+
+async function callClaude({ apiKey, model, system, userText }) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model, max_tokens: 2048, system, messages: [{ role: "user", content: userText }] }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`claude HTTP ${r.status}: ${JSON.stringify(data).slice(0, 300)}`);
+  const usage = data?.usage || {};
+  return { text: String(data?.content?.[0]?.text || ""), inputTokens: Number(usage.input_tokens || 0), outputTokens: Number(usage.output_tokens || 0) };
+}
+
+async function callGemini({ apiKey, model, system, userText, images }) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const parts = [{ text: userText }];
+  for (const img of images || []) {
+    if (img && typeof img.data === "string") {
+      parts.push({ inlineData: { mimeType: img.mimeType || "image/jpeg", data: img.data } });
+    }
+  }
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts }],
+    }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`gemini HTTP ${r.status}: ${JSON.stringify(data).slice(0, 300)}`);
+  const text = String(data?.candidates?.[0]?.content?.parts?.[0]?.text || "");
+  const usage = data?.usageMetadata || {};
+  return { text, inputTokens: Number(usage.promptTokenCount || 0), outputTokens: Number(usage.candidatesTokenCount || 0) };
+}
+
+async function callFusionGpt({ apiKey, model, system, userText, images }) {
+  const content = [{ type: "text", text: userText }];
+  for (const img of images || []) {
+    if (img && typeof img.data === "string") {
+      content.push({ type: "image_url", image_url: { url: `data:${img.mimeType || "image/jpeg"};base64,${img.data}` } });
+    }
+  }
+  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content }] }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`gpt HTTP ${r.status}: ${JSON.stringify(data).slice(0, 300)}`);
+  const usage = data?.usage || {};
+  return { text: String(data?.choices?.[0]?.message?.content || ""), inputTokens: Number(usage.prompt_tokens || 0), outputTokens: Number(usage.completion_tokens || 0) };
 }
 
 export default async function(req) {
@@ -257,7 +344,171 @@ export default async function(req) {
       return Response.json({ reply, draftedMessage: "", provider: "local-fallback", configured: false, learning: { memoryCount: learnedMemories.length } });
     }
 
-    const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
+        // ---- Earnings screenshot OCR: vision parse of a gig earnings screenshot ----
+        // task:"earnings_ocr" + images:[{mimeType,data}]. Gemini first (cheap vision),
+        // GPT fallback. Returns { parsed, reply, engine, model, usage }.
+        const ocrImages = (Array.isArray(body.images) ? body.images : [])
+          .filter((i) => i && typeof i.data === "string" && i.data.length > 100)
+          .slice(0, 2)
+          .map((i) => ({
+            mimeType: String(i.mimeType || "image/jpeg").slice(0, 80),
+            data: String(i.data).slice(0, 7000000),
+          }));
+        const isOcrTask = String(body.task || "") === "earnings_ocr" && ocrImages.length > 0;
+        if (isOcrTask) {
+          const paidOk = paidAiFallbackAllowed();
+          const gKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+          const oKey = paidOk ? secrets.get("OPENAI_API_KEY") : "";
+          if (!gKey && !oKey) {
+            return Response.json({ error: "No vision provider key configured", provider: "none" }, { status: 503 });
+          }
+          const ocrSystem = [
+            "You are an earnings-receipt parser for a gig-driver app.",
+            "Read the screenshot of a gig driver earnings screen (DoorDash, Uber Driver, Instacart, Spark, Shipt, Grubhub, Amazon Flex, Veho).",
+            "Extract ONLY what is visibly shown. Reply with STRICT JSON only, no prose, no markdown fences:",
+            '{"amount": number|null, "platform": string|null, "date": "YYYY-MM-DD"|null, "trips": number|null, "currency": "USD", "confidence": "high"|"medium"|"low", "note": string}',
+            "Rules: amount = the total earnings figure shown (never a per-delivery amount).",
+            "platform = the app name visible in the screenshot. date = the earnings date shown, else null.",
+            "trips = deliveries/trips count if shown, else null. Never invent a number — use null when unsure.",
+            "note = one short line describing what you saw.",
+          ].join("\n");
+          const ocrText = `${String(body.message || "Parse this gig-driver earnings screenshot into JSON.").slice(0, 300)}\nnonce:${Date.now().toString(36)}`;
+          const ocrFeature = "ocr:earnings_screenshot";
+          const ocrTries = [];
+          if (gKey) ocrTries.push(["gemini", DECK_ENGINE_MODELS.gemini, gKey]);
+          if (oKey) ocrTries.push(["gpt", secrets.get("OPENAI_MODEL") || "gpt-5.6", oKey]);
+          let ocrOut = null, ocrEngine = "", ocrModel = "", ocrErr = "";
+          for (const [eng, mdl, key] of ocrTries) {
+            try {
+              const op = eng === "gemini" ? `gemini_${ocrFeature}` : `openai_${ocrFeature}`;
+              const prov = eng === "gemini" ? "google" : "openai";
+              const est = eng === "gemini" ? 0.005 : 0.01;
+              ocrOut = await withEcosystemAdmission(base44, {
+                sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: op,
+                provider: prov, priority: 55, estimatedMs: 25000, estimatedCost: est, realtime: false, tags: ["credits", "ai", "ocr"],
+              }, () => eng === "gemini"
+                ? callGemini({ apiKey: key, model: mdl, system: ocrSystem, userText: ocrText, images: ocrImages })
+                : callFusionGpt({ apiKey: key, model: mdl, system: ocrSystem, userText: ocrText, images: ocrImages }));
+              ocrEngine = eng; ocrModel = mdl;
+              break;
+            } catch (e) { ocrErr = e?.message || String(e); console.warn("ocr engine failed", eng, ocrErr); }
+          }
+          if (!ocrOut) {
+            return Response.json({ error: `Earnings OCR failed: ${ocrErr || "no vision engine available"}`, provider: "none" }, { status: 502 });
+          }
+          let parsed = null;
+          try {
+            const m = String(ocrOut.text || "").match(/\{[\s\S]*\}/);
+            if (m) parsed = JSON.parse(m[0]);
+          } catch { /* client falls back to manual entry */ }
+          const ocrCost = estimateCost({ input_tokens: ocrOut.inputTokens, output_tokens: ocrOut.outputTokens }, guardianConfig, ocrModel);
+          try {
+            await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+              user_id: user.id, request_id: "", model: ocrModel, mode: ocrFeature,
+              input_tokens: Number(ocrOut.inputTokens || 0), output_tokens: Number(ocrOut.outputTokens || 0),
+              total_tokens: Number(ocrOut.inputTokens || 0) + Number(ocrOut.outputTokens || 0),
+              estimated_cost_usd: ocrCost, status: "success", occurred_at: new Date().toISOString(),
+            });
+          } catch (e) { console.warn("ocr usage telemetry unavailable", e?.message || e); }
+          return Response.json({
+            parsed, reply: ocrOut.text, provider: "external", engine: ocrEngine, model: ocrModel,
+            usage: { input_tokens: Number(ocrOut.inputTokens || 0), output_tokens: Number(ocrOut.outputTokens || 0), estimated_cost_usd: Number(ocrCost.toFixed(6)) },
+            guardian: { mode: guardianMode, api_key_exposed: false },
+          });
+        }
+
+        // ---- Jarvis fusion routing: only when the caller asked for a bot/engine ----
+    const requestedBotId = String(body.bot || "").toLowerCase();
+    const requestedBot = DECK_BOTS[requestedBotId] || null;
+    const requestedEngineName = String(body.engine || "").toLowerCase();
+    const requestedEngine = ["gpt", "gemini", "claude"].includes(requestedEngineName) ? requestedEngineName : "";
+    const fusionEngine = requestedEngine || (requestedBot ? requestedBot.engine : "");
+    if (fusionEngine) {
+      const paidOk = paidAiFallbackAllowed();
+      const claudeKey = paidOk ? secrets.get("ANTHROPIC_API_KEY") : "";
+      const geminiKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+      const fusionGptModel = secrets.get("OPENAI_MODEL") || "gpt-5.6";
+      const tryOrder = [fusionEngine];
+      const fallbackEngine = (requestedBot && requestedBot.fallbackEngine) || (fusionEngine === "claude" ? "gpt" : null);
+      if (fallbackEngine && !tryOrder.includes(fallbackEngine)) tryOrder.push(fallbackEngine);
+
+      const fusionSystem = `${requestedBot ? requestedBot.system : "You are a helpful AI assistant."}\n\n${JARVIS_SAFETY}`;
+      const fusionUserText = String(safe.message || safe.command || safe.text || "Hello").slice(0, 4000);
+      const ctxBits = [];
+      if (safe.context && typeof safe.context === "object") {
+        for (const [k, v] of Object.entries(safe.context)) {
+          if (["string", "number", "boolean"].includes(typeof v) && String(v).length <= 200) ctxBits.push(`${k}: ${v}`);
+        }
+      }
+      const fusionInput = ctxBits.length ? `${fusionUserText}\n\n[driver context: ${ctxBits.join("; ")}]` : fusionUserText;
+      const fusionFeature = requestedBotId ? `brain:${requestedBotId}` : `brain:${fusionEngine}`;
+
+      async function fusionRespond(engine, model, out, fallbackUsed) {
+        const usageLike = { input_tokens: out.inputTokens, output_tokens: out.outputTokens };
+        const cost = estimateCost(usageLike, guardianConfig, model);
+        try {
+          await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+            user_id: user.id, request_id: "", model, mode: fusionFeature,
+            input_tokens: Number(out.inputTokens || 0), output_tokens: Number(out.outputTokens || 0),
+            total_tokens: Number(out.inputTokens || 0) + Number(out.outputTokens || 0),
+            estimated_cost_usd: cost, status: "success", occurred_at: new Date().toISOString(),
+          });
+        } catch (e) { console.warn("fusion usage telemetry unavailable", e?.message || e); }
+        try {
+          await base44.asServiceRole.entities.LokinLearningEvent.create({
+            user_id: user.id, event_type: "interaction", feature: fusionFeature,
+            input_text: fusionUserText.slice(0, 4000), response_text: String(out.text || "").slice(0, 4000), rating: 0,
+            metadata_json: JSON.stringify({ provider: engine, model, fallback_used: fallbackUsed, memory_count: learnedMemories.length }),
+            occurred_at: new Date().toISOString(),
+          });
+          if (profile) await base44.asServiceRole.entities.LokinLearningProfile.update(profile.id, { total_events: Number(profile.total_events || 0) + 1 });
+        } catch (e) { console.warn("fusion learning telemetry unavailable", e?.message || e); }
+        return Response.json({
+          reply: out.text, provider: "external", engine, model, bot: requestedBotId || null,
+          fallback_used: fallbackUsed,
+          usage: { input_tokens: Number(out.inputTokens || 0), output_tokens: Number(out.outputTokens || 0), estimated_cost_usd: Number(cost.toFixed(6)) },
+          guardian: { mode: guardianMode, api_key_exposed: false },
+          learning: { enabled: profile?.learning_enabled !== false, memoryCount: learnedMemories.length },
+        });
+      }
+
+      let fusionError = "";
+      for (const eng of tryOrder) {
+        try {
+          if (eng === "claude") {
+            if (!claudeKey) { fusionError = "ANTHROPIC_API_KEY is not configured in dashboard secrets"; continue; }
+            const out = await withEcosystemAdmission(base44, {
+              sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: `claude_${fusionFeature}`,
+              provider: "anthropic", priority: 55, estimatedMs: 25000, estimatedCost: 0.01, realtime: false, tags: ["credits", "ai", "claude"],
+            }, () => callClaude({ apiKey: claudeKey, model: DECK_ENGINE_MODELS.claude, system: fusionSystem, userText: fusionInput }));
+            return await fusionRespond("claude", DECK_ENGINE_MODELS.claude, out, eng !== fusionEngine);
+          }
+          if (eng === "gemini") {
+            if (!geminiKey) { fusionError = "GEMINI_API_KEY is not configured in dashboard secrets"; continue; }
+            const out = await withEcosystemAdmission(base44, {
+              sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: `gemini_${fusionFeature}`,
+              provider: "google", priority: 55, estimatedMs: 25000, estimatedCost: 0.005, realtime: false, tags: ["credits", "ai", "gemini"],
+            }, () => callGemini({ apiKey: geminiKey, model: DECK_ENGINE_MODELS.gemini, system: fusionSystem, userText: fusionInput }));
+            return await fusionRespond("gemini", DECK_ENGINE_MODELS.gemini, out, eng !== fusionEngine);
+          }
+          if (eng === "gpt") {
+            if (!apiKey) { fusionError = "OPENAI_API_KEY is not configured"; continue; }
+            const out = await withEcosystemAdmission(base44, {
+              sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: `openai_${fusionFeature}`,
+              provider: "openai", priority: 55, estimatedMs: 25000, estimatedCost: 0.01, realtime: false, tags: ["credits", "ai", "gpt"],
+            }, () => callFusionGpt({ apiKey, model: fusionGptModel, system: fusionSystem, userText: fusionInput }));
+            return await fusionRespond("gpt", fusionGptModel, out, eng !== fusionEngine);
+          }
+        } catch (e) { fusionError = e?.message || String(e); console.warn("fusion engine failed", eng, fusionError); }
+      }
+      return Response.json({
+        reply: "The AI brain is unreachable right now \u2014 no engine key is configured or every engine failed. Core app systems still work; try again once a provider key is set in dashboard secrets.",
+        provider: "local-fallback", engine: null, bot: requestedBotId || null, fallback_used: false,
+        detail: String(fusionError || "").slice(0, 300), guardian: { mode: guardianMode, api_key_exposed: false },
+      });
+    }
+
+const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInput: ${JSON.stringify(safe)}`;
 
     if (nvidia.configured) {
       try {

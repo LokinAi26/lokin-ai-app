@@ -9,7 +9,7 @@ import LockInSequence from "@/components/LockInSequence";
 import PullToRefresh from "@/components/PullToRefresh";
 import ShiftMileageCard from "@/components/ShiftMileageCard";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
-import { getShiftSnapshot } from "@/lib/shiftMileage";
+import { endShiftTracking, beginShiftTracking } from "@/lib/shiftMileage";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { loadSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import UserTypeSelector from "@/components/UserTypeSelector";
@@ -56,8 +56,8 @@ export default function Home() {
 
   async function tapOut() {
     if (!prefs?.id) return;
-    // Capture the live shift before the status change ends GPS tracking.
-    const snap = getShiftSnapshot();
+    // End GPS mileage tracking for this shift (stops the watch, clears state).
+    const snap = endShiftTracking() || { miles: 0, finalMiles: 0, milesSource: "gps", startedAt: null, category: null, path: [], odometerStart: null, odometerEnd: null };
     const optimizedRoute = loadSessionRouteRecord();
     const endedAt = Date.now();
     // Optimistic: the UI flips to off instantly; the preference write syncs in the background.
@@ -90,20 +90,46 @@ export default function Home() {
       /* recap still renders without the checklist if the read fails */
     }
     // Persist the tagged session so category profitability can be tracked over time.
+    let sessionId = null;
     if (me?.id) {
       // Offline-safe: if Tap Out happens with no signal, the session record
       // is stored locally and syncs automatically once the connection returns.
-      createOrQueue("DriverSession", {
-        user_id: me.id,
-        status: "ended",
-        category: snap.category || "mixed",
-        started_at: new Date(snap.startedAt || endedAt).toISOString(),
-        ended_at: new Date(endedAt).toISOString(),
-        miles: Math.round((snap.miles || 0) * 100) / 100,
-        earnings: Math.round(earnings * 100) / 100,
-      }).catch(() => {});
+      try {
+        const res = await createOrQueue("DriverSession", {
+          user_id: me.id,
+          status: "ended",
+          category: snap.category || "mixed",
+          started_at: new Date(snap.startedAt || endedAt).toISOString(),
+          ended_at: new Date(endedAt).toISOString(),
+          miles: Math.round((snap.finalMiles || 0) * 100) / 100,
+          gps_miles: Math.round((snap.miles || 0) * 100) / 100,
+          miles_source: snap.milesSource || "gps",
+          odometer_start: snap.odometerStart,
+          odometer_end: snap.odometerEnd,
+          earnings: Math.round(earnings * 100) / 100,
+        });
+        sessionId = res && !res.queued ? res.record?.id || null : null;
+      } catch {
+        /* recap still shows even if the session write fails */
+      }
     }
-    setSummary({ miles: snap.miles, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip, category: snap.category || "mixed" });
+    setSummary({ miles: snap.finalMiles, gpsMiles: snap.miles, milesSource: snap.milesSource, earnings, startedAt: snap.startedAt, endedAt, path: snap.path || [], optimizedRoute, preTrip, category: snap.category || "mixed", sessionId, odometerStart: snap.odometerStart });
+  }
+
+  // Recap modal finalized the odometer end reading: recompute authoritative
+  // miles and patch the stored DriverSession record.
+  async function finalizeShiftOdometer({ odometerEnd, finalMiles }) {
+    if (!summary?.sessionId) return;
+    try {
+      await base44.entities.DriverSession.update(summary.sessionId, {
+        miles: Math.round((finalMiles || 0) * 100) / 100,
+        miles_source: "odometer",
+        odometer_end: odometerEnd,
+      });
+      setSummary((s) => (s ? { ...s, miles: finalMiles, milesSource: "odometer", odometerEnd } : s));
+    } catch {
+      /* keep the GPS miles if the patch fails */
+    }
   }
 
   async function resumeWork() {
@@ -111,6 +137,8 @@ export default function Home() {
     // Optimistic: resume feels instant; the preference write syncs in the background.
     setPrefs({ ...prefs, work_status: "working" });
     setWorkStatusOptimistic(prefs, "working", { break_active: false }).then((r) => setPrefs(r.prefs));
+    // Resume GPS mileage tracking for the shift.
+    beginShiftTracking();
     sessionStorage.removeItem("lokin_app_free_roam");
     navigate("/ai-gps?focus=locked&nav=1&view=real");
   }
@@ -287,7 +315,7 @@ export default function Home() {
       {/* LOKIN stands with — awareness dedication, restored 2026-09-13 per Kendall. */}
       <AwarenessBanner />
 
-      <SessionSummaryModal summary={summary} onClose={() => setSummary(null)} />
+      <SessionSummaryModal summary={summary} onClose={() => setSummary(null)} onFinalizeOdometer={finalizeShiftOdometer} />
       <LockInSequence active={locking} onComplete={handleLockInComplete} />
       <WorkModeSheet open={showWork} onClose={() => setShowWork(false)} prefs={prefs} onStarted={() => loadCommand()} />
       <UserTypeSelector open={showType} onClose={() => setShowType(false)} prefs={prefs} onSaved={() => loadCommand()} />

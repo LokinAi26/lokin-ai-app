@@ -4,6 +4,7 @@
 // when the shift ends so they can be logged.
 const STORAGE_KEY = "lokin_shift_mileage";
 const PENDING_CATEGORY_KEY = "lokin_shift_category";
+const PENDING_ODO_START_KEY = "lokin_shift_odometer_start";
 const MAX_ACCURACY_M = 60; // discard weak fixes entirely
 const MIN_STEP_M = 6; // discard GPS jitter under ~6 m
 const MAX_SPEED_MPS = 42; // discard impossible jumps (~94 mph)
@@ -61,6 +62,35 @@ function takePendingCategory() {
     if (raw == null) return null;
     localStorage.removeItem(PENDING_CATEGORY_KEY);
     return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// Optional IRS-grade odometer reading at shift start. The Work Mode sheet sets
+// it before tracking begins; the recap modal collects the end reading.
+export function setShiftOdometerStart(miles) {
+  try {
+    const v = Number(miles);
+    if (Number.isFinite(v) && v >= 0) {
+      localStorage.setItem(PENDING_ODO_START_KEY, JSON.stringify(v));
+      const state = readState();
+      if (state) writeState({ ...state, odometerStart: v });
+    } else {
+      localStorage.removeItem(PENDING_ODO_START_KEY);
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function takePendingOdometerStart() {
+  try {
+    const raw = localStorage.getItem(PENDING_ODO_START_KEY);
+    if (raw == null) return null;
+    localStorage.removeItem(PENDING_ODO_START_KEY);
+    const v = Number(JSON.parse(raw));
+    return Number.isFinite(v) && v >= 0 ? v : null;
   } catch {
     return null;
   }
@@ -136,13 +166,14 @@ export function getShiftSnapshot() {
     miles: meters / METERS_PER_MILE,
     startedAt: state.startedAt || null,
     category: state.category || null,
+    odometerStart: state.odometerStart != null ? Number(state.odometerStart) : null,
     path: Array.isArray(state.path) ? state.path : [],
   };
 }
 
 // Begin (or resume after a reload) tracking the current shift.
 export function beginShiftTracking() {
-  if (!readState()) writeState({ startedAt: Date.now(), meters: 0, lastFix: null, category: takePendingCategory() });
+  if (!readState()) writeState({ startedAt: Date.now(), meters: 0, lastFix: null, category: takePendingCategory(), odometerStart: takePendingOdometerStart() });
   startWatch();
   notify();
 }
@@ -154,12 +185,24 @@ export function suspendShiftTracking() {
 }
 
 // End the shift. Returns the snapshot (miles accumulated) and clears state.
-export function endShiftTracking() {
+// When a valid odometer end reading is supplied (and a start was recorded),
+// the odometer difference is the authoritative mileage (IRS-grade); the GPS
+// total is kept as a cross-check.
+export function endShiftTracking(odometerEnd) {
   stopWatch();
   const snap = getShiftSnapshot();
   writeState(null);
   notify();
-  return snap.active ? snap : null;
+  if (!snap.active) return null;
+  const odoEnd = Number(odometerEnd);
+  const odoStart = snap.odometerStart;
+  let finalMiles = snap.miles;
+  let milesSource = "gps";
+  if (Number.isFinite(odoEnd) && odoEnd >= 0 && odoStart != null && odoEnd >= odoStart) {
+    finalMiles = odoEnd - odoStart;
+    milesSource = "odometer";
+  }
+  return { ...snap, odometerEnd: Number.isFinite(odoEnd) && odoEnd >= 0 ? odoEnd : null, finalMiles, milesSource };
 }
 
 export function subscribeShift(listener) {

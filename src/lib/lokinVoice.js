@@ -152,7 +152,8 @@ export function speakText(text, opts = {}) {
   try {
     if (!loaded) refresh();
     try { s.resume(); } catch {}
-    const u = new SpeechSynthesisUtterance(String(text).replace(/[*#_`]/g, ""));
+    // Official pronunciation: the LOKIN name is always spoken "Lock In".
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\bLOKIN\b/gi, "Lock In").replace(/[*#_`]/g, ""));
     applyVoice(u);
     if (opts.rate) u.rate = opts.rate;
     if (opts.pitch) u.pitch = opts.pitch;

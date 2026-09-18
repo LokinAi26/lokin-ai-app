@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
-import { Plus, Trash2, TrendingUp, CloudUpload } from "lucide-react";
+import { Plus, Trash2, TrendingUp } from "lucide-react";
+import SyncStatusBadge from "@/components/ui/SyncStatusBadge";
 import SelectSheet from "@/components/ui/SelectSheet";
 import { SEEDS } from "@/lib/heatData";
 import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
@@ -82,11 +83,11 @@ export default function IncomeSection() {
       <div className="space-y-1.5">
         {pending.map((q) => (
           <div key={q.id} className="flex items-center gap-3 rounded-xl border border-[#FFD200]/40 bg-[#FFD200]/[0.06] p-2.5">
-            <CloudUpload className="h-4 w-4 text-[#FFD200] shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-white">${Number(q.data.amount).toFixed(2)}</div>
-              <div className="text-[10px] text-[#FFD200]/80">{q.data.date} · {q.data.trips || 0} trips · saved offline — syncs when back online</div>
+              <div className="text-[10px] text-[#FFD200]/80">{q.data.date} · {q.data.trips || 0} trips · saved offline</div>
             </div>
+            <SyncStatusBadge status="pending" />
           </div>
         ))}
         {loading && <div className="text-xs text-white/40 text-center py-4">Loading…</div>}
@@ -97,6 +98,7 @@ export default function IncomeSection() {
               <div className="text-sm font-semibold text-white">${Number(i.amount).toFixed(2)}</div>
               <div className="text-[10px] text-white/40">{i.date} · {i.trips || 0} trips · {i.platform || "mixed"}{i.vehicle ? ` · ${vehicleLabel(i.vehicle)}` : ""}</div>
             </div>
+            <SyncStatusBadge status="synced" />
             <button onClick={() => del(i.id)} className="text-white/30 active:scale-90"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}

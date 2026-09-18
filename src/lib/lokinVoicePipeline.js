@@ -40,6 +40,46 @@ export function setTtsVoice(id) {
   } catch {}
 }
 
+// Voice level: 0-150 percent, persisted. 100 = the MP3's native loudness;
+// above 100 genuinely boosts it (via Web Audio gain, which iOS honors).
+const TTS_VOLUME_KEY = "lokin_tts_volume";
+const DEFAULT_TTS_VOLUME = 100;
+
+export function getTtsVolume() {
+  try {
+    const v = Number(localStorage.getItem(TTS_VOLUME_KEY));
+    if (Number.isFinite(v)) return Math.min(150, Math.max(0, Math.round(v)));
+  } catch {}
+  return DEFAULT_TTS_VOLUME;
+}
+
+export function setTtsVolume(v) {
+  try {
+    const n = Math.min(150, Math.max(0, Math.round(Number(v))));
+    if (Number.isFinite(n)) localStorage.setItem(TTS_VOLUME_KEY, String(n));
+  } catch {}
+}
+
+// Shared Web Audio context. iOS ignores the media element's volume property,
+// so the level slider drives a GainNode instead — the one loudness control
+// iOS actually honors. Created/resumed inside tap gestures (unlockVoiceAudio)
+// so it is running by the time replies play.
+let voiceCtx = null;
+function ensureVoiceCtx() {
+  try {
+    if (typeof window === "undefined") return null;
+    if (!voiceCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      voiceCtx = new AC();
+    }
+    if (voiceCtx.state === "suspended") voiceCtx.resume().catch(() => {});
+    return voiceCtx;
+  } catch {
+    return null;
+  }
+}
+
 export function canRecordVoice() {
   try {
     return Boolean(
@@ -56,13 +96,7 @@ export function canRecordVoice() {
 // iOS web views require a user gesture before any audio plays. Call this from
 // the mic tap so the reply audio is allowed to play later.
 export function unlockVoiceAudio() {
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) {
-      const ctx = new AC();
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
-    }
-  } catch {}
+  ensureVoiceCtx();
 }
 
 let currentAudio = null;
@@ -144,6 +178,22 @@ export async function speakLokin(text, opts = {}) {
     if (!data?.audio) throw new Error("no audio returned");
     const audio = new Audio(`data:${data.mimeType || "audio/mpeg"};base64,${data.audio}`);
     try { audio.setAttribute("playsinline", ""); } catch {}
+    const vol = getTtsVolume();
+    // Element volume for platforms that honor it (attenuation only).
+    try { audio.volume = Math.min(1, vol / 100); } catch {}
+    // GainNode so the level slider works on iOS too. Only when the shared
+    // context is running — routing through a suspended context would silence
+    // the reply, so in that case the element plays directly.
+    const ctx = ensureVoiceCtx();
+    if (ctx && ctx.state === "running") {
+      try {
+        const src = ctx.createMediaElementSource(audio);
+        const gain = ctx.createGain();
+        gain.gain.value = Math.min(1.5, Math.max(0, vol / 100));
+        src.connect(gain);
+        gain.connect(ctx.destination);
+      } catch {}
+    }
     currentAudio = audio;
     await audio.play();
     await new Promise((resolve) => {
@@ -157,7 +207,7 @@ export async function speakLokin(text, opts = {}) {
     // Consent or provider errors surface to the caller via the reply text path;
     // here we just try the device fallback so browsers still talk.
     try {
-      return speakText(clean, opts);
+      return speakText(clean, { ...opts, volume: Math.min(1, getTtsVolume() / 100) });
     } catch {
       return false;
     }
@@ -168,6 +218,8 @@ export default {
   TTS_VOICES,
   getTtsVoice,
   setTtsVoice,
+  getTtsVolume,
+  setTtsVolume,
   canRecordVoice,
   unlockVoiceAudio,
   stopSpeaking,
