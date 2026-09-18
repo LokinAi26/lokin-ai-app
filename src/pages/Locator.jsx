@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ScanLine, MapPin, Crosshair, PackageSearch, Store, Boxes, Clock3, Navigation, Layers3, Volume2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { normalizeInventoryItem, inventoryFreshness } from "@/lib/retailInventory";
 import { optimizeStoreRoute, substitutionRisk } from "@/lib/storeIntelligence";
 import BeepSeekScanner from "@/components/locator/BeepSeekScanner";
 import ScanToSearch from "@/components/locator/ScanToSearch";
+import OrderItemsImport from "@/components/OrderItemsImport";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
 const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
@@ -29,6 +31,8 @@ function derivePoint(item) {
 }
 
 export default function Locator() {
+  const [searchParams] = useSearchParams();
+  const autoImport = searchParams.get("import") === "1";
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -78,6 +82,31 @@ export default function Locator() {
   }
 
   function clearTrip() { setTripItems([]); }
+
+  // Merge OCR-imported order items into the Smart Shop trip, skipping
+  // duplicates already on the list (matched by normalized name).
+  function importOrderItems(items) {
+    const list = Array.isArray(items) ? items : [];
+    if (!list.length) return;
+    setTripItems((xs) => {
+      const have = new Set(xs.map((x) => String(x.name || "").trim().toLowerCase()));
+      const fresh = [];
+      for (const it of list) {
+        const name = String(it?.name || "").trim();
+        if (!name) continue;
+        if (have.has(name.toLowerCase())) continue;
+        have.add(name.toLowerCase());
+        fresh.push({
+          id: `order-${Date.now()}-${fresh.length}`,
+          name,
+          quantity: Number(it.quantity) > 0 ? Math.round(Number(it.quantity)) : 1,
+          unit: it.unit || "",
+          source: "order_import",
+        });
+      }
+      return [...xs, ...fresh];
+    });
+  }
 
   return (
     <div className="p-4 space-y-4 pb-8">
@@ -154,6 +183,8 @@ export default function Locator() {
           </div>
         </div>
       </>}
+
+      <OrderItemsImport onImport={importOrderItems} autoOpen={autoImport} />
 
       {tripItems.length > 0 && <div className="rounded-3xl border border-primary/20 lokin-panel p-4">
         <div className="flex items-center justify-between"><div><div className="text-[10px] tracking-[0.18em] text-primary">SMART SHOP ROUTE</div><div className="text-sm font-bold text-white">{tripItems.length} item{tripItems.length === 1 ? "" : "s"} · optimized walking order</div></div><button onClick={clearTrip} className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-semibold text-white/45">CLEAR</button></div>

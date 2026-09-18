@@ -486,6 +486,75 @@ export default async function(req) {
           });
         }
 
+        // ---- Order-items screenshot OCR: vision parse of a gig shopping-list screen ----
+        // task:"order_items_ocr" + images:[{mimeType,data}] (up to 2 screenshots for
+        // long lists across screens). Gemini first (cheap vision), GPT fallback.
+        // Returns { parsed, reply, engine, model, usage }.
+        // parsed: { items: [{name, quantity, unit}], store, confidence, note }.
+        const isOrderItemsTask = String(body.task || "") === "order_items_ocr" && ocrImages.length > 0;
+        if (isOrderItemsTask) {
+          const paidOk = paidAiFallbackAllowed();
+          const gKey = paidOk ? secrets.get("GEMINI_API_KEY") : "";
+          const oKey = paidOk ? secrets.get("OPENAI_API_KEY") : "";
+          if (!gKey && !oKey) {
+            return Response.json({ error: "No vision provider key configured", provider: "none" }, { status: 503 });
+          }
+          const itemsSystem = [
+            "You are a shopping-list parser for a gig-driver grocery copilot.",
+            "Read the screenshot(s) of a grocery/retail shopping order (DoorDash, Instacart, Shipt, Spark, Uber Eats).",
+            "Extract every shoppable item visibly shown, in order. Reply with STRICT JSON only, no prose, no markdown fences:",
+            '{"items": [{"name": string, "quantity": number, "unit": string|null}], "store": string|null, "confidence": "high"|"medium"|"low", "note": string}',
+            "Rules: name = the item name as shown (include size/flavor when visible, e.g. 'Whole Milk 1 gal').",
+            "quantity = the requested count shown, else 1. unit = unit shown (each, lb, oz, pack) else null.",
+            "Skip UI chrome, headers, totals, and delivery instructions — items only.",
+            "When two screenshots show one continuous list, merge them and de-duplicate repeated items.",
+            "Never invent an item — only what is visibly shown. note = one short line describing what you saw.",
+          ].join("\n");
+          const itemsText = `${String(body.message || "Parse this shopping order screenshot into JSON.").slice(0, 300)}\nnonce:${Date.now().toString(36)}`;
+          const itemsFeature = "ocr:order_items_screenshot";
+          const itemsTries = [];
+          if (gKey) itemsTries.push(["gemini", DECK_ENGINE_MODELS.gemini, gKey]);
+          if (oKey) itemsTries.push(["gpt", secrets.get("OPENAI_MODEL") || "gpt-5.6", oKey]);
+          let itemsOut = null, itemsEngine = "", itemsModel = "", itemsErr = "";
+          for (const [eng, mdl, key] of itemsTries) {
+            try {
+              const op = eng === "gemini" ? `gemini_${itemsFeature}` : `openai_${itemsFeature}`;
+              const prov = eng === "gemini" ? "google" : "openai";
+              const est = eng === "gemini" ? 0.005 : 0.01;
+              itemsOut = await withEcosystemAdmission(base44, {
+                sourceApp: "LOKIN AI", domain: "ai", type: "external_ai_inference", operation: op,
+                provider: prov, priority: 55, estimatedMs: 30000, estimatedCost: est, realtime: false, tags: ["credits", "ai", "ocr"],
+              }, () => eng === "gemini"
+                ? callGemini({ apiKey: key, model: mdl, system: itemsSystem, userText: itemsText, images: ocrImages })
+                : callFusionGpt({ apiKey: key, model: mdl, system: itemsSystem, userText: itemsText, images: ocrImages }));
+              itemsEngine = eng; itemsModel = mdl;
+              break;
+            } catch (e) { itemsErr = e?.message || String(e); console.warn("order items ocr engine failed", eng, itemsErr); }
+          }
+          if (!itemsOut) {
+            return Response.json({ error: `Order-items OCR failed: ${itemsErr || "no vision engine available"}`, provider: "none" }, { status: 502 });
+          }
+          let itemsParsed = null;
+          try {
+            const m = String(itemsOut.text || "").match(/\{[\s\S]*\}/);
+            if (m) itemsParsed = JSON.parse(m[0]);
+          } catch { /* client falls back to manual entry */ }
+          const itemsCost = estimateCost({ input_tokens: itemsOut.inputTokens, output_tokens: itemsOut.outputTokens }, guardianConfig, itemsModel);
+          try {
+            await base44.asServiceRole.entities.OpenAIUsageEvent.create({
+              user_id: user.id, request_id: "", model: itemsModel, mode: itemsFeature,
+              input_tokens: Number(itemsOut.inputTokens || 0), output_tokens: Number(itemsOut.outputTokens || 0),
+              total_tokens: Number(itemsOut.inputTokens || 0) + Number(itemsOut.outputTokens || 0),
+              estimated_cost_usd: itemsCost, status: "success", occurred_at: new Date().toISOString(),
+            });
+          } catch (e) { console.warn("order items ocr usage telemetry unavailable", e?.message || e); }
+          return Response.json({
+            parsed: itemsParsed, reply: itemsOut.text, provider: "external", engine: itemsEngine, model: itemsModel,
+            usage: { input_tokens: Number(itemsOut.inputTokens || 0), output_tokens: Number(itemsOut.outputTokens || 0), estimated_cost_usd: Number(itemsCost.toFixed(6)) },
+            guardian: { mode: guardianMode, api_key_exposed: false },
+          });
+        }
+
         // ---- Jarvis fusion routing: only when the caller asked for a bot/engine ----
     const requestedBotId = String(body.bot || "").toLowerCase();
     const requestedBot = DECK_BOTS[requestedBotId] || null;
