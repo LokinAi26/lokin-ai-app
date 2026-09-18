@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
-import { guardedInvoke } from "@/lib/creditGuardian";
+import { askBrain } from "@/lib/lokinBrain";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
@@ -248,9 +248,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       const now = new Date();
       const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
       const history = (transcriptHistoryRef.current || []).slice(-6).map((h) => `${h.role}: ${h.text}`).join("\n");
-      const res = await guardedInvoke(base44, "external-ai-gateway", {
-        mode: "assistant",
-        command,
+      // Jarvis fusion: open-ended voice questions go to the Ask LOKIN brain
+      // (multi-engine, same auth/consent/budget guardrails). Short app
+      // commands were already handled above and never reach here.
+      const res = await askBrain({
+        bot: "asklokin",
+        message: command,
         context: {
           todayEarnings,
           dailyGoal: p.daily_goal || 150,
