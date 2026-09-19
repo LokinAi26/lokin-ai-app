@@ -1,8 +1,12 @@
 import { invokeLLMWithAdmission } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { rateLimitResponse } from '../../shared/ipRateLimit.js';
 
 export default async function(req) {
   try {
+    // Cost-abuse guard: 20 requests per client per minute on this paid AI/geo endpoint.
+    const limited = rateLimitResponse(req, 'find-mechanic', 20, 60 * 1000);
+    if (limited) return limited;
     const base44 = createClientFromRequest(req);
     let body = {};
     try { body = await req.json(); } catch {}

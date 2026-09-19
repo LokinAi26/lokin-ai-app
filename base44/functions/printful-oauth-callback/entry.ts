@@ -39,15 +39,17 @@ export default async function (req: Request): Promise<Response> {
     if (!success) return Response.json({ error: "Printful authorization was rejected." }, { status: 400 });
     if (!code) return Response.json({ error: "Missing authorization code." }, { status: 400 });
 
-    const okState = await verifyState(state, user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") || "lokin-printful-fallback");
-    if (!okState) return Response.json({ error: "Invalid or expired OAuth state. Please reconnect." }, { status: 400 });
-
+    // Fail closed: configuration is checked before any state verification or
+    // token exchange — an unset secret must never sign or verify a state.
     const clientId = secrets.get("PRINTFUL_OAUTH_CLIENT_ID");
     const clientSecret = secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET");
     const redirectUri = secrets.get("PRINTFUL_OAUTH_REDIRECT_URI");
     if (!clientId || !clientSecret || !redirectUri) {
       return Response.json({ error: "Printful OAuth is not fully configured." }, { status: 503 });
     }
+
+    const okState = await verifyState(state, user.id, clientSecret);
+    if (!okState) return Response.json({ error: "Invalid or expired OAuth state. Please reconnect." }, { status: 400 });
 
     // Exchange the authorization code for tokens (OAuth 2.0 form-urlencoded).
     const body = new URLSearchParams({
@@ -64,7 +66,8 @@ export default async function (req: Request): Promise<Response> {
     });
     const tokenData = await tokenRes.json().catch(() => ({}));
     if (!tokenRes.ok) {
-      console.error("printful token exchange failed:", tokenRes.status, JSON.stringify(tokenData));
+      // Log status and the provider error only — never the full response body.
+      console.error("printful token exchange failed:", tokenRes.status, tokenData?.error?.message || tokenData?.result || "unknown error");
       return Response.json({ error: tokenData?.error?.message || tokenData?.result || "Token exchange failed." }, { status: 400 });
     }
     const accessToken = tokenData.access_token;

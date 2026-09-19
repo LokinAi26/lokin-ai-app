@@ -63,6 +63,9 @@ export async function makeUberState(userId: string, clientSecret: string) {
 }
 
 export async function verifyUberState(state: string, userId: string, clientSecret: string) {
+  // Fail closed: an empty secret must never verify — an empty-key HMAC would
+  // let anyone mint a valid state. (Connect/callback also 503 when unset.)
+  if (!text(clientSecret)) return false;
   const parts = String(state || "").split(".");
   if (parts.length !== 4) return false;
   const [uid, exp, nonce, sig] = parts;
