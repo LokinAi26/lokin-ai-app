@@ -109,7 +109,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating" }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -148,6 +148,10 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   const renderH = fullscreen ? 960 : MAP_H;
   const hudSafeX = fullscreen ? "max(0.65rem, env(safe-area-inset-left))" : "0.5rem";
   const arrived = navigationStatus === "arrived";
+  // Tells the driver which side of the street the entrance is on at arrival.
+  const arrivalSideLabel = (destinationSide === "left" || destinationSide === "right")
+    ? ` · on your ${destinationSide}`
+    : "";
   const rerouting = navigationStatus === "rerouting";
   const headingForward = fullscreen && followDriver;
 
@@ -499,7 +503,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
-              {!perspective && <polyline points={routePoints} fill="none" stroke="#A8FF00" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(168,255,0,1))" }} />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
               {!perspective && deliveryStops.map((stop, i) => {
                 const point = markerViewport ? project(stop.coordinate, markerViewport, renderW, renderH) : null;
                 if (!point) return null;
@@ -582,7 +586,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             <div className="lokin-card grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(52px,72px)] items-end gap-2 overflow-hidden px-3 py-3 backdrop-blur">
               <div className="min-w-0 overflow-hidden">
                 <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? `Destination reached${arrivalSideLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
               </div>
               <div className={`min-w-0 overflow-hidden border-l pl-2 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
                 <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
@@ -594,7 +598,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           <div className="absolute bottom-3 left-2 right-2 z-30 flex min-w-0 items-end gap-2">
             <div className="lokin-card min-w-0 flex-1 overflow-hidden px-3 py-2 backdrop-blur">
               <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-              <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? "Destination reached" : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+              <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? `Destination reached${arrivalSideLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
             </div>
             <div className="lokin-card w-[clamp(76px,23vw,96px)] shrink-0 overflow-hidden px-2.5 py-2 text-right backdrop-blur">
               <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
