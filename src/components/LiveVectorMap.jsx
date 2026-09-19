@@ -503,6 +503,7 @@ export default function LiveVectorMap({
           if (disposed) return;
           mapArchitect.map = map;
           baggz247Master.map = map;
+          baggz247Master.registerSignatureLandmarks();
           meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();

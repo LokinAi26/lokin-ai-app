@@ -418,19 +418,85 @@ export class MasterBuilder {
       return null;
     }
     const modelId = `master-landmark-${name}`;
+    const sourceId = `${modelId}-src`;
     const layerId = `${modelId}-layer`;
     try {
       if (typeof this.map.addModel !== "function") {
         throw new Error("this mapbox-gl build does not support addModel");
       }
+      // Already placed on this map instance — return the existing placement.
+      if (this.map.getLayer(layerId) && this.map.getSource(sourceId)) {
+        const existing = { name, lng, lat, modelUrl, scale, modelId, sourceId, layerId };
+        this.landmarks.set(name, existing);
+        return existing;
+      }
+      // Register the model with the style, then pin it to its coordinates via a
+      // GeoJSON point source consumed by a model layer.
       this.map.addModel(modelId, { type: "glb", url: modelUrl });
-      this.map.addLayer({ id: layerId, type: "model", source: modelId });
-      const record = { name, lng, lat, modelUrl, scale, modelId, layerId };
+      const point = {
+        type: "Feature",
+        properties: {},
+        geometry: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+      };
+      if (this.map.getSource(sourceId)) {
+        this.map.getSource(sourceId).setData(point);
+      } else {
+        this.map.addSource(sourceId, { type: "geojson", data: point });
+      }
+      this.map.addLayer({
+        id: layerId,
+        type: "model",
+        source: sourceId,
+        layout: { "model-id": modelId },
+      });
+      const record = { name, lng, lat, modelUrl, scale, modelId, sourceId, layerId };
       this.landmarks.set(name, record);
       return record;
     } catch (error) {
       console.warn(`[MasterBuilder] landmark "${name}" placement failed — model was not placed at (${lng}, ${lat}): ${error?.message || error}`);
       return null;
+    }
+  }
+
+  // BAGGZ_247 Batch 1 — signature landmark models for the Hampton Roads market.
+  // Stylized approximations, not survey-grade replicas.
+  registerSignatureLandmarks() {
+    const landmarks = [
+      {
+        id: "baggz247-dome",
+        name: "The Dome at Atlantic Park",
+        lat: 36.847164,
+        lng: -75.979075,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c0640846b_baggz247-dome.glb",
+      },
+      {
+        id: "baggz247-surf-lagoon",
+        name: "Atlantic Park surf lagoon",
+        lat: 36.84605,
+        lng: -75.97712,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c222e21d5_baggz247-surf-lagoon.glb",
+      },
+      {
+        id: "baggz247-waterside",
+        name: "Waterside District",
+        lat: 36.84483,
+        lng: -76.29102,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b71dd4fac_baggz247-waterside.glb",
+      },
+      {
+        id: "baggz247-town-center",
+        name: "Virginia Beach Town Center",
+        lat: 36.84344,
+        lng: -76.13266,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/0d8e372f4_baggz247-town-center.glb",
+      },
+    ];
+    for (const lm of landmarks) {
+      try {
+        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
+      } catch (e) {
+        console.warn("[baggz247] signature landmark failed:", lm.id, e);
+      }
     }
   }
 
