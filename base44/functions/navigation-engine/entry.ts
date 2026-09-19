@@ -38,6 +38,36 @@ function milesBetween(a: { longitude: number; latitude: number }, b: { longitude
   return 3958.7613 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+/**
+ * Which side of the travel direction the final destination sits on, so the
+ * driver hears "the destination is on your right" at arrival. Computed from
+ * the final approach bearing vs. the bearing to the destination coordinate.
+ * Returns "left", "right", or "straight" (destination essentially on the road).
+ */
+function bearingBetween(a: { longitude: number; latitude: number }, b: { longitude: number; latitude: number }) {
+  const rad = Math.PI / 180;
+  const dLon = (b.longitude - a.longitude) * rad;
+  const lat1 = a.latitude * rad;
+  const lat2 = b.latitude * rad;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return (Math.atan2(y, x) / rad + 360) % 360;
+}
+
+function destinationSide(routeCoords: number[][], destination: { longitude: number; latitude: number }) {
+  if (!Array.isArray(routeCoords) || routeCoords.length < 2) return "straight";
+  const last = routeCoords[routeCoords.length - 1];
+  const prev = routeCoords[routeCoords.length - 2];
+  const approachBearing = bearingBetween({ longitude: prev[0], latitude: prev[1] }, { longitude: last[0], latitude: last[1] });
+  const destBearing = bearingBetween({ longitude: last[0], latitude: last[1] }, destination);
+  const toDestM = milesBetween({ longitude: last[0], latitude: last[1] }, destination) * 1609.344;
+  // Destination essentially on the route line — no meaningful side.
+  if (toDestM < 6) return "straight";
+  const diff = ((destBearing - approachBearing + 540) % 360) - 180;
+  if (Math.abs(diff) < 25) return "straight";
+  return diff > 0 ? "right" : "left";
+}
+
 function addressHasGeographicContext(address: string) {
   const q = String(address || "").trim();
   // ZIP codes and comma-delimited locality/state context are reliable signals.
@@ -261,7 +291,13 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
   const candidates = (data?.features || [])
     .map((feature: any) => {
       const geometry = feature?.geometry?.coordinates;
-      const routable = feature?.properties?.coordinates?.routable_points?.[0];
+      // Mapbox Search v6 returns named routable_points for many addresses.
+      // Prefer an "entrance" point (the front door / main entry) over the
+      // generic default so the driver is routed to the front of the building.
+      const routablePoints = feature?.properties?.coordinates?.routable_points;
+      const routable = Array.isArray(routablePoints) && routablePoints.length
+        ? (routablePoints.find((p: any) => /entrance/i.test(String(p?.name || ""))) || routablePoints[0])
+        : null;
       const coords = routable
         ? [Number(routable.longitude), Number(routable.latitude)]
         : geometry;
@@ -270,6 +306,7 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
         feature,
         longitude: Number(coords[0]),
         latitude: Number(coords[1]),
+        routable_point_name: routable?.name || null,
       };
       return {
         ...result,
@@ -304,6 +341,9 @@ async function geocodeAddress(address: string, accessToken: string, proximity?: 
     brand: properties?.brand || [],
     operational_status: properties?.operational_status || null,
     accuracy: properties?.coordinates?.accuracy || null,
+    // Which routable point was chosen: "entrance" means Mapbox had real
+    // front-door data; anything else is the generic curb/street point.
+    routable_point_name: selected.routable_point_name || null,
     proximity_miles: selected.proximity_miles,
   };
 }
@@ -442,6 +482,9 @@ async function directions(
     step_count: Array.isArray(leg?.steps) ? leg.steps.length : 0,
   }));
 
+  const geometryCoords = route.geometry.coordinates.map((pair: any) => [Number(pair[0]), Number(pair[1])]);
+  const lastDestination = coordinates[coordinates.length - 1];
+
   return {
     provider: "mapbox",
     profile,
@@ -451,8 +494,11 @@ async function directions(
     duration_s: Number(route.duration || 0),
     geometry: light ? null : {
       type: "LineString",
-      coordinates: route.geometry.coordinates.map((pair: any) => [Number(pair[0]), Number(pair[1])]),
+      coordinates: geometryCoords,
     },
+    // Which side of the road the final destination is on at arrival —
+    // the app speaks this so the driver finds the front at night.
+    destination_side: light ? null : destinationSide(geometryCoords, lastDestination),
     waypoints: (data?.waypoints || []).map((w: any, index: number) => ({
       index,
       name: w?.name || "",
