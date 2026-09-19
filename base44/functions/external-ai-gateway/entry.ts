@@ -267,6 +267,7 @@ export default async function(req) {
     let model = defaultModel;
     let guardianMode = "normal";
     let guardianConfig = null;
+    let nvidiaFallbackUsed = false;
 
     try {
       const configs = await base44.asServiceRole.entities.OpenAIGuardianConfig.filter({ user_id: user.id }, "-updated_date", 1);
@@ -412,6 +413,7 @@ export default async function(req) {
           } catch (e) { console.warn("ocr usage telemetry unavailable", e?.message || e); }
           return Response.json({
             parsed, reply: ocrOut.text, provider: "external", engine: ocrEngine, model: ocrModel,
+            serving_engine: ocrModel, fallback_used: ocrEngine !== ocrTries[0]?.[0],
             usage: { input_tokens: Number(ocrOut.inputTokens || 0), output_tokens: Number(ocrOut.outputTokens || 0), estimated_cost_usd: Number(ocrCost.toFixed(6)) },
             guardian: { mode: guardianMode, api_key_exposed: false },
           });
@@ -481,6 +483,7 @@ export default async function(req) {
           } catch (e) { console.warn("offer ocr usage telemetry unavailable", e?.message || e); }
           return Response.json({
             parsed: offerParsed, reply: offerOut.text, provider: "external", engine: offerEngine, model: offerModel,
+            serving_engine: offerModel, fallback_used: offerEngine !== offerTries[0]?.[0],
             usage: { input_tokens: Number(offerOut.inputTokens || 0), output_tokens: Number(offerOut.outputTokens || 0), estimated_cost_usd: Number(offerCost.toFixed(6)) },
             guardian: { mode: guardianMode, api_key_exposed: false },
           });
@@ -550,6 +553,7 @@ export default async function(req) {
           } catch (e) { console.warn("order items ocr usage telemetry unavailable", e?.message || e); }
           return Response.json({
             parsed: itemsParsed, reply: itemsOut.text, provider: "external", engine: itemsEngine, model: itemsModel,
+            serving_engine: itemsModel, fallback_used: itemsEngine !== itemsTries[0]?.[0],
             usage: { input_tokens: Number(itemsOut.inputTokens || 0), output_tokens: Number(itemsOut.outputTokens || 0), estimated_cost_usd: Number(itemsCost.toFixed(6)) },
             guardian: { mode: guardianMode, api_key_exposed: false },
           });
@@ -603,6 +607,7 @@ export default async function(req) {
         } catch (e) { console.warn("fusion learning telemetry unavailable", e?.message || e); }
         return Response.json({
           reply: out.text, provider: "external", engine, model, bot: requestedBotId || null,
+          serving_engine: model,
           fallback_used: fallbackUsed,
           usage: { input_tokens: Number(out.inputTokens || 0), output_tokens: Number(out.outputTokens || 0), estimated_cost_usd: Number(cost.toFixed(6)) },
           guardian: { mode: guardianMode, api_key_exposed: false },
@@ -673,12 +678,15 @@ const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInp
           ...parsed,
           provider:"nvidia-owned",
           model:nvidia.llmModel,
+          serving_engine:nvidia.llmModel,
+          fallback_used:false,
           usage:{ input_tokens:0, output_tokens:0, total_tokens:0, estimated_cost_usd:0 },
           guardian:{ mode:"owned-compute", api_key_exposed:false, paid_fallback_enabled:paidAiFallbackAllowed() },
           learning:{ enabled:profile?.learning_enabled !== false, memoryCount:learnedMemories.length, strategyCount:learnedStrategies.length, profileVersion:Number(profile?.version || 1), engineVersion:2 }
         });
       } catch (e) {
         console.warn("NVIDIA owned inference unavailable", e?.message || e);
+        nvidiaFallbackUsed = true;
         if (!apiKey) throw e;
       }
     }
@@ -766,6 +774,8 @@ const prompt = `${systemFor(mode)}\nRequired JSON shape: ${schemaFor(mode)}\nInp
       ...parsed,
       provider: "external",
       model,
+      serving_engine: model,
+      fallback_used: nvidiaFallbackUsed,
       usage: {
         input_tokens: Number(usage.input_tokens || 0),
         output_tokens: Number(usage.output_tokens || 0),
