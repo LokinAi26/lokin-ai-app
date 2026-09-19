@@ -27,7 +27,8 @@
       ]
     },
     "graph_json": {
-      "type": "string"
+      "type": "string",
+      "description": "Canonical JSON graph with ordered nodes and dependencies"
     },
     "input_schema_json": {
       "type": "string"
