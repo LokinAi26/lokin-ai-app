@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -53,7 +53,6 @@ import ActiveDelivery from './pages/ActiveDelivery';
 import Certified from './pages/Certified';
 import MerchantHub from './pages/MerchantHub';
 import ComplianceHandoff from './pages/ComplianceHandoff';
-import MerchantPortal from './pages/MerchantPortal';
 import DriverDispatch from './pages/DriverDispatch';
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -159,7 +158,7 @@ const AuthenticatedApp = () => {
           <Route path="/certified" element={<Certified />} />
           <Route path="/merchant-hub" element={<MerchantHub />} />
           <Route path="/compliance-handoff" element={<ComplianceHandoff />} />
-          <Route path="/merchant-portal" element={<MerchantPortal />} />
+          <Route path="/merchant-portal" element={<Navigate to="/merchant-hub?tab=orders" replace />} />
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />

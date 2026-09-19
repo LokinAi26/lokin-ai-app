@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, Smartphone, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Shield, Cpu, BadgeDollarSign, Glasses, CandlestickChart } from "lucide-react";
+import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, BadgeDollarSign, Glasses, CandlestickChart, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
@@ -8,15 +8,28 @@ import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
 const SECTIONS = [
   {
+    id: "configure",
+    label: "Configure LOKIN",
+    icon: SlidersHorizontal,
+    color: "text-primary",
+    items: [
+      { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals, vehicle & pay targets" },
+      { to: "/categories", icon: ListFilter, title: "Work Filters", desc: "Choose your work" },
+      { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Block unwanted stops" },
+      { to: "/connect", icon: Plug, title: "AI Connections", desc: "ChatGPT, Claude, Cursor" },
+      { to: "/5g", icon: Signal, title: "Connection Diagnostics", desc: "Device-reported network metrics" },
+    ],
+  },
+  {
     id: "earn",
     label: "Earn & Optimize",
     icon: Wallet,
     color: "text-primary",
     items: [
       { to: "/opportunities", icon: Radar, title: "Live Jobs", desc: "Verified current openings" },
-      { to: "/driver-platforms", icon: Link2, title: "Driver Data Sources", desc: "Official APIs, partner feeds & verified capture" },
-      { to: "/gigs", icon: ClipboardList, title: "Live Paid Research", desc: "Mystery shops, food reviews & tests" },
       { to: "/hotspots", icon: Flame, title: "Hotspots", desc: "Real earning zones from your offer history" },
+      { to: "/gigs", icon: ClipboardList, title: "Live Paid Research", desc: "Mystery shops, food reviews & tests" },
+      { to: "/driver-platforms", icon: Link2, title: "Driver Data Sources", desc: "Official APIs, partner feeds & verified capture" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage & deductions" },
       { to: "/traders-playbook", icon: CandlestickChart, title: "Trader's Playbook", desc: "Learn, paper practice & journal" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history" },
@@ -24,40 +37,29 @@ const SECTIONS = [
   },
   {
     id: "road",
-    label: "Road & Shopping",
+    label: "On the Road",
     icon: Road,
     color: "text-accent",
     items: [
-      { to: "/5g", icon: Signal, title: "Connection Diagnostics", desc: "Device-reported network metrics" },
       { to: "/active-delivery", icon: Package, title: "Active Delivery", desc: "Live order status" },
       { to: "/driver-dispatch", icon: Truck, title: "AI Dispatch Center", desc: "Truck freight + local pickups" },
-      { to: "/on-the-road", icon: Truck, title: "Road Hub", desc: "Stops & road tools" },
-      { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts & costs" },
+      { to: "/on-the-road", icon: MapPin, title: "Road Hub", desc: "Stops & road tools" },
       { to: "/locator", icon: ScanLine, title: "Shopping AI", desc: "Scan & find the shelf" },
       { to: "/shop-deliver", icon: ShoppingBag, title: "Shop & Deliver", desc: "Manage shopping runs" },
+      { to: "/fuel", icon: FuelIcon, title: "Fuel", desc: "Discounts & costs" },
+      { to: "/break-time", icon: Coffee, title: "Break & Recharge", desc: "Music & reset" },
     ],
   },
   {
     id: "market",
-    label: "Marketplace & Coverage",
+    label: "Marketplace",
     icon: Store,
     color: "text-primary",
     items: [
+      { to: "/merchant-hub", icon: Building2, title: "Merchant Hub", desc: "Pilot merchants, pickups & orders" },
       { to: "/stash", icon: Leaf, title: "LOKIN Green", desc: "Discreet cannabis ordering", requires: "cannabis" },
-      { to: "/green-delivery", icon: Truck, title: "Green Delivery", desc: "Certified cannabis orders", requires: "cannabis" },
+      { to: "/green-delivery", icon: Send, title: "Green Delivery", desc: "Certified cannabis orders", requires: "cannabis" },
       { to: "/insurance", icon: ShieldCheck, title: "LOKIN Cover", desc: "Gig & commercial insurance", requires: "insurance" },
-    ],
-  },
-  {
-    id: "control",
-    label: "Control Center",
-    icon: Shield,
-    color: "text-destructive",
-    items: [
-      { to: "/categories", icon: SlidersHorizontal, title: "Work Filters", desc: "Choose your work" },
-      { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Block unwanted stops" },
-      { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS & emergency tools" },
-      { to: "/break-time", icon: Coffee, title: "Break & Recharge", desc: "Music & reset" },
     ],
   },
   {
@@ -67,18 +69,15 @@ const SECTIONS = [
     color: "text-accent",
     items: [
       { to: "/certified", icon: GraduationCap, title: "LOKIN Certified", desc: "Driver academy" },
-      { to: "/merchant-hub", icon: Store, title: "Merchant Hub", desc: "Pilot partners" },
-      { to: "/merchant-portal", icon: Building2, title: "Merchant Portal", desc: "Pickups & drivers" },
-      { to: "/compliance-handoff", icon: BadgeCheck, title: "Verified Handoff", desc: "ID check workflow" },
+      { to: "/safety", icon: ShieldAlert, title: "Safety", desc: "SOS & emergency tools" },
       { to: "/oasis", icon: Sparkles, title: "LOKIN OASIS", desc: "Ideas into products and profit" },
-      { to: "/brand", icon: Sparkles, title: "LOKIN Brand", desc: "Apparel & gear" },
-      { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals & vehicle" },
+      { to: "/brand", icon: Shirt, title: "LOKIN Brand", desc: "Apparel & gear" },
+      { to: "/compliance-handoff", icon: BadgeCheck, title: "Verified Handoff", desc: "ID check workflow" },
       { to: "/support", icon: Headphones, title: "AI Support", desc: "Help & billing" },
-      { to: "/connect", icon: Plug, title: "AI Connections", desc: "ChatGPT, Claude, Cursor" },
-      { to: "/insurance-admin", icon: ShieldCheck, title: "Cover Admin", desc: "Bind insurance apps" },
-      { to: "/printful-connect", icon: Link2, title: "Printful Connect", desc: "OAuth account tools" },
       { to: "/showcase", icon: Smartphone, title: "App Showcase", desc: "The LOKIN vision" },
       { to: "/vision-bridge", icon: Glasses, title: "LOKIN Vision Bridge", desc: "Live simulator / glasses heartbeat" },
+      { to: "/printful-connect", icon: KeyRound, title: "Printful Connect", desc: "OAuth account tools" },
+      { to: "/insurance-admin", icon: Lock, title: "Cover Admin", desc: "Bind insurance apps", requires: "insurance" },
       { to: "/funding-command", icon: BadgeDollarSign, title: "Funding Command", desc: "Virginia grants, contracts & readiness", requires: "admin" },
     ],
   },
@@ -130,12 +129,24 @@ function Section({ section, defaultOpen }) {
 
 export default function More() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [q, setQ] = useState("");
   useEffect(() => {
     let alive = true;
     base44.auth.me().then((user) => { if (alive) setIsAdmin(user?.role === "admin"); }).catch(() => {});
     return () => { alive = false; };
   }, []);
-  const visibleSections = SECTIONS.map((section) => ({ ...section, items: section.items.filter((item) => item.requires === "cannabis" ? RELEASE_FLAGS.regulatedCannabis : item.requires === "insurance" ? RELEASE_FLAGS.insuranceTransactions : item.requires === "admin" ? isAdmin : true) })).filter((section) => section.items.length > 0);
+  const query = q.trim().toLowerCase();
+  const visibleSections = SECTIONS
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) =>
+        (item.requires === "cannabis" ? RELEASE_FLAGS.regulatedCannabis
+          : item.requires === "insurance" ? RELEASE_FLAGS.insuranceTransactions
+          : item.requires === "admin" ? isAdmin : true) &&
+        (!query || `${item.title} ${item.desc}`.toLowerCase().includes(query))
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
   async function logout() {
     await base44.auth.logout("/login");
   }
@@ -144,11 +155,24 @@ export default function More() {
       <div className="lokin-kicker lokin-kicker-lime">HUB</div>
       <h1 className="text-2xl font-bold font-heading metal-text -mt-2">More</h1>
 
-      {visibleSections.map((s, i) => (
-        <Section key={s.id} section={s} defaultOpen={i === 0} />
-      ))}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search features…"
+          className="w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-primary/50"
+        />
+      </div>
 
-      <PartnerApps />
+      {visibleSections.map((s, i) => (
+        <Section key={s.id + (query ? ":q" : "")} section={s} defaultOpen={i === 0 || query.length > 0} />
+      ))}
+      {query.length > 0 && visibleSections.length === 0 && (
+        <div className="text-center text-sm text-white/45 py-6">No features match “{q.trim()}”.</div>
+      )}
+
+      {!query && <PartnerApps />}
 
       <button onClick={logout} className="w-full rounded-2xl border border-white/10 lokin-panel py-3 text-sm font-medium text-white/55 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
         <LogOut className="h-4 w-4" /> Sign out
