@@ -56,6 +56,7 @@ export function uberOAuthMissingSecrets(secrets: any) {
 }
 
 export async function makeUberState(userId: string, clientSecret: string) {
+  if (!clientSecret) throw new Error("UBER_DRIVER_CLIENT_SECRET is not configured");
   const exp = Math.floor(Date.now() / 1000) + 10 * 60;
   const nonce = crypto.randomUUID();
   const payload = `${String(userId)}.${exp}.${nonce}`;
@@ -63,6 +64,7 @@ export async function makeUberState(userId: string, clientSecret: string) {
 }
 
 export async function verifyUberState(state: string, userId: string, clientSecret: string) {
+  if (!clientSecret) return false;
   const parts = String(state || "").split(".");
   if (parts.length !== 4) return false;
   const [uid, exp, nonce, sig] = parts;
