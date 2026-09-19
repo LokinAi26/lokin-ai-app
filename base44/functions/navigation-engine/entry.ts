@@ -258,6 +258,32 @@ function locationQueryVariants(input: string) {
   return [...new Set([original, spoken, roadDelimited, localityDelimited].filter(Boolean))];
 }
 
+// Door-pin resolution: the client may pass pre-resolved coordinates for an
+// address the driver has already pinned (their own saved door location).
+// A valid pin bypasses Mapbox geocoding entirely and is flagged so the UI
+// can say the route ends at the driver's saved door pin.
+async function resolveDestination(
+  address: string,
+  accessToken: string,
+  origin: { longitude: number; latitude: number } | null,
+  pinCoord?: { longitude: number; latitude: number } | null,
+) {
+  const pin = pinCoord && validCoord(pinCoord) ? { longitude: Number(pinCoord.longitude), latitude: Number(pinCoord.latitude) } : null;
+  if (pin) {
+    return {
+      input: address,
+      name: "Saved door pin",
+      full_address: address,
+      longitude: pin.longitude,
+      latitude: pin.latitude,
+      door_pin: true,
+      geocode_skipped: true,
+    };
+  }
+  const g: any = await geocodeAddress(address, accessToken, origin);
+  return { ...g, door_pin: false };
+}
+
 async function geocodeAddress(address: string, accessToken: string, proximity?: { longitude: number; latitude: number } | null) {
   const q = String(address || "").trim();
   if (!q) throw new Error("A store, business, place, or address is required");
@@ -632,7 +658,10 @@ export default async function navigationEngine(req: Request) {
       // Geocoding independent stops concurrently removes the previous
       // per-stop network waterfall before the directions request.
       const geocoded = await Promise.all(
-        destinationAddresses.map((address) => geocodeAddress(address, accessToken, origin)),
+        destinationAddresses.map((address, i) => {
+        const pinCoord = validCoord((body?.destination_coordinates || [])[i]);
+        return resolveDestination(address, accessToken, origin, pinCoord);
+      }),
       );
       const coordinates = [origin, ...geocoded.map((g) => ({ longitude: g.longitude, latitude: g.latitude }))];
       const route = await directions(coordinates, accessToken, body?.options || {});
@@ -657,7 +686,10 @@ export default async function navigationEngine(req: Request) {
       }
       if (!origin) return json({ error: "A starting point is required — allow GPS or enter a starting address" }, 400);
 
-      const geocoded = await Promise.all(drops.map((d: any) => geocodeAddress(d, accessToken, origin)));
+      const geocoded = await Promise.all(drops.map((d: any, i: number) => {
+        const pinCoord = validCoord((body?.drop_coordinates || [])[i]);
+        return resolveDestination(d, accessToken, origin, pinCoord);
+      }));
       const stops = geocoded.map((g: any, i: number) => ({
         input: drops[i],
         name: g.name || "",
