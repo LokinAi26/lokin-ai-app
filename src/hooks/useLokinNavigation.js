@@ -38,6 +38,7 @@ import {
   recordRerouteBlocked,
 } from "@/lib/navFusion";
 import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
+import { checkStoreGeofence, reportStoreArrival } from "@/lib/storeGeofence";
 import { speakText } from "@/lib/lokinVoice";
 
 function asCoord(position) {
@@ -98,6 +99,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
+  const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon} for the grocery-geofence foreground re-check
   const lastAcceptedSampleRef = useRef(null);
   const [gpsModeVersion, setGpsModeVersion] = useState(() => gpsSuperAgent.getModeVersion());
   const [gpsRestartCounter, setGpsRestartCounter] = useState(0);
@@ -408,6 +410,18 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const acceptedSample = { ...sample, interval_ms: intervalMs };
     lastAcceptedSampleRef.current = acceptedSample;
     if (source === "native") nativeSeenAtRef.current = Date.now();
+    // Grocery geofence on the nav GPS feed too (not just the shift feed): every
+    // accepted nav fix is checked against nearby grocery/retail stores, so the
+    // item locator fires while navigating even without an active shift.
+    // Dead-reckoned fixes (tunnels/garages) are skipped to avoid phantom entries.
+    const navLat = Number(coord[1]);
+    const navLon = Number(coord[0]);
+    if (Number.isFinite(navLat) && Number.isFinite(navLon)) {
+      lastNavFixRef.current = { lat: navLat, lon: navLon };
+      if (acceptedSample.dead_reckoned !== true) {
+        try { checkStoreGeofence(navLat, navLon); } catch { /* geofence is best-effort */ }
+      }
+    }
     // GPS Super Agent monitoring: read-only sample report (never alters the pipeline).
     try { gpsSuperAgent.ingest(acceptedSample); } catch {}
 
@@ -498,6 +512,18 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       offRouteSamplesRef.current = 0;
       setManeuver(null);
       setStatus("arrived");
+      // Arrival-at-grocery: if navigation ended at a grocery/retail
+      // destination, fire the store entry event directly even if a geofence
+      // crossing was never detected (entry missed while GPS was suspended).
+      try {
+        const finalGeocoded = geocodedRef.current?.[geocodedRef.current.length - 1] || {};
+        const destName = finalGeocoded.name || finalGeocoded.place_name
+          || destinationsRef.current[destinationsRef.current.length - 1]
+          || "";
+        if (destName && coord && coord.length >= 2) {
+          reportStoreArrival(destName, Number(coord[1]), Number(coord[0]));
+        }
+      } catch { /* geofence is best-effort */ }
       return;
     }
 
@@ -642,6 +668,24 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
+
+  // Grocery-geofence foreground re-check: iOS suspends web GPS behind another
+  // app (e.g. the Dasher app), so a store entry that happened while
+  // backgrounded is only detected once LOKIN comes back to the front.
+  useEffect(() => {
+    const onForeground = () => {
+      const f = lastNavFixRef.current;
+      if (f && Number.isFinite(f.lat) && Number.isFinite(f.lon)) {
+        try { checkStoreGeofence(f.lat, f.lon); } catch { /* best-effort */ }
+      }
+    };
+    document.addEventListener("visibilitychange", onForeground);
+    window.addEventListener("focus", onForeground);
+    return () => {
+      document.removeEventListener("visibilitychange", onForeground);
+      window.removeEventListener("focus", onForeground);
+    };
+  }, []);
 
   useEffect(() => {
     if (!voiceGuidance || !voiceSupported() || !maneuver) return;
