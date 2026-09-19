@@ -1,15 +1,17 @@
 // LOKIN store geofence — automatic AI item locator trigger.
 //
-// While a shift's GPS watch is running, every accepted fix is checked against
-// nearby grocery/retail stores (OpenStreetMap via Overpass, same endpoint the
-// 3D map engine uses). Crossing into a store's radius fires an "enter" event;
-// leaving fires "exit". The StoreEntrySheet listens and auto-opens the item
-// locator prompt.
+// Every accepted GPS fix — from the shift watch AND the navigation watch — is
+// checked against nearby grocery/retail stores (OpenStreetMap via Overpass,
+// same endpoint the 3D map engine uses). Crossing into a store's radius fires
+// an "enter" event; leaving fires "exit". The StoreEntrySheet listens and
+// auto-opens the item locator prompt. Entries missed while LOKIN is
+// backgrounded are caught by a foreground re-check, and arrival at a
+// grocery/retail destination fires the enter event directly.
 //
-// Honest limits: this runs on the shift GPS pipeline, so it fires while
-// Kendall is locked in with LOKIN foregrounded. iOS suspends web GPS when
-// another app is in front, so entries that happen while LOKIN is backgrounded
-// are not detected until he returns.
+// Honest limits: iOS suspends web GPS when another app is in front, so
+// entries that happen while LOKIN is backgrounded are detected when he
+// returns, not in real time. Store data comes from OpenStreetMap; stores
+// missing from the map are not detected.
 const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
 const CACHE_KEY = "lokin_store_cache";
 const ENABLED_KEY = "lokin_store_geofence_enabled";
@@ -161,6 +163,41 @@ async function refreshStores(lat, lon) {
     }
   })();
   return fetchInFlight;
+}
+
+// Arrival-at-grocery trigger. When navigation ends at a grocery/retail
+// destination, the driver is standing in the store even if no geofence
+// crossing was ever detected (e.g. iOS suspended GPS behind the Dasher app,
+// so the entry moment was missed). Fires the SAME "enter" event the
+// StoreEntrySheet already listens for. No-op when already inside a store,
+// when the geofence is disabled, or when the name is not a grocery/retail
+// place. Never throws.
+export function reportStoreArrival(name, lat, lon) {
+  try {
+    if (insideStore) return;
+    if (!isStoreGeofenceEnabled()) return;
+    const n = String(name || "").toLowerCase();
+    if (!n) return;
+    const STORE_RE = /\b(wegmans|walmart|kroger|aldi|costco|trader\s*joe|whole\s*foods?|food\s*lion|publix|safeway|giant(\s*food)?|harris\s*teeter|farm\s*fresh|food\s*city|martin's|lidl|bj'?s|sam'?s\s*club|dollar\s*(general|tree)|family\s*dollar|five\s*below|target|cvs|walgreens|rite\s*aid|grocery|supermarket|supercenter|wholesale|bodega|produce|butcher|bakery|deli)\b/;
+    if (!STORE_RE.test(n)) return;
+    // Avoid street-name false positives ("Market Street", "Grocery Ave")
+    // unless a known store brand is also present.
+    const STREET_RE = /\b(street|st\.|avenue|ave\.|road|rd\.|drive|dr\.|boulevard|blvd\.|lane|ln\.|court|ct\.|place|pl\.|pike|highway|hwy|circle|cir\.|terrace|ter\.|way)\b/;
+    const BRAND_RE = /\b(wegmans|walmart|kroger|aldi|costco|trader\s*joe|whole\s*foods?|food\s*lion|publix|safeway|target|cvs|walgreens|harris\s*teeter|lidl)\b/;
+    if (STREET_RE.test(n) && !BRAND_RE.test(n)) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const label = String(name).trim().slice(0, 80);
+    insideStore = {
+      id: "arrival:" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      name: label,
+      kind: "arrival",
+      lat,
+      lon,
+    };
+    notify({ type: "enter", store: insideStore });
+  } catch {
+    /* never break the navigation pipeline */
+  }
 }
 
 // Called (fire-and-forget) on every accepted shift GPS fix. Never throws.
