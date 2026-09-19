@@ -24,14 +24,18 @@ async function hmacSign(msg: string, keyMaterial: string): Promise<string> {
 }
 
 // Stateless, signed OAuth state token: userId.expiresAt.nonce.signature
-export async function makeState(userId: string, clientSecret = "lokin-printful-fallback"): Promise<string> {
+// Fail closed: a missing client secret throws / returns false instead of
+// falling back to a hardcoded constant (previously "lokin-printful-fallback").
+export async function makeState(userId: string, clientSecret: string): Promise<string> {
+  if (!clientSecret) throw new Error("PRINTFUL_OAUTH_CLIENT_SECRET is not configured");
   const exp = Math.floor(Date.now() / 1000) + 600;
   const nonce = crypto.randomUUID();
   const sig = await hmacSign(`${userId}.${exp}.${nonce}`, clientSecret);
   return `${userId}.${exp}.${nonce}.${sig}`;
 }
 
-export async function verifyState(state: string, userId: string, clientSecret = "lokin-printful-fallback"): Promise<boolean> {
+export async function verifyState(state: string, userId: string, clientSecret: string): Promise<boolean> {
+  if (!clientSecret) return false;
   if (!state || typeof state !== "string") return false;
   const parts = state.split(".");
   if (parts.length !== 4) return false;
