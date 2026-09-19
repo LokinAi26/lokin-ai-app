@@ -1,0 +1,99 @@
+{
+  "name": "L3Schedule",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Who runs it and who it serves."
+    },
+    "trigger": {
+      "type": "string",
+      "description": "Cron expression or event, e.g. daily 07:00 ET."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Exactly what it may read/write/touch \u2014 nothing more."
+    },
+    "output": {
+      "type": "string",
+      "description": "Where results land: chat, push, feed, file."
+    },
+    "verification": {
+      "type": "string",
+      "description": "What proves it worked \u2014 not just that it ran."
+    },
+    "stop_rule": {
+      "type": "string",
+      "description": "When it disables itself, e.g. 3 consecutive failures."
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "consecutive_failures": {
+      "type": "number",
+      "default": 0
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_status": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "name",
+    "trigger",
+    "scope",
+    "verification"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

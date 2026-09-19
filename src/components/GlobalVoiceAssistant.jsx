@@ -22,6 +22,11 @@ const NAV_COMMANDS = [
   { keys: ["break", "break time", "play music", "music", "chill", "relax", "rest", "pause for"], to: "/break-time", label: "Opening Break Time" },
   { keys: ["safety", "sos", "emergency", "help me", "help now", "danger", "unsafe", "911"], to: "/safety", label: "Opening Safety" },
   { keys: ["support", "help", "report", "bug", "billing", "issue", "problem", "contact"], to: "/support", label: "Opening Support" },
+  { keys: ["automate", "automation", "l3 ops", "operating layer", "operating system", "shakedown"], to: "/l3", label: "Opening L3 Ops" },
+  { keys: ["root cause", "rootcause", "why did this fail", "diagnose this"], to: "/l3?mode=rootcause", label: "Opening Root Cause" },
+  { keys: ["debug mode", "debug this", "debug it", "debug"], to: "/l3?mode=debug", label: "Opening Debug" },
+  { keys: ["ten x", "x ten", "10x", "ten times more", "ten times productivity"], to: "/l3?mode=x10", label: "Opening X10" },
+  { keys: ["productivity", "productivity mode", "be more productive"], to: "/l3?mode=productivity", label: "Opening Productivity" },
   { keys: ["on the road", "truck stop", "rest area", "rest stop", "rv park", "parking", "overnight"], to: "/on-the-road", label: "On The Road" },
   { keys: ["vehicle", "car", "mechanic", "maintenance", "car care", "oil", "tire", "repair", "service"], to: "/vehicle-care", label: "Vehicle Care" },
   { keys: ["brand", "merch", "apparel", "shiesty", "gear", "store", "shop brand"], to: "/brand", label: "Opening Brand" },
@@ -451,7 +456,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     if (external?.command) {
       const validated = validateExternalCommand(external.command, external.payload);
       if (validated.ok) {
-        const phrases = { lock_in: "lock in", pause: "pause", resume: "resume", tap_out: "tap out", find_item: "find item", smart_shop: "smart shop", open_route: "best route", safety: "safety" };
+        const phrases = { lock_in: "lock in", pause: "pause", resume: "resume", tap_out: "tap out", find_item: "find item", smart_shop: "smart shop", open_route: "best route", safety: "safety", x10: "ten x", productivity: "productivity", rootcause: "root cause", debug: "debug", automate: "automate" };
         const phrase = phrases[external.command] || external.command;
         // Destructive/session-ending external actions require the user to confirm in LOKIN.
         if (validated.policy.confirmation === "explicit") {

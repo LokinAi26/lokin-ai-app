@@ -8,6 +8,11 @@ export const LOKIN_COMMANDS = Object.freeze({
   SMART_SHOP: "smart_shop",
   OPEN_ROUTE: "open_route",
   SAFETY: "safety",
+  X10: "x10",
+  PRODUCTIVITY: "productivity",
+  ROOTCAUSE: "rootcause",
+  DEBUG: "debug",
+  AUTOMATE: "automate",
 });
 
 const PHRASES = {
@@ -19,6 +24,11 @@ const PHRASES = {
   smart_shop: "smart shop",
   open_route: "best route",
   safety: "safety",
+  x10: "ten x",
+  productivity: "productivity",
+  rootcause: "root cause",
+  debug: "debug",
+  automate: "automate",
 };
 
 export function dispatchLokinCommand(command, payload = {}, source = "internal") {

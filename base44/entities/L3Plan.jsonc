@@ -1,0 +1,109 @@
+{
+  "name": "L3Plan",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string",
+      "description": "The directive this plan executes."
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "quick_answer",
+        "task",
+        "scheduled"
+      ],
+      "default": "task"
+    },
+    "command": {
+      "type": "string",
+      "description": "Source LOKIN command: x10, productivity, rootcause, debug, automate \u2014 or empty."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "awaiting_approval",
+        "in_progress",
+        "blocked",
+        "completed",
+        "cancelled",
+        "archived"
+      ],
+      "default": "planned"
+    },
+    "steps_json": {
+      "type": "string",
+      "description": "Ordered checklist: [{order, name, purpose, done}]"
+    },
+    "checkpoint_class": {
+      "type": "string",
+      "enum": [
+        "none",
+        "irreversible",
+        "destructive",
+        "financial",
+        "public",
+        "credential"
+      ],
+      "default": "none"
+    },
+    "command_run_id": {
+      "type": "string",
+      "description": "LokinCommandRun audit record for this directive."
+    }
+  },
+  "required": [
+    "user_id",
+    "goal",
+    "classification",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

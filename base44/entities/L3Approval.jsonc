@@ -1,0 +1,108 @@
+{
+  "name": "L3Approval",
+  "type": "object",
+  "properties": {
+    "plan_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "description": "The exact named action the card covers \u2014 a yes covers only this."
+    },
+    "checkpoint_class": {
+      "type": "string",
+      "enum": [
+        "irreversible",
+        "destructive",
+        "financial",
+        "public",
+        "credential"
+      ]
+    },
+    "token": {
+      "type": "string",
+      "description": "Single-use approval token."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "TTL deadline \u2014 expiry defaults to DENY."
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_via": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ttl"
+      ]
+    },
+    "audit_json": {
+      "type": "string",
+      "description": "Original directive and source kept for the audit trail."
+    }
+  },
+  "required": [
+    "plan_id",
+    "user_id",
+    "checkpoint_class",
+    "status",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
