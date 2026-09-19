@@ -118,7 +118,7 @@ export default async function(req) {
         }
       } catch (e) {
         // Email is best-effort; the in-app alert still lands.
-        console.warn('opportunity alert email failed', userId, e?.message || e);
+        console.warn('opportunity alert email failed for user', String(userId).slice(0, 8), e?.message || e);
       }
 
       await base44.asServiceRole.entities.OpportunityAlert.create({

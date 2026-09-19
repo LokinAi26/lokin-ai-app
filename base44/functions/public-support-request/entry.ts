@@ -1,8 +1,12 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.43";
+import { rateLimitResponse } from "../../shared/ipRateLimit.js";
 
 export default async function(req: Request) {
   try {
     if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405 });
+    // Spam/storage-abuse guard: 3 submissions per client per hour.
+    const limited = rateLimitResponse(req, "support", 3, 60 * 60 * 1000);
+    if (limited) return limited;
     const body = await req.json().catch(() => ({}));
     const email = String(body.email || "").trim().slice(0, 320);
     const message = String(body.message || "").trim().slice(0, 4000);
