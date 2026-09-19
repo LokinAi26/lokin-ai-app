@@ -584,7 +584,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             className="absolute z-30"
             style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="lokin-card grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(52px,72px)] items-end gap-2 overflow-hidden px-3 py-3 backdrop-blur">
+            <div className="lokin-card grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(78px,92px)] items-end gap-2 overflow-hidden px-3 py-3 backdrop-blur">
               <div className="min-w-0 overflow-hidden">
                 <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
                 <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
