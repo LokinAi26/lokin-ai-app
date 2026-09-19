@@ -41,6 +41,12 @@ export default function WorkModeSheet({ open, onClose, prefs, onStarted }) {
 
   function start() {
     setSaving(true);
+    // Ask for web notification permission up front so the very first
+    // faster-route alert of the shift fires instantly instead of being
+    // lost to the permission prompt.
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
     setShiftCategory(category);
     setShiftOdometerStart(odoStart);
     // Begin automatic GPS mileage tracking for this shift, pinning the
