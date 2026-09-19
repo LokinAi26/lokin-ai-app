@@ -1,7 +1,7 @@
 import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
-import { verifyState, getPrintfulConnection } from "../../shared/printfulOAuth.ts";
+import { verifyState, getPrintfulConnection, oauthConfigured } from "../../shared/printfulOAuth.ts";
 
 /**
  * printful-oauth-callback — exchanges the Printful authorization code (returned to
@@ -39,7 +39,12 @@ export default async function (req: Request): Promise<Response> {
     if (!success) return Response.json({ error: "Printful authorization was rejected." }, { status: 400 });
     if (!code) return Response.json({ error: "Missing authorization code." }, { status: 400 });
 
-    const okState = await verifyState(state, user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") || "lokin-printful-fallback");
+    // Fail closed BEFORE state verification: never sign/verify with a fallback secret.
+    if (!oauthConfigured(secrets)) {
+      return Response.json({ error: "Printful OAuth is not fully configured." }, { status: 503 });
+    }
+
+    const okState = await verifyState(state, user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET"));
     if (!okState) return Response.json({ error: "Invalid or expired OAuth state. Please reconnect." }, { status: 400 });
 
     const clientId = secrets.get("PRINTFUL_OAUTH_CLIENT_ID");
