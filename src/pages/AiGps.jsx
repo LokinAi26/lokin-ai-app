@@ -332,6 +332,7 @@ export default function AiGps() {
               remainingDurationS={nav.remainingDurationS}
               followDriver={locked}
               navigationStatus={nav.status}
+              destinationSide={nav.route?.destination_side}
               onEnterFullscreen={enterFullscreenNavigation}
             />
           ) : (
@@ -344,6 +345,7 @@ export default function AiGps() {
               followDriver={locked}
               perspective
               navigationStatus={nav.status}
+              destinationSide={nav.route?.destination_side}
               onEnterFullscreen={enterFullscreenNavigation}
             />
           )}
@@ -422,6 +424,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           fullscreen
           etaLiveTraffic={nav.etaLiveTraffic}
           navigationStatus={nav.status}
+          destinationSide={nav.route?.destination_side}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
