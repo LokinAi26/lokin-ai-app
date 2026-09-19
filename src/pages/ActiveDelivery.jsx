@@ -5,6 +5,7 @@ import { Navigation, MapPin, Clock, DollarSign, Check, ChevronLeft, ChevronRight
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { saveDoorPin, captureDoorFix, hasDoorPin } from "@/lib/doorPins";
 
 // Mirrors the LOKIN "Active Delivery" mockup: customer card, ETA/distance,
 // earnings + $/hr, quick status actions, auto-update messages toggle.
@@ -19,6 +20,30 @@ export default function ActiveDelivery() {
   const [idx, setIdx] = useState(0);
   const [statusIdx, setStatusIdx] = useState(-1); // -1 none, 0-3 quick statuses, 4 delivered
   const [auto, setAuto] = useState(true);
+  const [pinState, setPinState] = useState("idle"); // idle | pinning | pinned | error
+
+  // Auto-learn the door: when a drop-off is marked delivered, quietly save
+  // where the driver actually stopped. A manual pin later overrides it.
+  function autoLearnDoor(address) {
+    if (!address || hasDoorPin(address)) return;
+    captureDoorFix(12000)
+      .then((fix) => saveDoorPin({ address, ...fix, source: "auto" }))
+      .catch(() => {});
+  }
+
+  async function pinTheDoor() {
+    const address = stops[idx]?.dropoff_address || "";
+    if (!address || pinState === "pinning") return;
+    setPinState("pinning");
+    try {
+      const fix = await captureDoorFix(15000);
+      saveDoorPin({ address, ...fix, source: "manual" });
+      setPinState("pinned");
+    } catch {
+      setPinState("error");
+      setTimeout(() => setPinState("idle"), 2500);
+    }
+  }
 
   useEffect(() => { load(); }, []);
 
@@ -50,10 +75,12 @@ export default function ActiveDelivery() {
     base44.entities.Offer.get(current.id).then(setOffer).catch(() => setOffer(null));
   }, [current?.id]);
 
-  function pickStop(i) { setIdx(i); setStatusIdx(-1); }
+  function pickStop(i) { setIdx(i); setStatusIdx(-1); setPinState("idle"); }
   function markDelivered() {
     setStatusIdx(4);
     setAuto(true); // ensure delivered auto-message
+    autoLearnDoor(current?.dropoff_address || "");
+    setPinState(hasDoorPin(current?.dropoff_address || "") ? "pinned" : "idle");
   }
   function nextDelivery() {
     if (idx < total - 1) { setIdx(idx + 1); setStatusIdx(-1); }
@@ -150,6 +177,11 @@ export default function ActiveDelivery() {
               <Check className="h-7 w-7 text-primary mx-auto" />
               <div className="mt-1 font-display font-bold tracking-wide text-primary text-glow">DELIVERED</div>
               <div className="text-xs text-white/50 mt-0.5">Auto-update sent to {customerName}.</div>
+              <button onClick={pinTheDoor} disabled={pinState === "pinning"}
+                className={`mt-3 w-full rounded-2xl border py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${pinState === "pinned" ? "border-primary/50 bg-primary/10 text-primary" : "border-white/15 bg-white/5 text-white/70"}`}>
+                <MapPin className="h-3.5 w-3.5" />
+                {pinState === "pinning" ? "Pinning your location…" : pinState === "pinned" ? "Door pinned ✓ — future routes come straight here" : pinState === "error" ? "Couldn't get GPS — try again" : "Pin the door here"}
+              </button>
               {idx < total - 1 ? (
                 <button onClick={nextDelivery} className="mt-3 w-full rounded-2xl bg-primary text-black py-3 text-sm font-bold glow-primary">
                   Next Delivery →

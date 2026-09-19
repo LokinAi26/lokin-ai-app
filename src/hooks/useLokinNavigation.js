@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDoorPin } from "@/lib/doorPins";
 import { base44LiveFunctions } from "@/api/base44Client";
 import {
   haversineMeters,
@@ -159,6 +160,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setError(`LOKIN blocked an implausible far-away match for “${invalid?.input || normalizedDestinations?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
   }, [geocodedDestinations, destinationsKey, route?.distance_m]);
 
+  // Resolve the driver's saved door pins before routing: any address with
+  // a pin passes its coordinates straight through, so navigation ends at
+  // the real door instead of the map's generic curb point.
+  const doorPinCoordinates = useCallback((addresses) => {
+    return (addresses || []).map((address) => {
+      const pin = getDoorPin(address);
+      return pin ? { longitude: pin.longitude, latitude: pin.latitude } : null;
+    });
+  }, []);
+
   const requestRoute = useCallback(async (originCoord, addresses, reason = "initial") => {
     if (!originCoord || !addresses?.length) return null;
     const requestId = ++routeRequestRef.current;
@@ -181,6 +192,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         action: "route_addresses",
         origin: { longitude: originCoord[0], latitude: originCoord[1] },
         destination_addresses: addresses,
+        destination_coordinates: doorPinCoordinates(addresses),
         options: { profile: "driving-traffic", curbApproach: true },
       });
       if (requestId !== routeRequestRef.current) return null;
@@ -301,6 +313,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         action: "route_addresses",
         origin: { longitude: snap.coordinate[0], latitude: snap.coordinate[1] },
         destination_addresses: remaining,
+        destination_coordinates: doorPinCoordinates(remaining),
         options: { profile: "driving-traffic", curbApproach: true },
       });
       if (requestId !== improvementRequestRef.current) return;
@@ -651,11 +664,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     if (!routeKey || arrivalAnnouncedRef.current === routeKey) return;
     arrivalAnnouncedRef.current = routeKey;
     const side = route?.destination_side;
+    const atDoorPin = (geocodedDestinations || []).some((g) => g?.door_pin === true);
+    const pinWord = atDoorPin ? " at your saved door pin" : "";
     const text = side === "left" || side === "right"
-      ? `You have arrived. The destination is on your ${side}.`
-      : "You have arrived. The destination is just ahead.";
+      ? `You have arrived${pinWord}. The destination is on your ${side}.`
+      : `You have arrived${pinWord}. The destination is just ahead.`;
     speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
-  }, [status, voiceGuidance, route?.generated_at, route?.destination_side]);
+  }, [status, voiceGuidance, route?.generated_at, route?.destination_side, geocodedDestinations]);
 
   const retry = useCallback(() => {
     const coord = rawPosition?.coordinate;

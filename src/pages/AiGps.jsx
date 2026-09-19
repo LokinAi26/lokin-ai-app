@@ -71,6 +71,8 @@ export default function AiGps() {
     enabled: destinationAddresses.length > 0,
     voiceGuidance,
   });
+  // True when the final routed destination resolved from the driver's own saved door pin.
+  const arrivedAtDoorPin = (nav.geocodedDestinations || []).some((g) => g?.door_pin === true);
 
   // Instant faster-route alerts: web notification + native push (one per detection).
   useRouteImprovementPush(nav.routeImprovement);
@@ -333,6 +335,7 @@ export default function AiGps() {
               followDriver={locked}
               navigationStatus={nav.status}
               destinationSide={nav.route?.destination_side}
+              doorPinArrived={arrivedAtDoorPin}
               onEnterFullscreen={enterFullscreenNavigation}
             />
           ) : (
@@ -346,6 +349,7 @@ export default function AiGps() {
               perspective
               navigationStatus={nav.status}
               destinationSide={nav.route?.destination_side}
+              doorPinArrived={arrivedAtDoorPin}
               onEnterFullscreen={enterFullscreenNavigation}
             />
           )}
@@ -425,6 +429,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           etaLiveTraffic={nav.etaLiveTraffic}
           navigationStatus={nav.status}
           destinationSide={nav.route?.destination_side}
+          doorPinArrived={arrivedAtDoorPin}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">

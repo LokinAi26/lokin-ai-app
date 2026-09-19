@@ -109,7 +109,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -152,6 +152,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   const arrivalSideLabel = (destinationSide === "left" || destinationSide === "right")
     ? ` · on your ${destinationSide}`
     : "";
+  const arrivalPinLabel = doorPinArrived ? " · saved door pin" : "";
   const rerouting = navigationStatus === "rerouting";
   const headingForward = fullscreen && followDriver;
 
@@ -586,7 +587,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             <div className="lokin-card grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(52px,72px)] items-end gap-2 overflow-hidden px-3 py-3 backdrop-blur">
               <div className="min-w-0 overflow-hidden">
                 <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? `Destination reached${arrivalSideLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
               </div>
               <div className={`min-w-0 overflow-hidden border-l pl-2 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
                 <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
@@ -598,7 +599,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           <div className="absolute bottom-3 left-2 right-2 z-30 flex min-w-0 items-end gap-2">
             <div className="lokin-card min-w-0 flex-1 overflow-hidden px-3 py-2 backdrop-blur">
               <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-              <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? `Destination reached${arrivalSideLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
+              <div className="mt-0.5 line-clamp-2 break-words text-[clamp(0.78rem,3.6vw,1rem)] font-extrabold leading-tight text-white">{arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
             </div>
             <div className="lokin-card w-[clamp(76px,23vw,96px)] shrink-0 overflow-hidden px-2.5 py-2 text-right backdrop-blur">
               <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
