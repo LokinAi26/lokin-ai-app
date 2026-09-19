@@ -93,6 +93,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const arrivedRef = useRef(false);
   const lastRerouteAtRef = useRef(0);
   const lastSpokenRef = useRef("");
+  const arrivalAnnouncedRef = useRef("");
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
@@ -641,6 +642,20 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
     speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
   }, [maneuver?.leg_index, maneuver?.step_index, maneuver?.distance_from_driver_m, voiceGuidance]);
+
+  // Arrival announcement: once per route, tell the driver which side the
+  // destination is on so they find the front entrance, not the back of the block.
+  useEffect(() => {
+    if (status !== "arrived" || !voiceGuidance || !voiceSupported()) return;
+    const routeKey = route?.generated_at || "";
+    if (!routeKey || arrivalAnnouncedRef.current === routeKey) return;
+    arrivalAnnouncedRef.current = routeKey;
+    const side = route?.destination_side;
+    const text = side === "left" || side === "right"
+      ? `You have arrived. The destination is on your ${side}.`
+      : "You have arrived. The destination is just ahead.";
+    speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
+  }, [status, voiceGuidance, route?.generated_at, route?.destination_side]);
 
   const retry = useCallback(() => {
     const coord = rawPosition?.coordinate;
