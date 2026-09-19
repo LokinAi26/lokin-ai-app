@@ -1,4 +1,5 @@
 {
+  "name": "OasisWorkflowDefinition",
   "type": "object",
   "description": "Versioned immutable workflow graph compiled by the OASIS Production Fabric",
   "properties": {
@@ -84,6 +85,5 @@
         "role": "admin"
       }
     }
-  },
-  "name": "OasisWorkflowDefinition"
+  }
 }
