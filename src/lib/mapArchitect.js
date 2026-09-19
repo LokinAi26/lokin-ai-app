@@ -232,6 +232,7 @@ export class MasterBuilder {
     this.fountains = [];
     this.water = [];
     this.landmarks = new Map(); // name -> placement record
+    this._trafficTimers = []; // animated traffic interval/timeout ids
   }
 
   ensureGeojsonLayer(sourceId, layerId, layerSpec, data) {
@@ -498,6 +499,295 @@ export class MasterBuilder {
         console.warn("[baggz247] signature landmark failed:", lm.id, e);
       }
     }
+  }
+
+  // BAGGZ_247 Batch 2 — 19 additional static landmarks across Hampton Roads.
+  // Stylized approximations, not survey-grade replicas.
+  registerBatch2Landmarks() {
+    const landmarks = [
+      {
+        id: "baggz247-downtown-portsmouth",
+        name: "Downtown Portsmouth (Olde Towne)",
+        lat: 36.83903,
+        lng: -76.2971,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/28d10e947_baggz247-batch2-downtown-portsmouth.glb",
+      },
+      {
+        id: "baggz247-odu",
+        name: "Old Dominion University",
+        lat: 36.88523,
+        lng: -76.30452,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3924251ea_baggz247-batch2-odu.glb",
+      },
+      {
+        id: "baggz247-nsu",
+        name: "Norfolk State University",
+        lat: 36.84757,
+        lng: -76.26373,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/4d4aa161a_baggz247-batch2-nsu.glb",
+      },
+      {
+        id: "baggz247-cnu",
+        name: "Christopher Newport University",
+        lat: 37.06199,
+        lng: -76.4905,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d0ca5625d_baggz247-batch2-cnu.glb",
+      },
+      {
+        id: "baggz247-william-mary",
+        name: "William & Mary",
+        lat: 37.27174,
+        lng: -76.71425,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e2366a99f_baggz247-batch2-william-mary.glb",
+      },
+      {
+        id: "baggz247-hampton",
+        name: "Hampton University",
+        lat: 37.01948,
+        lng: -76.33669,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1e7693990_baggz247-batch2-hampton.glb",
+      },
+      {
+        id: "baggz247-regent",
+        name: "Regent University",
+        lat: 36.80336,
+        lng: -76.19337,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f8b7de979_baggz247-batch2-regent.glb",
+      },
+      {
+        id: "baggz247-vwu",
+        name: "Virginia Wesleyan University",
+        lat: 36.8692,
+        lng: -76.18909,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/760d8ee56_baggz247-batch2-vwu.glb",
+      },
+      {
+        id: "baggz247-tcc-chesapeake",
+        name: "TCC Chesapeake Campus",
+        lat: 36.72627,
+        lng: -76.29313,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/45947228e_baggz247-batch2-tcc-chesapeake.glb",
+      },
+      {
+        id: "baggz247-tcc-portsmouth",
+        name: "TCC Portsmouth Campus",
+        lat: 36.80574,
+        lng: -76.3492,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ff7737a3a_baggz247-batch2-tcc-portsmouth.glb",
+      },
+      {
+        id: "baggz247-vpcc",
+        name: "Virginia Peninsula Community College",
+        lat: 37.02323,
+        lng: -76.33651,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/16387adfa_baggz247-batch2-vpcc.glb",
+      },
+      {
+        id: "baggz247-high-rise-bridge",
+        name: "High Rise Bridge (I-64)",
+        lat: 36.75768,
+        lng: -76.29129,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/2682d3360_baggz247-batch2-high-rise-bridge.glb",
+      },
+      {
+        id: "baggz247-jordan-bridge",
+        name: "South Norfolk Jordan Bridge",
+        lat: 36.81,
+        lng: -76.28615,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6a29ecbad_baggz247-batch2-jordan-bridge.glb",
+      },
+      {
+        id: "baggz247-berkley-bridge",
+        name: "Berkley Bridge (I-264)",
+        lat: 36.84119,
+        lng: -76.28651,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/16871f307_baggz247-batch2-berkley-bridge.glb",
+      },
+      {
+        id: "baggz247-hrbt",
+        name: "Hampton Roads Bridge-Tunnel",
+        lat: 36.96774,
+        lng: -76.2978,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/dc2f986b8_baggz247-batch2-hrbt.glb",
+      },
+      {
+        id: "baggz247-mmbt",
+        name: "Monitor-Merrimac Bridge-Tunnel",
+        lat: 36.91651,
+        lng: -76.41485,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f3809d8a3_baggz247-batch2-mmbt.glb",
+      },
+      {
+        id: "baggz247-james-river-bridge",
+        name: "James River Bridge (US-17)",
+        lat: 37.03771,
+        lng: -76.46752,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/7726085d9_baggz247-batch2-james-river-bridge.glb",
+      },
+      {
+        id: "baggz247-mount-trashmore",
+        name: "Mount Trashmore Park",
+        lat: 36.82914,
+        lng: -76.1231,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5e5293c7e_baggz247-batch2-mount-trashmore.glb",
+      },
+      {
+        id: "baggz247-orf-airport",
+        name: "Norfolk International Airport",
+        lat: 36.89885,
+        lng: -76.20654,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e5fa56a11_baggz247-batch2-orf-airport.glb",
+      },
+    ];
+    for (const lm of landmarks) {
+      try {
+        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
+      } catch (e) {
+        console.warn("[baggz247] batch2 landmark failed:", lm.id, e);
+      }
+    }
+  }
+
+  // Moves a placed traffic entity by rewriting its GeoJSON point source.
+  _setTrafficPoint(record, lng, lat) {
+    if (!this.map || !record) return;
+    const source = this.map.getSource(record.sourceId);
+    if (!source) return;
+    source.setData({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+    });
+  }
+
+  // BAGGZ_247 Batch 2 — animated traffic: a ferry looping across the river,
+  // an occasional plane flyover over ORF airspace, and yachts bobbing gently
+  // at the marinas. All motion is GeoJSON point-source updates on timers.
+  startAnimatedTraffic() {
+    if (!this.map) {
+      console.warn("[baggz247] animated traffic skipped — map not ready");
+      return;
+    }
+    if (this._trafficTimers.length > 0) return; // already running
+
+    // Ferry — loops between Waterside and Downtown Portsmouth.
+    const FERRY_A = [-76.29102, 36.84483];
+    const FERRY_B = [-76.2971, 36.83903];
+    const FERRY_STEPS = 120; // ~4 minutes per crossing at one step per 2 s
+    try {
+      const ferry = this.addLandmark("baggz247-ferry", FERRY_A[0], FERRY_A[1],
+        "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/73c920e78_baggz247-batch2-ferry.glb");
+      if (ferry) {
+        let step = 0;
+        let forward = true;
+        this._trafficTimers.push(window.setInterval(() => {
+          if (!this.map) return; // pause while the map is not ready
+          const from = forward ? FERRY_A : FERRY_B;
+          const to = forward ? FERRY_B : FERRY_A;
+          const t = step / FERRY_STEPS;
+          this._setTrafficPoint(ferry, from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t);
+          step += 1;
+          if (step >= FERRY_STEPS) {
+            step = 0;
+            forward = !forward;
+          }
+        }, 2000));
+      }
+    } catch (e) {
+      console.warn("[baggz247] ferry animation skipped:", e);
+    }
+
+    // Plane — hidden by default; brief flyover roughly every 90 seconds.
+    const PLANE_START = [-76.26, 36.89885];
+    const PLANE_END = [-76.15, 36.89885];
+    const PLANE_STEPS = 10; // ~20 s flyover at one step per 2 s
+    const PLANE_WAIT_TICKS = 45; // ~90 s between flyovers
+    try {
+      const plane = this.addLandmark("baggz247-plane", PLANE_START[0], PLANE_START[1],
+        "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/816d74a2f_baggz247-batch2-plane.glb");
+      if (plane && this.map.getLayer(plane.layerId)) {
+        this.map.setLayoutProperty(plane.layerId, "visibility", "none");
+        let phase = "waiting";
+        let ticks = PLANE_WAIT_TICKS;
+        let step = 0;
+        this._trafficTimers.push(window.setInterval(() => {
+          if (!this.map) return; // pause while the map is not ready
+          try {
+            if (phase === "waiting") {
+              ticks += 1;
+              if (ticks >= PLANE_WAIT_TICKS) {
+                ticks = 0;
+                step = 0;
+                phase = "flying";
+                this.map.setLayoutProperty(plane.layerId, "visibility", "visible");
+              }
+              return;
+            }
+            const t = step / PLANE_STEPS;
+            this._setTrafficPoint(plane,
+              PLANE_START[0] + (PLANE_END[0] - PLANE_START[0]) * t,
+              PLANE_START[1] + (PLANE_END[1] - PLANE_START[1]) * t);
+            step += 1;
+            if (step >= PLANE_STEPS) {
+              this.map.setLayoutProperty(plane.layerId, "visibility", "none");
+              phase = "waiting";
+              ticks = 0;
+            }
+          } catch (e) {
+            console.warn("[baggz247] plane flyover frame skipped:", e);
+          }
+        }, 2000));
+      }
+    } catch (e) {
+      console.warn("[baggz247] plane animation skipped:", e);
+    }
+
+    // Yachts — anchored hulls bobbing gently near the marinas.
+    const YACHT_URL = "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/cee076736_baggz247-batch2-yacht.glb";
+    try {
+      const anchors = [
+        [-76.2913, 36.8451], // Waterside marina
+        [-76.2907, 36.8446], // Waterside marina
+        [-76.2973, 36.8393], // Downtown Portsmouth
+      ];
+      const yachts = [];
+      anchors.forEach(([lng, lat], i) => {
+        const record = this.addLandmark(`baggz247-yacht-${i + 1}`, lng, lat, YACHT_URL);
+        if (record) yachts.push({ record, lng, lat });
+      });
+      if (yachts.length > 0) {
+        let bob = 0;
+        this._trafficTimers.push(window.setInterval(() => {
+          if (!this.map) return; // pause while the map is not ready
+          bob += 1;
+          yachts.forEach((y, i) => {
+            const dLat = Math.sin(bob + i * 1.7) * 0.00005;
+            const dLng = Math.cos(bob * 0.8 + i * 1.7) * 0.00005;
+            this._setTrafficPoint(y.record, y.lng + dLng, y.lat + dLat);
+          });
+        }, 3000));
+      }
+    } catch (e) {
+      console.warn("[baggz247] yacht animation skipped:", e);
+    }
+  }
+
+  // Teardown for the animated traffic entities: clears every timer and removes
+  // their layers/sources/models. Static landmarks are left to the map itself.
+  destroy() {
+    this._trafficTimers.forEach((id) => {
+      window.clearTimeout(id);
+      window.clearInterval(id);
+    });
+    this._trafficTimers = [];
+    const map = this.map;
+    if (!map) return;
+    ["baggz247-plane", "baggz247-ferry", "baggz247-yacht-1", "baggz247-yacht-2", "baggz247-yacht-3"].forEach((name) => {
+      const modelId = `master-landmark-${name}`;
+      try { if (map.getLayer(`${modelId}-layer`)) map.removeLayer(`${modelId}-layer`); } catch { /* style may be gone */ }
+      try { if (map.getSource(`${modelId}-src`)) map.removeSource(`${modelId}-src`); } catch { /* style may be gone */ }
+      try { if (typeof map.removeModel === "function") map.removeModel(modelId); } catch { /* style may be gone */ }
+    });
   }
 
   // Enriches the visible area with the OSM building at the view center plus

@@ -504,6 +504,8 @@ export default function LiveVectorMap({
           mapArchitect.map = map;
           baggz247Master.map = map;
           baggz247Master.registerSignatureLandmarks();
+          baggz247Master.registerBatch2Landmarks();
+          baggz247Master.startAnimatedTraffic();
           meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();
@@ -545,6 +547,7 @@ export default function LiveVectorMap({
       markerRef.current?.remove();
       markerRef.current = null;
       mapArchitect.destroy();
+      baggz247Master.destroy();
       meshBuilder.destroy();
       map?.remove();
       mapRef.current = null;
