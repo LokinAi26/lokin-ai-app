@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "name": "DoorPin",
+  "properties": {
+    "accuracy_m": {
+      "type": "number",
+      "description": "GPS accuracy in meters at capture time, when known"
+    },
+    "address_key": {
+      "type": "string",
+      "description": "Normalized address key (lowercased, unit designators stripped) used for lookup"
+    },
+    "confirmations": {
+      "type": "number",
+      "description": "How many times this pin has been saved/confirmed",
+      "default": 1
+    },
+    "display_address": {
+      "type": "string",
+      "description": "Human-readable address as the driver entered it"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "note": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "description": "manual = driver stood at the door and pinned it; auto = captured where the delivery was marked complete",
+      "enum": [
+        "manual",
+        "auto"
+      ],
+      "default": "auto"
+    }
+  },
+  "required": [
+    "address_key",
+    "latitude",
+    "longitude"
+  ]
+}
