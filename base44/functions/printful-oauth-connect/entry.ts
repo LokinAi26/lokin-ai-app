@@ -23,7 +23,7 @@ export default async function (req: Request): Promise<Response> {
 
     const clientId = secrets.get("PRINTFUL_OAUTH_CLIENT_ID");
     const redirectUri = secrets.get("PRINTFUL_OAUTH_REDIRECT_URI");
-    const state = await makeState(user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET") || "lokin-printful-fallback");
+    const state = await makeState(user.id, secrets.get("PRINTFUL_OAUTH_CLIENT_SECRET"));
     const authorizeUrl = `https://www.printful.com/oauth/authorize?client_id=${encodeURIComponent(clientId)}&state=${encodeURIComponent(state)}&redirect_url=${encodeURIComponent(redirectUri)}`;
 
     return Response.json({ configured: true, authorizeUrl, state });
