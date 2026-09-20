@@ -1,1 +1,50 @@
-{"name":"RateLimitBucket","properties":{"bucket_key":{"description":"key_prefix + fixed window id; one bucket per client per window","type":"string"},"count":{"description":"Hits recorded in this window","type":"number"},"key_prefix":{"description":"Limiter key + client identifier, e.g. public-support-request:1.2.3.4","type":"string"},"window_start":{"description":"ISO timestamp of the window start","type":"string"}},"required":["key_prefix","bucket_key","count","window_start"],"rls":{"create":{"user_condition":{"role":"admin"}},"delete":{"user_condition":{"role":"admin"}},"read":{"user_condition":{"role":"admin"}},"update":{"user_condition":{"role":"admin"}}},"type":"object"}
+{
+  "type": "object",
+  "name": "RateLimitBucket",
+  "properties": {
+    "bucket_key": {
+      "type": "string",
+      "description": "key_prefix + fixed window id; one bucket per client per window"
+    },
+    "count": {
+      "type": "number",
+      "description": "Hits recorded in this window"
+    },
+    "key_prefix": {
+      "type": "string",
+      "description": "Limiter key + client identifier, e.g. public-support-request:1.2.3.4"
+    },
+    "window_start": {
+      "type": "string",
+      "description": "ISO timestamp of the window start"
+    }
+  },
+  "required": [
+    "key_prefix",
+    "bucket_key",
+    "count",
+    "window_start"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

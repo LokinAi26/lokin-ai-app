@@ -13,6 +13,9 @@ const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
+// Restored LOKIN neon lime green route line (the original brand lime).
+// Stop pins keep the softer green so they read as markers, not route.
+const LOKIN_LIME_ROUTE = "#A8FF00";
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
 const STOPS_FONT = ["Noto Sans Regular"];
@@ -240,10 +243,10 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
-      "line-opacity": 0.35,
+      "line-color": LOKIN_LIME_ROUTE,
+      "line-opacity": 0.55,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
-      "line-blur": 6,
+      "line-blur": 5,
     },
   });
   map.addLayer({
@@ -272,7 +275,7 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
+      "line-color": LOKIN_LIME_ROUTE,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
       "line-blur": 0,
@@ -500,6 +503,9 @@ export default function LiveVectorMap({
           if (disposed) return;
           mapArchitect.map = map;
           baggz247Master.map = map;
+          baggz247Master.registerSignatureLandmarks();
+          baggz247Master.registerBatch2Landmarks();
+          baggz247Master.startAnimatedTraffic();
           meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();
@@ -541,6 +547,7 @@ export default function LiveVectorMap({
       markerRef.current?.remove();
       markerRef.current = null;
       mapArchitect.destroy();
+      baggz247Master.destroy();
       meshBuilder.destroy();
       map?.remove();
       mapRef.current = null;

@@ -10,6 +10,11 @@ export const LOKIN_EXTERNAL_POLICY = Object.freeze({
   [LOKIN_COMMANDS.SMART_SHOP]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
   [LOKIN_COMMANDS.OPEN_ROUTE]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
   [LOKIN_COMMANDS.SAFETY]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
+  [LOKIN_COMMANDS.X10]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
+  [LOKIN_COMMANDS.PRODUCTIVITY]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
+  [LOKIN_COMMANDS.ROOTCAUSE]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
+  [LOKIN_COMMANDS.DEBUG]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
+  [LOKIN_COMMANDS.AUTOMATE]: { allowed: true, confirmation: "none", mode: "foregroundPreferred" },
 });
 
 export function validateExternalCommand(command, payload = {}) {

@@ -7,6 +7,7 @@ import {
   Wifi, Search, Briefcase, LifeBuoy, LayoutGrid, SlidersHorizontal, Ban, ShieldAlert,
   Coffee, Truck, Calculator, Receipt, Flame, ScanLine, Radar, Power, Sparkles,
   Satellite, Plug, Wrench, Crown, TrendingUp, MapPin, Mic, Settings as SettingsIcon,
+  Layers, Zap, SearchCheck, Bug, Gauge,
 } from "lucide-react";
 
 // A command is a single actionable intent. `run(navigate)` executes it.
@@ -64,6 +65,12 @@ export const COMMAND_GROUPS = [
       { id: "connectivity", title: "Stay Linked", subtitle: "Signal & network", icon: Wifi, keywords: ["network", "signal", "offline"], run: (n) => n("/connectivity") },
       { id: "brand", title: "LOKIN Brand", subtitle: "Apparel & gear", icon: Crown, keywords: ["store", "merch", "shop"], run: (n) => n("/brand") },
       { id: "support", title: "AI Support", subtitle: "Help & billing", icon: LifeBuoy, keywords: ["help", "bug", "ticket"], run: (n) => n("/support") },
+      { id: "l3", title: "L3 Ops", subtitle: "Operating layer — plans, approvals & runs", icon: Layers, keywords: ["l3", "operating", "system", "shakedown"], run: (n) => n("/l3") },
+      { id: "l3-automate", title: "/automate", subtitle: "Dispatch a directive to the operating layer", icon: Zap, keywords: ["automate", "automation", "dispatch"], run: (n) => n("/l3?mode=automate") },
+      { id: "l3-rootcause", title: "/rootcause", subtitle: "Open a root-cause diagnosis plan", icon: SearchCheck, keywords: ["rootcause", "root cause", "diagnose"], run: (n) => n("/l3?mode=rootcause") },
+      { id: "l3-debug", title: "/debug", subtitle: "Open a debug plan", icon: Bug, keywords: ["debug", "fix", "broken"], run: (n) => n("/l3?mode=debug") },
+      { id: "l3-x10", title: "/X10", subtitle: "10x productivity directive", icon: TrendingUp, keywords: ["x10", "ten x", "10x"], run: (n) => n("/l3?mode=x10") },
+      { id: "l3-productivity", title: "/productivity", subtitle: "Productivity directive", icon: Gauge, keywords: ["productivity", "focus"], run: (n) => n("/l3?mode=productivity") },
     ],
   },
 ];

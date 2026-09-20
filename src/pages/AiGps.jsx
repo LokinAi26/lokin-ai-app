@@ -177,6 +177,7 @@ export default function AiGps() {
         loadingStops={loadingStops}
         deliveryStops={deliveryStops}
         destinationAddresses={destinationAddresses}
+        doorPinArrived={arrivedAtDoorPin}
         onOpenAppFreeRoam={openAppFreeRoam}
         onExit={() => navigate("/", { replace: true })}
       />
@@ -410,7 +411,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, onOpenAppFreeRoam, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, onOpenAppFreeRoam, onExit }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -429,7 +430,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           etaLiveTraffic={nav.etaLiveTraffic}
           navigationStatus={nav.status}
           destinationSide={nav.route?.destination_side}
-          doorPinArrived={arrivedAtDoorPin}
+          doorPinArrived={doorPinArrived}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
