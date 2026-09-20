@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, BadgeDollarSign, Glasses, CandlestickChart, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
+import { SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, BadgeDollarSign, Glasses, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
@@ -31,7 +31,6 @@ const SECTIONS = [
       { to: "/gigs", icon: ClipboardList, title: "Live Paid Research", desc: "Mystery shops, food reviews & tests" },
       { to: "/driver-platforms", icon: Link2, title: "Driver Data Sources", desc: "Official APIs, partner feeds & verified capture" },
       { to: "/tax", icon: Calculator, title: "Tax Engine", desc: "Mileage & deductions" },
-      { to: "/traders-playbook", icon: CandlestickChart, title: "Trader's Playbook", desc: "Learn, paper practice & journal" },
       { to: "/receipts", icon: ReceiptIcon, title: "Receipts", desc: "Purchase history" },
     ],
   },
