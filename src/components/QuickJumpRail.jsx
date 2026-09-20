@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 import { Navigation, Fuel, ShoppingBag, Wifi, Search, Briefcase, LifeBuoy, LayoutGrid, X, Leaf, ShieldCheck } from "lucide-react";
 
 // Compact neon-green quick-jump hub — pinned to the top-right so you can hop
@@ -15,16 +16,20 @@ const ITEMS = [
   { to: "/locator", label: "Locator", icon: Search, match: (p) => p.startsWith("/locator") },
   { to: "/gigs", label: "Gigs", icon: Briefcase, match: (p) => p.startsWith("/gigs") },
   { to: "/support", label: "Support", icon: LifeBuoy, match: (p) => p.startsWith("/support") },
-  { to: "/stash", label: "Green", icon: Leaf, match: (p) => p.startsWith("/stash") || p.startsWith("/green-delivery") },
-  { to: "/insurance", label: "Cover", icon: ShieldCheck, match: (p) => p.startsWith("/insurance") },
+  { to: "/stash", label: "Green", icon: Leaf, match: (p) => p.startsWith("/stash") || p.startsWith("/green-delivery"), flag: "regulatedCannabis" },
+  { to: "/insurance", label: "Cover", icon: ShieldCheck, match: (p) => p.startsWith("/insurance"), flag: "insuranceTransactions" },
 ];
+
+// Disabled release-gated items stay invisible (not just gated) so reviewers
+// never see a tap that leads to a disabled-feature screen.
+const VISIBLE_ITEMS = ITEMS.filter((i) => !i.flag || RELEASE_FLAGS[i.flag]);
 
 export default function QuickJumpRail() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const activeItem = ITEMS.find((i) => i.match(loc.pathname));
+  const activeItem = VISIBLE_ITEMS.find((i) => i.match(loc.pathname));
   const ActiveIcon = activeItem?.icon || LayoutGrid;
 
   // Close on route change
@@ -53,7 +58,7 @@ export default function QuickJumpRail() {
       {open && (
         <div className="mt-2 w-44 rounded-2xl border border-primary/30 glass p-2 glow-primary">
           <div className="grid grid-cols-3 gap-1.5">
-            {ITEMS.map(({ to, label, icon: Icon, match }) => {
+            {VISIBLE_ITEMS.map(({ to, label, icon: Icon, match }) => {
               const active = match(loc.pathname);
               return (
                 <button

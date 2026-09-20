@@ -18,6 +18,7 @@ import Fuel from './pages/Fuel';
 import LokinAI from './pages/LokinAI';
 import Earnings from './pages/Earnings';
 import EarningsIntelligence from './pages/EarningsIntelligence';
+import ShiftReport from './pages/ShiftReport';
 import DriverPlatforms from './pages/DriverPlatforms';
 import UberDriverCallback from './pages/UberDriverCallback';
 import More from './pages/More';
@@ -121,6 +122,7 @@ const AuthenticatedApp = () => {
           <Route path="/lokin" element={<LokinAI />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/earnings-intelligence" element={<EarningsIntelligence />} />
+          <Route path="/shift-report" element={<ShiftReport />} />
           <Route path="/driver-platforms" element={<DriverPlatforms />} />
           <Route path="/driver-platforms/uber/callback" element={<UberDriverCallback />} />
           <Route path="/more" element={<More />} />
@@ -160,11 +162,11 @@ const AuthenticatedApp = () => {
           <Route path="/driver-dispatch" element={<DriverDispatch />} />
           <Route path="/printful-connect" element={<PrintfulConnect />} />
           <Route path="/printful/callback" element={<PrintfulCallback />} />
-          <Route path="/stash" element={RELEASE_FLAGS.regulatedCannabis ? <Stash /> : <ReleaseGate title="LOKIN Green — partner activation required" body="LOKIN Green is preserved but disabled for the App Store 1.0 launch until a licensed cannabis-market partner, legal-entity submission, and jurisdictional geo-restriction are active." />} />
-          <Route path="/stash/cart" element={RELEASE_FLAGS.regulatedCannabis ? <StashCart /> : <ReleaseGate title="Regulated checkout unavailable" body="Cannabis checkout is disabled in the App Store 1.0 launch candidate." />} />
-          <Route path="/green-delivery" element={RELEASE_FLAGS.regulatedCannabis ? <GreenDelivery /> : <ReleaseGate title="Green Delivery — partner activation required" body="Regulated delivery remains disabled until licensed-market and jurisdiction controls are active." />} />
-          <Route path="/insurance" element={RELEASE_FLAGS.insuranceTransactions ? <Insurance /> : <ReleaseGate title="LOKIN Cover — partner activation required" body="Insurance application and binding workflows are preserved but disabled in the App Store 1.0 launch until an authorized carrier/agency relationship and required legal-entity submission are in place." />} />
-          <Route path="/insurance-admin" element={RELEASE_FLAGS.insuranceTransactions ? <InsuranceAdmin /> : <ReleaseGate title="LOKIN Cover Admin unavailable" body="Carrier administration is not enabled in the App Store 1.0 launch candidate." />} />
+          <Route path="/stash" element={RELEASE_FLAGS.regulatedCannabis ? <Stash /> : <ReleaseGate title="Not available in this release" body="This feature is not available in the App Store 1.0 release." />} />
+          <Route path="/stash/cart" element={RELEASE_FLAGS.regulatedCannabis ? <StashCart /> : <ReleaseGate title="Not available in this release" body="This feature is not available in the App Store 1.0 release." />} />
+          <Route path="/green-delivery" element={RELEASE_FLAGS.regulatedCannabis ? <GreenDelivery /> : <ReleaseGate title="Not available in this release" body="This feature is not available in the App Store 1.0 release." />} />
+          <Route path="/insurance" element={RELEASE_FLAGS.insuranceTransactions ? <Insurance /> : <ReleaseGate title="Not available in this release" body="This feature is not available in the App Store 1.0 release." />} />
+          <Route path="/insurance-admin" element={RELEASE_FLAGS.insuranceTransactions ? <InsuranceAdmin /> : <ReleaseGate title="Not available in this release" body="This feature is not available in the App Store 1.0 release." />} />
           <Route path="/onboarding" element={<DriverOnboarding />} />
         </Route>
       </Route>

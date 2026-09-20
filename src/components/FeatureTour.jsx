@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, CreditCard, MessageCircle, Route as RouteIcon, ScanLine, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, MessageCircle, Route as RouteIcon, ShieldCheck, X } from "lucide-react";
 import { LOKIN_SKYLINE_BG } from "@/components/Brand";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -21,13 +21,6 @@ const CARDS = [
     soon: false,
   },
   {
-    icon: ScanLine,
-    title: "AI STORE ASSISTANT",
-    desc: "FIND. SCAN. DELIVER.",
-    detail: "In-store guidance for shop-and-deliver orders, aisle to doorstep.",
-    soon: true,
-  },
-  {
     icon: MessageCircle,
     title: "AI DRIVER SUPPORT",
     desc: "HANDS-FREE HELP",
@@ -40,13 +33,6 @@ const CARDS = [
     desc: "PROTECT & PREPARE",
     detail: "Stay linked, stay aware, and stay covered on every mile.",
     soon: false,
-  },
-  {
-    icon: CreditCard,
-    title: "LOKIN CARD",
-    desc: "EARN. SAVE. LEVEL UP.",
-    detail: "The driver's card for fuel, fees, and faster payouts.",
-    soon: true,
   },
 ];
 
