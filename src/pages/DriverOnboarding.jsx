@@ -74,24 +74,73 @@ export default function DriverOnboarding() {
     return () => { alive = false; };
   }, []);
 
+  // Permission requests in embedded iOS preview WebViews can hang indefinitely
+  // when the native prompt never appears or never resolves. A timeout watchdog
+  // guarantees the busy state always clears with honest, actionable guidance.
+  function withTimeout(promise, ms, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label || "timed out")), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
   async function requestPermissions() {
     setPermissionBusy(true);
     setPermissionMessage("");
     let locationOk = locationGranted;
     let microphoneOk = microphoneGranted;
+    let stalledOn = null;
     try {
       if (!locationOk && navigator.geolocation) {
-        await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 12000 }));
-        locationOk = true;
-        setLocationGranted(true);
+        try {
+          await withTimeout(
+            new Promise((resolve, reject) =>
+              navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
+            ),
+            25000,
+            "location"
+          );
+          locationOk = true;
+          setLocationGranted(true);
+        } catch (err) {
+          if (err && err.message === "location") {
+            stalledOn = "Location";
+          } else {
+            throw err;
+          }
+        }
       }
       if (!microphoneOk && navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((track) => track.stop());
-        microphoneOk = true;
-        setMicrophoneGranted(true);
+        let micResolvedLate = false;
+        try {
+          const streamPromise = navigator.mediaDevices.getUserMedia({ audio: true });
+          // If the prompt resolves after our watchdog fires, stop the late
+          // stream so the mic does not stay open silently.
+          streamPromise.then(
+            (stream) => { if (micResolvedLate) stream.getTracks().forEach((track) => track.stop()); },
+            () => {}
+          );
+          const stream = await withTimeout(streamPromise, 25000, "microphone");
+          stream.getTracks().forEach((track) => track.stop());
+          microphoneOk = true;
+          setMicrophoneGranted(true);
+        } catch (err) {
+          micResolvedLate = true;
+          if (err && err.message === "microphone") {
+            stalledOn = stalledOn ? stalledOn + " and the microphone" : "The microphone";
+          } else {
+            throw err;
+          }
+        }
       }
-      setPermissionMessage(locationOk && microphoneOk ? "Location and microphone are ready." : "Enable both permissions in device settings.");
+      if (locationOk && microphoneOk) {
+        setPermissionMessage("Location and microphone are ready.");
+      } else if (stalledOn) {
+        setPermissionMessage(stalledOn + " permission is not responding. Open iOS Settings, find this app, turn on Location (set to While Using with Precise Location on) and Microphone, then tap Enable permissions again.");
+      } else {
+        setPermissionMessage("Enable both permissions in device settings.");
+      }
     } catch {
       setPermissionMessage("Permission was not granted. You can enable it later in device settings.");
     } finally {
