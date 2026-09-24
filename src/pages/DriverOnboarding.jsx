@@ -51,10 +51,13 @@ export default function DriverOnboarding() {
     let alive = true;
     (async () => {
       try {
-        const [user, rows] = await Promise.all([
+        // The SDK promises have no client-side timeout: bound the initial
+        // load so a hung network can never trap the page on its spinner.
+        // A timeout falls through to the degraded-but-usable page below.
+        const [user, rows] = await withTimeout(Promise.all([
           base44.auth.me(),
           base44.entities.DriverPreference.filter({}).catch(() => []),
-        ]);
+        ]), 20000, "Loading your profile is taking too long");
         if (!alive) return;
         setMe(user);
         setPrefs(rows?.[0] || null);

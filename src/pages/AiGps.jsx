@@ -271,6 +271,9 @@ export default function AiGps() {
           <div className="text-xs text-white/60">
             {loadingStops ? "Loading optimized delivery addresses…" : nav.status === "waiting_location" ? (nav.waitingDetail || "Waiting for precise device GPS…") : "Geocoding stops and building the road-matched route…"}
           </div>
+          {nav.status === "waiting_location" && nav.waitingDetail && !loadingStops && (
+            <button onClick={nav.restartLocation} className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/70"><RefreshCw className="h-3.5 w-3.5" /> RETRY GPS</button>
+          )}
         </div>
       )}
 
@@ -442,6 +445,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             </div>
             {!error && waiting && nav.waitingDetail && (
               <div className="mt-2 text-xs leading-relaxed text-white/40">{nav.waitingDetail}</div>
+            )}
+            {!error && waiting && nav.waitingDetail && (
+              <button onClick={nav.restartLocation} className="mt-4 rounded-2xl bg-primary px-5 py-3 text-xs font-extrabold text-black">RETRY GPS</button>
             )}
           </div>
         </div>

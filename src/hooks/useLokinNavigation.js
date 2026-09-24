@@ -588,10 +588,23 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     if (!enabled || !normalizedDestinations.length || !nativeLocationAvailable()) return;
     setStatus("waiting_location");
     setError("");
+    setWaitingDetail("");
+
+    // Watchdog: the native engine speaks only through event callbacks. If the
+    // OS never delivers a permission decision or a fix (and no native error
+    // fires), the same honesty rule as the web path applies — name the
+    // blocker after 20s instead of spinning forever. A real fix clears it.
+    const nativeWatchdogId = window.setTimeout(() => {
+      setWaitingDetail("Still waiting on the LOKIN location engine — make sure location is allowed for LOKIN in device Settings and Location Services is on.");
+    }, 20000);
 
     const unsubscribeLocation = subscribeNativeLocation((raw) => {
       const sample = normalizeNativeLocationSample(raw);
-      if (sample) processLocationSample(sample, "native");
+      if (sample) {
+        window.clearTimeout(nativeWatchdogId);
+        setWaitingDetail("");
+        processLocationSample(sample, "native");
+      }
     });
     const nativeSessionId = `lokin-nav-${Date.now()}`;
     const unsubscribeAuthorization = subscribeNativeLocationAuthorization((authorization) => {
@@ -599,12 +612,23 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (["always", "whenInUse"].includes(authStatus) && !nativeStartedRef.current) {
         nativeStartedRef.current = true;
         setError("");
+        setWaitingDetail("");
         startNativeLocation({ mode: gpsSuperAgent.getNativeMode(), sessionId: nativeSessionId });
         return;
       }
       if (["denied", "restricted"].includes(authStatus)) {
+        window.clearTimeout(nativeWatchdogId);
+        setWaitingDetail("");
         setStatus("error");
         setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
+        return;
+      }
+      // Unrecognized authorization string (e.g. "notDetermined"): the OS has
+      // not delivered a usable decision yet. Say so instead of leaving the
+      // waiting screen on its generic copy. (Re-emitted "always"/"whenInUse"
+      // after the engine started is intentionally a no-op.)
+      else if (!["always", "whenInUse"].includes(authStatus)) {
+        setWaitingDetail("Waiting on your location permission — allow location for LOKIN when your device asks.");
       }
     });
     const unsubscribeError = subscribeNativeLocationError((nativeError) => {
@@ -638,6 +662,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     requestNativeWhenInUse();
 
     return () => {
+      window.clearTimeout(nativeWatchdogId);
       unsubscribeLocation();
       unsubscribeAuthorization();
       unsubscribeError();
