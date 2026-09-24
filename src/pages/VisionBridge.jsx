@@ -191,7 +191,7 @@ export default function VisionBridge() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[10px] font-display tracking-[0.18em] text-primary/80">ANDROID XR NATIVE RUNTIME</div>
-              <div className="mt-1 text-xs font-bold text-white/80">{nativeXr?.projected_connected ? "XR ONLINE" : "SIMULATOR \u2014 no display glasses connected"}</div>
+              <div className="mt-1 text-xs font-bold text-white/80">{nativeXr?.projected_connected ? "XR ONLINE" : "SIMULATOR — no display glasses connected"}</div>
             </div>
             <div className={`rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${nativeXr?.projected_connected ? "border-primary/40 bg-primary/10 text-primary" : "border-white/10 text-white/45"}`}>
               {(nativeXr?.projected_state || "waiting_device").replace(/_/g, " ").toUpperCase()}
