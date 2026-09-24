@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Activity, Battery, Eye, Glasses, Navigation, Power, Radio, RefreshCw, Smartphone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
@@ -169,8 +170,11 @@ export default function VisionBridge() {
               <div className="text-[10px] tracking-[0.18em] text-white/40">LIVE HEARTBEAT BRIDGE</div>
             </div>
           </div>
-          <div className={`rounded-full border px-3 py-1.5 text-[10px] font-extrabold ${linked ? "border-primary/40 bg-primary/10 text-primary" : "border-amber-400/30 bg-amber-400/10 text-amber-300"}`}>
-            {linked ? "● CONNECTED" : "● WAITING"}
+          <div className="flex items-center gap-2">
+            <Link to="/vision-hud" className="rounded-full border border-[#8FE44E]/40 bg-[#8FE44E]/10 px-3 py-1.5 text-[10px] font-extrabold text-[#8FE44E]">PHONE HUD</Link>
+            <div className={`rounded-full border px-3 py-1.5 text-[10px] font-extrabold ${linked ? "border-primary/40 bg-primary/10 text-primary" : "border-amber-400/30 bg-amber-400/10 text-amber-300"}`}>
+              {linked ? "● CONNECTED" : "● WAITING"}
+            </div>
           </div>
         </div>
 
