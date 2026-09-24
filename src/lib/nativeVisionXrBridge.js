@@ -45,3 +45,15 @@ export function subscribeNativeVisionXrState(callback) {
   window.addEventListener(XR_STATE_EVENT, listener);
   return () => window.removeEventListener(XR_STATE_EVENT, listener);
 }
+
+// Vision HUD snapshot forwarding (PROMPT-03): the VisionHud page dispatches
+// `lokin:vision-hud-snapshot` with display-ready strings. Forward the snapshot
+// to the native glasses bridge ONLY when a real native bridge is present.
+// When nativeVisionXrAvailable() is false: do nothing — never buffer, never
+// fake a device.
+if (typeof window !== "undefined") {
+  window.addEventListener("lokin:vision-hud-snapshot", (event) => {
+    if (!nativeVisionXrAvailable()) return;
+    postNativeVisionXrCommand("hud_snapshot", event?.detail || {});
+  });
+}
