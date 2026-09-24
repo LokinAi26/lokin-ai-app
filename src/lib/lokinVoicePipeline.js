@@ -13,6 +13,16 @@ import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { speakText } from "./lokinVoice";
 
+// Voice-state event bus for HUD surfaces (e.g. VisionHud): fires exactly on
+// real speech state transitions — never on a timer, never simulated.
+function emitVoiceState(state) {
+  try {
+    if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+      window.dispatchEvent(new CustomEvent("lokin:voice-state", { detail: { state } }));
+    }
+  } catch {}
+}
+
 const TTS_VOICE_KEY = "lokin_tts_voice";
 const DEFAULT_TTS_VOICE = "onyx";
 
@@ -105,6 +115,7 @@ export function stopSpeaking() {
   try { if (currentAudio) currentAudio.pause(); } catch {}
   currentAudio = null;
   try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch {}
+  emitVoiceState("idle");
 }
 
 // Record one utterance. Resolves { stop, done } — done resolves a Blob.
@@ -167,6 +178,9 @@ export async function speakLokin(text, opts = {}) {
   const clean = String(text || "").replace(/[*#_`]/g, "").trim();
   if (!clean) return false;
   stopSpeaking();
+  // Emitted after stopSpeaking() (which reports idle) so a new utterance
+  // reads as idle -> speaking, never speaking -> idle -> speaking.
+  emitVoiceState("speaking");
   try {
     const res = await guardedInvoke(
       base44,
@@ -200,6 +214,8 @@ export async function speakLokin(text, opts = {}) {
       audio.onended = resolve;
       audio.onerror = resolve;
     });
+    // Single choke point for natural end-of-speech on the gateway path.
+    emitVoiceState("idle");
     if (currentAudio === audio) currentAudio = null;
     return true;
   } catch (e) {
