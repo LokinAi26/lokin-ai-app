@@ -81,6 +81,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [trafficEta, setTrafficEta] = useState(null);
   const [routeImprovement, setRouteImprovement] = useState(null);
   const [nativeRuntime, setNativeRuntime] = useState(null);
+  // Honest sub-copy for the GPS waiting screen: names the actual blocker
+  // (permission pending, denied, or slow fix) instead of spinning forever.
+  const [waitingDetail, setWaitingDetail] = useState("");
   const routeRef = useRef(null);
   const geocodedRef = useRef([]);
   const destinationsRef = useRef(normalizedDestinations);
@@ -100,6 +103,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const nativeSeenAtRef = useRef(0);
   const nativeStartedRef = useRef(false);
   const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon} for the grocery-geofence foreground re-check
+  const webFixReceivedRef = useRef(false); // first web-geolocation fix arrived (watchdog guard)
   const lastAcceptedSampleRef = useRef(null);
   const [gpsModeVersion, setGpsModeVersion] = useState(() => gpsSuperAgent.getModeVersion());
   const [gpsRestartCounter, setGpsRestartCounter] = useState(0);
@@ -189,6 +193,15 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     }
     setStatus(reason === "initial" ? "routing" : "rerouting");
     setError("");
+    // Watchdog: the route service should answer in seconds. If it hangs, say so
+    // instead of leaving the GPS screen on "Locking onto your live road route\u2026".
+    let routeSettled = false;
+    const routeWatchdogId = window.setTimeout(() => {
+      if (!routeSettled && routeRequestRef.current === requestId) {
+        setStatus("error");
+        setError("The route service is taking too long to respond. Check your connection and tap RETRY GPS.");
+      }
+    }, 60000);
     try {
       const response = await base44LiveFunctions.functions.invoke("navigation-engine", {
         action: "route_addresses",
@@ -244,8 +257,12 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setStatus("navigating");
       if (reason !== "initial") setRerouteCount((n) => n + 1);
       setRouteImprovement(null);
+      routeSettled = true;
+      window.clearTimeout(routeWatchdogId);
       return prepared;
     } catch (e) {
+      routeSettled = true;
+      window.clearTimeout(routeWatchdogId);
       const detail = e?.response?.data;
       if (detail?.code === "NAV_PROVIDER_NOT_CONFIGURED") setProviderConfigured(false);
       setStatus("error");
@@ -640,10 +657,39 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     }
 
     setStatus("waiting_location");
+    setWaitingDetail("");
+    webFixReceivedRef.current = false;
+
+    // Watchdog: watchPosition can hang forever when the OS never delivers a
+    // permission decision or a fix (common in embedded preview WebViews). After
+    // 20s with no fix, name the actual blocker instead of spinning forever.
+    const watchdogId = window.setTimeout(() => {
+      if (webFixReceivedRef.current) return;
+      const probe = navigator.permissions?.query
+        ? navigator.permissions.query({ name: "geolocation" }).then((p) => p?.state, () => "unknown")
+        : Promise.resolve("unknown");
+      probe.then((permissionState) => {
+        if (webFixReceivedRef.current) return;
+        if (permissionState === "denied") {
+          setStatus("error");
+          setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
+        } else if (permissionState === "prompt") {
+          setWaitingDetail("Still waiting on your location permission \u2014 allow Precise Location when your device asks.");
+        } else if (permissionState === "granted") {
+          setWaitingDetail("GPS fix is taking longer than usual \u2014 make sure Location Services is on and you have a clear view of the sky.");
+        } else {
+          setWaitingDetail("Still waiting for your device\u2019s GPS \u2014 check that Location Services is on and location is allowed for this page.");
+        }
+      });
+    }, 20000);
+
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const coord = asCoord(position);
         if (!coord) return;
+        webFixReceivedRef.current = true;
+        setWaitingDetail("");
+        window.clearTimeout(watchdogId);
         processLocationSample({
           coordinate: coord,
           latitude: coord[1],
@@ -657,6 +703,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         }, "web");
       },
       (geoError) => {
+        window.clearTimeout(watchdogId);
+        setWaitingDetail("");
         setStatus("error");
         const message = geoError?.code === 1
           ? "Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings."
@@ -666,7 +714,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       gpsSuperAgent.getWebOptions(),
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => {
+      window.clearTimeout(watchdogId);
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
 
   // Grocery-geofence foreground re-check: iOS suspends web GPS behind another
@@ -723,6 +774,15 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     requestRoute(coord, destinationsRef.current, "initial");
   }, [rawPosition, requestRoute]);
 
+  // Re-run location acquisition (re-registers watchPosition / re-prompts).
+  // Used by RETRY GPS when no position was ever acquired (e.g. denied permission).
+  const restartLocation = useCallback(() => {
+    setError("");
+    setWaitingDetail("");
+    webFixReceivedRef.current = false;
+    setGpsRestartCounter((n) => n + 1);
+  }, []);
+
   const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
   const fallbackRemainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);
   const etaAgeMs = trafficEta?.received_at_ms ? Math.max(0, Date.now() - Number(trafficEta.received_at_ms)) : Infinity;
@@ -749,6 +809,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     status,
     error,
     retry,
+    restartLocation,
+    waitingDetail,
     rerouteCount,
     providerConfigured,
     providerVerified,
