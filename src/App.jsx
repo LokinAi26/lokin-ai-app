@@ -74,6 +74,7 @@ import SupportInfo from './pages/SupportInfo';
 import FundingCommand from './pages/FundingCommand';
 import L3Ops from './pages/L3Ops';
 import VisionBridge from './pages/VisionBridge';
+import VisionHud from './pages/VisionHud';
 import ReleaseGate from './components/ReleaseGate';
 import { RELEASE_FLAGS } from './lib/releaseFlags';
 
@@ -155,6 +156,7 @@ const AuthenticatedApp = () => {
           <Route path="/funding-command" element={<FundingCommand />} />
           <Route path="/l3" element={<L3Ops />} />
           <Route path="/vision-bridge" element={<VisionBridge />} />
+          <Route path="/vision-hud" element={<VisionHud />} />
           <Route path="/5g" element={<FiveG />} />
           <Route path="/active-delivery" element={<ActiveDelivery />} />
           <Route path="/certified" element={<Certified />} />

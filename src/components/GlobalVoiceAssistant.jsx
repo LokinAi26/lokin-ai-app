@@ -118,6 +118,14 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   const wakeTriggerAtRef = useRef(0);
   const alwaysOnRef = useRef(alwaysOn);
   const transcriptHistoryRef = useRef([]);
+  // Voice-state event bus for HUD surfaces (e.g. VisionHud): fires exactly
+  // when the underlying listening/busy state changes — never on a timer.
+  useEffect(() => {
+    try {
+      const state = listening ? "listening" : busy ? "thinking" : "idle";
+      window.dispatchEvent(new CustomEvent("lokin:voice-state", { detail: { state } }));
+    } catch {}
+  }, [listening, busy]);
   // Session-derived context (falls back to 0/"mixed" when no session state).
   const sessionHours = (() => { try {
     const s = JSON.parse(localStorage.getItem("lokin_session") || "{}");

@@ -33,32 +33,24 @@ export default function AiGps() {
   useEffect(() => { setDestinationInput(explicitDestination); }, [explicitDestination]);
 
   useEffect(() => {
-    let alive = true;
     setRouteLoadError("");
 
     if (explicitDestination.trim()) {
       setStops([]);
       setLoadingStops(false);
-      return () => { alive = false; };
+      return;
     }
 
     const optimizedSession = loadOptimizedRouteSession();
     if (optimizedSession?.stops?.length) {
       setStops(optimizedSession.stops);
       setLoadingStops(false);
-      return () => { alive = false; };
+      return;
     }
 
-    setLoadingStops(true);
-    guardedInvoke(base44, "optimizeRoute", { mode: "most_profit" })
-      .then((res) => {
-        if (!alive) return;
-        setStops(res.data?.sequenced || []);
-        setRouteLoadError("");
-      })
-      .catch((e) => alive && setRouteLoadError(e?.message || "Could not load the optimized delivery route."))
-      .finally(() => alive && setLoadingStops(false));
-    return () => { alive = false; };
+    // Opening GPS must not implicitly optimize offers or block destination search.
+    setStops([]);
+    setLoadingStops(false);
   }, [explicitDestination]);
 
   const destinationAddresses = useMemo(() => {
@@ -131,8 +123,8 @@ export default function AiGps() {
     next.set("focus", "locked");
     next.set("destination", destination);
     next.set("nav", "1");
-    next.set("view", "real");
-    setMapView("real");
+    next.set("view", mapView);
+    // Preserve the selected MAP/4D mode on Find + Go.
     setParams(next, { replace: true });
     if (sameDestination && nav.rawPosition) nav.retry();
   }
@@ -141,6 +133,26 @@ export default function AiGps() {
     const next = new URLSearchParams(params);
     next.delete("destination");
     setParams(next);
+  }
+
+  async function loadDeliveryRoute() {
+    if (loadingStops) return;
+    setLoadingStops(true);
+    setRouteLoadError("");
+    try {
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: "most_profit" }, { force: true, userInitiated: true });
+      const nextStops = Array.isArray(res.data?.sequenced) ? res.data.sequenced : [];
+      if (!nextStops.length) {
+        setStops([]);
+        setRouteLoadError("No eligible delivery stops are available. Add confirmed offers in Route Optimizer, or use Find + Go.");
+        return;
+      }
+      setStops(nextStops);
+    } catch (e) {
+      setRouteLoadError(e?.message || "Could not load the optimized delivery route.");
+    } finally {
+      setLoadingStops(false);
+    }
   }
 
   async function verifyProvider() {
@@ -366,8 +378,11 @@ export default function AiGps() {
         <div className="rounded-3xl border border-dashed border-lokin-neon/45 bg-black/60 p-6 text-center shadow-[0_0_18px_rgba(51,255,20,0.12)]">
           <RouteIcon className="h-7 w-7 mx-auto text-primary/60" />
           <div className="mt-2 text-sm font-bold text-white/70">No destination is available yet</div>
-          <div className="mt-1 text-xs text-white/40">Add eligible offers in Route Optimizer, then start LOKIN Navigation.</div>
-          <Link to="/route" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-black"><MapPin className="h-3.5 w-3.5" /> Open Route Optimizer</Link>
+          <div className="mt-1 text-xs text-white/40">Use Find + Go above for any destination, or load your eligible delivery stops when you choose.</div>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <button type="button" onClick={loadDeliveryRoute} disabled={loadingStops} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-black disabled:opacity-50"><RouteIcon className="h-3.5 w-3.5" /> {loadingStops ? "Loading route…" : "Load delivery route"}</button>
+            <Link to="/route" className="inline-flex items-center gap-2 rounded-xl border border-primary/30 px-4 py-2.5 text-xs font-bold text-primary"><MapPin className="h-3.5 w-3.5" /> Route Optimizer</Link>
+          </div>
         </div>
       )}
 
