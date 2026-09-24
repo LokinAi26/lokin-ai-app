@@ -38,6 +38,7 @@ import {
   recordRerouteBlocked,
 } from "@/lib/navFusion";
 import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
+import { withTimeout } from "@/lib/promiseTimeout";
 import { checkStoreGeofence, reportStoreArrival } from "@/lib/storeGeofence";
 import { speakText } from "@/lib/lokinVoice";
 
@@ -659,7 +660,15 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     // Native engines start only after the OS confirms permission. This avoids
     // racing Android's permission dialog and prevents a foreground service from
     // starting and immediately stopping before ACCESS_FINE/COARSE is granted.
-    requestNativeWhenInUse();
+    // Fail fast: the bridge exists but the shell did not accept the permission
+    // command — re-posting it on every retry just loops the honest copy with
+    // zero chance of a prompt. Name the real blocker immediately instead.
+    const permissionRequestAccepted = requestNativeWhenInUse();
+    if (!permissionRequestAccepted) {
+      window.clearTimeout(nativeWatchdogId);
+      setStatus("error");
+      setError("The LOKIN app shell did not ask iOS for location. Grant Location for LOKIN in iOS Settings (While Using, with Precise Location on), or use the LOKIN website in Safari.");
+    }
 
     return () => {
       window.clearTimeout(nativeWatchdogId);
@@ -699,7 +708,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
           setStatus("error");
           setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
         } else if (permissionState === "prompt") {
-          setWaitingDetail("Still waiting on your location permission — allow Precise Location when your device asks.");
+          // Honest copy: inside the stock app wrapper no device prompt is
+          // coming on its own — only the app shell can ask iOS for location.
+          // Never promise a prompt that can't arrive.
+          setWaitingDetail("Still waiting on your location permission. If a prompt appears, allow Precise Location. In the LOKIN app no prompt appears on its own — grant Location for LOKIN in iOS Settings (While Using, with Precise Location on), or use the LOKIN website in Safari.");
         } else if (permissionState === "granted") {
           setWaitingDetail("GPS fix is taking longer than usual — make sure Location Services is on and you have a clear view of the sky.");
         } else {
@@ -805,8 +817,40 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setError("");
     setWaitingDetail("");
     webFixReceivedRef.current = false;
+    // A stale watch registration alone may never deliver a fresh fix — fire a
+    // bounded one-shot probe as well. A success feeds the same pipeline as a
+    // watch fix; a timeout only surfaces as waiting detail while still
+    // waiting, never clobbering a real error state.
+    if (navigator.geolocation) {
+      withTimeout(
+        new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
+        ),
+        20000,
+        "GPS retry timed out"
+      ).then((position) => {
+        const coord = asCoord(position);
+        if (!coord) return;
+        webFixReceivedRef.current = true;
+        setWaitingDetail("");
+        processLocationSample({
+          coordinate: coord,
+          latitude: coord[1],
+          longitude: coord[0],
+          accuracy_m: Number(position.coords.accuracy || 0),
+          heading: Number.isFinite(position.coords.heading) ? position.coords.heading : null,
+          speed_mps: Number.isFinite(position.coords.speed) ? position.coords.speed : null,
+          altitude_m: Number.isFinite(position.coords.altitude) ? position.coords.altitude : null,
+          timestamp: position.timestamp || Date.now(),
+          source: "web-geolocation-retry",
+        }, "web");
+      }).catch((err) => {
+        if (webFixReceivedRef.current) return;
+        setWaitingDetail(err?.message || "GPS retry timed out — still waiting for a fix.");
+      });
+    }
     setGpsRestartCounter((n) => n + 1);
-  }, []);
+  }, [processLocationSample]);
 
   const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);
   const fallbackRemainingDurationS = route && snapped ? Math.max(0, Number(route.duration_s || 0) * (1 - snapped.progress)) : Number(route?.duration_s || 0);

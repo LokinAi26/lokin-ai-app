@@ -49,6 +49,21 @@ export default function DriverOnboarding() {
 
   useEffect(() => {
     let alive = true;
+    // Permission state is queried once on mount AND re-queried every time the
+    // page comes back to the foreground — a grant made in iOS Settings while
+    // the app was backgrounded is picked up on return, no re-tap needed.
+    async function refreshPermissionStates() {
+      if (!navigator.permissions?.query) return;
+      try {
+        const checks = await Promise.allSettled([
+          navigator.permissions.query({ name: "geolocation" }),
+          navigator.permissions.query({ name: "microphone" }),
+        ]);
+        if (!alive) return;
+        setLocationGranted(checks[0].status === "fulfilled" && checks[0].value.state === "granted");
+        setMicrophoneGranted(checks[1].status === "fulfilled" && checks[1].value.state === "granted");
+      } catch { /* permission queries are best-effort */ }
+    }
     (async () => {
       try {
         // The SDK promises have no client-side timeout: bound the initial
@@ -61,20 +76,21 @@ export default function DriverOnboarding() {
         if (!alive) return;
         setMe(user);
         setPrefs(rows?.[0] || null);
-        if (navigator.permissions?.query) {
-          const checks = await Promise.allSettled([
-            navigator.permissions.query({ name: "geolocation" }),
-            navigator.permissions.query({ name: "microphone" }),
-          ]);
-          if (!alive) return;
-          setLocationGranted(checks[0].status === "fulfilled" && checks[0].value.state === "granted");
-          setMicrophoneGranted(checks[1].status === "fulfilled" && checks[1].value.state === "granted");
-        }
+        await refreshPermissionStates();
       } finally {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    function onForeground() {
+      if (document.visibilityState === "visible") refreshPermissionStates();
+    }
+    document.addEventListener("visibilitychange", onForeground);
+    window.addEventListener("focus", onForeground);
+    return () => {
+      alive = false;
+      document.removeEventListener("visibilitychange", onForeground);
+      window.removeEventListener("focus", onForeground);
+    };
   }, []);
 
   // Permission requests in embedded iOS preview WebViews can hang indefinitely
