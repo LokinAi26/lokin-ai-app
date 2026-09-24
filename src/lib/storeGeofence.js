@@ -72,32 +72,41 @@ export function setStoreGeofenceEnabled(on) {
 
 async function fetchNearbyStores(lat, lon) {
   const q = `[out:json][timeout:20];(node["shop"~"${SHOP_RE}"](around:${FETCH_RADIUS_M},${lat},${lon});way["shop"~"${SHOP_RE}"](around:${FETCH_RADIUS_M},${lat},${lon}););out center tags ${MAX_STORES};`;
-  const res = await fetch(OVERPASS_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
-    body: "data=" + encodeURIComponent(q),
-  });
-  if (!res.ok) throw new Error(`store lookup failed (${res.status})`);
-  const json = await res.json();
-  const stores = [];
-  for (const el of json.elements || []) {
-    const plat = el.lat;
-    const plon = el.lon;
-    const c = el.center || {};
-    const sla = Number.isFinite(plat) ? plat : c.lat;
-    const slo = Number.isFinite(plon) ? plon : c.lon;
-    if (!Number.isFinite(sla) || !Number.isFinite(slo)) continue;
-    const tags = el.tags || {};
-    stores.push({
-      id: String(el.type || "?")[0] + (el.id ?? Math.round(sla * 1e5) + ":" + Math.round(slo * 1e5)),
-      name: tags.name || tags.brand || "Grocery store",
-      kind: tags.shop || "store",
-      lat: sla,
-      lon: slo,
+  // Client-side deadline: without it a hung Overpass connection holds the
+  // fetchInFlight lock forever and store refresh silently stops updating.
+  const controller = new AbortController();
+  const abortTimer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(OVERPASS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+      body: "data=" + encodeURIComponent(q),
+      signal: controller.signal,
     });
-    if (stores.length >= MAX_STORES) break;
+    if (!res.ok) throw new Error(`store lookup failed (${res.status})`);
+    const json = await res.json();
+    const stores = [];
+    for (const el of json.elements || []) {
+      const plat = el.lat;
+      const plon = el.lon;
+      const c = el.center || {};
+      const sla = Number.isFinite(plat) ? plat : c.lat;
+      const slo = Number.isFinite(plon) ? plon : c.lon;
+      if (!Number.isFinite(sla) || !Number.isFinite(slo)) continue;
+      const tags = el.tags || {};
+      stores.push({
+        id: String(el.type || "?")[0] + (el.id ?? Math.round(sla * 1e5) + ":" + Math.round(slo * 1e5)),
+        name: tags.name || tags.brand || "Grocery store",
+        kind: tags.shop || "store",
+        lat: sla,
+        lon: slo,
+      });
+      if (stores.length >= MAX_STORES) break;
+    }
+    return stores;
+  } finally {
+    clearTimeout(abortTimer);
   }
-  return stores;
 }
 
 const listeners = new Set();

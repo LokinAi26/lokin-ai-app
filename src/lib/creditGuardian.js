@@ -1,6 +1,7 @@
 import { guardianPolicyFor } from "./creditGuardianManifest";
 import { hasAiConsent } from "./aiConsent";
 import { requestRouteOptimization } from "./routeOptimizerRequest";
+import { withTimeout } from "./promiseTimeout";
 
 const CACHE_PREFIX = "lokin:guardian:";
 
@@ -42,7 +43,7 @@ export function guardianDecision({ essential = false, userInitiated = false, cac
   return CREDIT_GUARDIAN.mode === "preservation" ? "defer" : "allow";
 }
 
-export async function guardedInvoke(base44, name, payload = {}, { force = false, userInitiated = false } = {}) {
+export async function guardedInvoke(base44, name, payload = {}, { force = false, userInitiated = false, timeoutMs = 30000 } = {}) {
   const policy = guardianPolicyFor(name);
   const externalAi = new Set(["external-ai-gateway", "voice-pipeline", "lokinAssistant", "lokinSupport", "aiTextAssist", "learning-intelligence", "tax-advisor", "opportunity-recommend"]);
   if (externalAi.has(name) && !hasAiConsent()) {
@@ -56,9 +57,16 @@ export async function guardedInvoke(base44, name, payload = {}, { force = false,
     err.code = "LOKIN_CREDIT_DEFERRED";
     throw err;
   }
-  const invoke = () => name === "optimizeRoute"
-    ? requestRouteOptimization(base44, payload)
-    : base44.functions.invoke(name, payload);
+  // Backend invokes have no client-side timeout: race every guarded call so
+  // a hung fetch rejects into the caller's normal error path instead of
+  // leaving its loading spinner up forever.
+  const invoke = () => withTimeout(
+    name === "optimizeRoute"
+      ? requestRouteOptimization(base44, payload)
+      : base44.functions.invoke(name, payload),
+    timeoutMs,
+    `${name} is taking too long to respond`
+  );
   const ttl = Number(policy.ttl || 0);
   if (ttl > 0) {
     const key = `${name}:${JSON.stringify(payload)}`;

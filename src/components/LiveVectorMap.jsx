@@ -418,6 +418,18 @@ export default function LiveVectorMap({
     let map = null;
 
     async function start() {
+      // Startup watchdog FIRST: the map_config fetch below can hang
+      // indefinitely (the invoke has no client-side timeout), so the timer
+      // must be armed before any await — never after it.
+      let timedOut = false;
+      startupTimer = window.setTimeout(() => {
+        if (disposed || loadedRef.current) return;
+        timedOut = true;
+        map?.remove();
+        mapRef.current = null;
+        setStatus("fallback");
+        callbacksRef.current.onUnavailable?.("Live map startup exceeded 10 seconds");
+      }, 10000);
       try {
         const response = await base44LiveFunctions.functions.invoke("navigation-engine", { action: "map_config" });
         const config = response?.data?.map_config;
@@ -425,7 +437,9 @@ export default function LiveVectorMap({
         if (!accessToken.startsWith("pk.")) {
           throw new Error("A restricted Mapbox public token is required for live vector navigation");
         }
-        if (disposed || !containerRef.current) return;
+        // A late-resolving config after the watchdog fired must not build a
+        // map behind the fallback UI.
+        if (disposed || timedOut || !containerRef.current) return;
 
         mapboxgl.accessToken = accessToken;
         const initial = normalizeCoordinate(snappedPosition?.coordinate)
@@ -521,16 +535,8 @@ export default function LiveVectorMap({
           const reason = event?.error?.message || "Live vector map failed to initialize";
           setMessage(reason);
         });
-
-        startupTimer = window.setTimeout(() => {
-          if (disposed || loadedRef.current) return;
-          map?.remove();
-          mapRef.current = null;
-          setStatus("fallback");
-          callbacksRef.current.onUnavailable?.("Live map startup exceeded 10 seconds");
-        }, 10000);
       } catch (error) {
-        if (disposed) return;
+        if (disposed || timedOut) return;
         const reason = error?.response?.data?.error || error?.message || "Live vector map is unavailable";
         setMessage(reason);
         setStatus("fallback");

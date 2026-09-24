@@ -3,6 +3,7 @@ import { Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
 import MapQualityMenu from "@/components/map/MapQualityMenu";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
+import { withTimeout } from "@/lib/promiseTimeout";
 import LiveVectorMap from "@/components/LiveVectorMap";
 import FuelDealsOverlay from "@/components/map/FuelDealsOverlay";
 
@@ -284,7 +285,10 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
       lastMapRequestAtRef.current = Date.now();
       setLoading(true);
       setError("");
-      base44LiveFunctions.functions.invoke("navigation-engine", {
+      // The invoke has no client-side timeout: race it so a hung fetch can
+      // never leave "Loading real Mapbox streets…" spinning forever. A
+      // timeout flows into the normal error path below.
+      withTimeout(base44LiveFunctions.functions.invoke("navigation-engine", {
         action: "static_map",
         viewport: {
           ...viewport,
@@ -297,7 +301,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           route_geometry: perspective ? staticRouteGeometry : null,
           driver_coordinate: perspective ? displayCoord || null : null,
         },
-      }).then((response) => {
+      }), 20000, "The map service is taking too long to respond").then((response) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
         const dataUrl = response.data?.map?.data_url || "";
         if (!dataUrl) throw new Error("Map provider returned no basemap image");
