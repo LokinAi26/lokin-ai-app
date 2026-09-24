@@ -283,7 +283,7 @@ export default function AiGps() {
         <div className="rounded-2xl border border-accent/20 bg-accent/[0.04] p-3 flex items-center gap-3">
           <Satellite className="h-4 w-4 text-accent animate-pulse" />
           <div className="text-xs text-white/60">
-            {loadingStops ? "Loading optimized delivery addresses…" : nav.status === "waiting_location" ? "Waiting for precise device GPS…" : "Geocoding stops and building the road-matched route…"}
+            {loadingStops ? "Loading optimized delivery addresses…" : nav.status === "waiting_location" ? (nav.waitingDetail || "Waiting for precise device GPS…") : "Geocoding stops and building the road-matched route…"}
           </div>
         </div>
       )}
@@ -457,6 +457,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             <div className="mt-2 text-sm text-white/55">
               {error ? "Navigation needs attention" : waiting ? "Locking onto your live road route…" : "Waiting for a destination…"}
             </div>
+            {!error && waiting && nav.waitingDetail && (
+              <div className="mt-2 text-xs leading-relaxed text-white/40">{nav.waitingDetail}</div>
+            )}
           </div>
         </div>
       )}
@@ -501,8 +504,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">
           <AlertTriangle className="mx-auto h-6 w-6 text-red-300" />
           <div className="mt-2 text-sm font-bold text-red-200">{error}</div>
-          {nav.rawPosition && destinationAddresses.length > 0 && (
-            <button onClick={nav.retry} className="mt-4 rounded-2xl bg-primary px-5 py-3 text-xs font-extrabold text-black">RETRY GPS</button>
+          {destinationAddresses.length > 0 && (
+            <button onClick={nav.rawPosition ? nav.retry : nav.restartLocation} className="mt-4 rounded-2xl bg-primary px-5 py-3 text-xs font-extrabold text-black">RETRY GPS</button>
           )}
         </div>
       )}
