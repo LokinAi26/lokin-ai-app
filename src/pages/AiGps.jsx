@@ -460,10 +460,10 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
-          <img src={LOKIN_SKYLINE_BG} alt="Lokin GPS skyline" className="absolute inset-0 h-full w-full object-cover opacity-55" draggable={false} />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,12,10,0.58),rgba(2,6,5,0.9))]" />
+          <img src={LOKIN_SKYLINE_BG} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-55" draggable={false} />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,12,10,0.58),rgba(2,6,5,0.9))]" />
           <div>
-            <img src={LOKIN_CENTER} alt="Lokin emblem" className="mx-auto h-14 w-14 rounded-full border border-primary/35 bg-black/60 p-2 object-contain shadow-[0_0_18px_rgba(204,255,0,0.35)]" draggable={false} />
+            <img src={LOKIN_CENTER} alt="" aria-hidden="true" className="mx-auto h-14 w-14 rounded-full border border-primary/35 bg-black/60 p-2 object-contain shadow-[0_0_18px_rgba(204,255,0,0.35)]" draggable={false} />
             <Radar className="mx-auto h-10 w-10 animate-pulse text-primary" />
             <div className="mt-4 font-display text-lg font-black tracking-[0.16em] text-primary">LOKIN GPS</div>
             <div className="mt-2 text-sm text-white/55">
