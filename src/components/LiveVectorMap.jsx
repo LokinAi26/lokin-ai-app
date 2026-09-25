@@ -525,6 +525,7 @@ export default function LiveVectorMap({
           baggz247Master.map = map;
           baggz247Master.registerSignatureLandmarks();
           baggz247Master.registerBatch2Landmarks();
+          baggz247Master.registerBatch3Landmarks();
           baggz247Master.startAnimatedTraffic();
           meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {

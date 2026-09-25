@@ -648,6 +648,77 @@ export class MasterBuilder {
     }
   }
 
+  // BAGGZ_247 Batch 3 — 8 true-to-life landmarks from real OSM footprints.
+  // Built 2026-09-25: meter units, Y-up, true/documented heights, facade
+  // detail. Placement coordinates are the real OSM ring centroids.
+  registerBatch3Landmarks() {
+    const landmarks = [
+      {
+        id: "baggz247-vb-convention-center",
+        name: "Virginia Beach Convention Center",
+        lat: 36.84566,
+        lng: -75.9874,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b8021b654_vb-convention-center.glb",
+      },
+      {
+        id: "baggz247-norfolk-scope",
+        name: "Norfolk Scope Arena",
+        lat: 36.85326,
+        lng: -76.28689,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b8f39283a_norfolk-scope.glb",
+      },
+      {
+        id: "baggz247-nauticus",
+        name: "Nauticus / Half Moone Cruise Terminal",
+        lat: 36.84767,
+        lng: -76.29532,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/86d636ae1_nauticus.glb",
+      },
+      {
+        id: "baggz247-lynnhaven-mall",
+        name: "Lynnhaven Mall",
+        lat: 36.81617,
+        lng: -76.07122,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3aef93743_lynnhaven-mall.glb",
+      },
+      {
+        id: "baggz247-downtown-norfolk-towers",
+        name: "Downtown Norfolk tower cluster",
+        lat: 36.84321,
+        lng: -76.28774,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d41128bbf_downtown-norfolk-towers.glb",
+      },
+      {
+        id: "baggz247-hampton-coliseum",
+        name: "Hampton Coliseum",
+        lat: 37.0347,
+        lng: -76.38137,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/71f8cac51_hampton-coliseum.glb",
+      },
+      {
+        id: "baggz247-cavalier-hotel",
+        name: "The Cavalier Hotel",
+        lat: 36.86923,
+        lng: -75.9837,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f99c23f41_cavalier-hotel.glb",
+      },
+      {
+        id: "baggz247-cbbt-portal",
+        name: "Chesapeake Bay Bridge-Tunnel south portal",
+        lat: 36.96565,
+        lng: -76.11299,
+        url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/cf013aeed_cbbt-portal.glb",
+      },
+    ];
+    for (const lm of landmarks) {
+      try {
+        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
+      } catch (e) {
+        console.warn("[baggz247] batch3 landmark failed:", lm.id, e);
+      }
+    }
+  }
+
   // Moves a placed traffic entity by rewriting its GeoJSON point source.
   _setTrafficPoint(record, lng, lat) {
     if (!this.map || !record) return;
