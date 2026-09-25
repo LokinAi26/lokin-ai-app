@@ -99,7 +99,7 @@ function DashboardScreen() {
 function ActiveDeliveryScreen() {
   return (
     <div className="relative h-full p-3 flex flex-col">
-      <img src="/assets/lokin-emblem.png" alt="Lokin emblem" className="absolute right-4 top-5 h-10 w-10 rounded-full border border-primary/40 bg-black/50 p-1.5 object-contain shadow-[0_0_16px_rgba(204,255,0,0.35)]" draggable={false} />
+      <img src={LOKIN_CENTER} alt="Lokin emblem" className="absolute right-4 top-5 h-10 w-10 rounded-full border border-primary/40 bg-black/50 p-1.5 object-contain shadow-[0_0_16px_rgba(204,255,0,0.35)]" draggable={false} />
       <div className="mt-6 text-[10px] text-primary tracking-wide font-bold">ACTIVE DELIVERY</div>
       <div className="mt-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
         <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ function ActiveDeliveryScreen() {
 function EarningsScreen() {
   return (
     <div className="relative h-full p-3 flex flex-col">
-      <img src="/assets/city-skyline-night.png" alt="Lokin skyline" className="pointer-events-none absolute bottom-0 left-0 h-28 w-full object-cover opacity-25" draggable={false} />
+      <img src={LOKIN_SKYLINE_BG} alt="Lokin skyline" className="pointer-events-none absolute bottom-0 left-0 h-28 w-full object-cover opacity-25" draggable={false} />
       <div className="mt-6 text-[10px] text-primary tracking-wide font-bold">EARNINGS</div>
       <div className="mt-1 text-3xl font-display font-extrabold text-primary text-glow">$87.40</div>
       <div className="text-[10px] text-white/45">Gross today · 5 trips · 12 mi</div>
