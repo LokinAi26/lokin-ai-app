@@ -88,7 +88,7 @@ function DashboardScreen() {
             <circle cx="50" cy="50" r={R} fill="none" stroke="#ccff00" strokeWidth="5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} className="lokin-route" />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <img src={LOKIN_CENTER} alt="Lokin emblem" className="h-11 w-11 object-contain lokin-pulse" draggable={false} />
+            <img src={LOKIN_CENTER} alt="" aria-hidden="true" className="h-11 w-11 object-contain lokin-pulse" draggable={false} />
           </div>
         </div>
         <button className="mt-3 rounded-full bg-primary text-black text-xs font-extrabold tracking-wider px-6 py-2 glow-primary">START WORK</button>
