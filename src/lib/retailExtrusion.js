@@ -15,8 +15,16 @@
 // cell cache (geometry is too large for localStorage), hard cap on building
 // count, 30 s Overpass deadline, and fully disabled in "performance" quality.
 
-const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 const OVERPASS_TIMEOUT_MS = 30000;
+// Retry schedule across endpoints: primary -> fallback -> primary, then stop.
+// The layer never invents data; when every attempt fails it reports an honest
+// error status instead of failing silently.
+const RETRY_DELAYS_MS = [2000, 5000];
+const AUTO_RETRY_MS = 45000;
 const MAX_BUILDINGS = 350;
 const MIN_ZOOM = 13.5;
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -32,6 +40,10 @@ const LABEL_LAYER_ID = "lokin-retail-labels";
 // Labels appear a touch closer than the extrusions so they never clutter
 // the mid-zoom view — the buildings arrive first, names follow.
 const LABEL_MIN_ZOOM = 14.5;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function haversineMeters(a, b) {
   const R = 6371000;
@@ -104,6 +116,35 @@ class RetailExtrusion {
     this.debounceTimer = null;
     this.disposed = false;
     this.visible = false;
+    // Honest data-service status for the view: idle | loading | ready | error.
+    // "error" means every fetch attempt failed and nothing is on the map.
+    // When cached data is still visible, a failed refresh stays silent.
+    this.status = "idle";
+    this.statusListeners = new Set();
+    this.autoRetryTimer = null;
+  }
+
+  setStatus(next) {
+    if (this.status === next || this.disposed) return;
+    this.status = next;
+    for (const cb of this.statusListeners) {
+      try {
+        cb(next);
+      } catch {
+        /* listener bug must not break the layer */
+      }
+    }
+  }
+
+  // Subscribe to data-service status. Returns an unsubscribe function.
+  onStatus(cb) {
+    this.statusListeners.add(cb);
+    try {
+      cb(this.status);
+    } catch {
+      /* ignore */
+    }
+    return () => this.statusListeners.delete(cb);
   }
 
   setEnabled(on) {
@@ -146,10 +187,15 @@ class RetailExtrusion {
     if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
       this.lastCenter = at;
       this.applyGeoJSON(hit.geojson);
+      this.setStatus("ready");
+      window.clearTimeout(this.autoRetryTimer);
+      this.autoRetryTimer = null;
       return;
     }
 
     this.inFlight = this.fetchBuildings(bounds);
+    const hadVisible = this.visible;
+    if (!hadVisible) this.setStatus("loading");
     try {
       const geojson = await this.inFlight;
       this.cache.set(key, { at: Date.now(), geojson });
@@ -159,14 +205,33 @@ class RetailExtrusion {
       }
       this.lastCenter = at;
       this.applyGeoJSON(geojson);
+      this.setStatus("ready");
+      window.clearTimeout(this.autoRetryTimer);
+      this.autoRetryTimer = null;
     } catch {
       // Overpass busy or offline: keep whatever is on the map, never blank it.
+      // Only report an honest error when there is nothing to show.
+      if (!this.visible) {
+        this.setStatus("error");
+        this.scheduleAutoRetry();
+      }
     } finally {
       this.inFlight = null;
     }
   }
 
-  async fetchBuildings(bounds) {
+  scheduleAutoRetry() {
+    window.clearTimeout(this.autoRetryTimer);
+    this.autoRetryTimer = window.setTimeout(() => {
+      this.autoRetryTimer = null;
+      if (this.disposed || !this.enabled || !this.map) return;
+      if (this.status !== "error") return;
+      // refresh() re-checks the zoom gate and hides cleanly when zoomed out.
+      this.refresh(this.map.getBounds());
+    }, AUTO_RETRY_MS);
+  }
+
+  buildOverpassQuery(bounds) {
     // Clamp the query box to ~1.6 km so Overpass stays fast on mobile data.
     const c = bounds.getCenter();
     const dLat = 0.0072;
@@ -176,11 +241,14 @@ class RetailExtrusion {
     const w = c.lng - dLon;
     const e = c.lng + dLon;
     const bbox = `${s.toFixed(5)},${w.toFixed(5)},${n.toFixed(5)},${e.toFixed(5)}`;
-    const q = `[out:json][timeout:20];(way["building"~"retail|commercial|supermarket|warehouse"](${bbox});way["shop"](${bbox});way["amenity"~"restaurant|fast_food|cafe"](${bbox}););out geom tags ${MAX_BUILDINGS};`;
+    return `[out:json][timeout:20];(way["building"~"retail|commercial|supermarket|warehouse"](${bbox});way["shop"](${bbox});way["amenity"~"restaurant|fast_food|cafe"](${bbox}););out geom tags ${MAX_BUILDINGS};`;
+  }
+
+  async fetchOnce(endpoint, q) {
     const controller = new AbortController();
     const abortTimer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
     try {
-      const res = await fetch(OVERPASS_ENDPOINT, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
         body: "data=" + encodeURIComponent(q),
@@ -192,6 +260,25 @@ class RetailExtrusion {
     } finally {
       clearTimeout(abortTimer);
     }
+  }
+
+  async fetchBuildings(bounds) {
+    const q = this.buildOverpassQuery(bounds);
+    let lastError = null;
+    const attempts = OVERPASS_ENDPOINTS.length + 1; // primary -> fallback -> primary
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      if (attempt > 0) {
+        await sleep(RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)]);
+      }
+      if (this.disposed || !this.enabled) throw lastError || new Error("retail layer stopped");
+      const endpoint = OVERPASS_ENDPOINTS[attempt % OVERPASS_ENDPOINTS.length];
+      try {
+        return await this.fetchOnce(endpoint, q);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
   }
 
   applyGeoJSON(geojson) {
@@ -268,6 +355,9 @@ class RetailExtrusion {
 
   hide() {
     this.visible = false;
+    window.clearTimeout(this.autoRetryTimer);
+    this.autoRetryTimer = null;
+    this.setStatus("idle");
     try {
       if (this.map?.getLayer(LAYER_ID)) this.map.setLayoutProperty(LAYER_ID, "visibility", "none");
       if (this.map?.getLayer(LABEL_LAYER_ID))
@@ -288,6 +378,9 @@ class RetailExtrusion {
   destroy() {
     this.disposed = true;
     window.clearTimeout(this.debounceTimer);
+    window.clearTimeout(this.autoRetryTimer);
+    this.autoRetryTimer = null;
+    this.statusListeners.clear();
     this.cache.clear();
     this.inFlight = null;
     try {

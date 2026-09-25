@@ -404,6 +404,8 @@ export default function LiveVectorMap({
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [cameraPitch, setCameraPitch] = useState(perspective ? 78 : 0);
+  // Honest retail data-service status: idle | loading | ready | error.
+  const [retailStatus, setRetailStatus] = useState("idle");
 
   routeRef.current = routeGeometry;
   stopsRef.current = deliveryStops;
@@ -417,6 +419,8 @@ export default function LiveVectorMap({
     let disposed = false;
     let startupTimer = null;
     let map = null;
+    // Honest retail data-service status (error pill, auto-retrying).
+    const offRetailStatus = retailExtrusion.onStatus(setRetailStatus);
 
     async function start() {
       // Startup watchdog FIRST: the map_config fetch below can hang
@@ -556,6 +560,7 @@ export default function LiveVectorMap({
     start();
     return () => {
       disposed = true;
+      offRetailStatus?.();
       window.clearTimeout(startupTimer);
       window.clearTimeout(resumeTimerRef.current);
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
@@ -789,6 +794,11 @@ export default function LiveVectorMap({
       {status === "fallback" && message && (
         <div className="absolute inset-x-4 top-4 z-10 rounded-xl border border-amber-300/25 bg-black/85 px-3 py-2 text-center text-[10px] text-amber-200">
           {message}
+        </div>
+      )}
+      {retailStatus === "error" && (
+        <div className="absolute inset-x-4 top-16 z-10 rounded-xl border border-amber-300/25 bg-black/85 px-3 py-2 text-center text-[10px] text-amber-200">
+          Store map data unavailable · retrying
         </div>
       )}
     </div>
