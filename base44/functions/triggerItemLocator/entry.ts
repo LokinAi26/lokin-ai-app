@@ -1,6 +1,8 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { isVirginiaZipCode, normalizeZipCode } from "../../shared/virginia.ts";
 
+const DEFAULT_GEOFENCE_RADIUS_METERS = 1.5; // 5 feet
+
 function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -42,7 +44,7 @@ export default async function triggerItemLocator(req: Request) {
       if (store_zip_code && normalizeZipCode(item?.zip_code) !== store_zip_code) continue;
 
       const radius = Number(item?.geofence_radius_meters);
-      const maxRadius = Number.isFinite(radius) && radius > 0 ? radius : 1.5;
+      const maxRadius = Number.isFinite(radius) && radius > 0 ? radius : DEFAULT_GEOFENCE_RADIUS_METERS;
       const distance = haversineMeters(driver_latitude, driver_longitude, geofenceLat, geofenceLon);
       if (distance > maxRadius) continue;
 

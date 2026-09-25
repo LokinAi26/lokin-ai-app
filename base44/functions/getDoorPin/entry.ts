@@ -12,16 +12,6 @@ function normalizeAddress(value: unknown) {
     .trim();
 }
 
-function uniqueById(rows: any[]) {
-  const seen = new Set<string>();
-  return rows.filter((row) => {
-    const key = String(row?.id || "");
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
 export default async function getDoorPin(req: Request) {
   try {
     const base44 = createClientFromRequest(req);
@@ -46,11 +36,7 @@ export default async function getDoorPin(req: Request) {
     }
 
     if (zip_code) {
-      const [driverRows, allRows] = await Promise.all([
-        base44.asServiceRole.entities.DoorPin.filter({ driver_id, zip_code }, "-updated_date", 200, 0),
-        base44.asServiceRole.entities.DoorPin.filter({ zip_code }, "-updated_date", 200, 0),
-      ]);
-      rows = uniqueById([...(driverRows || []), ...(allRows || [])]);
+      rows = await base44.asServiceRole.entities.DoorPin.filter({ driver_id, zip_code }, "-updated_date", 200, 0);
     } else {
       rows = await base44.asServiceRole.entities.DoorPin.filter({ driver_id }, "-updated_date", 200, 0);
     }

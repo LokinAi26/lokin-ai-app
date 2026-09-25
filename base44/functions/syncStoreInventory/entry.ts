@@ -2,7 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { supportedStoreApis, syncFromStoreApi } from "../../shared/storeApiRegistry.ts";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
-const syncCache = new Map<string, { expiresAt: number; payload: any }>();
+const syncCache = new Map<string, { expiresAt: number; items: any[]; store: string; source: string }>();
 
 function cacheKey(source: string, storeCode: string) {
   return `${source.toLowerCase()}::${storeCode.toLowerCase()}`;
@@ -35,13 +35,20 @@ export default async function syncStoreInventory(req: Request) {
     const key = cacheKey(store_api_source, store_location_code);
     const now = Date.now();
     const cache = syncCache.get(key);
-    if (cache && cache.expiresAt > now) {
-      console.log("[syncStoreInventory] cache hit", { source: store_api_source, store_location_code });
-      return Response.json(cache.payload);
+    const cacheHit = Boolean(cache && cache.expiresAt > now);
+    let resolvedItems = cacheHit ? (cache?.items || []) : [];
+    if (!cacheHit) {
+      const remote = await syncFromStoreApi(store_api_source, { store_location_code, api_key_id });
+      resolvedItems = Array.isArray(remote.items) ? remote.items : [];
+      syncCache.set(key, {
+        expiresAt: now + CACHE_TTL_MS,
+        items: resolvedItems,
+        source: store_api_source,
+        store: store_location_code,
+      });
+    } else {
+      console.log("[syncStoreInventory] cache hit", { source: store_api_source, store_location_code, items: resolvedItems.length });
     }
-
-    const remote = await syncFromStoreApi(store_api_source, { store_location_code, api_key_id });
-    const items = Array.isArray(remote.items) ? remote.items : [];
     const existing = await base44.asServiceRole.entities.LocatorItem.filter({ store: store_location_code }, "-updated_date", 1000, 0);
     const existingByKey = new Map<string, any>();
     for (const row of existing) {
@@ -54,7 +61,7 @@ export default async function syncStoreInventory(req: Request) {
     let synced_count = 0;
     const last_sync = new Date().toISOString();
 
-    for (const item of items) {
+    for (const item of resolvedItems) {
       try {
         const keyPart = String(item.barcode || item.item_code || item.name || "").toLowerCase();
         if (!keyPart) continue;
@@ -91,8 +98,8 @@ export default async function syncStoreInventory(req: Request) {
       store: store_location_code,
       source: store_api_source,
       cache_ttl_ms: CACHE_TTL_MS,
+      cache_hit: cacheHit,
     };
-    syncCache.set(key, { expiresAt: now + CACHE_TTL_MS, payload });
     console.log("[syncStoreInventory] completed", payload);
     return Response.json(payload);
   } catch (error) {

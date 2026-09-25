@@ -158,7 +158,7 @@ function LocatorContent() {
             {item.map_zone && <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60"><Layers3 className="inline h-3.5 w-3.5 mr-1"/>Zone {item.map_zone}</span>}
           </div>
           <button onClick={addToTrip} className="mt-3 w-full rounded-xl border border-primary/25 bg-primary/[0.06] py-2 text-xs font-bold text-primary disabled:opacity-40" disabled={tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode))}>{tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode)) ? "ADDED TO SMART SHOP" : "+ ADD TO SMART SHOP"}</button>
-          <button onClick={() => setReportOpen(true)} className="mt-2 w-full rounded-xl border border-primary/25 bg-primary/[0.04] py-2 text-xs font-bold text-primary">
+          <button type="button" onClick={() => setReportOpen(true)} className="mt-2 w-full rounded-xl border border-primary/25 bg-primary/[0.04] py-2 text-xs font-bold text-primary">
             Found It! Report exact location
           </button>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/35">

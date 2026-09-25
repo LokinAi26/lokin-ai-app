@@ -13,6 +13,11 @@ import useDoorPin from "@/hooks/useDoorPin";
 const STATUS = ["5 MIN AWAY", "AT PICKUP", "ON MY WAY", "OUTSIDE"];
 const AUTO_MSGS = ["Order Confirmed", "On My Way", "Arriving Soon", "Delivered"];
 
+function zipFromAddress(address) {
+  const match = String(address || "").match(/\b(\d{5})(?:-\d{4})?\b/);
+  return match?.[1] || "";
+}
+
 export default function ActiveDelivery() {
   const [data, setData] = useState(null);
   const [prefs, setPrefs] = useState(null);
@@ -26,10 +31,11 @@ export default function ActiveDelivery() {
   // Auto-learn the door: when a drop-off is marked delivered, quietly save
   // where the driver actually stopped. A manual pin later overrides it.
   function autoLearnDoor(address) {
-    if (!address || hasSavedDoorPin) return;
+    if (!address || hasDoorPinForAddress(address)) return;
     captureDoorFix(12000)
       .then((fix) => saveDoorPinRemote({
         targetAddress: address,
+        zip_code: zipFromAddress(address),
         latitude: fix.latitude,
         longitude: fix.longitude,
         description: "auto delivery confirmation",
@@ -45,6 +51,7 @@ export default function ActiveDelivery() {
       const fix = await captureDoorFix(15000);
       await saveDoorPinRemote({
         targetAddress: address,
+        zip_code: zipFromAddress(address),
         latitude: fix.latitude,
         longitude: fix.longitude,
         description: "manual driver pin",
@@ -79,7 +86,12 @@ export default function ActiveDelivery() {
   const stops = data?.sequenced || [];
   const total = stops.length;
   const current = stops[idx];
-  const { saveDoorPin: saveDoorPinRemote, hasDoorPin: hasSavedDoorPin, refresh: refreshDoorPin } = useDoorPin(current?.dropoff_address || "");
+  const currentZip = zipFromAddress(current?.dropoff_address || "");
+  const {
+    saveDoorPin: saveDoorPinRemote,
+    hasDoorPinForAddress,
+    refresh: refreshDoorPin,
+  } = useDoorPin(current?.dropoff_address || "", currentZip);
   const delivered = statusIdx === 4;
 
   useEffect(() => {
@@ -93,7 +105,7 @@ export default function ActiveDelivery() {
     setStatusIdx(4);
     setAuto(true); // ensure delivered auto-message
     autoLearnDoor(current?.dropoff_address || "");
-    setPinState(hasSavedDoorPin ? "pinned" : "idle");
+    setPinState(hasDoorPinForAddress(current?.dropoff_address || "") ? "pinned" : "idle");
   }
   function nextDelivery() {
     if (idx < total - 1) { setIdx(idx + 1); setStatusIdx(-1); }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 
 export default function DriverReportModal({ open, onClose, item, onSubmit, currentCoords }) {
@@ -6,6 +6,20 @@ export default function DriverReportModal({ open, onClose, item, onSubmit, curre
   const [shelf, setShelf] = useState("");
   const [confidence, setConfidence] = useState(3);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setAisle("");
+      setShelf("");
+      setConfidence(3);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setAisle("");
+    setShelf("");
+    setConfidence(3);
+  }, [item?.id]);
 
   if (!open || !item) return null;
 

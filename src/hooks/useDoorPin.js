@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeAddressKey, setDoorPinMemory } from "@/lib/doorPins";
 
@@ -7,10 +7,12 @@ export default function useDoorPin(address = "", zipCode = "") {
   const [pins, setPins] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
 
   const addressKey = useMemo(() => normalizeAddressKey(address), [address]);
 
   const refresh = useCallback(async (opts = {}) => {
+    const requestId = ++requestIdRef.current;
     const body = {};
     if (opts.address != null ? opts.address : address) body.address = opts.address != null ? opts.address : address;
     if (opts.zip_code != null ? opts.zip_code : zipCode) body.zip_code = opts.zip_code != null ? opts.zip_code : zipCode;
@@ -20,6 +22,7 @@ export default function useDoorPin(address = "", zipCode = "") {
     try {
       const response = await base44.functions.invoke("getDoorPin", body);
       const payload = response?.data;
+      if (requestId !== requestIdRef.current) return payload;
       if (Array.isArray(payload)) {
         const next = payload.map((pin) => setDoorPinMemory(pin)).filter(Boolean);
         setPins(next);
@@ -32,9 +35,11 @@ export default function useDoorPin(address = "", zipCode = "") {
       }
       return payload;
     } catch (err) {
+      if (requestId !== requestIdRef.current) return null;
       setError(err?.message || "Failed to fetch door pin");
       return null;
     } finally {
+      if (requestId !== requestIdRef.current) return;
       setLoading(false);
     }
   }, [address, zipCode, addressKey]);
@@ -66,9 +71,20 @@ export default function useDoorPin(address = "", zipCode = "") {
   }, [address, zipCode]);
 
   useEffect(() => {
-    if (!addressKey) return;
+    if (!addressKey) {
+      setDoorPin(null);
+      setPins([]);
+      return;
+    }
     refresh({ address });
   }, [addressKey, address, refresh]);
+
+  const hasDoorPinForAddress = useCallback((targetAddress) => {
+    const key = normalizeAddressKey(targetAddress);
+    if (!key) return false;
+    if (doorPin && normalizeAddressKey(doorPin?.address || doorPin?.display_address) === key) return true;
+    return pins.some((pin) => normalizeAddressKey(pin?.address || pin?.display_address) === key);
+  }, [doorPin, pins]);
 
   return {
     doorPin,
@@ -76,6 +92,7 @@ export default function useDoorPin(address = "", zipCode = "") {
     loading,
     error,
     hasDoorPin: Boolean(doorPin),
+    hasDoorPinForAddress,
     refresh,
     saveDoorPin: save,
   };
