@@ -8,6 +8,7 @@ import {
   shouldAcceptNavigationSample,
 } from "@/lib/navigationPerformance";
 import { mapArchitect, baggz247Master, meshBuilder } from "@/lib/mapArchitect";
+import { retailExtrusion } from "@/lib/retailExtrusion";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -490,6 +491,10 @@ export default function LiveVectorMap({
           if (event?.originalEvent) markInteraction();
         });
         map.on("moveend", scheduleResume);
+        map.on("moveend", () => {
+          if (disposed) return;
+          retailExtrusion.refresh(map.getBounds());
+        });
         map.on("pitch", (event) => {
           const nextPitch = clamp(map.getPitch(), 0, 80);
           setCameraPitch(nextPitch);
@@ -501,6 +506,7 @@ export default function LiveVectorMap({
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
           addDeliveryStopLayers(map, stopsRef.current);
+          retailExtrusion.reapplyAfterStyleLoad();
           if (style3dRef.current && qualityRef.current !== "performance") {
             meshBuilder.alignWithRoute(routeRef.current);
           }
@@ -528,6 +534,8 @@ export default function LiveVectorMap({
             baggz247Master.enhanceVisibleArea(map.getBounds());
             meshBuilder.startAnimations();
           }
+          retailExtrusion.map = map;
+          retailExtrusion.setEnabled(style3dRef.current && qualityRef.current !== "performance");
         });
 
         map.on("error", (event) => {
@@ -555,6 +563,7 @@ export default function LiveVectorMap({
       mapArchitect.destroy();
       baggz247Master.destroy();
       meshBuilder.destroy();
+      retailExtrusion.destroy();
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
@@ -586,6 +595,7 @@ export default function LiveVectorMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     mapArchitect.setQuality(!style3d ? "performance" : quality);
+    retailExtrusion.setEnabled(style3d && quality !== "performance");
   }, [style3d, quality]);
 
   useEffect(() => {
