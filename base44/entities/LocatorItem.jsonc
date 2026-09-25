@@ -73,6 +73,10 @@
       "type": "number",
       "default": 0
     },
+    "confidence_weight_total": {
+      "type": "number",
+      "default": 0
+    },
     "last_driver_report": {
       "type": "string"
     },

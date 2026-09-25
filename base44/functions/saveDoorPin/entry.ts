@@ -32,6 +32,7 @@ export default async function saveDoorPin(req: Request) {
     const map_x = body.map_x == null ? null : finiteNumber(body.map_x, "map_x");
     const map_y = body.map_y == null ? null : finiteNumber(body.map_y, "map_y");
     const precise_location_description = String(body.description || "").trim().slice(0, 200);
+    const source = String(body.source || "manual").toLowerCase() === "auto" ? "auto" : "manual";
 
     if (!address) {
       return Response.json({ error: "address is required" }, { status: 400 });
@@ -63,7 +64,7 @@ export default async function saveDoorPin(req: Request) {
         display_address: String(body.address || "").trim() || row.display_address || "",
         latitude: gps_latitude,
         longitude: gps_longitude,
-        source: "manual",
+        source,
         confirmations: verified_by_delivery_count,
         updated_at: now,
       });
@@ -84,7 +85,7 @@ export default async function saveDoorPin(req: Request) {
         display_address: String(body.address || "").trim(),
         latitude: gps_latitude,
         longitude: gps_longitude,
-        source: "manual",
+        source,
         confirmations: 1,
       });
     }

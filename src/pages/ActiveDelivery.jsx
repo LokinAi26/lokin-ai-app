@@ -30,17 +30,23 @@ export default function ActiveDelivery() {
 
   // Auto-learn the door: when a drop-off is marked delivered, quietly save
   // where the driver actually stopped. A manual pin later overrides it.
-  function autoLearnDoor(address) {
-    if (!address || hasDoorPinForAddress(address)) return;
-    captureDoorFix(12000)
-      .then((fix) => saveDoorPinRemote({
+  async function autoLearnDoor(address) {
+    if (!address || hasDoorPinForAddress(address)) return false;
+    try {
+      const fix = await captureDoorFix(12000);
+      await saveDoorPinRemote({
         targetAddress: address,
         zip_code: zipFromAddress(address),
         latitude: fix.latitude,
         longitude: fix.longitude,
         description: "auto delivery confirmation",
-      }))
-      .catch(() => {});
+        source: "auto",
+      });
+      await refreshDoorPin({ address, zip_code: zipFromAddress(address) });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async function pinTheDoor() {
@@ -55,8 +61,9 @@ export default function ActiveDelivery() {
         latitude: fix.latitude,
         longitude: fix.longitude,
         description: "manual driver pin",
+        source: "manual",
       });
-      await refreshDoorPin({ address });
+      await refreshDoorPin({ address, zip_code: zipFromAddress(address) });
       setPinState("pinned");
     } catch {
       setPinState("error");
@@ -101,11 +108,12 @@ export default function ActiveDelivery() {
   }, [current?.id]);
 
   function pickStop(i) { setIdx(i); setStatusIdx(-1); setPinState("idle"); }
-  function markDelivered() {
+  async function markDelivered() {
     setStatusIdx(4);
     setAuto(true); // ensure delivered auto-message
-    autoLearnDoor(current?.dropoff_address || "");
-    setPinState(hasDoorPinForAddress(current?.dropoff_address || "") ? "pinned" : "idle");
+    const address = current?.dropoff_address || "";
+    const learned = await autoLearnDoor(address);
+    setPinState(learned || hasDoorPinForAddress(address) ? "pinned" : "idle");
   }
   function nextDelivery() {
     if (idx < total - 1) { setIdx(idx + 1); setStatusIdx(-1); }

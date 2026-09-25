@@ -29,7 +29,7 @@ export default async function reportItemLocation(req: Request) {
     if (!item?.id) return Response.json({ error: "LocatorItem not found" }, { status: 404 });
 
     const previousCount = Number(item.driver_reports_count || 0);
-    const previousWeight = Math.max(previousCount, 0);
+    const previousWeight = Math.max(Number(item.confidence_weight_total || 0), 0);
     const nextWeight = previousWeight + confidenceWeight;
 
     const previousMapX = Number(item.map_x);
@@ -53,6 +53,7 @@ export default async function reportItemLocation(req: Request) {
       map_y,
       map_verified: true,
       driver_reports_count: previousCount + 1,
+      confidence_weight_total: nextWeight,
       report_count: Number(item.report_count || 0) + 1,
       last_driver_report: new Date().toISOString(),
       reported_by: String(user.id),

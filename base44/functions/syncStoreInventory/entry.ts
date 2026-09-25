@@ -49,7 +49,10 @@ export default async function syncStoreInventory(req: Request) {
     } else {
       console.log("[syncStoreInventory] cache hit", { source: store_api_source, store_location_code, items: resolvedItems.length });
     }
-    const existing = await base44.asServiceRole.entities.LocatorItem.filter({ store: store_location_code }, "-updated_date", 1000, 0);
+    const existing = await base44.asServiceRole.entities.LocatorItem.filter({
+      store: store_location_code,
+      store_api_source,
+    }, "-updated_date", 1000, 0);
     const existingByKey = new Map<string, any>();
     for (const row of existing) {
       const k = String(row.barcode || row.item_code || row.name || "").toLowerCase();

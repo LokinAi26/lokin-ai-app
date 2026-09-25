@@ -44,7 +44,7 @@ export default function useDoorPin(address = "", zipCode = "") {
     }
   }, [address, zipCode, addressKey]);
 
-  const save = useCallback(async ({ latitude, longitude, map_x = null, map_y = null, description = "", zip_code = zipCode, targetAddress = address } = {}) => {
+  const save = useCallback(async ({ latitude, longitude, map_x = null, map_y = null, description = "", source = "manual", zip_code = zipCode, targetAddress = address } = {}) => {
     const lat = Number(latitude);
     const lon = Number(longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error("Door pin requires finite latitude and longitude");
@@ -56,6 +56,7 @@ export default function useDoorPin(address = "", zipCode = "") {
       map_x: map_x == null ? null : Number(map_x),
       map_y: map_y == null ? null : Number(map_y),
       description,
+      source,
     };
     const response = await base44.functions.invoke("saveDoorPin", payload);
     const normalized = setDoorPinMemory(response?.data);
@@ -76,8 +77,8 @@ export default function useDoorPin(address = "", zipCode = "") {
       setPins([]);
       return;
     }
-    refresh({ address });
-  }, [addressKey, address, refresh]);
+    refresh({ address, zip_code: zipCode });
+  }, [addressKey, address, zipCode, refresh]);
 
   const hasDoorPinForAddress = useCallback((targetAddress) => {
     const key = normalizeAddressKey(targetAddress);
