@@ -3,7 +3,9 @@
 // Data: OpenStreetMap building footprints with retail/commercial tags, fetched
 // live from Overpass for the visible map area (same feed family as the store
 // geofence). Rendered as a Mapbox fill-extrusion layer so strip malls and
-// storefronts that Mapbox's own 3D buildings leave flat get real mass.
+// storefronts that Mapbox's own 3D buildings leave flat get real mass, plus a
+// symbol layer that labels the buildings carrying real OSM name/brand tags —
+// the layer never invents a building or a store name.
 //
 // Honest-data rules: footprints and heights come from OSM tags only. A missing
 // height tag falls back to a documented 7 m retail estimate — the layer never
@@ -26,6 +28,10 @@ const LEVEL_HEIGHT_M = 3.4;
 
 const SOURCE_ID = "lokin-retail-buildings";
 const LAYER_ID = "lokin-retail-extrusions";
+const LABEL_LAYER_ID = "lokin-retail-labels";
+// Labels appear a touch closer than the extrusions so they never clutter
+// the mid-zoom view — the buildings arrive first, names follow.
+const LABEL_MIN_ZOOM = 14.5;
 
 function haversineMeters(a, b) {
   const R = 6371000;
@@ -197,15 +203,17 @@ class RetailExtrusion {
       } else {
         map.getSource(SOURCE_ID).setData(geojson);
       }
-      if (!map.getLayer(LAYER_ID)) {
-        // Insert below the first symbol layer so extrusions never cover labels.
-        let beforeId = null;
-        for (const layer of map.getStyle().layers || []) {
-          if (layer.type === "symbol") {
-            beforeId = layer.id;
-            break;
-          }
+      // Insert below the first symbol layer so extrusions never cover
+      // map labels. The name labels go in the same slot, right above the
+      // extrusions, so they sit under street/POI labels too.
+      let beforeId = null;
+      for (const layer of map.getStyle().layers || []) {
+        if (layer.type === "symbol") {
+          beforeId = layer.id;
+          break;
         }
+      }
+      if (!map.getLayer(LAYER_ID)) {
         map.addLayer(
           {
             id: LAYER_ID,
@@ -221,7 +229,37 @@ class RetailExtrusion {
           beforeId
         );
       }
+      if (!map.getLayer(LABEL_LAYER_ID)) {
+        map.addLayer(
+          {
+            id: LABEL_LAYER_ID,
+            type: "symbol",
+            source: SOURCE_ID,
+            minzoom: LABEL_MIN_ZOOM,
+            // Only buildings that carry a real OSM name/brand get a label —
+            // the layer never invents a store name.
+            filter: ["!=", ["get", "name"], ""],
+            layout: {
+              "text-field": ["get", "name"],
+              "text-size": ["interpolate", ["linear"], ["zoom"], 14.5, 10, 17, 13],
+              "text-anchor": "center",
+              "text-justify": "center",
+              "text-max-width": 8,
+              "text-allow-overlap": false,
+              "symbol-placement": "point",
+            },
+            paint: {
+              "text-color": "#dff5cf",
+              "text-halo-color": "rgba(6,10,6,0.9)",
+              "text-halo-width": 1.5,
+              "text-opacity": 0.95,
+            },
+          },
+          beforeId
+        );
+      }
       map.setLayoutProperty(LAYER_ID, "visibility", "visible");
+      map.setLayoutProperty(LABEL_LAYER_ID, "visibility", "visible");
       this.visible = true;
     } catch {
       // Style mid-reload: the next style.load re-applies from cache.
@@ -232,6 +270,8 @@ class RetailExtrusion {
     this.visible = false;
     try {
       if (this.map?.getLayer(LAYER_ID)) this.map.setLayoutProperty(LAYER_ID, "visibility", "none");
+      if (this.map?.getLayer(LABEL_LAYER_ID))
+        this.map.setLayoutProperty(LABEL_LAYER_ID, "visibility", "none");
     } catch {
       /* map tearing down */
     }
@@ -251,6 +291,7 @@ class RetailExtrusion {
     this.cache.clear();
     this.inFlight = null;
     try {
+      if (this.map?.getLayer(LABEL_LAYER_ID)) this.map.removeLayer(LABEL_LAYER_ID);
       if (this.map?.getLayer(LAYER_ID)) this.map.removeLayer(LAYER_ID);
       if (this.map?.getSource(SOURCE_ID)) this.map.removeSource(SOURCE_ID);
     } catch {
