@@ -1,11 +1,16 @@
 // Retail building extrusions — real store buildings in 3D.
 //
-// Data: OpenStreetMap building footprints with retail/commercial tags, fetched
-// live from Overpass for the visible map area (same feed family as the store
-// geofence). Rendered as a Mapbox fill-extrusion layer so strip malls and
-// storefronts that Mapbox's own 3D buildings leave flat get real mass, plus a
-// symbol layer that labels the buildings carrying real OSM name/brand tags —
-// the layer never invents a building or a store name.
+// Data: OpenStreetMap building footprints with retail/commercial tags.
+// Primary source is a STATIC local cache (public/data/retail-cache.geojson),
+// built from real OSM data by scripts/build-retail-cache.py — the layer draws
+// instantly from it and never depends on a live map-data service at view time.
+// A live Overpass fetch still runs silently in the background as the freshness
+// source; when it succeeds it replaces the cached view, when it fails the
+// cached buildings stay on the map with no error noise. Rendered as a Mapbox
+// fill-extrusion layer so strip malls and storefronts that Mapbox's own 3D
+// buildings leave flat get real mass, plus a symbol layer that labels the
+// buildings carrying real OSM name/brand tags — the layer never invents a
+// building or a store name.
 //
 // Honest-data rules: footprints and heights come from OSM tags only. A missing
 // height tag falls back to a documented 7 m retail estimate — the layer never
@@ -26,6 +31,7 @@ const OVERPASS_TIMEOUT_MS = 30000;
 const RETRY_DELAYS_MS = [2000, 5000];
 const AUTO_RETRY_MS = 45000;
 const MAX_BUILDINGS = 350;
+const STATIC_VIEWPORT_CAP = 1200; // static-cache features drawn per viewport (named first)
 const MIN_ZOOM = 13.5;
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const MAX_CELLS = 12;
@@ -64,7 +70,12 @@ function parseHeight(tags) {
   const raw = tags?.height;
   if (typeof raw === "string") {
     const m = parseFloat(raw.replace(/[^0-9.]/g, ""));
-    if (Number.isFinite(m) && m > 0) return Math.min(m, 60);
+    if (Number.isFinite(m) && m > 0) {
+      // OSM height is meters by convention, but US mappers sometimes tag
+      // feet (37' or 37 ft) — convert so a KFC never renders 37 m tall.
+      const meters = /'|ft|feet/i.test(raw) ? m * 0.3048 : m;
+      return Math.min(meters, 60);
+    }
   }
   const levels = parseFloat(tags?.["building:levels"]);
   if (Number.isFinite(levels) && levels > 0) return Math.min(levels * LEVEL_HEIGHT_M, 60);
@@ -116,6 +127,11 @@ class RetailExtrusion {
     this.debounceTimer = null;
     this.disposed = false;
     this.visible = false;
+    // Static OSM cache: real building footprints bundled with the app, so the
+    // layer never depends on a live map-data service at view time. Loaded once,
+    // then filtered per viewport. A failed load degrades to live-only mode.
+    this.staticCache = null; // null = not loaded yet, [] = load failed/empty
+    this.staticLoad = null;
     // Honest data-service status for the view: idle | loading | ready | error.
     // "error" means every fetch attempt failed and nothing is on the map.
     // When cached data is still visible, a failed refresh stays silent.
@@ -167,21 +183,87 @@ class RetailExtrusion {
     this.debounceTimer = window.setTimeout(() => this.loadForBounds(bounds), DEBOUNCE_MS);
   }
 
+  // Load the bundled static OSM cache once. Resolves to the feature array
+  // (empty when the file is missing or unreadable — the layer then runs in
+  // live-only mode exactly as before).
+  ensureStaticCache() {
+    if (this.staticLoad) return this.staticLoad;
+    this.staticLoad = (async () => {
+      try {
+        const url = new URL("data/retail-cache.geojson", document.baseURI).toString();
+        const res = await fetch(url, { cache: "force-cache" });
+        if (!res.ok) throw new Error(`static retail cache unavailable (${res.status})`);
+        const json = await res.json();
+        const feats = [];
+        for (const f of json.features || []) {
+          const ring = f.geometry && f.geometry.coordinates && f.geometry.coordinates[0];
+          if (!ring || ring.length < 4) continue;
+          let x0 = Infinity,
+            y0 = Infinity,
+            x1 = -Infinity,
+            y1 = -Infinity;
+          for (const p of ring) {
+            if (p[0] < x0) x0 = p[0];
+            if (p[1] < y0) y0 = p[1];
+            if (p[0] > x1) x1 = p[0];
+            if (p[1] > y1) y1 = p[1];
+          }
+          f._bbox = [x0, y0, x1, y1];
+          feats.push(f);
+        }
+        this.staticCache = feats;
+      } catch {
+        this.staticCache = [];
+      }
+      return this.staticCache;
+    })();
+    return this.staticLoad;
+  }
+
+  // Static-cache features intersecting the viewport, named buildings first so
+  // a dense district never drops its labels under the viewport cap.
+  async staticFeaturesForBounds(bounds) {
+    const feats = await this.ensureStaticCache();
+    if (!feats.length) return [];
+    const s = bounds.getSouth();
+    const w = bounds.getWest();
+    const n = bounds.getNorth();
+    const e = bounds.getEast();
+    const out = [];
+    for (const f of feats) {
+      const b = f._bbox;
+      if (b[2] < w || b[0] > e || b[3] < s || b[1] > n) continue;
+      out.push(f);
+    }
+    out.sort((a, b) => (b.properties.name ? 1 : 0) - (a.properties.name ? 1 : 0));
+    return out.slice(0, STATIC_VIEWPORT_CAP);
+  }
+
   async loadForBounds(bounds) {
     if (!this.map || this.disposed || !this.enabled) return;
     const center = bounds.getCenter();
     const at = { lat: center.lat, lon: center.lng };
     if (this.lastCenter && haversineMeters(this.lastCenter, at) < REFETCH_MOVE_M && this.visible) return;
 
-    if (this.inFlight) {
-      try {
-        await this.inFlight;
-      } catch {
-        /* fall through to cache-or-empty */
+    // 1. Static cache first: instant real data, zero network dependency.
+    //    A failed cache load simply yields no features — the live path below
+    //    runs exactly as it always has.
+    try {
+      const staticFeats = await this.staticFeaturesForBounds(bounds);
+      if (staticFeats.length > 0 && !this.disposed && this.enabled) {
+        this.lastCenter = at;
+        this.applyGeoJSON({ type: "FeatureCollection", features: staticFeats });
+        this.setStatus("ready");
+        window.clearTimeout(this.autoRetryTimer);
+        this.autoRetryTimer = null;
       }
-      return;
+    } catch {
+      /* fall through to the live path */
     }
 
+    // 2. Live data stays the freshness source: cell cache, then Overpass.
+    //    When the static cache already has buildings on screen, a failed live
+    //    refresh stays silent — the error pill is only for a truly empty map.
     const key = cellKey(at.lat, at.lon);
     const hit = this.cache.get(key);
     if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
@@ -193,9 +275,17 @@ class RetailExtrusion {
       return;
     }
 
+    if (this.inFlight) {
+      try {
+        await this.inFlight;
+      } catch {
+        /* fall through to cache-or-empty */
+      }
+      return;
+    }
+
     this.inFlight = this.fetchBuildings(bounds);
-    const hadVisible = this.visible;
-    if (!hadVisible) this.setStatus("loading");
+    if (!this.visible) this.setStatus("loading");
     try {
       const geojson = await this.inFlight;
       this.cache.set(key, { at: Date.now(), geojson });
