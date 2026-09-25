@@ -3,6 +3,7 @@ import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause,
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
+import { LOKIN_CENTER, LOKIN_SKYLINE_BG } from "@/components/Brand";
 import RouteImprovementAlert from "@/components/nav/RouteImprovementAlert";
 import { speakText } from "@/lib/lokinVoice";
 import { base44 } from "@/api/base44Client";
@@ -197,7 +198,14 @@ export default function AiGps() {
   }
 
   return (
-    <div className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} space-y-4 pb-6`}>
+    <div
+      className={`${locked ? "p-3 pt-[calc(0.75rem+env(safe-area-inset-top))]" : "p-4"} space-y-4 pb-6`}
+      style={{
+        backgroundImage: `linear-gradient(rgba(3, 9, 8, 0.84), rgba(2, 5, 4, 0.92)), url(${LOKIN_SKYLINE_BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Radar className="h-5 w-5 text-accent" />
@@ -451,8 +459,11 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           doorPinArrived={doorPinArrived}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#081008] px-8 text-center">
+        <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
+          <img src={LOKIN_SKYLINE_BG} alt="Lokin GPS skyline" className="absolute inset-0 h-full w-full object-cover opacity-55" draggable={false} />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,12,10,0.58),rgba(2,6,5,0.9))]" />
           <div>
+            <img src={LOKIN_CENTER} alt="Lokin emblem" className="mx-auto h-14 w-14 rounded-full border border-primary/35 bg-black/60 p-2 object-contain shadow-[0_0_18px_rgba(204,255,0,0.35)]" draggable={false} />
             <Radar className="mx-auto h-10 w-10 animate-pulse text-primary" />
             <div className="mt-4 font-display text-lg font-black tracking-[0.16em] text-primary">LOKIN GPS</div>
             <div className="mt-2 text-sm text-white/55">
