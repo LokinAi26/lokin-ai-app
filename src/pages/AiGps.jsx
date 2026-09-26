@@ -83,6 +83,12 @@ export default function AiGps() {
       .map((g, i) => ({
         sequence: i + 1,
         coordinate: [Number(g.longitude), Number(g.latitude)],
+        // Rooftop/parcel point for the visual beam; falls back to the routable
+        // coordinate when the geocoder had no raw geometry (e.g. door pins).
+        rooftop_coordinate:
+          Number.isFinite(Number(g.rooftop_longitude)) && Number.isFinite(Number(g.rooftop_latitude))
+            ? [Number(g.rooftop_longitude), Number(g.rooftop_latitude)]
+            : null,
         input: g.input || "",
         full_address: g.full_address || "",
       }))
