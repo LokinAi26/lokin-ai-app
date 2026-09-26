@@ -508,7 +508,12 @@ async function directions(
     step_count: Array.isArray(leg?.steps) ? leg.steps.length : 0,
   }));
 
-  const geometryCoords = route.geometry.coordinates.map((pair: any) => [Number(pair[0]), Number(pair[1])]);
+  // Light requests ask Mapbox for overview=false, which omits route.geometry
+  // entirely — never read coordinates off a missing geometry, or every
+  // plan_drops request crashes with NAV_ENGINE_ERROR.
+  const geometryCoords = (!light && route?.geometry?.coordinates)
+    ? route.geometry.coordinates.map((pair: any) => [Number(pair[0]), Number(pair[1])])
+    : null;
   const lastDestination = coordinates[coordinates.length - 1];
 
   return {
@@ -524,7 +529,7 @@ async function directions(
     },
     // Which side of the road the final destination is on at arrival —
     // the app speaks this so the driver finds the front at night.
-    destination_side: light ? null : destinationSide(geometryCoords, lastDestination),
+    destination_side: !geometryCoords ? null : destinationSide(geometryCoords, lastDestination),
     waypoints: (data?.waypoints || []).map((w: any, index: number) => ({
       index,
       name: w?.name || "",
