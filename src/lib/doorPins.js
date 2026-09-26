@@ -4,6 +4,7 @@
 // repeat deliveries route straight to the saved door instead of the map's
 // generic curb point.
 const STORAGE_KEY = "lokin_door_pins_v1";
+const memoryPins = {};
 
 // "123 Main St Apt 4B, Virginia Beach, VA" -> "123 main st virginia beach va"
 // Unit/suite/apt designators are stripped because the door pin belongs to the
@@ -38,7 +39,7 @@ function writeAll(pins) {
 export function getDoorPin(address) {
   const key = normalizeAddressKey(address);
   if (!key) return null;
-  return readAll()[key] || null;
+  return memoryPins[key] || readAll()[key] || null;
 }
 
 export function hasDoorPin(address) {
@@ -73,6 +74,7 @@ export function saveDoorPin({ address, latitude, longitude, accuracy_m = null, s
     pins[key].source = "manual";
   }
   writeAll(pins);
+  memoryPins[key] = pins[key];
   return pins[key];
 }
 
@@ -82,12 +84,13 @@ export function deleteDoorPin(address) {
   const pins = readAll();
   if (!pins[key]) return false;
   delete pins[key];
+  delete memoryPins[key];
   writeAll(pins);
   return true;
 }
 
 export function listDoorPins() {
-  return Object.values(readAll()).sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""));
+  return Object.values({ ...readAll(), ...memoryPins }).sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""));
 }
 
 export function doorPinCount() {
@@ -108,4 +111,20 @@ export function captureDoorFix(timeoutMs = 15000) {
       { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 5000 },
     );
   });
+}
+
+export function setDoorPinMemory(pin) {
+  const key = normalizeAddressKey(pin?.address || pin?.display_address || pin?.address_key || "");
+  const lat = Number(pin?.gps_latitude ?? pin?.latitude);
+  const lng = Number(pin?.gps_longitude ?? pin?.longitude);
+  if (!key || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const normalized = {
+    ...pin,
+    address_key: key,
+    latitude: lat,
+    longitude: lng,
+    updated_at: pin?.updated_at || pin?.last_updated || new Date().toISOString(),
+  };
+  memoryPins[key] = normalized;
+  return normalized;
 }
