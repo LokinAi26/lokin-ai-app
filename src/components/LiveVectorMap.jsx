@@ -656,7 +656,7 @@ export default function LiveVectorMap({
           }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           applyCinematicGrade(map, cinematicRef.current, styleRef.current);
-          updateDestinationBeam(map, routeRef.current);
+          updateDestinationBeam(map, beamRef, routeRef.current);
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -797,7 +797,7 @@ export default function LiveVectorMap({
       if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
       orbitRef.current = null;
     };
-  }, [cinematic]);
+  }, [cinematic, status]);
 
   useEffect(() => {
     const target = normalizeCoordinate(snappedPosition?.coordinate);
