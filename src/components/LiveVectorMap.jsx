@@ -450,15 +450,27 @@ function createDestinationBeam() {
 // Keep the destination beam pinned to the route's end (the real destination).
 // The beamRef lives on the component; this helper is called on style load and
 // whenever the route geometry changes.
-function updateDestinationBeam(map, beamRef, routeGeometry) {
+function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) {
   if (!map) return;
-  const coordinates = routeFeature(routeGeometry).geometry.coordinates;
-  if (coordinates.length < 2) {
+  // Lock the beam to the final destination ADDRESS: the last stop in delivery
+  // sequence carries the geocoded address point. The route's end is only a
+  // road-snapped fallback — it can sit off the true address.
+  const sequenced = (Array.isArray(deliveryStops) ? deliveryStops : [])
+    .map((stop) => ({
+      sequence: Number(stop?.sequence) || 0,
+      coordinate: normalizeCoordinate(stop?.coordinate),
+    }))
+    .filter((stop) => stop.coordinate)
+    .sort((a, b) => a.sequence - b.sequence);
+  const routeCoordinates = routeFeature(routeGeometry).geometry.coordinates;
+  const destination = sequenced.length
+    ? sequenced[sequenced.length - 1].coordinate
+    : (routeCoordinates.length >= 2 ? routeCoordinates[routeCoordinates.length - 1] : null);
+  if (!destination) {
     beamRef.current?.remove();
     beamRef.current = null;
     return;
   }
-  const destination = coordinates[coordinates.length - 1];
   if (beamRef.current) {
     beamRef.current.setLngLat(destination);
   } else {
@@ -656,7 +668,7 @@ export default function LiveVectorMap({
           }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           applyCinematicGrade(map, cinematicRef.current, styleRef.current);
-          updateDestinationBeam(map, beamRef, routeRef.current);
+          updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -726,14 +738,14 @@ export default function LiveVectorMap({
     if (!map || !loadedRef.current) return;
     const apply = () => {
       addNavigationLayers(map, routeGeometry);
-      updateDestinationBeam(map, beamRef, routeGeometry);
+      updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops);
       if (style3dRef.current && qualityRef.current !== "performance") {
         meshBuilder.alignWithRoute(routeGeometry);
       }
     };
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
-  }, [routeGeometry]);
+  }, [routeGeometry, deliveryStops]);
 
   useEffect(() => {
     const map = mapRef.current;
