@@ -458,7 +458,9 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   const sequenced = (Array.isArray(deliveryStops) ? deliveryStops : [])
     .map((stop) => ({
       sequence: Number(stop?.sequence) || 0,
-      coordinate: normalizeCoordinate(stop?.coordinate),
+      // Prefer the rooftop/parcel point for the visual beam so it sits on the
+      // address itself; the routable entrance coordinate is for driving.
+      coordinate: normalizeCoordinate(stop?.rooftop_coordinate) || normalizeCoordinate(stop?.coordinate),
     }))
     .filter((stop) => stop.coordinate)
     .sort((a, b) => a.sequence - b.sequence);
@@ -1001,13 +1003,15 @@ export default function LiveVectorMap({
           .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0))
           .pop();
         if (!last) return null;
+        const beamCoord = Array.isArray(last.rooftop_coordinate) ? last.rooftop_coordinate : last.coordinate;
         return (
           <div className="absolute bottom-3 left-3 z-20 max-w-[70%] rounded-lg border border-amber-300/30 bg-black/85 px-2.5 py-1.5 text-left shadow-lg backdrop-blur">
             <div className="text-[8px] font-extrabold tracking-[0.14em] text-amber-300">BEAM DEBUG</div>
             <div className="mt-0.5 text-[9px] leading-snug text-white/85">Typed: {String(last.input || "—")}</div>
             <div className="text-[9px] leading-snug text-white/85">Geocoded: {String(last.full_address || "—")}</div>
             <div className="text-[8px] leading-snug text-white/50">
-              {Number(last.coordinate[0]).toFixed(6)}, {Number(last.coordinate[1]).toFixed(6)}
+              Beam: {Number(beamCoord[0]).toFixed(6)}, {Number(beamCoord[1]).toFixed(6)}
+              {Array.isArray(last.rooftop_coordinate) ? " (rooftop)" : " (routable)"}
             </div>
           </div>
         );
