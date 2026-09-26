@@ -14,9 +14,9 @@ const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
-// Restored LOKIN neon lime green route line (the original brand lime).
-// Stop pins keep the softer green so they read as markers, not route.
-const LOKIN_LIME_ROUTE = "#A8FF00";
+// Cinematic art direction lock (2026-09-25): the route core is LOKIN Green
+// #8FE44E — the single brand green, glowing against the dusk grade.
+// Stop pins keep the same green so they read as markers, not route.
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
 const STOPS_FONT = ["Noto Sans Regular"];
@@ -244,7 +244,7 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_LIME_ROUTE,
+      "line-color": LOKIN_NEON_ROUTE,
       "line-opacity": 0.55,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
       "line-blur": 5,
@@ -276,12 +276,62 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_LIME_ROUTE,
+      "line-color": LOKIN_NEON_ROUTE,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
       "line-blur": 0,
     },
   });
+}
+
+// ---------- Cinematic art direction (locked 2026-09-25) ----------
+// Real-data cinematic grade for the GPS map: golden-hour dusk light, real
+// terrain elevation, warm atmospheric haze. All real Mapbox sources — no
+// invented geometry. Applied only in cinematic mode so the everyday driving
+// view is untouched.
+const TERRAIN_SOURCE = "lokin-cinematic-terrain";
+const CINEMATIC_FOG = {
+  color: "#e8c9a0",
+  "high-color": "#f6ddb4",
+  "horizon-blend": 0.1,
+  "space-color": "#0a0f24",
+  "star-intensity": 0.12,
+  range: [0.6, 12],
+};
+
+function applyCinematicGrade(map, enabled, style) {
+  if (!map || typeof map.setConfigProperty !== "function") return;
+  try {
+    if (enabled) {
+      map.setConfigProperty("basemap", "lightPreset", "dusk");
+      if (!map.getSource(TERRAIN_SOURCE)) {
+        map.addSource(TERRAIN_SOURCE, {
+          type: "raster-dem",
+          url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+          tileSize: 512,
+          maxzoom: 14,
+        });
+      }
+      map.setTerrain({ source: TERRAIN_SOURCE, exaggeration: 1.15 });
+      if (typeof map.setFog === "function") map.setFog(CINEMATIC_FOG);
+    } else {
+      // Restore the standard immersive treatment for this style.
+      configureImmersiveStyle(map, style);
+      try {
+        map.setTerrain(null);
+      } catch {
+        // Terrain may never have applied (token scope); nothing to clear.
+      }
+      try {
+        if (typeof map.setFog === "function") map.setFog(null);
+      } catch {
+        // No fog was set; nothing to clear.
+      }
+    }
+  } catch {
+    // Grade is decorative: a token without terrain scope or an older style
+    // fragment must never break navigation. The map keeps working ungraded.
+  }
 }
 
 function applyDuskTreatment(map, aerial) {
@@ -336,9 +386,9 @@ function createDriverMarker() {
   root.style.width = "48px";
   root.style.height = "48px";
   root.style.borderRadius = "999px";
-  root.style.border = "3px solid rgba(0,229,255,.72)";
-  root.style.background = "rgba(0,229,255,.15)";
-  root.style.boxShadow = "0 0 0 5px rgba(0,229,255,.08), 0 0 18px rgba(0,229,255,.45)";
+  root.style.border = "3px solid rgba(143,228,78,.8)";
+  root.style.background = "rgba(143,228,78,.15)";
+  root.style.boxShadow = "0 0 0 5px rgba(143,228,78,.08), 0 0 18px rgba(143,228,78,.45)";
   root.style.display = "grid";
   root.style.placeItems = "center";
   root.style.position = "relative";
@@ -348,7 +398,7 @@ function createDriverMarker() {
   pulse.style.position = "absolute";
   pulse.style.inset = "-9px";
   pulse.style.borderRadius = "999px";
-  pulse.style.border = "2px solid rgba(0,229,255,.55)";
+  pulse.style.border = "2px solid rgba(143,228,78,.55)";
   pulse.style.animation = "lokin-marker-pulse 2.2s ease-out infinite";
   pulse.style.pointerEvents = "none";
   root.appendChild(pulse);
@@ -359,10 +409,92 @@ function createDriverMarker() {
   arrow.style.borderLeft = "10px solid transparent";
   arrow.style.borderRight = "10px solid transparent";
   arrow.style.borderBottom = "29px solid #B7FF42";
-  arrow.style.filter = "drop-shadow(0 0 5px rgba(168,255,0,.95)) drop-shadow(0 1px 0 #071009)";
+  arrow.style.filter = "drop-shadow(0 0 5px rgba(143,228,78,.95)) drop-shadow(0 1px 0 #071009)";
   arrow.style.transform = "translateY(-2px)";
   root.appendChild(arrow);
   return root;
+}
+
+// Destination beam: a vertical LOKIN-green light pillar marking the route
+// destination. Pure DOM/CSS over the real map — no 3D geometry invented.
+function createDestinationBeam() {
+  if (typeof document !== "undefined" && !document.getElementById("lokin-beam-keyframes")) {
+    const styleTag = document.createElement("style");
+    styleTag.id = "lokin-beam-keyframes";
+    styleTag.textContent = "@keyframes lokin-beam-flicker{0%,100%{opacity:.92}50%{opacity:.62}}";
+    document.head.appendChild(styleTag);
+  }
+  const root = document.createElement("div");
+  root.setAttribute("aria-label", "Destination");
+  root.style.position = "relative";
+  root.style.width = "30px";
+  root.style.height = "150px";
+  root.style.background = "linear-gradient(to top, rgba(143,228,78,.9), rgba(143,228,78,.28) 55%, rgba(143,228,78,0))";
+  root.style.filter = "drop-shadow(0 0 12px rgba(143,228,78,.8))";
+  root.style.animation = "lokin-beam-flicker 3.2s ease-in-out infinite";
+  root.style.pointerEvents = "none";
+  const base = document.createElement("div");
+  base.style.position = "absolute";
+  base.style.bottom = "-10px";
+  base.style.left = "50%";
+  base.style.width = "46px";
+  base.style.height = "46px";
+  base.style.transform = "translateX(-50%)";
+  base.style.borderRadius = "999px";
+  base.style.border = "3px solid rgba(143,228,78,.85)";
+  base.style.background = "rgba(143,228,78,.18)";
+  root.appendChild(base);
+  return root;
+}
+
+// Keep the destination beam pinned to the route's end (the real destination).
+// The beamRef lives on the component; this helper is called on style load and
+// whenever the route geometry changes.
+function updateDestinationBeam(map, beamRef, routeGeometry) {
+  if (!map) return;
+  const coordinates = routeFeature(routeGeometry).geometry.coordinates;
+  if (coordinates.length < 2) {
+    beamRef.current?.remove();
+    beamRef.current = null;
+    return;
+  }
+  const destination = coordinates[coordinates.length - 1];
+  if (beamRef.current) {
+    beamRef.current.setLngLat(destination);
+  } else {
+    beamRef.current = new mapboxgl.Marker({
+      element: createDestinationBeam(),
+      anchor: "bottom",
+    })
+      .setLngLat(destination)
+      .addTo(map);
+  }
+}
+
+// FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
+function CinematicFpsMeter() {
+  const [fps, setFps] = useState(0);
+  useEffect(() => {
+    let frames = 0;
+    let raf = 0;
+    let last = performance.now();
+    const loop = (now) => {
+      frames += 1;
+      if (now - last >= 500) {
+        setFps(Math.round((frames * 1000) / (now - last)));
+        frames = 0;
+        last = now;
+      }
+      raf = window.requestAnimationFrame(loop);
+    };
+    raf = window.requestAnimationFrame(loop);
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div className="absolute bottom-3 left-3 z-20 rounded-md border border-accent/30 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold tracking-widest text-accent backdrop-blur">
+      {fps} FPS
+    </div>
+  );
 }
 
 export default function LiveVectorMap({
@@ -383,6 +515,8 @@ export default function LiveVectorMap({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const beamRef = useRef(null);
+  const orbitRef = useRef(null);
   const animationRef = useRef(null);
   const routeRef = useRef(routeGeometry);
   const stopsRef = useRef(deliveryStops);
@@ -404,6 +538,12 @@ export default function LiveVectorMap({
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [cameraPitch, setCameraPitch] = useState(perspective ? 78 : 0);
+  // Cinematic art direction mode (locked 2026-09-25): dusk grade, real
+  // terrain, warm haze, orbit camera, destination beam, FPS meter.
+  // Defaults on in perspective view so the staged look is immediately visible.
+  const [cinematic, setCinematic] = useState(perspective);
+  const cinematicRef = useRef(perspective);
+  cinematicRef.current = cinematic;
   // Honest retail data-service status: idle | loading | ready | error.
   const [retailStatus, setRetailStatus] = useState("idle");
 
@@ -515,6 +655,8 @@ export default function LiveVectorMap({
             meshBuilder.alignWithRoute(routeRef.current);
           }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
+          applyCinematicGrade(map, cinematicRef.current, styleRef.current);
+          updateDestinationBeam(map, routeRef.current);
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -564,8 +706,11 @@ export default function LiveVectorMap({
       window.clearTimeout(startupTimer);
       window.clearTimeout(resumeTimerRef.current);
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
+      if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
       markerRef.current?.remove();
       markerRef.current = null;
+      beamRef.current?.remove();
+      beamRef.current = null;
       mapArchitect.destroy();
       baggz247Master.destroy();
       meshBuilder.destroy();
@@ -581,6 +726,7 @@ export default function LiveVectorMap({
     if (!map || !loadedRef.current) return;
     const apply = () => {
       addNavigationLayers(map, routeGeometry);
+      updateDestinationBeam(map, beamRef, routeGeometry);
       if (style3dRef.current && qualityRef.current !== "performance") {
         meshBuilder.alignWithRoute(routeGeometry);
       }
@@ -615,8 +761,43 @@ export default function LiveVectorMap({
       const live = mapRef.current;
       if (!live) return;
       applyDuskTreatment(live, isAerialStyle(style));
+      applyCinematicGrade(live, cinematicRef.current, style);
     });
   }, [style]);
+
+  // Cinematic mode: apply the grade immediately and run the slow orbit camera.
+  // The orbit pauses while the user is interacting and yields to the normal
+  // follow camera the moment cinematic mode is switched off.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    applyCinematicGrade(map, cinematic, styleRef.current);
+    if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
+    if (!cinematic) {
+      orbitRef.current = null;
+      return undefined;
+    }
+    let last = performance.now();
+    const orbit = (now) => {
+      orbitRef.current = window.requestAnimationFrame(orbit);
+      const live = mapRef.current;
+      if (!live || interactingRef.current) {
+        last = now;
+        return;
+      }
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      const driver = displayedRef.current.coordinate;
+      if (driver) live.setCenter(driver);
+      live.setBearing((live.getBearing() + dt * 2.4 + 360) % 360);
+      live.setPitch(70 + Math.sin(now / 3200) * 5);
+    };
+    orbitRef.current = window.requestAnimationFrame(orbit);
+    return () => {
+      if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
+      orbitRef.current = null;
+    };
+  }, [cinematic]);
 
   useEffect(() => {
     const target = normalizeCoordinate(snappedPosition?.coordinate);
@@ -660,8 +841,9 @@ export default function LiveVectorMap({
     animationRef.current = window.requestAnimationFrame(tick);
 
     const map = mapRef.current;
-    if (map && loadedRef.current && followDriver && !interactingRef.current) {
+    if (map && loadedRef.current && followDriver && !interactingRef.current && !cinematicRef.current) {
       // 4D cinematic follow: default zoom ~16.5 with a slight speed-based pull-back.
+      // Suppressed in cinematic mode — the orbit camera owns the frame there.
       const targetZoom = perspective
         ? clamp(16.8 - Math.max(0, Number(speedMps || 0)) * 0.012, 16.0, 16.8)
         : clamp(17.1 - Math.max(0, Number(speedMps || 0)) * 0.015, 16.1, 17.1);
@@ -783,6 +965,21 @@ export default function LiveVectorMap({
           PULL HORIZON · {Math.round(cameraPitch)}°
         </button>
       )}
+      {status === "ready" && (
+        <button
+          type="button"
+          aria-label={cinematic ? "Turn off cinematic camera" : "Turn on cinematic camera"}
+          onClick={() => setCinematic((value) => !value)}
+          className={`absolute right-3 top-3 z-20 rounded-full border px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] shadow-lg backdrop-blur transition-colors ${
+            cinematic
+              ? "border-accent/60 bg-accent/20 text-accent"
+              : "border-white/20 bg-black/75 text-white/70"
+          }`}
+        >
+          CINEMATIC {cinematic ? "ON" : "OFF"}
+        </button>
+      )}
+      {cinematic && status === "ready" && <CinematicFpsMeter />}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
