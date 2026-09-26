@@ -415,41 +415,59 @@ function createDriverMarker() {
   return root;
 }
 
-// Destination beam: a vertical LOKIN-green light pillar marking the route
-// destination. Pure DOM/CSS over the real map — no 3D geometry invented.
-function createDestinationBeam() {
-  if (typeof document !== "undefined" && !document.getElementById("lokin-beam-keyframes")) {
-    const styleTag = document.createElement("style");
-    styleTag.id = "lokin-beam-keyframes";
-    styleTag.textContent = "@keyframes lokin-beam-flicker{0%,100%{opacity:.92}50%{opacity:.62}}";
-    document.head.appendChild(styleTag);
+// Destination beam: a LOKIN-green light pillar grown out of the destination
+// rooftop as REAL 3D geometry (fill-extrusion). The base disc sits flat on the
+// roof at the building's own height — sampled from the rendered extrusion —
+// so it never floats above or sinks into the rooftop in perspective view.
+const BEAM_SOURCE = "lokin-destination-beam";
+const BEAM_BASE_LAYER = "lokin-beam-base";
+const BEAM_PILLAR_LAYER = "lokin-beam-pillar";
+const BEAM_PILLAR_HEIGHT_M = 90;
+
+function removeDestinationBeamLayers(map) {
+  if (!map) return;
+  for (const id of [BEAM_PILLAR_LAYER, BEAM_BASE_LAYER]) {
+    if (map.getLayer(id)) map.removeLayer(id);
   }
-  const root = document.createElement("div");
-  root.setAttribute("aria-label", "Destination");
-  root.style.position = "relative";
-  root.style.width = "30px";
-  root.style.height = "150px";
-  root.style.background = "linear-gradient(to top, rgba(143,228,78,.9), rgba(143,228,78,.28) 55%, rgba(143,228,78,0))";
-  root.style.filter = "drop-shadow(0 0 12px rgba(143,228,78,.8))";
-  root.style.animation = "lokin-beam-flicker 3.2s ease-in-out infinite";
-  root.style.pointerEvents = "none";
-  const base = document.createElement("div");
-  base.style.position = "absolute";
-  base.style.bottom = "-10px";
-  base.style.left = "50%";
-  base.style.width = "46px";
-  base.style.height = "46px";
-  base.style.transform = "translateX(-50%)";
-  base.style.borderRadius = "999px";
-  base.style.border = "3px solid rgba(143,228,78,.85)";
-  base.style.background = "rgba(143,228,78,.18)";
-  root.appendChild(base);
-  return root;
+  if (map.getSource(BEAM_SOURCE)) map.removeSource(BEAM_SOURCE);
+}
+
+// Small square footprint (degrees) centered on [lng, lat].
+function squareAround([lng, lat], halfMeters) {
+  const mPerDegLng = 111320 * Math.cos((lat * Math.PI) / 180);
+  const dLat = halfMeters / 111320;
+  const dLng = halfMeters / mPerDegLng;
+  return [[
+    [lng - dLng, lat - dLat],
+    [lng + dLng, lat - dLat],
+    [lng + dLng, lat + dLat],
+    [lng - dLng, lat + dLat],
+    [lng - dLng, lat - dLat],
+  ]];
+}
+
+// Roof height (meters) of the building under a lngLat, sampled from the
+// rendered 3D extrusion. Falls back to 0 (ground) when nothing is rendered
+// yet or the point misses every building.
+function roofHeightAt(map, lngLat) {
+  try {
+    const features = map.queryRenderedFeatures(map.project(lngLat));
+    for (const feature of features) {
+      const props = feature.properties || {};
+      const h = Number(props.height ?? props["building:height"]);
+      if (Number.isFinite(h) && h > 0) return h;
+    }
+  } catch {
+    // Render not ready — the caller re-pins on idle.
+  }
+  return 0;
 }
 
 // Keep the destination beam pinned to the route's end (the real destination).
-// The beamRef lives on the component; this helper is called on style load and
-// whenever the route geometry changes.
+// The beamRef is a legacy handle (retired DOM marker); the beam itself is GL
+// layers now, so this helper is called on style load, on idle (once buildings
+// have rendered and the roof height can be sampled), and whenever the route
+// geometry changes.
 function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) {
   if (!map) return;
   // Lock the beam to the final destination ADDRESS: the last stop in delivery
@@ -469,20 +487,61 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
     ? sequenced[sequenced.length - 1].coordinate
     : (routeCoordinates.length >= 2 ? routeCoordinates[routeCoordinates.length - 1] : null);
   if (!destination) {
-    beamRef.current?.remove();
+    if (beamRef.current?.remove) beamRef.current.remove();
     beamRef.current = null;
+    removeDestinationBeamLayers(map);
     return;
   }
-  if (beamRef.current) {
-    beamRef.current.setLngLat(destination);
-  } else {
-    beamRef.current = new mapboxgl.Marker({
-      element: createDestinationBeam(),
-      anchor: "bottom",
-    })
-      .setLngLat(destination)
-      .addTo(map);
-  }
+  // Retire the legacy DOM marker — it pinned at ground elevation and floated
+  // above rooftops in the 3D perspective view.
+  if (beamRef.current?.remove) beamRef.current.remove();
+  beamRef.current = null;
+
+  const roofH = roofHeightAt(map, destination);
+  const data = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { part: "base" },
+        geometry: { type: "Polygon", coordinates: squareAround(destination, 7) },
+      },
+      {
+        type: "Feature",
+        properties: { part: "pillar" },
+        geometry: { type: "Polygon", coordinates: squareAround(destination, 3) },
+      },
+    ],
+  };
+  const src = map.getSource(BEAM_SOURCE);
+  if (src) src.setData(data);
+  else map.addSource(BEAM_SOURCE, { type: "geojson", data });
+
+  const paintBeam = (layerId, filter, paint) => {
+    if (map.getLayer(layerId)) {
+      map.setFilter(layerId, filter);
+      for (const [key, value] of Object.entries(paint)) map.setPaintProperty(layerId, key, value);
+    } else {
+      map.addLayer({
+        id: layerId, type: "fill-extrusion", source: BEAM_SOURCE, filter, slot: "top", paint,
+      });
+    }
+  };
+  // Flat base disc: 1.5 m thick, sitting exactly on the roof plane.
+  paintBeam(BEAM_BASE_LAYER, ["==", ["get", "part"], "base"], {
+    "fill-extrusion-color": "#8FE44E",
+    "fill-extrusion-opacity": 0.95,
+    "fill-extrusion-base": roofH,
+    "fill-extrusion-height": roofH + 1.5,
+  });
+  // Pillar rising from the roof.
+  paintBeam(BEAM_PILLAR_LAYER, ["==", ["get", "part"], "pillar"], {
+    "fill-extrusion-color": "#8FE44E",
+    "fill-extrusion-opacity": 0.55,
+    "fill-extrusion-vertical-gradient": true,
+    "fill-extrusion-base": roofH,
+    "fill-extrusion-height": roofH + BEAM_PILLAR_HEIGHT_M,
+  });
 }
 
 // FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
@@ -671,6 +730,13 @@ export default function LiveVectorMap({
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           applyCinematicGrade(map, cinematicRef.current, styleRef.current);
           updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
+          // Re-pin once the first frame is idle: at style.load the 3D
+          // buildings may not be rendered yet, so the roof-height sample can
+          // miss. Idle guarantees the extrusion is on screen.
+          map.once("idle", () => {
+            if (disposed) return;
+            updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
+          });
           if (!loadedRef.current) {
             loadedRef.current = true;
             window.clearTimeout(startupTimer);
@@ -723,8 +789,9 @@ export default function LiveVectorMap({
       if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
       markerRef.current?.remove();
       markerRef.current = null;
-      beamRef.current?.remove();
+      beamRef.current?.remove?.();
       beamRef.current = null;
+      removeDestinationBeamLayers(map);
       mapArchitect.destroy();
       baggz247Master.destroy();
       meshBuilder.destroy();
