@@ -491,7 +491,7 @@ function CinematicFpsMeter() {
     return () => window.cancelAnimationFrame(raf);
   }, []);
   return (
-    <div className="absolute bottom-3 left-3 z-20 rounded-md border border-accent/30 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold tracking-widest text-accent backdrop-blur">
+    <div className="absolute left-3 top-3 z-20 rounded-md border border-accent/30 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold tracking-widest text-accent backdrop-blur">
       {fps} FPS
     </div>
   );
