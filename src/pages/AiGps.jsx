@@ -83,6 +83,8 @@ export default function AiGps() {
       .map((g, i) => ({
         sequence: i + 1,
         coordinate: [Number(g.longitude), Number(g.latitude)],
+        input: g.input || "",
+        full_address: g.full_address || "",
       }))
       .filter((s) => Number.isFinite(s.coordinate[0]) && Number.isFinite(s.coordinate[1]));
   }, [nav.geocodedDestinations]);
