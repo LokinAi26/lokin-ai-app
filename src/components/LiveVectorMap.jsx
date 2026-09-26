@@ -992,6 +992,26 @@ export default function LiveVectorMap({
         </button>
       )}
       {cinematic && status === "ready" && <CinematicFpsMeter />}
+      {/* DEBUG: beam anchor readout — shows exactly what the geocoder returned
+          for the final destination so a misplaced beam can be traced to a bad
+          geocode vs a bad anchor. Remove before App Store review. */}
+      {status === "ready" && Array.isArray(deliveryStops) && deliveryStops.length > 0 && (() => {
+        const last = [...deliveryStops]
+          .filter((s) => Array.isArray(s?.coordinate))
+          .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0))
+          .pop();
+        if (!last) return null;
+        return (
+          <div className="absolute bottom-3 left-3 z-20 max-w-[70%] rounded-lg border border-amber-300/30 bg-black/85 px-2.5 py-1.5 text-left shadow-lg backdrop-blur">
+            <div className="text-[8px] font-extrabold tracking-[0.14em] text-amber-300">BEAM DEBUG</div>
+            <div className="mt-0.5 text-[9px] leading-snug text-white/85">Typed: {String(last.input || "—")}</div>
+            <div className="text-[9px] leading-snug text-white/85">Geocoded: {String(last.full_address || "—")}</div>
+            <div className="text-[8px] leading-snug text-white/50">
+              {Number(last.coordinate[0]).toFixed(6)}, {Number(last.coordinate[1]).toFixed(6)}
+            </div>
+          </div>
+        );
+      })()}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
