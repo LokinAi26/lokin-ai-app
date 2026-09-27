@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
 import MapQualityMenu from "@/components/map/MapQualityMenu";
-import NavHudStrip from "@/components/nav/NavHudStrip";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
 import { withTimeout } from "@/lib/promiseTimeout";
@@ -13,6 +12,16 @@ const MAP_H = 420;
 const TILE_SIZE = 512;
 const MAP_REFRESH_MIN_MS = 650;
 const MAP_REFRESH_DEBOUNCE_MS = 80;
+
+function formatCompactDuration(seconds) {
+  const value = Math.max(0, Number(seconds || 0));
+  if (value > 0 && value < 60) return "<1m";
+  const minutes = Math.max(0, Math.round(value / 60));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours}h${remainder}m` : `${hours}h`;
+}
 
 function mercator(coord, zoom) {
   const lon = Number(coord?.[0] || 0);
@@ -101,7 +110,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, maneuvers = [], remainingDurationS, remainingDistanceM = null, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, etaUpdatedAt = null, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -500,7 +509,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           {rendererMode === "fallback" && image && (
             <svg viewBox={`0 0 ${renderW} ${renderH}`} className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none">
               {!perspective && <polyline points={routePoints} fill="none" stroke="#060B04" strokeWidth="19" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.92" />}
-              {!perspective && <polyline points={routePoints} fill="none" stroke="#A2EB1B" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(162,235,27,1))" }} />}
+              {!perspective && <polyline points={routePoints} fill="none" stroke="#8FE44E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 8px rgba(143,228,78,1))" }} />}
               {!perspective && deliveryStops.map((stop, i) => {
                 const point = markerViewport ? project(stop.coordinate, markerViewport, renderW, renderH) : null;
                 if (!point) return null;
@@ -580,16 +589,11 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             className="absolute z-30"
             style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
           >
-            <NavHudStrip
-              maneuver={maneuver}
-              maneuvers={maneuvers}
-              drivenAlongM={Number(snappedPosition?.along_route_m || 0)}
-              remainingDurationS={remainingDurationS}
-              remainingDistanceM={remainingDistanceM}
-              etaUpdatedAt={etaUpdatedAt}
-              etaLiveTraffic={etaLiveTraffic}
-              arrivedLabel={arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : ""}
-            />
+            {/* Slim driver bar: just the maneuver instruction. Street/ETA/duration
+                are already shown by the native pills below — no duplication. */}
+            <div className="w-full min-w-0 max-w-full truncate rounded-full border border-primary/25 bg-black/80 px-4 py-2.5 text-center text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold text-white shadow-lg backdrop-blur">
+              {arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}
+            </div>
           </div>
         ) : (
           <div className="absolute bottom-3 left-2 right-2 z-30 flex min-w-0 items-end gap-2">
