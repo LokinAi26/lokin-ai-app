@@ -181,7 +181,7 @@ function staticRouteOverlay(routeGeometry: any) {
   const coords = simplifyStaticRoute(routeGeometry?.coordinates || routeGeometry || [], 240);
   if (coords.length < 2) return "";
   const polyline = encodeURIComponent(encodePolyline5(coords));
-  return `path-7+A8FF00-1(${polyline})`;
+  return `path-7+A2EB1B-1(${polyline})`;
 }
 
 function staticDriverOverlay(driverCoordinate: any) {
