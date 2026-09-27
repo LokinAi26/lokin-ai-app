@@ -667,15 +667,10 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             className="absolute z-30"
             style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="lokin-card grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_minmax(78px,92px)] items-end gap-2 overflow-hidden px-3 py-3 backdrop-blur">
-              <div className="min-w-0 overflow-hidden">
-                <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-                <div className="mt-1 line-clamp-2 break-words text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold leading-[1.15] text-white">{arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}</div>
-              </div>
-              <div className={`min-w-0 overflow-hidden border-l pl-2 text-right ${arrived ? "border-primary/20" : "border-accent/15"}`}>
-                <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
-                <div className={`mt-0.5 whitespace-nowrap font-display leading-none ${arrived ? "text-sm font-black text-primary" : "lokin-hero-number text-[clamp(1.05rem,5vw,1.3rem)]"}`}>{arrived ? "DONE" : formatCompactDuration(remainingDurationS)}</div>
-              </div>
+            {/* Slim driver bar: just the maneuver instruction. Street/ETA/duration
+                are already shown by the native pills below — no duplication. */}
+            <div className="w-full min-w-0 max-w-full truncate rounded-full border border-primary/25 bg-black/80 px-4 py-2.5 text-center text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold text-white shadow-lg backdrop-blur">
+              {arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}
             </div>
           </div>
         ) : (
