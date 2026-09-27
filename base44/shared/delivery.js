@@ -52,27 +52,17 @@ export function zipFromAddress(addr = "") {
   return m ? m[1] : "";
 }
 
-// Very small Haversine approximation in miles (good enough for ranking)
-export function milesBetween(a, b) {
-  if (!a || !b) return 0;
-  const latA = zipLat(a), lonA = zipLon(a);
-  const latB = zipLat(b), lonB = zipLon(b);
-  const R = 3958.8;
-  const dLat = ((latB - latA) * Math.PI) / 180;
-  const dLon = ((lonB - lonA) * Math.PI) / 180;
-  const la1 = (latA * Math.PI) / 180;
-  const la2 = (latB * Math.PI) / 180;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
-  return Math.round(2 * R * Math.asin(Math.sqrt(h)) * 10) / 10;
-}
-
-function zipLat(addr) {
-  const z = zipFromAddress(addr) || "00000";
-  return 25 + (parseInt(z, 10) % 2400) / 100;
-}
-function zipLon(addr) {
-  const z = zipFromAddress(addr) || "00000";
-  return -125 + (parseInt(z, 10) % 5000) / 100;
+// Coarse geographic proximity from ZIP codes — NOT a distance.
+// US ZIPs are geographically ordered: more shared leading digits = closer.
+// Returns 0 (same ZIP) .. 5 (no shared prefix, or unparseable). Use only for
+// rough ranking (e.g. homeward mode). Never present this as miles — offers
+// carry no real coordinates, and inventing them corrupts driver-facing stats.
+export function zipProximity(a, b) {
+  const za = zipFromAddress(a), zb = zipFromAddress(b);
+  if (!za || !zb) return 5;
+  let shared = 0;
+  while (shared < 5 && za[shared] === zb[shared]) shared++;
+  return 5 - shared;
 }
 
 // True earning rate — gross, fuel, mileage cost, expenses, net, $/hr (gross + net)
@@ -137,7 +127,7 @@ export function rankByMode(eligible, mode = "most_profit", originAddress = "") {
     low_stress: (a, b) => (a.miles - b.miles) || ((a.est_minutes || 99) - (b.est_minutes || 99)),
     minimum_mileage: (a, b) => a.miles - b.miles,
     homeward: (a, b) =>
-      milesBetween(a.dropoff_address, originAddress) - milesBetween(b.dropoff_address, originAddress),
+      zipProximity(a.dropoff_address, originAddress) - zipProximity(b.dropoff_address, originAddress),
   };
   return [...eligible].sort(cmp[mode] || cmp.most_profit);
 }
@@ -162,12 +152,14 @@ export function sequenceByZone(offers, originAddress = "") {
 export function totalRouteStats(sequenced, prefs, originAddress = "") {
   const stops = sequenced.length;
   let miles = 0, net = 0, gross = 0, fuel = 0, minutes = 0;
-  let prev = originAddress;
+  // Sum only driver-stated offer miles. Deadhead between stops is unknown —
+  // offers carry no real coordinates — so we report what is verified rather
+  // than fabricating inter-stop distances (the old pseudo-geocode invented
+  // thousands of phantom miles whenever the origin was empty).
   for (const o of sequenced) {
-    miles += (o.miles || 0) + milesBetween(prev, o.pickup_address);
+    miles += (o.miles || 0);
     const t = trueEarningRate(o, prefs);
     net += t.net; gross += t.gross; fuel += t.fuel; minutes += o.est_minutes || 0;
-    prev = o.dropoff_address;
   }
   const hours = minutes / 60;
   return {
