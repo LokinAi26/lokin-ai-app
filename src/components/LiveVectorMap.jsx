@@ -1169,9 +1169,9 @@ export default function LiveVectorMap({
           type="button"
           aria-label={cinematic ? "Turn off cinematic camera" : "Turn on cinematic camera"}
           onClick={() => setCinematic((value) => !value)}
-          // Sits below the GPS header toggle (LOKIN/MAP/4D) — top-3 slid under
-          // it and left only the "C" of CINEMATIC peeking out.
-          className={`absolute right-3 top-[76px] z-20 rounded-full border px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] shadow-lg backdrop-blur transition-colors ${
+          // Sits below the GPS header on the LEFT — the right edge is crowded
+          // (4D toggle, night/aerial control) and kept swallowing it.
+          className={`absolute left-3 top-[76px] z-20 rounded-full border px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] shadow-lg backdrop-blur transition-colors ${
             cinematic
               ? "border-accent/60 bg-accent/20 text-accent"
               : "border-white/20 bg-black/75 text-white/70"
