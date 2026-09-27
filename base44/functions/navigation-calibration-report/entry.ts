@@ -37,6 +37,7 @@ export default async function(req: Request) {
     }
 
     const created = await base44.entities.NavigationCalibrationRun.create({
+      created_by_id: String(user.id),
       scenario,
       platform,
       result,
