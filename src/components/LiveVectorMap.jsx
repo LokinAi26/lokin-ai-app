@@ -20,6 +20,9 @@ const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
+// Route-line override (Kendall 2026-09-27): Lokin Lime neon for the route
+// line layers only — beam, pulse, pins, and POI rings stay LOKIN Green.
+const LOKIN_LIME_ROUTE = "#A2EB1B";
 // Cinematic art direction lock (2026-09-25): the route core is LOKIN Green
 // #8FE44E â the single brand green, glowing against the dusk grade.
 // Stop pins keep the same green so they read as markers, not route.
@@ -250,7 +253,7 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
+      "line-color": LOKIN_LIME_ROUTE,
       "line-opacity": 0.55,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
       "line-blur": 5,
@@ -282,7 +285,7 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      "line-color": LOKIN_NEON_ROUTE,
+      "line-color": LOKIN_LIME_ROUTE,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
       "line-opacity": 1,
       "line-blur": 0,
