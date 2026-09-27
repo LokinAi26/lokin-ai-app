@@ -102,6 +102,11 @@ const REMEDIATION: Record<string, string> = {
 
 export default async function (req: Request): Promise<Response> {
   const base44 = createClientFromRequest(req);
+  // Commerce diagnostics expose store-wide business data — admin only.
+  const user = await base44.auth.me().catch(() => null);
+  if (!user || String(user.role || '').toLowerCase() !== 'admin') {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
   const checks: any[] = [];
   const checkedAt = new Date().toISOString();
 
