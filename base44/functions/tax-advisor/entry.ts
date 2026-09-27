@@ -90,10 +90,10 @@ export default async function (req) {
     const mode = (payload.mode || "tax").toLowerCase();
 
     const [earnings, miles, expenses, goals] = await Promise.all([
-      base44.entities.Earning.filter({}, "-date", 500),
-      base44.entities.MileageLog.filter({}, "-date", 500),
-      base44.entities.Expense.filter({}, "-date", 500),
-      base44.entities.CreditGoal.filter({}, "-updated_date", 10),
+      base44.entities.Earning.filter({ created_by_id: String(user.id) }, "-date", 500),
+      base44.entities.MileageLog.filter({ created_by_id: String(user.id) }, "-date", 500),
+      base44.entities.Expense.filter({ created_by_id: String(user.id) }, "-date", 500),
+      base44.entities.CreditGoal.filter({ created_by_id: String(user.id) }, "-updated_date", 10),
     ]);
 
     const ytdEarnings = (earnings || []).filter((e) => (e.date || "").startsWith(String(YEAR)));
