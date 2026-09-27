@@ -38,6 +38,7 @@ export default async function(req:Request){
   }
 
   if(action==='generate_dynamic_suite'){
+   if(!admin(user))return Response.json({error:'ADMIN_REQUIRED'},{status:403});
    const suite=createFreshEvaluationSuite({seed:body.seed});
    await base44.asServiceRole.entities.DynamicEvaluationRun.create({suite_id:suite.suite_id,seed:suite.seed,domain:'LOKIN_AI',status:'GENERATED',tasks:{items:suite.tasks},summary:{task_count:suite.tasks.length},version:suite.version,created_at:new Date().toISOString()});
    return Response.json(suite);
