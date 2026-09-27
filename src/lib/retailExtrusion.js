@@ -107,6 +107,7 @@ function waysToGeoJSON(elements) {
       properties: {
         id: `w${el.id}`,
         name: tags.name || tags.brand || "",
+        brand: tags.brand || "",
         height_m: parseHeight(tags),
         estimated: !tags.height && !tags["building:levels"],
       },
