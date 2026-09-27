@@ -8,6 +8,26 @@ const MAX_HISTORY = 250;
 const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f;
 const nowIso = () => new Date().toISOString();
 
+// Hang guard (2026-09-27): every DB round-trip in the admission path gets a
+// hard timeout. An unbounded filter/create/update here hangs the entire
+// function invocation (the runtime waits for the event loop to drain), which
+// is what left optimizeRoute and navigation-engine stuck in the monitor.
+// On timeout we fail OPEN for realtime paths — a driver waiting on navigation
+// is worse than a missed ledger row — and log a warning.
+const ADMISSION_DB_TIMEOUT_MS = 3000;
+
+function withDbTimeout(promise, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error(`[ecosystemAdmission] DB ${label} timed out after ${ADMISSION_DB_TIMEOUT_MS}ms`);
+      error.code = "LOKIN_ADMISSION_DB_TIMEOUT";
+      reject(error);
+    }, ADMISSION_DB_TIMEOUT_MS);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}
+
 function stableHash(value) {
   const s = typeof value === 'string' ? value : JSON.stringify(value ?? null);
   let h = 2166136261;
@@ -22,8 +42,11 @@ function clientEntities(base44) {
 async function recentDecisions(base44) {
   const entities = clientEntities(base44);
   if (!entities?.EcosystemWorkloadDecision) return [];
-  try { return await entities.EcosystemWorkloadDecision.filter({}, '-decided_at', MAX_HISTORY) || []; }
-  catch { return []; }
+  try { return await withDbTimeout(entities.EcosystemWorkloadDecision.filter({}, '-decided_at', MAX_HISTORY), "filter") || []; }
+  catch (error) {
+    console.warn("[ecosystemAdmission] recentDecisions unavailable:", error?.code || error?.message);
+    return [];
+  }
 }
 
 function snapshotFromRows(rows, now = Date.now()) {
@@ -93,7 +116,9 @@ export async function admitEcosystemOperation(base44, workload = {}) {
       decision_version: decision.decisionVersion || ECOSYSTEM_FABRIC_VERSION,
       decided_at: decidedAt,
     };
-    try { record = await entities.EcosystemWorkloadDecision.create(payload); } catch {}
+    try { record = await withDbTimeout(entities.EcosystemWorkloadDecision.create(payload), "create"); } catch (error) {
+      console.warn("[ecosystemAdmission] decision record skipped:", error?.code || error?.message);
+    }
   }
   if (!decision.accepted) throw new EcosystemAdmissionError(decision);
   return { ...decision, idempotencyKey, recordId:record?.id || null, leaseExpiresAt };
@@ -111,7 +136,9 @@ export async function completeEcosystemOperation(base44, lease, outcome = {}) {
     actual_cost: Math.max(0, n(outcome.actualCost ?? outcome.actual_cost, 0)),
     error: success ? '' : String(outcome.error || 'operation failed').slice(0,500),
   };
-  try { await entities.EcosystemWorkloadDecision.update(lease.recordId, patch); } catch {}
+  try { await withDbTimeout(entities.EcosystemWorkloadDecision.update(lease.recordId, patch), "update"); } catch (error) {
+    console.warn("[ecosystemAdmission] decision completion skipped:", error?.code || error?.message);
+  }
 }
 
 export async function withEcosystemAdmission(base44, workload, operation) {
