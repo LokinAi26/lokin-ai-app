@@ -6,6 +6,8 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Shared builder-owned Google Calendar connector — admin only.
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'calendar_sync', priority:55, estimatedMs:5000, realtime:false, background:true, tags:['provider','scheduled'] });
 
     // Shared Google Calendar connector (builder's account).
