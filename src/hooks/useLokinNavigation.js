@@ -106,6 +106,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon} for the grocery-geofence foreground re-check
   const webFixReceivedRef = useRef(false); // first web-geolocation fix arrived (watchdog guard)
   const lastAcceptedSampleRef = useRef(null);
+  // HUD anti-flicker latches (2026-09-26): the maneuver card and ETA are
+  // derived from every GPS fix, so a parked phone's position wander must not
+  // visibly flip them. Both latches only advance forward and reset on a new
+  // route or navigation teardown.
+  const latchedManeuverRef = useRef(null);
+  const maneuverAdvanceStreakRef = useRef(0);
+  const etaDisplayMinRef = useRef(null);
+  const etaUpStreakRef = useRef(0);
+  const positionWindowRef = useRef([]);
+  const [etaDisplayS, setEtaDisplayS] = useState(null);
   const [gpsModeVersion, setGpsModeVersion] = useState(() => gpsSuperAgent.getModeVersion());
   const [gpsRestartCounter, setGpsRestartCounter] = useState(0);
   const fusionEngineRef = useRef(null);
@@ -124,6 +134,12 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setGeocodedDestinations([]);
     setSnapped(null);
     setManeuver(null);
+    latchedManeuverRef.current = null;
+    maneuverAdvanceStreakRef.current = 0;
+    etaDisplayMinRef.current = null;
+    etaUpStreakRef.current = 0;
+    positionWindowRef.current = [];
+    setEtaDisplayS(null);
     setRerouteCount(0);
     setTrafficEta(null);
     setRouteImprovement(null);
@@ -163,6 +179,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setRoute(null);
     setSnapped(null);
     setManeuver(null);
+    latchedManeuverRef.current = null;
+    maneuverAdvanceStreakRef.current = 0;
     setStatus("error");
     setError(`LOKIN blocked an implausible far-away match for “${invalid?.input || normalizedDestinations?.[0] || "this address"}”. Add city, state, or ZIP before navigating.`);
   }, [geocodedDestinations, destinationsKey, route?.distance_m]);
@@ -188,6 +206,12 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       setGeocodedDestinations([]);
       setSnapped(null);
       setManeuver(null);
+      latchedManeuverRef.current = null;
+      maneuverAdvanceStreakRef.current = 0;
+      etaDisplayMinRef.current = null;
+      etaUpStreakRef.current = 0;
+      positionWindowRef.current = [];
+      setEtaDisplayS(null);
       setRerouteCount(0);
       arrivalSamplesRef.current = 0;
       arrivedRef.current = false;
@@ -248,7 +272,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         };
         snappedRef.current = enrichedInitialSnap;
         setSnapped(enrichedInitialSnap);
-        setManeuver(nextManeuverForSnap(prepared.maneuvers || [], initialSnap, prepared.geometry.coordinates));
+        const initialManeuver = nextManeuverForSnap(prepared.maneuvers || [], initialSnap, prepared.geometry.coordinates);
+        latchedManeuverRef.current = initialManeuver;
+        maneuverAdvanceStreakRef.current = 0;
+        setManeuver(initialManeuver);
       }
 
       geocodedRef.current = geocoded;
@@ -496,8 +523,30 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     };
     snappedRef.current = enrichedSnap;
     setSnapped(enrichedSnap);
-    const next = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
-    setManeuver(next);
+    const candidate = nextManeuverForSnap(activeRoute.maneuvers || [], snap, geometry);
+    // Maneuver latch: a parked phone's GPS wander moves along_route_m back and
+    // forth across maneuver points, which used to flip the card at ~1Hz. The
+    // card now holds until 3 consecutive fixes agree the driver truly passed it.
+    const latched = latchedManeuverRef.current;
+    const latchedAlong = Number(latched?.along_route_m);
+    const candidateAlong = Number(candidate?.along_route_m);
+    if (!candidate) {
+      // No credible maneuver this fix — hold the card steady.
+    } else if (!latched || !Number.isFinite(latchedAlong)) {
+      latchedManeuverRef.current = candidate;
+      maneuverAdvanceStreakRef.current = 0;
+      setManeuver(candidate);
+    } else if (Number.isFinite(candidateAlong) && candidateAlong > latchedAlong) {
+      maneuverAdvanceStreakRef.current += 1;
+      if (maneuverAdvanceStreakRef.current >= 3) {
+        latchedManeuverRef.current = candidate;
+        maneuverAdvanceStreakRef.current = 0;
+        setManeuver(candidate);
+      }
+    } else {
+      // Same or earlier maneuver (GPS wandered backward) — hold the card.
+      maneuverAdvanceStreakRef.current = 0;
+    }
 
     const finalDestination = geocodedRef.current?.[geocodedRef.current.length - 1];
     const finalDestinationCoord = finalDestination
@@ -525,10 +574,14 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     } else if (arrival.status === "arrived-hold") {
       offRouteSamplesRef.current = 0;
       setManeuver(null);
+      latchedManeuverRef.current = null;
+      maneuverAdvanceStreakRef.current = 0;
       return;
     } else if (arrival.status === "arrived") {
       offRouteSamplesRef.current = 0;
       setManeuver(null);
+      latchedManeuverRef.current = null;
+      maneuverAdvanceStreakRef.current = 0;
       setStatus("arrived");
       // Arrival-at-grocery: if navigation ended at a grocery/retail
       // destination, fire the store entry event directly even if a geofence
@@ -550,10 +603,24 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const fusionConfidence = fusionEngine.getConfidence();
     const fusionAllowsReroute = fusionEngine.shouldAllowReroute();
     // NOTE: `policy` is computed once up at the snap; reuse it here.
+    // Parked guard: a stationary phone's GPS drift is not a route deviation.
+    // While the last several fixes haven't moved, hold the off-route counter
+    // at zero so drift can't fire a reroute every cooldown window (the
+    // flickering "REROUTING · CONFIRMING ROAD" loop). Displacement-based, so
+    // it works even when the provider reports no speed.
+    const positionWindow = positionWindowRef.current;
+    if (coord && Number.isFinite(Number(coord[0])) && Number.isFinite(Number(coord[1]))) {
+      positionWindow.push({ lon: Number(coord[0]), lat: Number(coord[1]) });
+      if (positionWindow.length > 6) positionWindow.shift();
+    }
+    const parked = positionWindow.length >= 4 && positionWindow.every((p) =>
+      haversineMeters([p.lon, p.lat], [positionWindow[0].lon, positionWindow[0].lat]) < 8);
     if (acceptedSample.dead_reckoned === true) {
       // Dead-reckoned fixes keep the map moving through a tunnel/garage, but
       // never create a network reroute on their own. Wait for an absolute
       // Core Location / Fused Location Provider fix to confirm the deviation.
+      offRouteSamplesRef.current = 0;
+    } else if (parked) {
       offRouteSamplesRef.current = 0;
     } else if (snap.distance_m > policy.thresholdM) {
       offRouteSamplesRef.current += 1;
@@ -869,6 +936,41 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     ? (status === "arrived" ? 0 : Math.max(1, trafficRemainingDurationS))
     : (status === "arrived" ? 0 : Math.max(1, fallbackRemainingDurationS));
 
+  // ETA anti-flicker: the HUD shows whole minutes that only ever tick down. A
+  // higher minute value is adopted only after 4 consecutive fixes (~4s) agree,
+  // so 1Hz progress jitter can't flap "4m"<->"3m" at the rounding boundary
+  // while a genuine reroute's new ETA still lands promptly.
+  useEffect(() => {
+    const rawMin = Math.floor(Math.max(0, Number(remainingDurationS) || 0) / 60);
+    const prev = etaDisplayMinRef.current;
+    if (rawMin === 0) {
+      // Sub-minute: every value here formats as "<1m" — already jitter-proof.
+      etaDisplayMinRef.current = 0;
+      etaUpStreakRef.current = 0;
+      setEtaDisplayS(30);
+      return;
+    }
+    if (prev == null || status === "arrived") {
+      etaDisplayMinRef.current = rawMin;
+      etaUpStreakRef.current = 0;
+      setEtaDisplayS(rawMin * 60);
+      return;
+    }
+    if (rawMin === prev) { etaUpStreakRef.current = 0; return; }
+    if (rawMin < prev) {
+      etaDisplayMinRef.current = rawMin;
+      etaUpStreakRef.current = 0;
+      setEtaDisplayS(rawMin * 60);
+      return;
+    }
+    etaUpStreakRef.current += 1;
+    if (etaUpStreakRef.current >= 4) {
+      etaDisplayMinRef.current = rawMin;
+      etaUpStreakRef.current = 0;
+      setEtaDisplayS(rawMin * 60);
+    }
+  }, [remainingDurationS, status]);
+
   return {
     route,
     geocodedDestinations,
@@ -887,7 +989,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     providerProbeError,
     probeProvider,
     remainingDistanceM,
-    remainingDurationS,
+    remainingDurationS: etaDisplayS == null ? remainingDurationS : etaDisplayS,
     etaUpdatedAt: trafficEta?.generated_at || route?.generated_at || null,
     etaLiveTraffic: trafficEta?.live_traffic === true || route?.live_traffic === true,
     refreshTrafficEta,
