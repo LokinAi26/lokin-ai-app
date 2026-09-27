@@ -729,6 +729,11 @@ export default function LiveVectorMap({
   // Orbit-ownership state (Kendall's call 2026-09-27 — "orbit only when
   // stationary"): showcaseRef = the slow orbit currently owns the frame.
   const showcaseRef = useRef(false);
+  // Path A perf (2026-09-27, Kendall: "Let's do path A"): terrain renders
+  // ONLY for the parked showcase. This ref tracks whether terrain is
+  // currently applied so the orbit loop toggles it on state changes,
+  // never every frame.
+  const terrainForShowcaseRef = useRef(null);
   const stationarySinceRef = useRef(null);
   const showcaseBlendRef = useRef(0);
   // Parked-flicker gate: the follow camera has been eased onto the driver at
@@ -857,7 +862,9 @@ export default function LiveVectorMap({
           zoom: snappedPosition?.coordinate ? (perspective ? 16.6 : 16.8) : 13,
           bearing: Number(heading || 0),
           pitch: perspective ? 78 : 0,
-          antialias: true,
+          antialias: false, // Path A perf (2026-09-27): MSAA off — invisible at 2x+ density
+          // Path A perf (2026-09-27): cap render resolution at 2x (was uncapped 3x on his iPhone)
+          pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
           attributionControl: false,
           renderWorldCopies: false,
           fadeDuration: 0,
@@ -921,6 +928,7 @@ export default function LiveVectorMap({
           }
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           applyCinematicGrade(map, cinematicRef.current, styleRef.current);
+          terrainForShowcaseRef.current = cinematicRef.current ? true : null; // Path A perf sync
           updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
           refreshPoiAnchors();
           // Re-pin once the first frame is idle: at style.load the 3D
@@ -1048,6 +1056,7 @@ export default function LiveVectorMap({
       if (!live) return;
       applyDuskTreatment(live, isAerialStyle(style));
       applyCinematicGrade(live, cinematicRef.current, style);
+      terrainForShowcaseRef.current = cinematicRef.current ? true : null; // Path A perf sync
     });
   }, [style]);
 
@@ -1065,6 +1074,9 @@ export default function LiveVectorMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     applyCinematicGrade(map, cinematic, styleRef.current);
+    // Path A perf: the grade turns terrain on; the loop below clears it on
+    // the first driving frame and restores it for the parked showcase.
+    terrainForShowcaseRef.current = cinematic ? true : null;
     if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
     showcaseRef.current = false;
     stationarySinceRef.current = null;
@@ -1096,12 +1108,22 @@ export default function LiveVectorMap({
         stationarySinceRef.current = null;
         showcaseRef.current = false;
         showcaseBlendRef.current = 0;
+        // Path A perf: terrain is parked-showcase only — drop it while driving.
+        if (terrainForShowcaseRef.current !== false) {
+          try { live.setTerrain(null); } catch { /* nothing to clear */ }
+          terrainForShowcaseRef.current = false;
+        }
         return;
       }
       if (!deadReckoned) {
         if (stationarySinceRef.current == null) stationarySinceRef.current = now;
         if (now - stationarySinceRef.current >= SHOWCASE_STATIONARY_MS) {
           showcaseRef.current = true;
+          // Path A perf: parked 6 s+ — restore terrain for the showcase orbit.
+          if (terrainForShowcaseRef.current !== true) {
+            try { live.setTerrain({ source: TERRAIN_SOURCE, exaggeration: 1.15 }); } catch { /* DEM unavailable */ }
+            terrainForShowcaseRef.current = true;
+          }
         }
       }
       if (!showcaseRef.current) return; // still inside the 6 s grace — hold frame
