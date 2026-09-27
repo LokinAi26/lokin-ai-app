@@ -24,7 +24,7 @@ const LOKIN_NEON_ROUTE = "#8FE44E";
 // line layers only — beam, pulse, pins, and POI rings stay LOKIN Green.
 const LOKIN_LIME_ROUTE = "#A2EB1B";
 // Cinematic art direction lock (2026-09-25): the route core is LOKIN Green
-// #8FE44E â the single brand green, glowing against the dusk grade.
+// #8FE44E — the single brand green, glowing against the dusk grade.
 // Stop pins keep the same green so they read as markers, not route.
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
@@ -234,68 +234,74 @@ function addNavigationLayers(map, routeGeometry) {
   const data = routeFeature(routeGeometry);
   if (map.getSource(ROUTE_SOURCE)) {
     map.getSource(ROUTE_SOURCE).setData(data);
-    return;
+  } else {
+    map.addSource(ROUTE_SOURCE, {
+      type: "geojson",
+      data,
+      lineMetrics: true,
+    });
   }
-
-  map.addSource(ROUTE_SOURCE, {
-    type: "geojson",
-    data,
-    lineMetrics: true,
-  });
-  // Neon glow halo under the route (bloom for true LOKIN Green neon).
+  // Rebuild the route stack from scratch: guarantees the bright lime core is
+  // never buried under a stale layer and never depends on style slots.
+  // Add-order is the paint order (last = top): glow -> casing -> core.
+  // No `slot` — explicit ordering only.
+  const ROUTE_LAYER_IDS = ["lokin-live-route-glow", ROUTE_CASING, ROUTE_LINE];
+  for (const id of ROUTE_LAYER_IDS) {
+    if (map.getLayer(id)) map.removeLayer(id);
+  }
+  const lineLayout = { "line-cap": "round", "line-join": "round" };
   map.addLayer({
     id: "lokin-live-route-glow",
     type: "line",
     source: ROUTE_SOURCE,
-    slot: "top",
-    layout: {
-      "line-cap": "round",
-      "line-join": "round",
-    },
+    layout: lineLayout,
     paint: {
       "line-color": LOKIN_LIME_ROUTE,
-      "line-opacity": 0.55,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 18, 17, 30],
-      "line-blur": 5,
+      "line-opacity": 0.65,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 22, 17, 34],
+      "line-blur": 6,
     },
   });
   map.addLayer({
     id: ROUTE_CASING,
     type: "line",
     source: ROUTE_SOURCE,
-    slot: "top",
-    layout: {
-      "line-cap": "round",
-      "line-join": "round",
-    },
+    layout: lineLayout,
     paint: {
-      // Thin dark edge for definition â narrow so the neon dominates.
+      // Thin dark edge for definition — narrow so the neon dominates.
       "line-color": "#060B04",
       "line-opacity": 0.95,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 16],
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 11, 17, 17],
     },
   });
   map.addLayer({
     id: ROUTE_LINE,
     type: "line",
     source: ROUTE_SOURCE,
-    slot: "top",
-    layout: {
-      "line-cap": "round",
-      "line-join": "round",
-    },
+    layout: lineLayout,
     paint: {
       "line-color": LOKIN_LIME_ROUTE,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 13],
+      "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 17, 15],
       "line-opacity": 1,
       "line-blur": 0,
     },
   });
+  // Keep stop pins/clusters above the route line.
+  const firstStopLayer = "lokin-stop-cluster-halo";
+  if (map.getLayer(firstStopLayer)) {
+    for (const id of ROUTE_LAYER_IDS) {
+      try {
+        map.moveLayer(id, firstStopLayer);
+      } catch {
+        // Stop layers may be mid-rebuild; route order is already correct.
+      }
+    }
+  }
 }
 
 // ---------- Cinematic art direction (locked 2026-09-25) ----------
 // Real-data cinematic grade for the GPS map: golden-hour dusk light, real
-// terrain elevation, warm atmospheric haze. All real Mapbox sources â no
+// terrain elevation, warm atmospheric haze. All real Mapbox sources — no
 // invented geometry. Applied only in cinematic mode so the everyday driving
 // view is untouched.
 const TERRAIN_SOURCE = "lokin-cinematic-terrain";
@@ -427,7 +433,7 @@ function createDriverMarker() {
 // Destination beam: a LOKIN-green light pillar grown out of the destination
 // rooftop, rendered as a custom WebGL layer. A custom layer is used (instead
 // of fill-extrusion) because the cinematic dusk light preset recolors lit
-// geometry slate-blue â the beam must stay unlit neon #8FE44E. The base pad
+// geometry slate-blue — the beam must stay unlit neon #8FE44E. The base pad
 // sits flat on the roof at the building's own height (sampled from the
 // rendered extrusion), so it never floats above or sinks into the rooftop.
 const BEAM_LAYER_ID = "lokin-beam-gl";
@@ -622,7 +628,7 @@ function roofHeightAt(map, lngLat) {
       if (Number.isFinite(h) && h > 0) return h;
     }
   } catch {
-    // Render not ready â the caller re-pins on idle.
+    // Render not ready — the caller re-pins on idle.
   }
   return 0;
 }
@@ -635,7 +641,7 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   if (!map) return;
   // Lock the beam to the final destination ADDRESS: the last stop in delivery
   // sequence carries the geocoded address point. The route's end is only a
-  // road-snapped fallback â it can sit off the true address.
+  // road-snapped fallback — it can sit off the true address.
   const sequenced = (Array.isArray(deliveryStops) ? deliveryStops : [])
     .map((stop) => ({
       sequence: Number(stop?.sequence) || 0,
@@ -671,7 +677,7 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   layer.setTarget(destination, roofH);
 }
 
-// FPS meter for the cinematic mode â the 30 FPS shipping gate, measured live.
+// FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
 function CinematicFpsMeter({ fullscreen = false }) {
   const [fps, setFps] = useState(0);
   useEffect(() => {
@@ -818,7 +824,7 @@ export default function LiveVectorMap({
     async function start() {
       // Startup watchdog FIRST: the map_config fetch below can hang
       // indefinitely (the invoke has no client-side timeout), so the timer
-      // must be armed before any await â never after it.
+      // must be armed before any await — never after it.
       let timedOut = false;
       startupTimer = window.setTimeout(() => {
         if (disposed || loadedRef.current) return;
@@ -1291,7 +1297,7 @@ export default function LiveVectorMap({
         <button
           type="button"
           aria-label="Pull down or push up to adjust the horizon"
-          // Fullscreen (TestFlight) has the app header overlaid at the top â
+          // Fullscreen (TestFlight) has the app header overlaid at the top —
           // drop below it there; the embedded card keeps the tighter offset.
           className={`absolute left-1/2 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary ${fullscreen ? "top-[calc(env(safe-area-inset-top)+4rem)]" : "top-24"}`}
           onPointerDown={beginHorizonGesture}
@@ -1300,7 +1306,7 @@ export default function LiveVectorMap({
           onPointerCancel={endHorizonGesture}
         >
           <span className="mr-1.5 inline-block h-1 w-6 rounded-full bg-primary/80 align-middle" />
-          PULL HORIZON Â· {Math.round(cameraPitch)}Â°
+          PULL HORIZON · {Math.round(cameraPitch)}°
         </button>
       )}
       {status === "ready" && (
@@ -1308,7 +1314,7 @@ export default function LiveVectorMap({
           type="button"
           aria-label={cinematic ? "Turn off cinematic camera" : "Turn on cinematic camera"}
           onClick={() => setCinematic((value) => !value)}
-          // Sits below the GPS header on the LEFT â the right edge is crowded
+          // Sits below the GPS header on the LEFT — the right edge is crowded
           // (4D toggle, night/aerial control) and kept swallowing it.
           // In fullscreen (TestFlight) the app header is overlaid at the top
           // (back + LOKIN buttons, z-50), so the toggle drops below it using
@@ -1338,7 +1344,7 @@ export default function LiveVectorMap({
       )}
       {retailStatus === "error" && (
         <div className="absolute inset-x-4 top-16 z-10 rounded-xl border border-amber-300/25 bg-black/85 px-3 py-2 text-center text-[10px] text-amber-200">
-          Store map data unavailable Â· retrying
+          Store map data unavailable · retrying
         </div>
       )}
     </div>
