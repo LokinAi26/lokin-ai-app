@@ -93,11 +93,13 @@ export default async function(req:Request) {
     const user:any = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error:'Unauthorized' }, { status:401 });
 
-    const query:any = user.role === 'admin' ? {} : { owner_user_id:user.id };
+    const isAdmin = user.role === 'admin';
+    const query:any = isAdmin ? {} : { owner_user_id:user.id };
     const [tasks, publicSettings, monitoring] = await Promise.all([
       base44.asServiceRole.entities.Base44BuildTask.filter(query, '-updated_date', 500).catch(() => []),
       base44.app.getPublicSettings().catch(() => null),
-      readMonitoring(APP_ID),
+      // App-owner analytics (credit burn, user counts) are admin-only.
+      isAdmin ? readMonitoring(APP_ID) : Promise.resolve({ configured:false, available:false, reason:'ADMIN_ONLY' }),
     ]);
 
     const trackedQueue = summarize(tasks || []);
