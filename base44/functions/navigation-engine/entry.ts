@@ -743,7 +743,7 @@ export default async function navigationEngine(req: Request) {
       const enteredEta = await trafficEta([origin, ...points.slice(1)], accessToken).catch(() => null);
 
       let prefs: any = {};
-      try { prefs = (await base44.entities.DriverPreference.filter({}))[0] || {}; } catch { prefs = {}; }
+      try { prefs = (await base44.entities.DriverPreference.filter({ created_by_id: String(user.id) }))[0] || {}; } catch { prefs = {}; }
       const mpg = Number(prefs?.vehicle_mpg) > 0 ? Number(prefs.vehicle_mpg) : 26;
       const gasPrice = Number(prefs?.gas_price) > 0 ? Number(prefs.gas_price) : 3.45;
       const toMiles = (m: number) => Number(m || 0) / 1609.344;
