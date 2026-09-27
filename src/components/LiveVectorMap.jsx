@@ -416,34 +416,189 @@ function createDriverMarker() {
 }
 
 // Destination beam: a LOKIN-green light pillar grown out of the destination
-// rooftop as REAL 3D geometry (fill-extrusion). The base disc sits flat on the
-// roof at the building's own height — sampled from the rendered extrusion —
-// so it never floats above or sinks into the rooftop in perspective view.
-const BEAM_SOURCE = "lokin-destination-beam";
-const BEAM_BASE_LAYER = "lokin-beam-base";
-const BEAM_PILLAR_LAYER = "lokin-beam-pillar";
+// rooftop, rendered as a custom WebGL layer. A custom layer is used (instead
+// of fill-extrusion) because the cinematic dusk light preset recolors lit
+// geometry slate-blue — the beam must stay unlit neon #8FE44E. The base pad
+// sits flat on the roof at the building's own height (sampled from the
+// rendered extrusion), so it never floats above or sinks into the rooftop.
+const BEAM_LAYER_ID = "lokin-beam-gl";
 const BEAM_PILLAR_HEIGHT_M = 90;
+const BEAM_HALF_WIDTH_M = 3;
+const BEAM_BASE_HALF_M = 7;
+const BEAM_GREEN = [0x8f / 255, 0xe4 / 255, 0x4e / 255];
+const WORLD_M = 40075016.68;
+
+const BEAM_VERT = `
+attribute vec3 a_pos;
+attribute vec2 a_uv;
+attribute float a_mode;
+uniform mat4 u_matrix;
+varying vec2 v_uv;
+varying float v_mode;
+void main() {
+  v_uv = a_uv;
+  v_mode = a_mode;
+  gl_Position = u_matrix * vec4(a_pos, 1.0);
+}
+`;
+
+const BEAM_FRAG = `
+precision mediump float;
+uniform vec3 u_color;
+uniform float u_time;
+varying vec2 v_uv;
+varying float v_mode;
+void main() {
+  float flicker = 0.88 + 0.12 * sin(u_time * 1.9);
+  float alpha;
+  if (v_mode < 0.5) {
+    // Pillar: bright at the base, fading upward.
+    alpha = mix(0.9, 0.04, pow(v_uv.y, 1.4)) * flicker;
+  } else {
+    // Base pad: soft circular falloff so it reads as a flat disc on the roof.
+    float d = length(v_uv - vec2(0.5)) * 2.0;
+    alpha = (1.0 - smoothstep(0.55, 1.0, d)) * 0.85 * flicker;
+  }
+  if (alpha < 0.01) discard;
+  gl_FragColor = vec4(u_color, alpha);
+}
+`;
+
+function compileBeamShader(gl, type, src) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  return shader;
+}
+
+function createBeamLayer() {
+  let program = null;
+  let buffer = null;
+  let layerMap = null;
+  const uniforms = {};
+  const attribs = {};
+  const state = { destination: null, roofH: 0 };
+
+  // Corner as a mercator vec3: [lng + eastM, lat + northM] at altM meters.
+  const corner = (lng, lat, mPerDegLng, mPerDegLat, eastM, northM, altM) => {
+    const mc = mapboxgl.MercatorCoordinate.fromLngLat(
+      { lng: lng + eastM / mPerDegLng, lat: lat + northM / mPerDegLat },
+      altM,
+    );
+    return [mc.x, mc.y, mc.z];
+  };
+
+  const buildVertices = (map) => {
+    const [lng, lat] = state.destination;
+    const roofH = state.roofH;
+    // Camera-facing right vector (horizontal, meters) so the pillar is a
+    // billboard that always faces the viewer.
+    let rx = 1;
+    let ry = 0;
+    try {
+      const cam = map.getFreeCameraOptions().position;
+      const g = mapboxgl.MercatorCoordinate.fromLngLat({ lng, lat });
+      let dx = g.x - cam.x;
+      let dy = g.y - cam.y;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+      rx = -dy;
+      ry = dx;
+    } catch {
+      // North-facing fallback; the beam still draws.
+    }
+    const mPerDegLat = 111320;
+    const mPerDegLng = 111320 * Math.cos((lat * Math.PI) / 180);
+    const at = (eastM, northM, altM) =>
+      corner(lng, lat, mPerDegLng, mPerDegLat, eastM, northM, altM);
+    const verts = [];
+    const quad = (a, b, c, d, mode) => {
+      const points = [a, b, c, a, c, d];
+      const uvs = [[0, 0], [1, 0], [1, 1], [0, 0], [1, 1], [0, 1]];
+      points.forEach((p, i) => verts.push(p[0], p[1], p[2], uvs[i][0], uvs[i][1], mode));
+    };
+    // Pillar billboard: bottom edge on the roof, top 90 m above it.
+    const hw = BEAM_HALF_WIDTH_M;
+    quad(
+      at(-rx * hw, -ry * hw, roofH),
+      at(rx * hw, ry * hw, roofH),
+      at(rx * hw, ry * hw, roofH + BEAM_PILLAR_HEIGHT_M),
+      at(-rx * hw, -ry * hw, roofH + BEAM_PILLAR_HEIGHT_M),
+      0,
+    );
+    // Base pad: flat square 0.4 m above the roof plane (no z-fighting).
+    const hb = BEAM_BASE_HALF_M;
+    const z = roofH + 0.4;
+    quad(at(-hb, -hb, z), at(hb, -hb, z), at(hb, hb, z), at(-hb, hb, z), 1);
+    return new Float32Array(verts);
+  };
+
+  return {
+    id: BEAM_LAYER_ID,
+    type: "custom",
+    renderingMode: "3d",
+    setTarget(destination, roofH) {
+      state.destination = destination;
+      state.roofH = roofH;
+    },
+    onAdd(map, gl) {
+      layerMap = map;
+      const vs = compileBeamShader(gl, gl.VERTEX_SHADER, BEAM_VERT);
+      const fs = compileBeamShader(gl, gl.FRAGMENT_SHADER, BEAM_FRAG);
+      program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      buffer = gl.createBuffer();
+      uniforms.u_matrix = gl.getUniformLocation(program, "u_matrix");
+      uniforms.u_color = gl.getUniformLocation(program, "u_color");
+      uniforms.u_time = gl.getUniformLocation(program, "u_time");
+      attribs.a_pos = gl.getAttribLocation(program, "a_pos");
+      attribs.a_uv = gl.getAttribLocation(program, "a_uv");
+      attribs.a_mode = gl.getAttribLocation(program, "a_mode");
+    },
+    render(gl, matrix) {
+      if (!state.destination || !program || !buffer) return;
+      const data = buildVertices(layerMap);
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      const stride = 24; // 6 floats: xyz + uv + mode
+      gl.enableVertexAttribArray(attribs.a_pos);
+      gl.vertexAttribPointer(attribs.a_pos, 3, gl.FLOAT, false, stride, 0);
+      gl.enableVertexAttribArray(attribs.a_uv);
+      gl.vertexAttribPointer(attribs.a_uv, 2, gl.FLOAT, false, stride, 12);
+      gl.enableVertexAttribArray(attribs.a_mode);
+      gl.vertexAttribPointer(attribs.a_mode, 1, gl.FLOAT, false, stride, 20);
+      gl.uniformMatrix4fv(uniforms.u_matrix, false, matrix);
+      gl.uniform3f(uniforms.u_color, BEAM_GREEN[0], BEAM_GREEN[1], BEAM_GREEN[2]);
+      gl.uniform1f(uniforms.u_time, performance.now() / 1000);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.drawArrays(gl.TRIANGLES, 0, 12);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
+    },
+    onRemove(map, gl) {
+      if (buffer) gl.deleteBuffer(buffer);
+      if (program) gl.deleteProgram(program);
+      program = null;
+      buffer = null;
+      layerMap = null;
+    },
+  };
+}
 
 function removeDestinationBeamLayers(map) {
   if (!map) return;
-  for (const id of [BEAM_PILLAR_LAYER, BEAM_BASE_LAYER]) {
-    if (map.getLayer(id)) map.removeLayer(id);
+  try {
+    if (map.getLayer(BEAM_LAYER_ID)) map.removeLayer(BEAM_LAYER_ID);
+  } catch {
+    // Layer already gone (style swap); nothing to remove.
   }
-  if (map.getSource(BEAM_SOURCE)) map.removeSource(BEAM_SOURCE);
-}
-
-// Small square footprint (degrees) centered on [lng, lat].
-function squareAround([lng, lat], halfMeters) {
-  const mPerDegLng = 111320 * Math.cos((lat * Math.PI) / 180);
-  const dLat = halfMeters / 111320;
-  const dLng = halfMeters / mPerDegLng;
-  return [[
-    [lng - dLng, lat - dLat],
-    [lng + dLng, lat - dLat],
-    [lng + dLng, lat + dLat],
-    [lng - dLng, lat + dLat],
-    [lng - dLng, lat - dLat],
-  ]];
 }
 
 // Roof height (meters) of the building under a lngLat, sampled from the
@@ -464,10 +619,9 @@ function roofHeightAt(map, lngLat) {
 }
 
 // Keep the destination beam pinned to the route's end (the real destination).
-// The beamRef is a legacy handle (retired DOM marker); the beam itself is GL
-// layers now, so this helper is called on style load, on idle (once buildings
-// have rendered and the roof height can be sampled), and whenever the route
-// geometry changes.
+// The beamRef holds the custom-layer instance; this helper is called on style
+// load, on idle (once buildings have rendered and the roof height can be
+// sampled), and whenever the route geometry changes.
 function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) {
   if (!map) return;
   // Lock the beam to the final destination ADDRESS: the last stop in delivery
@@ -487,61 +641,25 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
     ? sequenced[sequenced.length - 1].coordinate
     : (routeCoordinates.length >= 2 ? routeCoordinates[routeCoordinates.length - 1] : null);
   if (!destination) {
-    if (beamRef.current?.remove) beamRef.current.remove();
-    beamRef.current = null;
     removeDestinationBeamLayers(map);
+    beamRef.current = null;
     return;
   }
-  // Retire the legacy DOM marker — it pinned at ground elevation and floated
-  // above rooftops in the 3D perspective view.
-  if (beamRef.current?.remove) beamRef.current.remove();
-  beamRef.current = null;
 
   const roofH = roofHeightAt(map, destination);
-  const data = {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: { part: "base" },
-        geometry: { type: "Polygon", coordinates: squareAround(destination, 7) },
-      },
-      {
-        type: "Feature",
-        properties: { part: "pillar" },
-        geometry: { type: "Polygon", coordinates: squareAround(destination, 3) },
-      },
-    ],
-  };
-  const src = map.getSource(BEAM_SOURCE);
-  if (src) src.setData(data);
-  else map.addSource(BEAM_SOURCE, { type: "geojson", data });
-
-  const paintBeam = (layerId, filter, paint) => {
-    if (map.getLayer(layerId)) {
-      map.setFilter(layerId, filter);
-      for (const [key, value] of Object.entries(paint)) map.setPaintProperty(layerId, key, value);
-    } else {
-      map.addLayer({
-        id: layerId, type: "fill-extrusion", source: BEAM_SOURCE, filter, slot: "top", paint,
-      });
+  let layer = beamRef.current;
+  if (!map.getLayer(BEAM_LAYER_ID) || !layer || typeof layer.setTarget !== "function") {
+    removeDestinationBeamLayers(map);
+    layer = createBeamLayer();
+    map.addLayer(layer, undefined);
+    try {
+      map.moveLayer(BEAM_LAYER_ID);
+    } catch {
+      // Already on top; nothing to do.
     }
-  };
-  // Flat base disc: 1.5 m thick, sitting exactly on the roof plane.
-  paintBeam(BEAM_BASE_LAYER, ["==", ["get", "part"], "base"], {
-    "fill-extrusion-color": "#8FE44E",
-    "fill-extrusion-opacity": 0.95,
-    "fill-extrusion-base": roofH,
-    "fill-extrusion-height": roofH + 1.5,
-  });
-  // Pillar rising from the roof.
-  paintBeam(BEAM_PILLAR_LAYER, ["==", ["get", "part"], "pillar"], {
-    "fill-extrusion-color": "#8FE44E",
-    "fill-extrusion-opacity": 0.55,
-    "fill-extrusion-vertical-gradient": true,
-    "fill-extrusion-base": roofH,
-    "fill-extrusion-height": roofH + BEAM_PILLAR_HEIGHT_M,
-  });
+    beamRef.current = layer;
+  }
+  layer.setTarget(destination, roofH);
 }
 
 // FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
