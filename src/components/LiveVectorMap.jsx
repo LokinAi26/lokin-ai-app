@@ -876,8 +876,12 @@ export default function LiveVectorMap({
           }, 4500);
         };
         map.on("dragstart", markInteraction);
-        map.on("rotatestart", markInteraction);
-        map.on("pitchstart", markInteraction);
+        map.on("rotatestart", (event) => {
+          if (event?.originalEvent) markInteraction();
+        });
+        map.on("pitchstart", (event) => {
+          if (event?.originalEvent) markInteraction();
+        });
         map.on("zoomstart", (event) => {
           if (event?.originalEvent) markInteraction();
         });
@@ -888,9 +892,10 @@ export default function LiveVectorMap({
           schedulePoiRefresh();
         });
         map.on("pitch", (event) => {
+          if (!event?.originalEvent) return; // programmatic pitch (showcase orbit) must not move the PULL HORIZON pill
           const nextPitch = clamp(map.getPitch(), 0, 80);
           setCameraPitch(nextPitch);
-          if (event?.originalEvent) preferredPitchRef.current = nextPitch;
+          preferredPitchRef.current = nextPitch;
         });
 
         map.on("style.load", () => {
