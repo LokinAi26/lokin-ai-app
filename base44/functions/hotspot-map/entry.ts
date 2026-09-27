@@ -175,9 +175,9 @@ export default async function hotspotMap(req: Request) {
 
     const [allOffers, preferenceRows, blocked, avoidPlaces] = await Promise.all([
       base44.entities.Offer.filter({ status: "available" }),
-      base44.entities.DriverPreference.filter({}),
-      base44.entities.BlockedCustomer.filter({}),
-      base44.entities.AvoidPlace.filter({}),
+      base44.entities.DriverPreference.filter({ created_by_id: String(user.id) }),
+      base44.entities.BlockedCustomer.filter({ created_by_id: String(user.id) }),
+      base44.entities.AvoidPlace.filter({ created_by_id: String(user.id) }),
     ]);
 
     const visibleOffers = filterOffersForUser(allOffers, String(user.id));
