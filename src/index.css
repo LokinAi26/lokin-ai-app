@@ -354,6 +354,17 @@ body {
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .leaflet-container { background: #050505; font-family: var(--font-body); }
   .lokin-route { filter: drop-shadow(0 0 6px rgba(124, 252, 30, 0.85)); }
+  /* Living route line (2026-09-27): the lime route glow breathes slowly so the
+     line feels alive and easier to follow while driving. Matches the live-map
+     glow pulse (opacity 0.5–0.8 on a ~2.6 s ease). */
+  @keyframes lokin-route-glow {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(162, 235, 27, 0.7)); }
+    50% { filter: drop-shadow(0 0 11px rgba(162, 235, 27, 1)); }
+  }
+  .lokin-route-pulse {
+    filter: drop-shadow(0 0 8px rgba(162, 235, 27, 1));
+    animation: lokin-route-glow 2.6s ease-in-out infinite;
+  }
   .leaflet-tooltip.lokin-tip { background: rgba(5, 5, 5, 0.92); border: 1px solid rgba(124, 252, 30, 0.4); color: #fff; font-size: 11px; box-shadow: none; }
   .leaflet-tooltip.lokin-tip::before { display: none; }
   @keyframes ticker-scroll {

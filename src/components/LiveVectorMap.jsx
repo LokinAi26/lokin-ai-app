@@ -1028,6 +1028,34 @@ export default function LiveVectorMap({
     else map.once("style.load", apply);
   }, [routeGeometry, deliveryStops]);
 
+  // Living route glow (2026-09-27): the halo breathes on a slow sine so the
+  // lime line feels alive and easier to follow while driving. Only the glow
+  // layer's opacity eases (0.5–0.8); the solid core and casing never change.
+  // Paint ticks are throttled to ~11 Hz so the pulse costs no meaningful FPS
+  // against the Path A perf budget, and it self-heals across route rebuilds
+  // because it re-checks the layer every tick.
+  useEffect(() => {
+    if (status !== "ready") return undefined;
+    let raf = 0;
+    let lastPaint = 0;
+    const pulse = (now) => {
+      raf = window.requestAnimationFrame(pulse);
+      const map = mapRef.current;
+      if (!map) return;
+      if (now - lastPaint < 90) return;
+      lastPaint = now;
+      if (!map.getLayer("lokin-live-route-glow")) return;
+      const opacity = 0.65 + 0.15 * Math.sin((now / 1000) * 2.4);
+      try {
+        map.setPaintProperty("lokin-live-route-glow", "line-opacity", opacity);
+      } catch {
+        // Style mid-swap; the next tick re-applies.
+      }
+    };
+    raf = window.requestAnimationFrame(pulse);
+    return () => window.cancelAnimationFrame(raf);
+  }, [status]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
