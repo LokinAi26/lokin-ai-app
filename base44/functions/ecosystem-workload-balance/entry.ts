@@ -39,7 +39,7 @@ export default async function(req: Request) {
       for (let i = 0; i < result.decisions.length; i += 1) {
         const decision = result.decisions[i];
         const source = workloads[i] || {};
-        await base44.entities.EcosystemWorkloadDecision.create({
+        await base44.asServiceRole.entities.EcosystemWorkloadDecision.create({
           workload_id: decision.workloadId,
           idempotency_key: decision.idempotencyKey,
           source_app: sourceApp,
