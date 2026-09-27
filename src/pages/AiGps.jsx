@@ -13,6 +13,7 @@ import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
 import { saveSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import useRouteImprovementPush from "@/hooks/useRouteImprovementPush";
+import useNavHaptics from "@/hooks/useNavHaptics";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -68,6 +69,10 @@ export default function AiGps() {
 
   // Instant faster-route alerts: web notification + native push (one per detection).
   useRouteImprovementPush(nav.routeImprovement);
+
+  // Haptic turn approach: escalating vibration as each upcoming maneuver nears
+  // (400 m tap → 200 m double → 90 m strong → 25 m at the street/exit).
+  useNavHaptics(nav.maneuver);
 
   // Voice-announce faster-route finds so the driver never has to check the map.
   useEffect(() => {
