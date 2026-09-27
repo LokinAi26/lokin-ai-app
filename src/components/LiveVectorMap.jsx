@@ -9,6 +9,12 @@ import {
 } from "@/lib/navigationPerformance";
 import { mapArchitect, baggz247Master, meshBuilder } from "@/lib/mapArchitect";
 import { retailExtrusion } from "@/lib/retailExtrusion";
+import {
+  POI_LAYER_ID,
+  POI_MIN_ZOOM,
+  createPoiAnchorLayer,
+  getPoiAnchors,
+} from "@/lib/poiAnchors";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -708,6 +714,8 @@ export default function LiveVectorMap({
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const beamRef = useRef(null);
+  const poiLayerRef = useRef(null);
+  const poiRefreshTimer = useRef(null);
   const orbitRef = useRef(null);
   // Orbit-ownership state (Kendall's call 2026-09-27 — "orbit only when
   // stationary"): showcaseRef = the slow orbit currently owns the frame.
@@ -750,6 +758,48 @@ export default function LiveVectorMap({
   style3dRef.current = style3d;
   qualityRef.current = quality;
   callbacksRef.current = { onReady, onUnavailable };
+
+  // POI brand-mark anchors (Kendall's call 2026-09-27 — ship brand marks).
+  // Anchors derive from the retail-extrusion OSM dataset (no second fetch):
+  // named/brand-tagged buildings within 500 m of the route, ranked, max 12.
+  function refreshPoiAnchors() {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current || !map.isStyleLoaded()) return;
+    const allowed =
+      style3dRef.current && qualityRef.current !== "performance" && map.getZoom() >= POI_MIN_ZOOM;
+    if (!allowed) {
+      try {
+        if (map.getLayer(POI_LAYER_ID)) map.removeLayer(POI_LAYER_ID);
+      } catch {
+        // Style mid-reload; nothing to remove.
+      }
+      poiLayerRef.current = null;
+      return;
+    }
+    const routeCoords = routeFeature(routeRef.current)?.geometry?.coordinates || [];
+    const driver =
+      displayedRef.current.coordinate || normalizeCoordinate(snappedPosition?.coordinate);
+    const anchors = getPoiAnchors(map, routeCoords, driver);
+    let layer = poiLayerRef.current;
+    if (!layer) {
+      layer = createPoiAnchorLayer();
+      poiLayerRef.current = layer;
+    }
+    layer.setAnchors(anchors);
+    try {
+      if (!map.getLayer(POI_LAYER_ID)) map.addLayer(layer);
+    } catch {
+      // Style mid-reload; the next style.load re-adds.
+      poiLayerRef.current = null;
+    }
+  }
+
+  function schedulePoiRefresh() {
+    window.clearTimeout(poiRefreshTimer.current);
+    poiRefreshTimer.current = window.setTimeout(() => {
+      refreshPoiAnchors();
+    }, 900);
+  }
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
@@ -835,6 +885,7 @@ export default function LiveVectorMap({
         map.on("moveend", () => {
           if (disposed) return;
           retailExtrusion.refresh(map.getBounds());
+          schedulePoiRefresh();
         });
         map.on("pitch", (event) => {
           const nextPitch = clamp(map.getPitch(), 0, 80);
@@ -854,12 +905,16 @@ export default function LiveVectorMap({
           applyDuskTreatment(map, isAerialStyle(styleRef.current));
           applyCinematicGrade(map, cinematicRef.current, styleRef.current);
           updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
+          refreshPoiAnchors();
           // Re-pin once the first frame is idle: at style.load the 3D
           // buildings may not be rendered yet, so the roof-height sample can
           // miss. Idle guarantees the extrusion is on screen.
           map.once("idle", () => {
             if (disposed) return;
             updateDestinationBeam(map, beamRef, routeRef.current, stopsRef.current);
+            // Same reason: the extrusion source is fully populated at idle,
+            // so the anchor query sees every named building.
+            refreshPoiAnchors();
           });
           if (!loadedRef.current) {
             loadedRef.current = true;
@@ -916,6 +971,13 @@ export default function LiveVectorMap({
       beamRef.current?.remove?.();
       beamRef.current = null;
       removeDestinationBeamLayers(map);
+      try {
+        if (map?.getLayer(POI_LAYER_ID)) map.removeLayer(POI_LAYER_ID);
+      } catch {
+        // Map already torn down.
+      }
+      poiLayerRef.current = null;
+      window.clearTimeout(poiRefreshTimer.current);
       mapArchitect.destroy();
       baggz247Master.destroy();
       meshBuilder.destroy();
@@ -932,6 +994,7 @@ export default function LiveVectorMap({
     const apply = () => {
       addNavigationLayers(map, routeGeometry);
       updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops);
+      refreshPoiAnchors();
       if (style3dRef.current && qualityRef.current !== "performance") {
         meshBuilder.alignWithRoute(routeGeometry);
       }
@@ -953,6 +1016,7 @@ export default function LiveVectorMap({
     if (!map || !loadedRef.current) return;
     mapArchitect.setQuality(!style3d ? "performance" : quality);
     retailExtrusion.setEnabled(style3d && quality !== "performance");
+    refreshPoiAnchors();
   }, [style3d, quality]);
 
   useEffect(() => {
