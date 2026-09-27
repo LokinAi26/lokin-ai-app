@@ -441,6 +441,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           followDriver
           perspective={mapView === "4d"}
           fullscreen
+          maneuvers={nav.route?.maneuvers || []}
+          remainingDistanceM={nav.remainingDistanceM}
+          etaUpdatedAt={nav.etaUpdatedAt}
           etaLiveTraffic={nav.etaLiveTraffic}
           navigationStatus={nav.status}
           destinationSide={nav.route?.destination_side}
