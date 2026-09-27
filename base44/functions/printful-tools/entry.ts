@@ -56,8 +56,15 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: `Invalid action. Use one of: ${VALID_ACTIONS.join(", ")}` }, { status: 400 });
     }
 
-    const { token, storeId: tokenStoreId } = await getEffectiveToken(base44, user, secrets);
+    const { token, storeId: tokenStoreId, source: tokenSource } = await getEffectiveToken(base44, user, secrets);
     if (!token) return Response.json({ error: "No Printful OAuth connection or PRINTFUL_API_TOKEN configured." }, { status: 500 });
+    // Write actions mutate the Printful store. When the caller has no personal
+    // OAuth connection the shared owner token is used — restrict those actions
+    // to admins or personal-OAuth callers so one user can't hijack the owner's
+    // webhooks or file library.
+    if ((action === "addFile" || action === "setWebhook") && user.role !== "admin" && tokenSource !== "oauth") {
+      return Response.json({ error: "Admin only" }, { status: 403 });
+    }
     const storeId = payload.storeId || tokenStoreId || "";
 
     // ----- File library: add a new file -----
