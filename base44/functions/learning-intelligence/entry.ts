@@ -86,7 +86,7 @@ export default async function(req) {
     if (action === "outcome") {
       const strategyKey = clean(body.strategy_key, 180);
       if (!strategyKey) return Response.json({ error:"strategy_key required" }, { status:400 });
-      const prefs = await base44.entities.DriverPreference.filter({});
+      const prefs = await base44.entities.DriverPreference.filter({ created_by_id: String(userId) });
       const result = await recordMeasuredOutcome(base44, userId, { ...body, strategy_key: strategyKey }, {
         profile,
         preferences: prefs?.[0] || {},
