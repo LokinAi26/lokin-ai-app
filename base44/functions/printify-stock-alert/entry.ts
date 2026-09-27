@@ -20,8 +20,12 @@ async function pfyGet(path, token) {
 }
 
 async function resolveRecipientEmail(base44, pref) {
-  if (pref.stock_alert_email) return pref.stock_alert_email;
+  // Always send to the preference OWNER's account email. The free-text
+  // stock_alert_email field is user-writable, so honoring it would let any
+  // user turn the daily scheduled run into a Gmail relay to arbitrary
+  // addresses. Alternate recipient addresses are intentionally not supported.
   try {
+    if (!pref.created_by_id) return "";
     const u = await base44.asServiceRole.entities.User.filter({ id: pref.created_by_id });
     return u?.[0]?.email || "";
   } catch {
