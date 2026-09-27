@@ -51,6 +51,21 @@ function voiceSupported() {
   return typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 }
 
+// Natural spoken distance for the early turn prompt: short distances in
+// feet, longer ones in quarter-mile steps.
+function spokenDistance(meters) {
+  const feet = meters * 3.28084;
+  if (feet < 1320) return `${Math.max(100, Math.round(feet / 100) * 100)} feet`;
+  const miles = feet / 5280;
+  const quarters = Math.max(1, Math.round(miles * 4));
+  if (quarters === 1) return "a quarter mile";
+  if (quarters === 2) return "a half mile";
+  if (quarters === 3) return "three quarters of a mile";
+  if (quarters === 4) return "1 mile";
+  const whole = quarters / 4;
+  return `${Number.isInteger(whole) ? whole : whole.toFixed(2).replace(/\.?0+$/, "")} miles`;
+}
+
 // Proactive faster-route detection: how often to look while mid-delivery, the
 // minimum savings worth alerting for (absolute + relative), and how long to
 // stay quiet after the driver declines an offered route.
@@ -98,7 +113,11 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const arrivalSamplesRef = useRef(0);
   const arrivedRef = useRef(false);
   const lastRerouteAtRef = useRef(0);
-  const lastSpokenRef = useRef("");
+  // Per-maneuver announcement phase: 0 = not spoken, 1 = early prompt done,
+  // 2 = immediate prompt done. Lets each turn be announced twice — once with
+  // distance ("In a quarter mile, turn right onto Main Street") and once at
+  // the turn itself.
+  const lastSpokenRef = useRef({ key: "", phase: 0 });
   const arrivalAnnouncedRef = useRef("");
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
@@ -128,7 +147,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     geocodedRef.current = [];
     startedKeyRef.current = "";
     offRouteSamplesRef.current = 0;
-    lastSpokenRef.current = "";
+    lastSpokenRef.current = { key: "", phase: 0 };
     lastAcceptedSampleRef.current = null;
     setRoute(null);
     setGeocodedDestinations([]);
@@ -281,7 +300,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       geocodedRef.current = geocoded;
       setGeocodedDestinations(geocoded);
       offRouteSamplesRef.current = 0;
-      lastSpokenRef.current = "";
+      lastSpokenRef.current = { key: "", phase: 0 };
       setStatus("navigating");
       if (reason !== "initial") setRerouteCount((n) => n + 1);
       setRouteImprovement(null);
@@ -842,17 +861,37 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     };
   }, []);
 
+  // Turn-by-turn voice prompts (2026-09-27): each upcoming maneuver speaks
+  // twice — an early prompt with the distance ("In a quarter mile, turn
+  // right onto Colley Avenue") and an immediate one at the turn ("Turn right
+  // onto Colley Avenue"). A maneuver that first appears already close skips
+  // straight to the immediate prompt, and GPS jitter can never re-speak a
+  // phase once it has fired.
   useEffect(() => {
     if (!voiceGuidance || !voiceSupported() || !maneuver) return;
     const distance = Number(maneuver.distance_from_driver_m);
-    if (!Number.isFinite(distance) || distance > 360) return;
+    if (!Number.isFinite(distance)) return;
     const key = `${maneuver.leg_index}:${maneuver.step_index}`;
-    if (lastSpokenRef.current === key) return;
-    const text = maneuver?.maneuver?.instruction;
-    if (!text) return;
-    lastSpokenRef.current = key;
+    const instruction = maneuver?.maneuver?.instruction;
+    if (!instruction) return;
+
+    const spoken = lastSpokenRef.current;
+    const phase = spoken.key === key ? spoken.phase : 0;
+    let nextPhase = phase;
+    const voice = { rate: 1.02, pitch: 0.96, volume: 0.9 };
+
+    // Early prompt with spoken distance.
+    if (phase < 1 && distance <= 360 && distance > 90) {
+      speakText(`In ${spokenDistance(distance)}, ${instruction}`, voice);
+      nextPhase = 1;
+    }
+    // Immediate prompt at the turn.
+    if (nextPhase < 2 && distance <= 90) {
+      speakText(instruction, voice);
+      nextPhase = 2;
+    }
+    if (nextPhase !== phase) lastSpokenRef.current = { key, phase: nextPhase };
     // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
-    speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
   }, [maneuver?.leg_index, maneuver?.step_index, maneuver?.distance_from_driver_m, voiceGuidance]);
 
   // Arrival announcement: once per route, tell the driver which side the
