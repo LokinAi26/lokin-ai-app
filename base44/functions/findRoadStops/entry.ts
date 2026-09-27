@@ -8,6 +8,8 @@ export default async function(req) {
     const limited = rateLimitResponse(req, 'find-road-stops', 20, 60 * 1000);
     if (limited) return limited;
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     let body = {};
     try { body = await req.json(); } catch {}
     const location = (body.location || "").trim();
