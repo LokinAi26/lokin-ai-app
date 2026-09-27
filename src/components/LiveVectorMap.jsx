@@ -663,7 +663,7 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
 }
 
 // FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
-function CinematicFpsMeter() {
+function CinematicFpsMeter({ fullscreen = false }) {
   const [fps, setFps] = useState(0);
   useEffect(() => {
     let frames = 0;
@@ -682,7 +682,7 @@ function CinematicFpsMeter() {
     return () => window.cancelAnimationFrame(raf);
   }, []);
   return (
-    <div className="absolute left-3 top-3 z-20 rounded-md border border-accent/30 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold tracking-widest text-accent backdrop-blur">
+    <div className={`absolute left-3 z-20 rounded-md border border-accent/30 bg-black/75 px-2 py-1 font-mono text-[10px] font-bold tracking-widest text-accent backdrop-blur ${fullscreen ? "top-[calc(env(safe-area-inset-top)+6.75rem)]" : "top-3"}`}>
       {fps} FPS
     </div>
   );
@@ -700,6 +700,7 @@ export default function LiveVectorMap({
   heading = 0,
   speedMps = 0,
   resetRevision = 0,
+  fullscreen = false,
   onReady,
   onUnavailable,
 }) {
@@ -1154,7 +1155,9 @@ export default function LiveVectorMap({
         <button
           type="button"
           aria-label="Pull down or push up to adjust the horizon"
-          className="absolute left-1/2 top-24 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary"
+          // Fullscreen (TestFlight) has the app header overlaid at the top —
+          // drop below it there; the embedded card keeps the tighter offset.
+          className={`absolute left-1/2 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary ${fullscreen ? "top-[calc(env(safe-area-inset-top)+4rem)]" : "top-24"}`}
           onPointerDown={beginHorizonGesture}
           onPointerMove={moveHorizonGesture}
           onPointerUp={endHorizonGesture}
@@ -1171,7 +1174,10 @@ export default function LiveVectorMap({
           onClick={() => setCinematic((value) => !value)}
           // Sits below the GPS header on the LEFT — the right edge is crowded
           // (4D toggle, night/aerial control) and kept swallowing it.
-          className={`absolute left-3 top-[76px] z-20 rounded-full border px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] shadow-lg backdrop-blur transition-colors ${
+          // In fullscreen (TestFlight) the app header is overlaid at the top
+          // (back + LOKIN buttons, z-50), so the toggle drops below it using
+          // the device safe area; the embedded card keeps the fixed offset.
+          className={`absolute left-3 z-20 rounded-full border px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] shadow-lg backdrop-blur transition-colors ${fullscreen ? "top-[calc(env(safe-area-inset-top)+4rem)]" : "top-[76px]"} ${
             cinematic
               ? "border-accent/60 bg-accent/20 text-accent"
               : "border-white/20 bg-black/75 text-white/70"
@@ -1180,7 +1186,7 @@ export default function LiveVectorMap({
           CINEMATIC {cinematic ? "ON" : "OFF"}
         </button>
       )}
-      {cinematic && status === "ready" && <CinematicFpsMeter />}
+      {cinematic && status === "ready" && <CinematicFpsMeter fullscreen={fullscreen} />}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
