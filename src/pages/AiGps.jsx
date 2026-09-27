@@ -169,17 +169,6 @@ export default function AiGps() {
     finally { setProbingProvider(false); }
   }
 
-  function openAppFreeRoam() {
-    const resume = new URLSearchParams(params);
-    resume.set("focus", "locked");
-    resume.set("nav", "1");
-    resume.set("view", mapView || "real");
-    const resumeUrl = `/ai-gps?${resume.toString()}`;
-    sessionStorage.setItem("lokin_app_free_roam", "1");
-    sessionStorage.setItem("lokin_gps_resume_url", resumeUrl);
-    navigate("/", { replace: true });
-  }
-
   function enterFullscreenNavigation() {
     const next = new URLSearchParams(params);
     next.set("focus", "locked");
@@ -198,7 +187,6 @@ export default function AiGps() {
         deliveryStops={deliveryStops}
         destinationAddresses={destinationAddresses}
         doorPinArrived={arrivedAtDoorPin}
-        onOpenAppFreeRoam={openAppFreeRoam}
         onExit={() => navigate("/", { replace: true })}
       />
     );
@@ -437,7 +425,7 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, onOpenAppFreeRoam, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, onExit }) {
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -497,17 +485,6 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
         ) : <span />}
-
-        {nav.route ? (
-          <button
-            type="button"
-            onClick={onOpenAppFreeRoam}
-            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/72 text-white/65 shadow-md backdrop-blur active:scale-95"
-            aria-label="Free roam"
-          >
-            <Move className="h-4 w-4" />
-          </button>
-        ) : <span className="w-10" />}
       </div>
 
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
