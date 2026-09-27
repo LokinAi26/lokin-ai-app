@@ -722,6 +722,9 @@ export default function LiveVectorMap({
   const showcaseRef = useRef(false);
   const stationarySinceRef = useRef(null);
   const showcaseBlendRef = useRef(0);
+  // Parked-flicker gate: the follow camera has been eased onto the driver at
+  // least once. Until then every fix positions the camera, even a ~0 m one.
+  const followCamInitRef = useRef(false);
   const animationRef = useRef(null);
   const routeRef = useRef(routeGeometry);
   const stopsRef = useRef(deliveryStops);
@@ -1158,16 +1161,35 @@ export default function LiveVectorMap({
       const targetZoom = perspective
         ? clamp(16.8 - Math.max(0, Number(speedMps || 0)) * 0.012, 16.0, 16.8)
         : clamp(17.1 - Math.max(0, Number(speedMps || 0)) * 0.015, 16.1, 17.1);
-      map.easeTo({
-        center: target,
-        offset: driverLockOffset(map, perspective),
-        zoom: targetZoom,
-        bearing: Number(heading || 0),
-        pitch: perspective ? preferredPitchRef.current : 0,
-        duration,
-        easing: (value) => value * value * (3 - 2 * value),
-        essential: true,
-      });
+      // Parked-flicker gate (2026-09-27): GPS fixes keep arriving ~1 Hz while
+      // stationary, and every one re-eased the camera a few centimeters. The
+      // camera never settled, and with fadeDuration 0 the basemap house-number
+      // labels popped in/out instead of cross-fading — "numbers flickering".
+      // Skip the camera update unless the driver actually moved or the frame
+      // changed. The driver marker above still interpolates every fix.
+      let camMoved = true;
+      if (followCamInitRef.current) {
+        const cur = map.getCenter();
+        const kx = 111320 * Math.cos((target[1] * Math.PI) / 180);
+        const movedM = Math.hypot((target[0] - cur.lng) * kx, (target[1] - cur.lat) * 111320);
+        let dBear = Math.abs(Number(heading || 0) - map.getBearing()) % 360;
+        if (dBear > 180) dBear = 360 - dBear;
+        const dZoom = Math.abs(map.getZoom() - targetZoom);
+        camMoved = movedM >= 2 || dBear >= 2 || dZoom >= 0.05;
+      }
+      if (camMoved) {
+        followCamInitRef.current = true;
+        map.easeTo({
+          center: target,
+          offset: driverLockOffset(map, perspective),
+          zoom: targetZoom,
+          bearing: Number(heading || 0),
+          pitch: perspective ? preferredPitchRef.current : 0,
+          duration,
+          easing: (value) => value * value * (3 - 2 * value),
+          essential: true,
+        });
+      }
     }
 
     return () => {
