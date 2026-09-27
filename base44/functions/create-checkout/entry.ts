@@ -92,6 +92,11 @@ Deno.serve(async (req: Request) => {
       const coRows = await base44.asServiceRole.entities.CannabisOrder.filter({ id: cannabisOrderId });
       const co = coRows?.[0];
       if (!co) return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+      // A signed-in user may only attach a checkout to their own order.
+      // (Anonymous checkout is intentional; order IDs are unguessable UUIDs.)
+      if (appUser && co.created_by_id && co.created_by_id !== String(appUser.id) && appUser.role !== 'admin') {
+        return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+      }
       if (co.payment_status === "paid") return new Response(JSON.stringify({ error: "Order already paid" }), { status: 409 });
       if (!co.age_verified) return new Response(JSON.stringify({ error: "Age confirmation required" }), { status: 403 });
 
