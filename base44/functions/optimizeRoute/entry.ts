@@ -153,6 +153,11 @@ export default async function(req) {
         `and a concrete estimate to close the remaining $${Math.max(0, (prefs.daily_goal || 150) - todayEarnings).toFixed(2)} to hit today's goal.`,
         `3-4 short bullets, plain text, no markdown headings.`,
       ].join("\n"),
+    }, {
+      // Hang guard (2026-09-27): the NVIDIA fetch must abort BEFORE the 5s
+      // withDeadline below fires, or the dangling 120s default fetch keeps the
+      // invocation alive in the activity monitor after the response is sent.
+      timeoutMs: 4000,
     }), 5000, "strategy briefing").catch(() => {
       briefingSource = "route_summary";
       console.warn("[optimizeRoute] AI briefing unavailable; returning computed route.");
