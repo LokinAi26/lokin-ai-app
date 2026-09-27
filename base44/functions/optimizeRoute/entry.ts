@@ -44,7 +44,7 @@ export default async function(req) {
       base44.entities.DriverPreference.filter({}),
       base44.entities.BlockedCustomer.filter({}),
       base44.entities.AvoidPlace.filter({}),
-      base44.entities.Earning.filter({}),
+      base44.entities.Earning.filter({ created_by_id: String(user.id) }),
     ]), 10000, "loading offers and preferences");
 
     const visibleOffers = filterOffersForUser(allOffers, String(user.id));
