@@ -1,4 +1,5 @@
 import { admitEcosystemOperation } from '../../shared/ecosystemAdmission.js';
+import { withDeadline } from '../../shared/requestDeadline.js';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.43";
 
 const MAPBOX_GEOCODE = "https://api.mapbox.com/search/geocode/v6";
@@ -544,9 +545,11 @@ async function directions(
 export default async function navigationEngine(req: Request) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    // Hang guard (2026-09-27): auth and admission had no timeout — a stalled
+    // backend call hung the entire invocation in the activity monitor.
+    const user = await withDeadline(() => base44.auth.me(), 5000, "authentication");
     if (!user) return json({ error: "Unauthorized" }, 401);
-    await admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'navigation_provider', priority:95, estimatedMs:5000, realtime:true, background:false, tags:['provider','realtime'] });
+    await withDeadline(() => admitEcosystemOperation(base44, { sourceApp:'LOKIN AI', domain:'provider', type:'provider_request', operation:'navigation_provider', priority:95, estimatedMs:5000, realtime:true, background:false, tags:['provider','realtime'] }), 8000, "ecosystem admission");
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || "status");
