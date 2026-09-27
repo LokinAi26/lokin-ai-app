@@ -486,6 +486,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
               snappedPosition={snappedPosition}
               perspective={perspective}
               followDriver={followDriver}
+              fullscreen={fullscreen}
               style={style}
               heading={heading}
               quality={quality}
