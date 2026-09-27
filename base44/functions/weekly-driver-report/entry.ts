@@ -38,12 +38,12 @@ export default async function (req) {
       if (String(user.role || '') !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Resolve the report recipient: explicit email arg, the invoking admin
-    // (workflow runtime invokes as the app owner), or all admins as fallback.
+    // Resolve the report recipient: the invoking admin (workflow runtime
+    // invokes as the app owner), or all admins as fallback. Never a
+    // caller-supplied email — that plus an empty scope would let a leaked job
+    // key exfiltrate every driver's aggregate to an arbitrary address.
     let recipients = [];
-    if (body.email) {
-      recipients = [{ email: String(body.email).trim(), id: null }];
-    } else {
+    {
       const invoking = await base44.auth.me().catch(() => null);
       if (invoking && invoking.email) {
         recipients = [{ email: invoking.email, id: invoking.id }];
