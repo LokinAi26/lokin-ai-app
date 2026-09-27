@@ -145,7 +145,10 @@ export default async function ingestLocalOffer(req: Request) {
 
     const capturedAt = new Date();
     const expiresAt = new Date(capturedAt.getTime() + expirationMinutes * 60000);
-    const offer = await base44.entities.Offer.create({
+    // Service-role write: Offer RLS restricts writes to admins; this
+    // authenticated function validates input and stamps ownership itself.
+    const offer = await base44.asServiceRole.entities.Offer.create({
+      created_by_id: String(user.id),
       ...privateOfferScope(String(user.id)),
       merchant,
       category,
