@@ -120,5 +120,11 @@ export async function nvidiaInvokeLLM(args = {}, meta = {}) {
     error.code = 'LOKIN_NVIDIA_INFERENCE_REQUIRED';
     throw error;
   }
-  return cfg.mode === 'gateway' ? invokeGateway(cfg, args, meta) : invokeDirectNim(cfg, args);
+  // Hang guard (2026-09-27): callers with their own deadline (e.g. optimizeRoute's
+  // 5s briefing budget) can pass meta.timeoutMs so this fetch aborts BEFORE the
+  // outer deadline fires. Otherwise the 120s default fetch dangles and keeps the
+  // function invocation alive in the monitor long after the response was sent.
+  const timeoutMs = Math.max(1_000, Number(meta?.timeoutMs) || cfg.timeoutMs);
+  const cfgWithTimeout = { ...cfg, timeoutMs };
+  return cfg.mode === 'gateway' ? invokeGateway(cfgWithTimeout, args, meta) : invokeDirectNim(cfgWithTimeout, args);
 }
