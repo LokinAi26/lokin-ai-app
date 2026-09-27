@@ -87,7 +87,7 @@ async function upsertActivity(base44: any, userId: string, values: any) {
   return await base44.asServiceRole.entities.DriverPlatformActivity.create(values);
 }
 
-async function upsertDailyEarnings(base44: any, payments: any[], trips: any[]) {
+async function upsertDailyEarnings(base44: any, userId: string, payments: any[], trips: any[]) {
   const byDay = new Map<string, any>();
   for (const payment of payments) {
     const iso = isoFromUnixSeconds(payment?.event_time);
@@ -114,9 +114,12 @@ async function upsertDailyEarnings(base44: any, payments: any[], trips: any[]) {
 
   let updated = 0;
   for (const [date, row] of byDay.entries()) {
-    const existing = await base44.entities.Earning.filter({ date, platform: "uber_driver_api" });
+    // Scope every ledger row to the signed-in driver. Without created_by_id
+    // scoping, one user's sync would read/overwrite another user's daily row.
+    const existing = await base44.asServiceRole.entities.Earning.filter({ date, platform: "uber_driver_api", created_by_id: userId });
     const values = {
       date,
+      created_by_id: userId,
       amount: Number(row.amount.toFixed(2)),
       base_pay: Number(row.base_pay.toFixed(2)),
       tips: 0,
@@ -126,8 +129,8 @@ async function upsertDailyEarnings(base44: any, payments: any[], trips: any[]) {
       miles: Number(row.miles.toFixed(2)),
       platform: "uber_driver_api",
     };
-    if (existing?.[0]) await base44.entities.Earning.update(existing[0].id, values);
-    else await base44.entities.Earning.create(values);
+    if (existing?.[0]) await base44.asServiceRole.entities.Earning.update(existing[0].id, values);
+    else await base44.asServiceRole.entities.Earning.create(values);
     updated += 1;
   }
   return updated;
@@ -278,7 +281,7 @@ export default async function uberDriverSync(req: Request) {
       await base44.asServiceRole.entities.DriverPlatformActivity.update(activity.id, { learned_at: syncedAt });
     }
 
-    const earningDays = await upsertDailyEarnings(base44, payments, trips);
+    const earningDays = await upsertDailyEarnings(base44, userId, payments, trips);
     const connectionRows = await base44.entities.DriverPlatformConnection.filter({ user_id: userId, platform_name: UBER_PROVIDER_KEY });
     const connection = connectionRows?.[0] || null;
     if (connection) {
