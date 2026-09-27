@@ -15,7 +15,7 @@ const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
 const LOKIN_NEON_ROUTE = "#8FE44E";
 // Cinematic art direction lock (2026-09-25): the route core is LOKIN Green
-// #8FE44E — the single brand green, glowing against the dusk grade.
+// #8FE44E â the single brand green, glowing against the dusk grade.
 // Stop pins keep the same green so they read as markers, not route.
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
@@ -260,7 +260,7 @@ function addNavigationLayers(map, routeGeometry) {
       "line-join": "round",
     },
     paint: {
-      // Thin dark edge for definition — narrow so the neon dominates.
+      // Thin dark edge for definition â narrow so the neon dominates.
       "line-color": "#060B04",
       "line-opacity": 0.95,
       "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 17, 16],
@@ -286,7 +286,7 @@ function addNavigationLayers(map, routeGeometry) {
 
 // ---------- Cinematic art direction (locked 2026-09-25) ----------
 // Real-data cinematic grade for the GPS map: golden-hour dusk light, real
-// terrain elevation, warm atmospheric haze. All real Mapbox sources — no
+// terrain elevation, warm atmospheric haze. All real Mapbox sources â no
 // invented geometry. Applied only in cinematic mode so the everyday driving
 // view is untouched.
 const TERRAIN_SOURCE = "lokin-cinematic-terrain";
@@ -418,7 +418,7 @@ function createDriverMarker() {
 // Destination beam: a LOKIN-green light pillar grown out of the destination
 // rooftop, rendered as a custom WebGL layer. A custom layer is used (instead
 // of fill-extrusion) because the cinematic dusk light preset recolors lit
-// geometry slate-blue — the beam must stay unlit neon #8FE44E. The base pad
+// geometry slate-blue â the beam must stay unlit neon #8FE44E. The base pad
 // sits flat on the roof at the building's own height (sampled from the
 // rendered extrusion), so it never floats above or sinks into the rooftop.
 const BEAM_LAYER_ID = "lokin-beam-gl";
@@ -613,7 +613,7 @@ function roofHeightAt(map, lngLat) {
       if (Number.isFinite(h) && h > 0) return h;
     }
   } catch {
-    // Render not ready — the caller re-pins on idle.
+    // Render not ready â the caller re-pins on idle.
   }
   return 0;
 }
@@ -626,7 +626,7 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   if (!map) return;
   // Lock the beam to the final destination ADDRESS: the last stop in delivery
   // sequence carries the geocoded address point. The route's end is only a
-  // road-snapped fallback — it can sit off the true address.
+  // road-snapped fallback â it can sit off the true address.
   const sequenced = (Array.isArray(deliveryStops) ? deliveryStops : [])
     .map((stop) => ({
       sequence: Number(stop?.sequence) || 0,
@@ -662,7 +662,7 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   layer.setTarget(destination, roofH);
 }
 
-// FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
+// FPS meter for the cinematic mode â the 30 FPS shipping gate, measured live.
 function CinematicFpsMeter({ fullscreen = false }) {
   const [fps, setFps] = useState(0);
   useEffect(() => {
@@ -709,6 +709,11 @@ export default function LiveVectorMap({
   const markerRef = useRef(null);
   const beamRef = useRef(null);
   const orbitRef = useRef(null);
+  // Orbit-ownership state (Kendall's call 2026-09-27 — "orbit only when
+  // stationary"): showcaseRef = the slow orbit currently owns the frame.
+  const showcaseRef = useRef(false);
+  const stationarySinceRef = useRef(null);
+  const showcaseBlendRef = useRef(0);
   const animationRef = useRef(null);
   const routeRef = useRef(routeGeometry);
   const stopsRef = useRef(deliveryStops);
@@ -757,7 +762,7 @@ export default function LiveVectorMap({
     async function start() {
       // Startup watchdog FIRST: the map_config fetch below can hang
       // indefinitely (the invoke has no client-side timeout), so the timer
-      // must be armed before any await — never after it.
+      // must be armed before any await â never after it.
       let timedOut = false;
       startupTimer = window.setTimeout(() => {
         if (disposed || loadedRef.current) return;
@@ -965,14 +970,24 @@ export default function LiveVectorMap({
     });
   }, [style]);
 
-  // Cinematic mode: apply the grade immediately and run the slow orbit camera.
-  // The orbit pauses while the user is interacting and yields to the normal
-  // follow camera the moment cinematic mode is switched off.
+  // Cinematic mode: the slow orbit owns the frame ONLY while the driver is
+  // stationary (Kendall's call 2026-09-27 — "orbit only when stationary").
+  // Driving (>2 m/s): the heading-locked follow camera owns the frame, no
+  // bearing drift. Stationary for 6 s: the orbit eases in. Arrival freezes
+  // the drive framing. Dead-reckoned fixes never advance the stationary
+  // timer. The orbit still pauses while the user is interacting, and yields
+  // to the normal follow camera the moment cinematic mode is switched off.
+  const DRIVE_SPEED_MPS = 2;
+  const SHOWCASE_STATIONARY_MS = 6000;
+  const SHOWCASE_BLEND_S = 1.2;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     applyCinematicGrade(map, cinematic, styleRef.current);
     if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
+    showcaseRef.current = false;
+    stationarySinceRef.current = null;
+    showcaseBlendRef.current = 0;
     if (!cinematic) {
       orbitRef.current = null;
       return undefined;
@@ -989,8 +1004,33 @@ export default function LiveVectorMap({
       last = now;
       const driver = displayedRef.current.coordinate;
       if (driver) live.setCenter(driver);
-      live.setBearing((live.getBearing() + dt * 2.4 + 360) % 360);
-      live.setPitch(70 + Math.sin(now / 3200) * 5);
+      const sample = lastAppliedRenderSampleRef.current;
+      const deadReckoned = sample?.dead_reckoned === true;
+      const speed = Number(sample?.speed_mps);
+      const moving = Number.isFinite(speed) && speed > DRIVE_SPEED_MPS;
+      if (status === "arrived" || moving) {
+        // Drive framing: the follow camera owns the frame (see the
+        // snapped-position effect below). Never let the orbit drift the
+        // bearing while the driver is moving.
+        stationarySinceRef.current = null;
+        showcaseRef.current = false;
+        showcaseBlendRef.current = 0;
+        return;
+      }
+      if (!deadReckoned) {
+        if (stationarySinceRef.current == null) stationarySinceRef.current = now;
+        if (now - stationarySinceRef.current >= SHOWCASE_STATIONARY_MS) {
+          showcaseRef.current = true;
+        }
+      }
+      if (!showcaseRef.current) return; // still inside the 6 s grace — hold frame
+      // Ease the orbit in so the pitch doesn't snap from the drive framing.
+      showcaseBlendRef.current = Math.min(1, showcaseBlendRef.current + dt / SHOWCASE_BLEND_S);
+      const b = showcaseBlendRef.current;
+      const blend = b * b * (3 - 2 * b);
+      live.setBearing((live.getBearing() + dt * 2.4 * blend + 360) % 360);
+      const orbitPitch = 70 + Math.sin(now / 3200) * 5;
+      live.setPitch(preferredPitchRef.current + (orbitPitch - preferredPitchRef.current) * blend);
     };
     orbitRef.current = window.requestAnimationFrame(orbit);
     return () => {
@@ -1041,9 +1081,11 @@ export default function LiveVectorMap({
     animationRef.current = window.requestAnimationFrame(tick);
 
     const map = mapRef.current;
-    if (map && loadedRef.current && followDriver && !interactingRef.current && !cinematicRef.current) {
+    if (map && loadedRef.current && followDriver && !interactingRef.current && (!cinematicRef.current || !showcaseRef.current)) {
       // 4D cinematic follow: default zoom ~16.5 with a slight speed-based pull-back.
-      // Suppressed in cinematic mode — the orbit camera owns the frame there.
+      // Suppressed while the showcase orbit owns the frame — in cinematic mode the
+      // follow cam drives while moving (orbit only when stationary), the orbit
+      // takes over after 6 s stopped.
       const targetZoom = perspective
         ? clamp(16.8 - Math.max(0, Number(speedMps || 0)) * 0.012, 16.0, 16.8)
         : clamp(17.1 - Math.max(0, Number(speedMps || 0)) * 0.015, 16.1, 17.1);
@@ -1155,7 +1197,7 @@ export default function LiveVectorMap({
         <button
           type="button"
           aria-label="Pull down or push up to adjust the horizon"
-          // Fullscreen (TestFlight) has the app header overlaid at the top —
+          // Fullscreen (TestFlight) has the app header overlaid at the top â
           // drop below it there; the embedded card keeps the tighter offset.
           className={`absolute left-1/2 z-20 -translate-x-1/2 touch-none select-none rounded-full border border-accent/30 bg-black/75 px-3 py-2 text-[9px] font-extrabold tracking-[0.12em] text-accent shadow-lg backdrop-blur active:border-primary/60 active:text-primary ${fullscreen ? "top-[calc(env(safe-area-inset-top)+4rem)]" : "top-24"}`}
           onPointerDown={beginHorizonGesture}
@@ -1164,7 +1206,7 @@ export default function LiveVectorMap({
           onPointerCancel={endHorizonGesture}
         >
           <span className="mr-1.5 inline-block h-1 w-6 rounded-full bg-primary/80 align-middle" />
-          PULL HORIZON · {Math.round(cameraPitch)}°
+          PULL HORIZON Â· {Math.round(cameraPitch)}Â°
         </button>
       )}
       {status === "ready" && (
@@ -1172,7 +1214,7 @@ export default function LiveVectorMap({
           type="button"
           aria-label={cinematic ? "Turn off cinematic camera" : "Turn on cinematic camera"}
           onClick={() => setCinematic((value) => !value)}
-          // Sits below the GPS header on the LEFT — the right edge is crowded
+          // Sits below the GPS header on the LEFT â the right edge is crowded
           // (4D toggle, night/aerial control) and kept swallowing it.
           // In fullscreen (TestFlight) the app header is overlaid at the top
           // (back + LOKIN buttons, z-50), so the toggle drops below it using
@@ -1202,7 +1244,7 @@ export default function LiveVectorMap({
       )}
       {retailStatus === "error" && (
         <div className="absolute inset-x-4 top-16 z-10 rounded-xl border border-amber-300/25 bg-black/85 px-3 py-2 text-center text-[10px] text-amber-200">
-          Store map data unavailable · retrying
+          Store map data unavailable Â· retrying
         </div>
       )}
     </div>
