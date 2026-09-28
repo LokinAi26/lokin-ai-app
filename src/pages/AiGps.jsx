@@ -490,7 +490,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto_auto_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
         <button
           type="button"
           onClick={onExit}
@@ -511,6 +511,16 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
         ) : <span />}
+        {nav.route && (
+          <button
+            type="button"
+            onClick={() => setVoicePanelOpen((v) => !v)}
+            aria-label="Guidance voice settings"
+            className="pointer-events-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95"
+          >
+            {voiceGuidance ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+        )}
       </div>
 
       {nav.offlineRoute && (
@@ -535,36 +545,24 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </button>
       )}
 
-      {/* Guidance voice picker (2026-09-27): the fullscreen locked surface is the
-          screen Kendall drives on — the picker lives here now, beside the mic. */}
-      {nav.route && (
-        <>
-          <button
-            type="button"
-            onClick={() => setVoicePanelOpen((v) => !v)}
-            aria-label="Guidance voice settings"
-            className="absolute bottom-[calc(10.2rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent glow-cyan shadow-lg backdrop-blur active:scale-95"
-          >
-            <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
-          </button>
-          {voicePanelOpen && (
-            <div className="absolute bottom-[calc(13.7rem+env(safe-area-inset-bottom))] right-3 z-40 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="lokin-kicker">Guidance voice</div>
-                <button
-                  type="button"
-                  onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-bold text-white/70 active:scale-95"
-                >
-                  {voiceGuidance ? <Volume2 className="h-3.5 w-3.5 text-accent" /> : <VolumeX className="h-3.5 w-3.5 text-white/35" />}
-                  {voiceGuidance ? "ON" : "MUTED"}
-                </button>
-              </div>
-              <VoicePicker compact voiceKind="guidance" />
-              <div className="mt-2 text-[10px] leading-relaxed text-white/40">Tap Preview to hear it, then drive. Saved on this device.</div>
-            </div>
-          )}
-        </>
+      {/* Guidance voice panel (2026-09-27): top-anchored under the z-50 bar so the
+          maneuver card can never cover it. */}
+      {voicePanelOpen && nav.route && (
+        <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+3.6rem)] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="lokin-kicker">Guidance voice</div>
+            <button
+              type="button"
+              onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }}
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-bold text-white/70 active:scale-95"
+            >
+              {voiceGuidance ? <Volume2 className="h-3.5 w-3.5 text-accent" /> : <VolumeX className="h-3.5 w-3.5 text-white/35" />}
+              {voiceGuidance ? "ON" : "MUTED"}
+            </button>
+          </div>
+          <VoicePicker compact voiceKind="guidance" />
+          <div className="mt-2 text-[10px] leading-relaxed text-white/40">Tap Preview to hear it, then drive. Saved on this device.</div>
+        </div>
       )}
 
       {error && !nav.route && (
