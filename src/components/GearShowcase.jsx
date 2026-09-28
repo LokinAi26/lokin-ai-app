@@ -5,9 +5,9 @@ import ApparelMockup from "@/components/ApparelMockup";
 // Full LOKIN catalog — 25 categories, 92 products.
 // Apparel + delivery systems from the Driver Collection poster,
 // plus the 7-piece Delivery Hardware ecosystem lineup.
-// Mockup variants map each item to the closest ApparelMockup visual;
-// Printful carries apparel + totes + socks; specialty food-delivery gear
-// is shown here as the LOKIN collection and created in Printful where supported.
+// Every variant maps to a purpose-built ApparelMockup visual so no
+// product ever renders as the wrong object; `selfdefense` is reserved
+// for actual safety/utility-kit items only.
 const SECTIONS = [
   {
     title: "Apparel Collection",
@@ -31,18 +31,18 @@ const SECTIONS = [
   {
     title: "Bottoms & Headwear",
     items: [
-      { variant: "tee", name: "Driver Joggers", sub: "Athletic fit" },
+      { variant: "joggers", name: "Driver Joggers", sub: "Athletic fit" },
       { variant: "cap", name: "LOKIN Snapback", sub: "Embroidered lock mark" },
-      { variant: "shiesty", name: "Driver Beanie", sub: "Thermal knit" },
+      { variant: "beanie", name: "Driver Beanie", sub: "Thermal knit" },
     ],
   },
   {
     title: "Rain Gear Collection",
     items: [
-      { variant: "hoodie", name: "Rain Jacket", sub: "Waterproof shell" },
-      { variant: "hoodie", name: "Long Rain Coat", sub: "Full coverage" },
-      { variant: "hoodie", name: "Driver Poncho", sub: "Packable" },
-      { variant: "hoodie", name: "Packable Rain Jacket", sub: "Packs to pouch" },
+      { variant: "raincoat", name: "Rain Jacket", sub: "Waterproof shell" },
+      { variant: "raincoat", name: "Long Rain Coat", sub: "Full coverage" },
+      { variant: "raincoat", name: "Driver Poncho", sub: "Packable" },
+      { variant: "raincoat", name: "Packable Rain Jacket", sub: "Packs to pouch" },
     ],
   },
   {
@@ -52,7 +52,7 @@ const SECTIONS = [
       { variant: "shiesty", name: "Ski Mask", sub: "Full-face thermal" },
       { variant: "shiesty", name: "LOKIN Balaclava", sub: "Fleece · One size" },
       { variant: "shiesty", name: "Neck Gaiter", sub: "Fleece tube" },
-      { variant: "shiesty", name: "Winter Beanie", sub: "Thermal knit" },
+      { variant: "beanie", name: "Winter Beanie", sub: "Thermal knit" },
     ],
   },
   {
@@ -119,9 +119,9 @@ const SECTIONS = [
     title: "Bags & Carry Gear",
     items: [
       { variant: "tote", name: "Shoulder Delivery Bag", sub: "Padded strap" },
-      { variant: "tote", name: "Driver Fanny Pack", sub: "Quick access" },
-      { variant: "tote", name: "Chest Bag", sub: "Ride-ready" },
-      { variant: "tote", name: "Crossbody Bag", sub: "Secure fit" },
+      { variant: "pouch", name: "Driver Fanny Pack", sub: "Quick access" },
+      { variant: "pouch", name: "Chest Bag", sub: "Ride-ready" },
+      { variant: "pouch", name: "Crossbody Bag", sub: "Secure fit" },
     ],
   },
   {
@@ -135,8 +135,8 @@ const SECTIONS = [
   {
     title: "Comfort on the Go",
     items: [
-      { variant: "seatcushion", name: "Travel Pillow", sub: "Memory foam" },
-      { variant: "seatcushion", name: "Neck Pillow", sub: "Memory foam" },
+      { variant: "pillow", name: "Travel Pillow", sub: "Memory foam" },
+      { variant: "pillow", name: "Neck Pillow", sub: "Memory foam" },
     ],
   },
   {
@@ -158,51 +158,51 @@ const SECTIONS = [
   {
     title: "Safety & Light Protection",
     items: [
-      { variant: "selfdefense", name: "Safety Glasses", sub: "Impact-rated" },
-      { variant: "selfdefense", name: "Anti-Glare Glasses", sub: "Day driving" },
-      { variant: "selfdefense", name: "Night Vision Glasses", sub: "Low-light" },
-      { variant: "selfdefense", name: "UV Protection Sleeves", sub: "Sun defense" },
-      { variant: "selfdefense", name: "Hand Warmers", sub: "Reusable" },
+      { variant: "glasses", name: "Safety Glasses", sub: "Impact-rated" },
+      { variant: "glasses", name: "Anti-Glare Glasses", sub: "Day driving" },
+      { variant: "glasses", name: "Night Vision Glasses", sub: "Low-light" },
+      { variant: "gloves", name: "UV Protection Sleeves", sub: "Sun defense" },
+      { variant: "gloves", name: "Hand Warmers", sub: "Reusable" },
     ],
   },
   {
     title: "Stay Warm & Protected",
     items: [
-      { variant: "selfdefense", name: "Heated Gloves", sub: "Battery-powered" },
-      { variant: "selfdefense", name: "Winter Work Gloves", sub: "Grip & warmth" },
+      { variant: "gloves", name: "Heated Gloves", sub: "Battery-powered" },
+      { variant: "gloves", name: "Winter Work Gloves", sub: "Grip & warmth" },
     ],
   },
   {
     title: "Tech & Phone Accessories",
     items: [
-      { variant: "selfdefense", name: "Bike/Moto Phone Holder", sub: "Handlebar mount" },
-      { variant: "selfdefense", name: "Magnetic Phone Mount", sub: "Dash mount" },
-      { variant: "selfdefense", name: "Waterproof Phone Pouch", sub: "Touch-through" },
+      { variant: "phonemount", name: "Bike/Moto Phone Holder", sub: "Handlebar mount" },
+      { variant: "phonemount", name: "Magnetic Phone Mount", sub: "Dash mount" },
+      { variant: "pouch", name: "Waterproof Phone Pouch", sub: "Touch-through" },
     ],
   },
   {
     title: "Lanyards & Keychains",
     items: [
-      { variant: "sticker", name: "LOKIN Lanyard", sub: "Breakaway clasp" },
-      { variant: "sticker", name: "Retractable Keychain", sub: "Belt clip" },
-      { variant: "sticker", name: "LOKIN Keychain", sub: "Lock mark fob" },
+      { variant: "keychain", name: "LOKIN Lanyard", sub: "Breakaway clasp" },
+      { variant: "keychain", name: "Retractable Keychain", sub: "Belt clip" },
+      { variant: "keychain", name: "LOKIN Keychain", sub: "Lock mark fob" },
     ],
   },
   {
     title: "Delivery Tools & Accessories",
     items: [
-      { variant: "selfdefense", name: "Insulated Water Bottle", sub: "24-hr cold" },
-      { variant: "selfdefense", name: "Mini Flashlight", sub: "Pocket beam" },
-      { variant: "selfdefense", name: "Portable Tire Inflator", sub: "Roadside ready" },
-      { variant: "selfdefense", name: "Multi-Tool Card", sub: "Wallet size" },
-      { variant: "sticker", name: "LOKIN Enamel Pin", sub: "Lock mark" },
+      { variant: "bottle", name: "Insulated Water Bottle", sub: "24-hr cold" },
+      { variant: "flashlight", name: "Mini Flashlight", sub: "Pocket beam" },
+      { variant: "tool", name: "Portable Tire Inflator", sub: "Roadside ready" },
+      { variant: "tool", name: "Multi-Tool Card", sub: "Wallet size" },
+      { variant: "keychain", name: "LOKIN Enamel Pin", sub: "Lock mark" },
     ],
   },
   {
     title: "Safety & Visibility",
     items: [
-      { variant: "selfdefense", name: "LED Safety Light", sub: "Clip-on beacon" },
-      { variant: "selfdefense", name: "Reflective Strap", sub: "Arm/ankle band" },
+      { variant: "beacon", name: "LED Safety Light", sub: "Clip-on beacon" },
+      { variant: "beacon", name: "Reflective Strap", sub: "Arm/ankle band" },
       { variant: "sticker", name: "Reflective Sticker Pack", sub: "Night visibility" },
     ],
   },

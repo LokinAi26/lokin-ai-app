@@ -245,6 +245,261 @@ function SelfDefenseKit({ glyphColor = NEON }) {
   );
 }
 
+function Joggers({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* waistband */}
+      <rect x="84" y="36" width="72" height="18" rx="6" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      <line x1="120" y1="40" x2="120" y2="50" stroke="hsl(0 0% 100% / 0.2)" strokeWidth="2" />
+      {/* legs */}
+      <path d="M84 54 H156 L162 208 H128 L120 116 H112 L104 208 H78 Z" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* ankle cuffs */}
+      <rect x="76" y="196" width="28" height="12" rx="3" fill="#05080b" stroke="hsl(81 84% 51% / 0.3)" strokeWidth="1.5" />
+      <rect x="136" y="196" width="28" height="12" rx="3" fill="#05080b" stroke="hsl(81 84% 51% / 0.3)" strokeWidth="1.5" />
+      {/* side stripe */}
+      <line x1="150" y1="70" x2="157" y2="192" stroke={NEON} strokeWidth="2" opacity="0.5" />
+      <g transform="translate(88 72)">
+        <LokinGlyph size={30} />
+      </g>
+      <text x="120" y="226" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">JOGGERS</text>
+    </svg>
+  );
+}
+
+function Beanie({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* pom */}
+      <circle cx="120" cy="58" r="13" fill={SWATCH} stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      {/* dome */}
+      <path d="M62 132 Q62 74 120 70 Q178 74 178 132 Z" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* folded cuff */}
+      <rect x="58" y="126" width="124" height="36" rx="12" fill="#05080b" stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      <line x1="78" y1="131" x2="78" y2="157" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <line x1="99" y1="131" x2="99" y2="157" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <line x1="120" y1="131" x2="120" y2="157" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <line x1="141" y1="131" x2="141" y2="157" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <line x1="162" y1="131" x2="162" y2="157" stroke="hsl(0 0% 100% / 0.14)" strokeWidth="2" />
+      <g transform="translate(98 84)">
+        <LokinGlyph size={42} />
+      </g>
+      <text x="120" y="196" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">BEANIE</text>
+    </svg>
+  );
+}
+
+function Raincoat({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* long shell */}
+      <path d="M70 70 L36 54 L24 96 L60 108 L60 224 L180 224 L180 108 L216 96 L204 54 L170 70 Z" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* hood */}
+      <path d="M95 70 Q120 30 145 70 Q120 84 95 70 Z" fill="#05080b" stroke="hsl(81 84% 51% / 0.3)" strokeWidth="2" />
+      {/* storm flap */}
+      <rect x="112" y="80" width="16" height="140" rx="4" fill="hsl(0 0% 0% / 0.4)" stroke="hsl(81 84% 51% / 0.2)" strokeWidth="1.5" />
+      {/* rain drops */}
+      <line x1="46" y1="120" x2="40" y2="134" stroke={NEON} strokeWidth="2" opacity="0.5" strokeLinecap="round" />
+      <line x1="200" y1="130" x2="194" y2="144" stroke={NEON} strokeWidth="2" opacity="0.5" strokeLinecap="round" />
+      <line x1="160" y1="180" x2="154" y2="194" stroke={NEON} strokeWidth="2" opacity="0.4" strokeLinecap="round" />
+      <g transform="translate(80 100)">
+        <LokinGlyph size={48} />
+      </g>
+      <text x="120" y="214" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">RAIN SHELL</text>
+    </svg>
+  );
+}
+
+function Bottle({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* cap */}
+      <rect x="104" y="26" width="32" height="20" rx="6" fill="#05080b" stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      {/* neck */}
+      <rect x="98" y="44" width="44" height="14" rx="5" fill={SWATCH} stroke="hsl(81 84% 51% / 0.3)" strokeWidth="2" />
+      {/* body */}
+      <path d="M98 58 H142 V150 Q142 200 120 206 Q98 200 98 150 Z" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* label band */}
+      <rect x="98" y="110" width="44" height="26" fill="hsl(0 0% 0% / 0.35)" stroke="hsl(81 84% 51% / 0.25)" strokeWidth="1.5" />
+      <g transform="translate(103 112)">
+        <LokinGlyph size={34} />
+      </g>
+      <text x="120" y="226" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">BOTTLE</text>
+    </svg>
+  );
+}
+
+function Flashlight({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* beam */}
+      <path d="M172 92 L228 58 L228 126 Z" fill={NEON} opacity="0.1" />
+      <path d="M172 96 L214 76 L214 112 Z" fill={NEON} opacity="0.14" />
+      {/* head */}
+      <rect x="150" y="80" width="24" height="28" rx="5" fill={SWATCH} stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      <circle cx="174" cy="94" r="9" fill={NEON} opacity="0.85" />
+      {/* body */}
+      <rect x="52" y="86" width="98" height="16" rx="8" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      <rect x="68" y="86" width="18" height="16" fill={NEON} opacity="0.55" />
+      {/* tail cap */}
+      <rect x="38" y="82" width="16" height="24" rx="5" fill="#05080b" stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      <g transform="translate(88 112)">
+        <LokinGlyph size={36} />
+      </g>
+      <text x="104" y="176" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">FLASHLIGHT</text>
+    </svg>
+  );
+}
+
+function PhoneMount({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* dash base */}
+      <ellipse cx="120" cy="202" rx="52" ry="12" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* arm */}
+      <rect x="114" y="130" width="12" height="68" rx="6" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* cradle */}
+      <rect x="84" y="114" width="72" height="16" rx="7" fill="#05080b" stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* phone */}
+      <rect x="82" y="26" width="76" height="96" rx="12" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      <rect x="90" y="36" width="60" height="76" rx="6" fill="#020303" />
+      <g transform="translate(102 52)">
+        <LokinGlyph size={36} />
+      </g>
+      <text x="120" y="226" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">PHONE MOUNT</text>
+    </svg>
+  );
+}
+
+function Pouch({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* strap */}
+      <path d="M70 130 Q70 50 120 50 Q170 50 170 130" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="5" />
+      {/* body */}
+      <rect x="66" y="118" width="108" height="84" rx="20" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* front pocket */}
+      <rect x="78" y="140" width="84" height="50" rx="12" fill="hsl(0 0% 0% / 0.4)" stroke="hsl(81 84% 51% / 0.25)" strokeWidth="1.5" />
+      <g transform="translate(102 146)">
+        <LokinGlyph size={36} />
+      </g>
+      <text x="120" y="224" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">POUCH</text>
+    </svg>
+  );
+}
+
+function Keychain({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* ring */}
+      <circle cx="120" cy="62" r="22" fill="none" stroke="hsl(0 0% 100% / 0.35)" strokeWidth="5" />
+      <line x1="120" y1="84" x2="120" y2="106" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="4" />
+      {/* lanyard straps */}
+      <path d="M108 106 L94 148 M132 106 L146 148" stroke={NEON} strokeWidth="3" opacity="0.55" strokeLinecap="round" />
+      {/* fob */}
+      <rect x="88" y="144" width="64" height="58" rx="14" fill={SWATCH} stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      <g transform="translate(100 154)">
+        <LokinGlyph size={40} />
+      </g>
+      <text x="120" y="226" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">KEYCHAIN</text>
+    </svg>
+  );
+}
+
+function Glasses({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* temples */}
+      <line x1="38" y1="98" x2="20" y2="68" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="4" strokeLinecap="round" />
+      <line x1="202" y1="98" x2="220" y2="68" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="4" strokeLinecap="round" />
+      {/* bridge */}
+      <path d="M114 104 Q120 94 126 104" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="4" />
+      {/* lenses */}
+      <rect x="36" y="94" width="78" height="52" rx="20" fill="#05080b" stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      <rect x="126" y="94" width="78" height="52" rx="20" fill="#05080b" stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      {/* lens glare */}
+      <line x1="58" y1="102" x2="80" y2="138" stroke="hsl(0 0% 100% / 0.18)" strokeWidth="7" strokeLinecap="round" />
+      <line x1="148" y1="102" x2="170" y2="138" stroke="hsl(0 0% 100% / 0.18)" strokeWidth="7" strokeLinecap="round" />
+      <g transform="translate(98 158)">
+        <LokinGlyph size={44} />
+      </g>
+      <text x="120" y="220" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">GLASSES</text>
+    </svg>
+  );
+}
+
+function Gloves({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* mitt */}
+      <path d="M92 208 V112 Q92 64 120 64 Q148 64 148 112 V130 L164 112 Q172 104 176 114 L180 142 Q182 152 174 154 L148 168 V208 Z" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* cuff */}
+      <rect x="88" y="198" width="64" height="20" rx="7" fill="#05080b" stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* knuckle stitching */}
+      <line x1="100" y1="118" x2="140" y2="118" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
+      <line x1="100" y1="140" x2="140" y2="140" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="2" />
+      <g transform="translate(100 148)">
+        <LokinGlyph size={40} />
+      </g>
+      <text x="120" y="228" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">GLOVES</text>
+    </svg>
+  );
+}
+
+function Pillow({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* U-shape neck pillow */}
+      <path d="M70 152 Q60 80 120 80 Q180 80 170 152" fill="none" stroke={SWATCH} strokeWidth="52" strokeLinecap="round" />
+      <path d="M70 152 Q60 80 120 80 Q180 80 170 152" fill="none" stroke="hsl(81 84% 51% / 0.35)" strokeWidth="54" strokeLinecap="round" opacity="0.35" />
+      <path d="M70 152 Q60 80 120 80 Q180 80 170 152" fill="none" stroke="hsl(81 84% 51% / 0.45)" strokeWidth="2" strokeDasharray="7 7" />
+      <g transform="translate(98 104)">
+        <LokinGlyph size={44} />
+      </g>
+      <text x="120" y="210" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">PILLOW</text>
+    </svg>
+  );
+}
+
+function Tool({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* kit box */}
+      <rect x="52" y="104" width="136" height="84" rx="14" fill={SWATCH} stroke="hsl(81 84% 51% / 0.35)" strokeWidth="2" />
+      {/* handle */}
+      <path d="M96 104 V88 Q96 78 106 78 H134 Q144 78 144 88 V104" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="4" />
+      {/* gauge dial */}
+      <circle cx="94" cy="146" r="20" fill="#05080b" stroke={NEON} strokeWidth="2" />
+      <line x1="94" y1="146" x2="104" y2="136" stroke={NEON} strokeWidth="2.5" strokeLinecap="round" />
+      {/* wrench */}
+      <circle cx="140" cy="132" r="9" fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="5" />
+      <line x1="146" y1="138" x2="168" y2="164" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="6" strokeLinecap="round" />
+      <g transform="translate(128 138)">
+        <LokinGlyph size={30} />
+      </g>
+      <text x="120" y="214" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">TOOL</text>
+    </svg>
+  );
+}
+
+function Beacon({ glyphColor = NEON }) {
+  return (
+    <svg viewBox="0 0 240 240" className="h-full w-full">
+      {/* glow rays */}
+      <path d="M120 40 V20 M84 50 L70 32 M156 50 L170 32" stroke={NEON} strokeWidth="3" strokeLinecap="round" opacity="0.7" />
+      {/* light body */}
+      <rect x="92" y="62" width="56" height="74" rx="16" fill={SWATCH} stroke="hsl(81 84% 51% / 0.4)" strokeWidth="2" />
+      <circle cx="120" cy="92" r="20" fill="none" stroke={NEON} strokeWidth="1.5" opacity="0.5" />
+      <circle cx="120" cy="92" r="13" fill={NEON} opacity="0.85" />
+      {/* clip */}
+      <rect x="104" y="136" width="32" height="42" rx="8" fill="#05080b" stroke="hsl(81 84% 51% / 0.3)" strokeWidth="2" />
+      <g transform="translate(106 140)">
+        <LokinGlyph size={28} />
+      </g>
+      <text x="120" y="204" fill={NEON} fontFamily="var(--font-display)" fontWeight="700" fontSize="8" letterSpacing="1.5" textAnchor="middle">SAFETY LIGHT</text>
+    </svg>
+  );
+}
+
 const VARIANTS = {
   tee: Tee,
   hoodie: Hoodie,
@@ -260,6 +515,19 @@ const VARIANTS = {
   massagecover: MassageCover,
   socks: Socks,
   selfdefense: SelfDefenseKit,
+  joggers: Joggers,
+  beanie: Beanie,
+  raincoat: Raincoat,
+  bottle: Bottle,
+  flashlight: Flashlight,
+  phonemount: PhoneMount,
+  pouch: Pouch,
+  keychain: Keychain,
+  glasses: Glasses,
+  gloves: Gloves,
+  pillow: Pillow,
+  tool: Tool,
+  beacon: Beacon,
 };
 
 export default function ApparelMockup({ variant = "tee", className = "" }) {
