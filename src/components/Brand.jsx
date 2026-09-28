@@ -1,87 +1,20 @@
 // LOKIN AI signature brand mark.
 // The O is a padlock fused with a clock: lock your time because time is money.
+// GLYPH artwork (Kendall: "Change the GLYPH", 2026-09-28): his crowned chrome
+// lock-clock render, transparent cutout in public/assets. Replaces the old inline SVG.
 
 export function LokinGlyph({ size = 28, className = "" }) {
-  const gid = `lokin-${Math.random().toString(36).slice(2, 8)}`;
   return (
-    <svg
+    <img
+      src="/assets/lokin-glyph-crown.png"
       width={size}
       height={size}
-      viewBox="0 0 100 100"
       className={className}
-      fill="none"
       role="img"
       aria-label="LOKIN lock clock logo"
-    >
-      <defs>
-        <linearGradient id={`${gid}-neon`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#d7ff45" />
-          <stop offset="45%" stopColor="#8dff00" />
-          <stop offset="100%" stopColor="#39b900" />
-        </linearGradient>
-        <linearGradient id={`${gid}-metal`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="48%" stopColor="#c8ced8" />
-          <stop offset="100%" stopColor="#707783" />
-        </linearGradient>
-        <radialGradient id={`${gid}-face`} cx="45%" cy="38%" r="65%">
-          <stop offset="0%" stopColor="#171b20" />
-          <stop offset="100%" stopColor="#020304" />
-        </radialGradient>
-        <filter id={`${gid}-glow`} x="-70%" y="-70%" width="240%" height="240%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      <circle cx="50" cy="58" r="38" fill="#8dff00" opacity="0.08" filter={`url(#${gid}-glow)`} />
-
-      {/* Padlock shackle */}
-      <path
-        d="M35 40 V27 a15 15 0 0 1 30 0 V40"
-        stroke={`url(#${gid}-neon)`}
-        strokeWidth="8"
-        strokeLinecap="round"
-        fill="none"
-        filter={`url(#${gid}-glow)`}
-      />
-
-      {/* Metallic clock bezel + black clock face */}
-      <circle cx="50" cy="58" r="35" fill="#050608" stroke={`url(#${gid}-metal)`} strokeWidth="6" />
-      <circle cx="50" cy="58" r="30" fill={`url(#${gid}-face)`} stroke={`url(#${gid}-neon)`} strokeWidth="3" />
-
-      {/* Twelve clock markers */}
-      {Array.from({ length: 12 }).map((_, i) => {
-        const a = (i * Math.PI) / 6;
-        const x1 = 50 + Math.cos(a) * 25;
-        const y1 = 58 + Math.sin(a) * 25;
-        const x2 = 50 + Math.cos(a) * 21;
-        const y2 = 58 + Math.sin(a) * 21;
-        return (
-          <line
-            key={i}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke="#d8dde5"
-            strokeWidth={i % 3 === 0 ? 2.2 : 1.1}
-            opacity="0.9"
-          />
-        );
-      })}
-
-      {/* Signature hands: forward-moving time */}
-      <line x1="50" y1="58" x2="50" y2="41" stroke="#ffffff" strokeWidth="3.8" strokeLinecap="round" />
-      <line x1="50" y1="58" x2="65" y2="48" stroke={`url(#${gid}-neon)`} strokeWidth="4" strokeLinecap="round" />
-      <circle cx="50" cy="58" r="4" fill={`url(#${gid}-neon)`} stroke="#ffffff" strokeWidth="1.2" />
-
-      {/* Keyhole accent */}
-      <path d="M50 63 l-3 5 h6 z" fill={`url(#${gid}-neon)`} opacity="0.9" />
-    </svg>
+      alt="LOKIN lock clock logo"
+      draggable={false}
+    />
   );
 }
 
