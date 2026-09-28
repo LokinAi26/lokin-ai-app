@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2 } from "lucide-react";
+import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -193,6 +193,8 @@ export default function AiGps() {
         deliveryStops={deliveryStops}
         destinationAddresses={destinationAddresses}
         doorPinArrived={arrivedAtDoorPin}
+        voiceGuidance={voiceGuidance}
+        setVoiceGuidance={setVoiceGuidance}
         onExit={() => navigate("/", { replace: true })}
       />
     );
@@ -445,7 +447,8 @@ export default function AiGps() {
   );
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, onExit }) {
+  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
 
@@ -530,6 +533,38 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         >
           <Mic className="h-6 w-6" />
         </button>
+      )}
+
+      {/* Guidance voice picker (2026-09-27): the fullscreen locked surface is the
+          screen Kendall drives on — the picker lives here now, beside the mic. */}
+      {nav.route && (
+        <>
+          <button
+            type="button"
+            onClick={() => setVoicePanelOpen((v) => !v)}
+            aria-label="Guidance voice settings"
+            className="absolute bottom-[calc(10.2rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent glow-cyan shadow-lg backdrop-blur active:scale-95"
+          >
+            <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
+          </button>
+          {voicePanelOpen && (
+            <div className="absolute bottom-[calc(13.7rem+env(safe-area-inset-bottom))] right-3 z-40 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="lokin-kicker">Guidance voice</div>
+                <button
+                  type="button"
+                  onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }}
+                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-bold text-white/70 active:scale-95"
+                >
+                  {voiceGuidance ? <Volume2 className="h-3.5 w-3.5 text-accent" /> : <VolumeX className="h-3.5 w-3.5 text-white/35" />}
+                  {voiceGuidance ? "ON" : "MUTED"}
+                </button>
+              </div>
+              <VoicePicker compact voiceKind="guidance" />
+              <div className="mt-2 text-[10px] leading-relaxed text-white/40">Tap Preview to hear it, then drive. Saved on this device.</div>
+            </div>
+          )}
+        </>
       )}
 
       {error && !nav.route && (
