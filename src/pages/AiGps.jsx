@@ -290,6 +290,16 @@ export default function AiGps() {
         </div>
       )}
 
+      {nav.offlineRoute && (
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-3 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+          <div>
+            <div className="text-sm font-bold text-white">Offline cached route</div>
+            <div className="mt-1 text-[11px] leading-relaxed text-white/50">The route service is unreachable, so LOKIN is navigating from your automatically saved route data. Turn guidance, ETA, and arrival detection continue on-device.</div>
+          </div>
+        </div>
+      )}
+
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} />
 
       {(routeLoadError || nav.error) && (
@@ -494,6 +504,12 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           </div>
         ) : <span />}
       </div>
+
+      {nav.offlineRoute && (
+        <div className="pointer-events-none absolute left-1/2 top-[calc(3.7rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
+          OFFLINE · CACHED ROUTE DATA
+        </div>
+      )}
 
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 

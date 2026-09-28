@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadOfflineRoute, saveOfflineRoute } from "@/lib/offlineRouteCache";
 import { getDoorPin } from "@/lib/doorPins";
 import { base44LiveFunctions } from "@/api/base44Client";
 import {
@@ -97,6 +98,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [providerProbeError, setProviderProbeError] = useState("");
   const [trafficEta, setTrafficEta] = useState(null);
   const [routeImprovement, setRouteImprovement] = useState(null);
+  const [offlineRoute, setOfflineRoute] = useState(false);
   const [nativeRuntime, setNativeRuntime] = useState(null);
   // Honest sub-copy for the GPS waiting screen: names the actual blocker
   // (permission pending, denied, or slow fix) instead of spinning forever.
@@ -163,6 +165,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     setRerouteCount(0);
     setTrafficEta(null);
     setRouteImprovement(null);
+    setOfflineRoute(false);
     arrivalSamplesRef.current = 0;
     arrivedRef.current = false;
   }, [destinationsKey]);
@@ -303,6 +306,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       offRouteSamplesRef.current = 0;
       lastSpokenRef.current = { key: "", phase: 0 };
       setStatus("navigating");
+      // Fresh live route: clear the offline indicator and refresh the
+      // on-device copy so a later dead zone falls back to current data.
+      setOfflineRoute(false);
+      saveOfflineRoute(prepared, geocoded, destinationsRef.current.join("||"));
       if (reason !== "initial") setRerouteCount((n) => n + 1);
       setRouteImprovement(null);
       routeSettled = true;
@@ -313,11 +320,59 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       window.clearTimeout(routeWatchdogId);
       const detail = e?.response?.data;
       if (detail?.code === "NAV_PROVIDER_NOT_CONFIGURED") setProviderConfigured(false);
+      // Dead-zone resilience: the route service is unreachable but this
+      // exact trip is cached on-device — continue navigating from the saved
+      // route instead of dropping the driver to an error screen.
+      if (!routeRef.current) {
+        const cached = loadOfflineRoute(destinationsRef.current.join("||"));
+        if (cached) {
+          const restored = { ...cached.route, maneuvers: prepareManeuvers(cached.route) };
+          routeRef.current = restored;
+          cumulativeRef.current = routeCumulativeDistances(restored.geometry.coordinates);
+          setRoute(restored);
+          setTrafficEta({
+            duration_s: Number(restored.duration_s || 0),
+            distance_m: Number(restored.distance_m || 0),
+            generated_at: cached.saved_at,
+            live_traffic: false,
+            received_at_ms: Date.now(),
+          });
+          const cachedSnap = matchToRouteHMM(originCoord, restored.geometry.coordinates, cumulativeRef.current);
+          if (cachedSnap) {
+            const enrichedCachedSnap = { ...cachedSnap, raw_coordinate: originCoord, timestamp: Date.now() };
+            snappedRef.current = enrichedCachedSnap;
+            setSnapped(enrichedCachedSnap);
+            const cachedManeuver = nextManeuverForSnap(restored.maneuvers || [], cachedSnap, restored.geometry.coordinates);
+            latchedManeuverRef.current = cachedManeuver;
+            maneuverAdvanceStreakRef.current = 0;
+            setManeuver(cachedManeuver);
+          }
+          geocodedRef.current = cached.geocoded || [];
+          setGeocodedDestinations(cached.geocoded || []);
+          offRouteSamplesRef.current = 0;
+          lastSpokenRef.current = { key: "", phase: 0 };
+          setStatus("navigating");
+          setOfflineRoute(true);
+          return restored;
+        }
+      }
       setStatus("error");
       setError(detail?.error || e?.message || "Navigation route failed");
       return null;
     }
   }, []);
+
+  // Offline resilience (2026-09-28): while actively navigating, keep
+  // refreshing the on-device route cache so a dead zone or app reload always
+  // has current route data to continue from.
+  useEffect(() => {
+    if (status !== "navigating") return undefined;
+    const timer = window.setInterval(() => {
+      const activeRoute = routeRef.current;
+      if (activeRoute) saveOfflineRoute(activeRoute, geocodedRef.current, destinationsRef.current.join("||"));
+    }, 60000);
+    return () => window.clearInterval(timer);
+  }, [status]);
 
   const refreshTrafficEta = useCallback(async () => {
     const activeRoute = routeRef.current;
@@ -1015,6 +1070,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
   return {
     route,
+    offlineRoute,
     geocodedDestinations,
     rawPosition,
     snappedPosition: snapped,

@@ -6,6 +6,7 @@ import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navig
 import { withTimeout } from "@/lib/promiseTimeout";
 import LiveVectorMap from "@/components/LiveVectorMap";
 import FuelDealsOverlay from "@/components/map/FuelDealsOverlay";
+import { getLatestOfflineMap, getOfflineMap, saveOfflineMap } from "@/lib/offlineMapCache";
 
 const MAP_W = 640;
 const MAP_H = 420;
@@ -144,6 +145,32 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   const imageViewportRef = useRef(null);
   const desiredViewportKeyRef = useRef("");
   const [mapRefreshNonce, setMapRefreshNonce] = useState(0);
+  // Offline map caching (2026-09-28): a dead zone switches the map to its
+  // cached basemap snapshots; the live vector map resumes on reconnect.
+  const [online, setOnline] = useState(() => navigator.onLine !== false);
+  const rendererModeRef = useRef(rendererMode);
+  rendererModeRef.current = rendererMode;
+  const styleRef = useRef(style);
+  styleRef.current = style;
+  useEffect(() => {
+    const goOffline = () => {
+      setOnline(false);
+      setFallbackReason("Offline — showing cached map");
+      setRendererMode("fallback");
+    };
+    const goOnline = () => {
+      setOnline(true);
+      setFallbackReason("");
+      setRendererMode("live");
+    };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    if (navigator.onLine === false) goOffline();
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, []);
   const lastMapRequestAtRef = useRef(0);
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
@@ -257,6 +284,28 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
 
   const viewportKey = viewport ? `${viewport.longitude.toFixed(4)}:${viewport.latitude.toFixed(4)}:${viewport.zoom.toFixed(2)}:${Number(viewport.bearing || 0).toFixed(0)}:${Number(viewport.pitch || 0).toFixed(0)}:${style}:${perspective ? "4d" : "2d"}` : "";
 
+  // Dead-zone prep (2026-09-28): while the live vector map is driving, quietly
+  // snapshot the current follow view into the offline map cache on a steady
+  // cadence so a dead zone always has a recent cached road view to show.
+  const prefetchViewportRef = useRef(null);
+  prefetchViewportRef.current = viewport;
+  useEffect(() => {
+    if (!online || !followDriver) return undefined;
+    const timer = window.setInterval(() => {
+      const current = prefetchViewportRef.current;
+      if (!current || rendererModeRef.current === "fallback") return;
+      const key = `${current.longitude.toFixed(4)}:${current.latitude.toFixed(4)}:${current.zoom.toFixed(2)}:${Number(current.bearing || 0).toFixed(0)}:${Number(current.pitch || 0).toFixed(0)}:${styleRef.current}:${perspective ? "4d" : "2d"}`;
+      base44LiveFunctions.functions.invoke("navigation-engine", {
+        action: "static_map",
+        viewport: { ...current, width: 480, height: 480, retina: false, style: styleRef.current, route_geometry: null, driver_coordinate: null },
+      }).then((response) => {
+        const dataUrl = response.data?.map?.data_url;
+        if (dataUrl) saveOfflineMap(key, current, dataUrl);
+      }).catch(() => { /* background prefetch is best-effort */ });
+    }, 45000);
+    return () => window.clearInterval(timer);
+  }, [online, followDriver, perspective]);
+
   useEffect(() => {
     desiredViewportKeyRef.current = viewportKey;
     if (rendererMode !== "fallback") {
@@ -269,6 +318,19 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
       imageViewportRef.current = null;
       setImage("");
       setLoading(false);
+      return undefined;
+    }
+    if (!online) {
+      // Dead zone: never wait on the network. Show the freshest cached
+      // basemap snapshot for this view instead of a spinner or error.
+      mapRequestRef.current += 1;
+      const crumb = getOfflineMap(viewportKey) || getLatestOfflineMap();
+      if (crumb) {
+        imageViewportRef.current = crumb.viewport;
+        setImage(crumb.data_url);
+      }
+      setLoading(false);
+      setError("");
       return undefined;
     }
     if (mapInFlightRef.current) {
@@ -309,9 +371,19 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
         // marker is projected with it so the two cannot detach in flight.
         imageViewportRef.current = viewport;
         setImage(dataUrl);
+        saveOfflineMap(viewportKey, viewport, dataUrl);
       }).catch((e) => {
         if (requestId !== mapRequestRef.current || desiredViewportKeyRef.current !== viewportKey) return;
-        setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
+        // Network hiccup: fall back to the cached snapshot for this view so
+        // navigation keeps a visible road instead of an error state.
+        const crumb = getOfflineMap(viewportKey) || getLatestOfflineMap();
+        if (crumb) {
+          imageViewportRef.current = crumb.viewport;
+          setImage(crumb.data_url);
+          setError("");
+        } else {
+          setError(e?.response?.data?.error || e?.message || "Could not load the real street basemap");
+        }
       }).finally(() => {
         mapInFlightRef.current = false;
         if (requestId === mapRequestRef.current) setLoading(false);
@@ -323,7 +395,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
     }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode]);
+  }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode, online]);
 
   const routePoints = useMemo(() => {
     // Project against the viewport the DISPLAYED image was rendered for; the
@@ -584,6 +656,12 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           </div>
         )}
 
+        {!online && (
+          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(6.4rem+env(safe-area-inset-top))]" : "top-[4.4rem]"}`}>
+            OFFLINE · CACHED MAP
+          </div>
+        )}
+
         {fullscreen ? (
           <div
             className="absolute z-30"
@@ -613,7 +691,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           </div>
         )}
 
-        {rendererMode === "fallback" && fallbackReason && image && (
+        {rendererMode === "fallback" && fallbackReason && image && online && (
           <div className="absolute left-1/2 top-[calc(4.9rem+env(safe-area-inset-top))] z-20 -translate-x-1/2 rounded-full border border-amber-300/25 bg-black/80 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-amber-200 backdrop-blur">
             LOW-BANDWIDTH MAP FALLBACK
           </div>
