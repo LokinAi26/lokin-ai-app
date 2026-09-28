@@ -50,6 +50,25 @@ export function setTtsVoice(id) {
   } catch {}
 }
 
+// Turn-by-turn guidance voice — separate pick from the Ask LOKIN voice
+// (Kendall 2026-09-27). Same OpenAI voice list, own persisted choice.
+const GUIDANCE_VOICE_KEY = "lokin_guidance_voice";
+const DEFAULT_GUIDANCE_VOICE = "onyx";
+
+export function getGuidanceVoice() {
+  try {
+    const v = localStorage.getItem(GUIDANCE_VOICE_KEY) || "";
+    if (TTS_VOICES.some((t) => t.id === v)) return v;
+  } catch {}
+  return DEFAULT_GUIDANCE_VOICE;
+}
+
+export function setGuidanceVoice(id) {
+  try {
+    if (TTS_VOICES.some((t) => t.id === id)) localStorage.setItem(GUIDANCE_VOICE_KEY, id);
+  } catch {}
+}
+
 // Voice level: 0-150 percent, persisted. 100 = the MP3's native loudness;
 // above 100 genuinely boosts it (via Web Audio gain, which iOS honors).
 const TTS_VOLUME_KEY = "lokin_tts_volume";
@@ -185,7 +204,7 @@ export async function speakLokin(text, opts = {}) {
     const res = await guardedInvoke(
       base44,
       "voice-pipeline",
-      { action: "speak", text: clean.slice(0, 2000), voice: getTtsVoice() },
+      { action: "speak", text: clean.slice(0, 2000), voice: opts.voice || getTtsVoice() },
       { userInitiated: true }
     );
     const data = res?.data;
@@ -230,10 +249,21 @@ export async function speakLokin(text, opts = {}) {
   }
 }
 
+// Turn-by-turn guidance speech: gateway TTS with the driver's picked
+// guidance voice. Works inside the iOS web view where device
+// speechSynthesis is silent. New prompts interrupt the current one
+// (speakLokin stops first) — correct for navigation.
+export function speakGuidance(text) {
+  return speakLokin(text, { voice: getGuidanceVoice() });
+}
+
 export default {
   TTS_VOICES,
   getTtsVoice,
   setTtsVoice,
+  getGuidanceVoice,
+  setGuidanceVoice,
+  speakGuidance,
   getTtsVolume,
   setTtsVolume,
   canRecordVoice,
