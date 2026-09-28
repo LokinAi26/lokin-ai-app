@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Flame, Volume2, VolumeX, Square, RefreshCw, Send } from "lucide-react";
+import { Flame, Volume2, VolumeX, Square, RefreshCw, Send, Mic } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import {
@@ -7,6 +7,9 @@ import {
   stopSpeaking,
   getTtsVoice,
   unlockVoiceAudio,
+  canRecordVoice,
+  startVoiceRecording,
+  transcribeVoiceBlob,
 } from "@/lib/lokinVoicePipeline";
 
 const AGENT = "thor";
@@ -36,8 +39,10 @@ export default function MotivationCoach() {
     try { return localStorage.getItem(VOICE_KEY) !== "off"; } catch { return true; }
   });
   const [fallback, setFallback] = useState(false);
+  const [recording, setRecording] = useState(false);
   const endRef = useRef(null);
   const seenRef = useRef(new Set());
+  const recRef = useRef(null);
 
   function toggleVoice() {
     setVoiceOn((v) => {
@@ -126,7 +131,7 @@ export default function MotivationCoach() {
       await base44.agents.addMessage(full, { role: "user", content: seed });
       setMessages([{ id: "seed", role: "user", text: seed }]);
     } catch (e) {
-      // Thor unavailable — honest one-shot fallback, no fake conversation.
+      // Thor unavailable â honest one-shot fallback, no fake conversation.
       console.warn("thor agent unavailable, using gateway fallback", e?.message || e);
       setBusy(false);
       setFallback(true);
@@ -162,6 +167,53 @@ export default function MotivationCoach() {
     setSpeaking(false);
   }
 
+  // Send a transcript, waiting briefly if Thor is still replying
+  // so a spoken message is never eaten.
+  async function sendWhenReady(text) {
+    const msg = String(text || "").trim();
+    if (!msg || !conversationId || fallback) return;
+    for (let i = 0; i < 12; i++) {
+      if (!busy) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    send(msg);
+  }
+
+  // Mic: tap to talk to Thor, tap again to send. Auto-stops at 15s.
+  async function toggleMic() {
+    if (recRef.current) {
+      const r = recRef.current;
+      recRef.current = null;
+      setRecording(false);
+      try {
+        r.stop();
+        const blob = await r.done;
+        const text = await transcribeVoiceBlob(blob);
+        if (text) sendWhenReady(text);
+      } catch { /* aborted or empty — stay silent */ }
+      return;
+    }
+    if (!canRecordVoice() || busy || fallback || !conversationId) return;
+    unlockVoiceAudio();
+    stopSpeaking();
+    setSpeaking(false);
+    try {
+      const r = await startVoiceRecording({ maxMs: 15000 });
+      recRef.current = r;
+      setRecording(true);
+      r.done.then((blob) => {
+        if (recRef.current !== r) return; // finished by tap
+        recRef.current = null;
+        setRecording(false);
+        transcribeVoiceBlob(blob).then((text) => {
+          if (text) sendWhenReady(text);
+        }).catch(() => {});
+      }).catch(() => {
+        if (recRef.current === r) { recRef.current = null; setRecording(false); }
+      });
+    } catch { /* mic denied — stay silent */ }
+  }
+
   const started = messages.length > 0;
 
   return (
@@ -183,7 +235,7 @@ export default function MotivationCoach() {
         </div>
       </div>
       <p className="text-xs text-white/45 mb-4">
-        A real conversation with Thor — he remembers your moods, goals, and past talks.
+        A real conversation with Thor - talk or type, he remembers your moods, goals, and past talks.
       </p>
 
       {!started && (
@@ -223,19 +275,29 @@ export default function MotivationCoach() {
             {busy && (
               <div className="flex justify-start">
                 <div className="rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-sm text-white/50">
-                  Thor is thinking…
+                  Thor is thinkingâ¦
                 </div>
               </div>
             )}
             <div ref={endRef} />
           </div>
 
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex gap-2 items-center">
+            <button onClick={toggleMic} disabled={busy || fallback}
+              title={recording ? "Tap to send" : "Talk to Thor"}
+              className={`rounded-xl border px-3.5 py-2.5 disabled:opacity-40 flex items-center gap-2 ${
+                recording
+                  ? "border-destructive/60 bg-destructive/15 text-destructive"
+                  : "border-primary/40 bg-primary/[0.08] text-primary"
+              }`}>
+              <Mic className="h-4 w-4" />
+              {recording && <span className="text-[11px] font-semibold">Listening... tap to send</span>}
+            </button>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-              placeholder="Talk to Thor…"
+              placeholder="Talk to Thor..."
               className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-primary/50"
             />
             <button onClick={() => send()} disabled={busy || !input.trim()}
@@ -252,7 +314,7 @@ export default function MotivationCoach() {
         <button onClick={() => startTalk(false)} disabled={busy}
           className="mt-4 w-full rounded-2xl glow-border lokin-panel py-3.5 font-display text-sm font-bold tracking-[0.12em] text-primary text-glow flex items-center justify-center gap-2 disabled:opacity-60">
           {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Flame className="h-4 w-4" />}
-          {busy ? "CONNECTING…" : "GET A PEP TALK"}
+          {busy ? "CONNECTINGâ¦" : "GET A PEP TALK"}
         </button>
       )}
     </div>
