@@ -1085,4 +1085,18 @@ img, svg { -webkit-user-drag: none; }
 /* Inner scroll regions contain their own bounce instead of chaining to the page */
 .lokin-scroll, [data-scroll-region] { overscroll-behavior: contain; }
 
+/* Voice mic HUD button (2026-09-28): a breathing cyan pulse ring so the
+   control is instantly findable in a glance while the car is moving. */
+@keyframes lokin-mic-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, .55), 0 0 18px rgba(34, 211, 238, .5); }
+  70% { box-shadow: 0 0 0 15px rgba(34, 211, 238, 0), 0 0 24px rgba(34, 211, 238, .65); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0), 0 0 18px rgba(34, 211, 238, .5); }
+}
+.lokin-mic-pulse {
+  animation: lokin-mic-pulse-ring 1.6s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lokin-mic-pulse { animation: none; box-shadow: 0 0 18px rgba(34, 211, 238, .5); }
+}
+
 /* All dropdowns use the SelectSheet bottom-sheet component (src/components/ui/SelectSheet.jsx). */

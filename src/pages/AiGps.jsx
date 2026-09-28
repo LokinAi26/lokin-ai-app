@@ -539,9 +539,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent("lokin:voice-mic-tap"))}
           aria-label="Voice assistant: ask for a route update or report traffic"
-          className="absolute bottom-[calc(5.6rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent glow-cyan shadow-lg backdrop-blur active:scale-95"
+          className="lokin-mic-pulse absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-black/90 text-accent glow-cyan backdrop-blur active:scale-90"
         >
-          <Mic className="h-6 w-6" />
+          <Mic className="h-7 w-7" strokeWidth={2.5} />
         </button>
       )}
 
