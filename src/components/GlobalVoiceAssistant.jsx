@@ -450,6 +450,20 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
 
   useEffect(() => () => { try { pipelineRecRef.current?.stop(); } catch {} stopSpeaking(); }, []);
 
+  // Locked nav HUD mic (2026-09-27): one tap on the HUD voice button opens the
+  // assistant and starts listening, so the driver can speak a route update or
+  // traffic report without leaving navigation or looking at the screen.
+  const micTapHandlerRef = useRef(null);
+  micTapHandlerRef.current = () => {
+    setOpen(true);
+    onMicTap();
+  };
+  useEffect(() => {
+    const onRequest = () => micTapHandlerRef.current();
+    window.addEventListener("lokin:voice-mic-tap", onRequest);
+    return () => window.removeEventListener("lokin:voice-mic-tap", onRequest);
+  }, []);
+
   // One command ingress for UI controls, deep links, Siri/App Intents,
   // Android App Actions, widgets, hardware buttons, and future integrations.
   useEffect(() => {

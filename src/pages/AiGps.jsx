@@ -497,6 +497,20 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
 
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 
+      {/* Hands-free voice button (2026-09-27): one tap opens LOKIN's voice
+          assistant already listening — ask for a route update or report
+          traffic without taking your eyes off the road. */}
+      {nav.route && (
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("lokin:voice-mic-tap"))}
+          aria-label="Voice assistant: ask for a route update or report traffic"
+          className="absolute bottom-[calc(5.6rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent glow-cyan shadow-lg backdrop-blur active:scale-95"
+        >
+          <Mic className="h-6 w-6" />
+        </button>
+      )}
+
       {error && !nav.route && (
         <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">
           <AlertTriangle className="mx-auto h-6 w-6 text-red-300" />
