@@ -109,6 +109,14 @@ function configureImmersiveStyle(map, style) {
       // Older cached style fragments may not expose every Standard setting.
     }
   });
+  // Kendall 2026-09-27: address/house numbers off the map (declutter).
+  try {
+    (map.getStyle()?.layers || [])
+      .filter((layer) => /housenum/i.test(layer.id))
+      .forEach((layer) => map.setLayoutProperty(layer.id, "visibility", "none"));
+  } catch {
+    // Decorative only; the map keeps working with numbers on.
+  }
 }
 
 function routeFeature(routeGeometry) {
@@ -1185,9 +1193,13 @@ export default function LiveVectorMap({
 
     const driverStationary = () => {
       if (status === "arrived") return false;
-      const speed = Number(lastAppliedRenderSampleRef.current?.speed_mps);
-      if (Number.isFinite(speed) && speed > DRIVE_SPEED_MPS) return false;
-      return true;
+      const raw = lastAppliedRenderSampleRef.current?.speed_mps;
+      const speed = Number(raw);
+      // Kendall 2026-09-27: unknown speed (null/NaN — iOS often withholds
+      // coords.speed) must NEVER read as parked. Hold the follow camera
+      // instead of easing into the orbit on a guess.
+      if (raw == null || !Number.isFinite(speed)) return false;
+      return speed <= DRIVE_SPEED_MPS;
     };
 
     // One native easeTo per orbit segment, chained on completion
