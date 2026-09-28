@@ -41,6 +41,7 @@ import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
 import { withTimeout } from "@/lib/promiseTimeout";
 import { checkStoreGeofence, reportStoreArrival } from "@/lib/storeGeofence";
 import { speakText } from "@/lib/lokinVoice";
+import { playNavCue } from "@/lib/navAudioCue";
 
 function asCoord(position) {
   if (!position?.coords) return null;
@@ -882,11 +883,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
 
     // Early prompt with spoken distance.
     if (phase < 1 && distance <= 360 && distance > 90) {
+      playNavCue("approach");
       speakText(`In ${spokenDistance(distance)}, ${instruction}`, voice);
       nextPhase = 1;
     }
     // Immediate prompt at the turn.
     if (nextPhase < 2 && distance <= 90) {
+      playNavCue("imminent");
       speakText(instruction, voice);
       nextPhase = 2;
     }
