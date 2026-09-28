@@ -533,8 +533,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
 
       {/* Hands-free voice button (2026-09-27): one tap opens LOKIN's voice
           assistant already listening — ask for a route update or report
-          traffic without taking your eyes off the road. */}
-      {nav.route && (
+          traffic without taking your eyes off the road. Permanent HUD
+          control: shown on the locked surface even before a route resolves. */}
+      {(
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent("lokin:voice-mic-tap"))}
