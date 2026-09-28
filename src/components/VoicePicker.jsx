@@ -5,6 +5,8 @@ import {
   TTS_VOICES,
   getTtsVoice,
   setTtsVoice,
+  getGuidanceVoice,
+  setGuidanceVoice,
   getTtsVolume,
   setTtsVolume,
   speakLokin,
@@ -14,8 +16,11 @@ import {
 // server-side, so they play inside the native iOS app (device speechSynthesis
 // voices are silent there). Selection persists globally and applies to every
 // spoken reply.
-export default function VoicePicker({ compact = false }) {
-  const [voiceId, setVoiceId] = useState(() => getTtsVoice());
+// voiceKind="guidance" drives the separate turn-by-turn guidance voice
+// (Kendall 2026-09-27): own persisted pick, navigation-style preview.
+export default function VoicePicker({ compact = false, voiceKind = "lokin" }) {
+  const isGuidance = voiceKind === "guidance";
+  const [voiceId, setVoiceId] = useState(() => (isGuidance ? getGuidanceVoice() : getTtsVoice()));
   const [previewing, setPreviewing] = useState(false);
   const [level, setLevel] = useState(() => getTtsVolume());
 
@@ -27,18 +32,25 @@ export default function VoicePicker({ compact = false }) {
 
   function pick(id) {
     setVoiceId(id);
-    setTtsVoice(id);
+    if (isGuidance) setGuidanceVoice(id);
+    else setTtsVoice(id);
   }
 
   async function preview() {
     if (previewing) return;
     setPreviewing(true);
     try {
-      await speakLokin("Hey, this is LOKIN. Let's lock in and get that bag.");
+      if (isGuidance) {
+        await speakLokin("In 500 feet, turn right onto Colley Avenue.", { voice: getGuidanceVoice() });
+      } else {
+        await speakLokin("Hey, this is LOKIN. Let's lock in and get that bag.");
+      }
     } finally {
       setPreviewing(false);
     }
   }
+
+  const pickerLabel = isGuidance ? "Guidance voice" : "LOKIN voice";
 
   return (
     <div className={compact ? "flex items-center gap-2" : "space-y-2"}>
@@ -47,8 +59,8 @@ export default function VoicePicker({ compact = false }) {
         value={voiceId}
         onChange={pick}
         options={TTS_VOICES.map((v) => ({ value: v.id, label: `${v.label} — ${v.hint}` }))}
-        placeholder="LOKIN voice"
-        label="LOKIN voice"
+        placeholder={pickerLabel}
+        label={pickerLabel}
         className="min-w-0 flex-1 rounded-xl border-white/15 bg-black/60 px-2.5 py-2 text-xs"
       />
       <button
