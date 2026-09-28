@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flame, Volume2, Square, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
-import { applyVoice } from "@/lib/lokinVoice";
+import { speakLokin, stopSpeaking, getTtsVoice } from "@/lib/lokinVoicePipeline";
 
 const MOODS = [
   { id: "in a slump", label: "In a slump" },
@@ -19,7 +19,7 @@ export default function MotivationCoach() {
 
   async function motivate() {
     setLoading(true);
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    stopSpeaking();
     setSpeaking(false);
     try {
       const res = await guardedInvoke(base44, "external-ai-gateway", { mode: "motivation", mood });
@@ -31,22 +31,21 @@ export default function MotivationCoach() {
     }
   }
 
-  function speak() {
-    if (!window.speechSynthesis || !msg) return;
-    try { window.speechSynthesis.resume(); } catch {}
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(msg);
-    applyVoice(u);
-    u.rate = 0.98;
-    u.pitch = 1.05;
-    u.onstart = () => setSpeaking(true);
-    u.onend = () => setSpeaking(false);
-    u.onerror = () => setSpeaking(false);
-    setTimeout(() => { try { window.speechSynthesis.speak(u); } catch {} }, 60);
+  // Pep talk voice now goes through the human gateway TTS pipeline
+  // (OpenAI TTS -> MP3), the same pipeline as turn-by-turn guidance,
+  // instead of the phone's built-in speechSynthesis robot voice.
+  async function speak() {
+    if (!msg) return;
+    setSpeaking(true);
+    try {
+      await speakLokin(msg, { voice: getTtsVoice() });
+    } finally {
+      setSpeaking(false);
+    }
   }
 
   function stopSpeak() {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    stopSpeaking();
     setSpeaking(false);
   }
 
@@ -61,8 +60,7 @@ export default function MotivationCoach() {
       <div className="text-[11px] uppercase tracking-wide text-white/40 mb-2">How are you feeling?</div>
       <div className="grid grid-cols-2 gap-2">
         {MOODS.map((m) => (
-          <button key={m.id} onClick={() => setMood(m.id)}
-            className={`rounded-2xl border px-3 py-2.5 text-xs font-semibold ${m.id === mood ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/55"}`}>
+          <button key={m.id} onClick={() => setMood(m.id)} className={`rounded-2xl border px-3 py-2.5 text-xs font-semibold ${m.id === mood ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/55"}`}>
             {m.label}
           </button>
         ))}
