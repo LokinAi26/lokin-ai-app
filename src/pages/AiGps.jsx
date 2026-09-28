@@ -4,7 +4,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
 import RouteImprovementAlert from "@/components/nav/RouteImprovementAlert";
-import { speakText } from "@/lib/lokinVoice";
+import { speakGuidance, unlockVoiceAudio } from "@/lib/lokinVoicePipeline";
+import VoicePicker from "@/components/VoicePicker";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
@@ -78,7 +79,7 @@ export default function AiGps() {
   useEffect(() => {
     if (!nav.routeImprovement || !voiceGuidance) return;
     const mins = Math.max(1, Math.round(nav.routeImprovement.savings_s / 60));
-    speakText(`Faster route available. You can save about ${mins} minutes.`, { rate: 1.02, pitch: 0.96, volume: 0.9 });
+    speakGuidance(`Faster route available. You can save about ${mins} minutes.`);
   }, [nav.routeImprovement?.received_at_ms, voiceGuidance]);
 
   // Active delivery points in the already-optimized sequence, for the 3D map's
@@ -401,7 +402,7 @@ export default function AiGps() {
         <>
           <div className="lokin-card p-4 border-accent/40">
             <div className="flex items-center gap-3">
-              <button onClick={() => setVoiceGuidance((v) => !v)} className="h-12 w-12 shrink-0 rounded-full border border-accent/40 bg-black/60 flex items-center justify-center glow-cyan">
+              <button onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }} className="h-12 w-12 shrink-0 rounded-full border border-accent/40 bg-black/60 flex items-center justify-center glow-cyan">
                 <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
               </button>
               <div className="min-w-0 flex-1">
@@ -409,6 +410,10 @@ export default function AiGps() {
                 <div className="mt-1 text-base font-bold text-white">{voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
                 <div className="mt-0.5 text-[11px] text-white/45">Keep your eyes on the road. LOKIN reroutes only after repeated off-route GPS fixes.</div>
               </div>
+            </div>
+            <div className="mt-3 border-t border-white/10 pt-3">
+              <div className="lokin-kicker mb-2">Guidance voice</div>
+              <VoicePicker compact voiceKind="guidance" />
             </div>
           </div>
 
