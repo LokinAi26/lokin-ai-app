@@ -5,7 +5,7 @@ import { guardedInvoke } from "@/lib/creditGuardian";
 import { useToast } from "@/components/ui/use-toast";
 import SupportMessageBubble from "@/components/support/SupportMessageBubble";
 
-const AGENT = "lokin-support";
+const AGENT = "lokin_support";
 const GREETING = "Hey, I'm LOKIN Support. How can I help you today?";
 const QUICK = [
   "How do I start a shift?",
@@ -42,7 +42,7 @@ export default function Support() {
         setMode("agent");
       } catch (e) {
         if (cancelled) return;
-        // Agent not available — fall back to the external-ai-gateway support mode.
+        // Agent not available â fall back to the external-ai-gateway support mode.
         console.warn("lokin-support agent unavailable, using gateway fallback", e?.message || e);
         setMode("fallback");
       }
@@ -101,7 +101,7 @@ export default function Support() {
     else sendFallback(msg);
   }
 
-  // Feedback loop (unchanged): 👍/👎 on each AI reply; 👎 surfaces human handoff.
+  // Feedback loop (unchanged): ð/ð on each AI reply; ð surfaces human handoff.
   async function rate(idx, rating) {
     const m = messages[idx];
     if (!m || m.rated) return;
@@ -154,7 +154,7 @@ export default function Support() {
           <div>
             <h1 className="text-xl font-bold font-heading metal-text leading-none">LOKIN Support</h1>
             <div className="flex items-center gap-1 text-[11px] text-accent/80 mt-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Adaptive AI · online
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Adaptive AI Â· online
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function Support() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Tell me what's going on…"
+            placeholder="Tell me what's going onâ¦"
             className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none"
           />
           <button onClick={() => send()} disabled={busy || !input.trim()}
