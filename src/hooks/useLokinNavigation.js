@@ -41,7 +41,7 @@ import {
 import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
 import { withTimeout } from "@/lib/promiseTimeout";
 import { checkStoreGeofence, reportStoreArrival } from "@/lib/storeGeofence";
-import { speakText } from "@/lib/lokinVoice";
+import { speakGuidance } from "@/lib/lokinVoicePipeline";
 import { playNavCue } from "@/lib/navAudioCue";
 
 function asCoord(position) {
@@ -924,7 +924,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   // straight to the immediate prompt, and GPS jitter can never re-speak a
   // phase once it has fired.
   useEffect(() => {
-    if (!voiceGuidance || !voiceSupported() || !maneuver) return;
+    if (!voiceGuidance || !maneuver) return;
     const distance = Number(maneuver.distance_from_driver_m);
     if (!Number.isFinite(distance)) return;
     const key = `${maneuver.leg_index}:${maneuver.step_index}`;
@@ -934,28 +934,27 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const spoken = lastSpokenRef.current;
     const phase = spoken.key === key ? spoken.phase : 0;
     let nextPhase = phase;
-    const voice = { rate: 1.02, pitch: 0.96, volume: 0.9 };
-
     // Early prompt with spoken distance.
     if (phase < 1 && distance <= 360 && distance > 90) {
       playNavCue("approach");
-      speakText(`In ${spokenDistance(distance)}, ${instruction}`, voice);
+      speakGuidance(`In ${spokenDistance(distance)}, ${instruction}`);
       nextPhase = 1;
     }
     // Immediate prompt at the turn.
     if (nextPhase < 2 && distance <= 90) {
       playNavCue("imminent");
-      speakText(instruction, voice);
+      speakGuidance(instruction);
       nextPhase = 2;
     }
     if (nextPhase !== phase) lastSpokenRef.current = { key, phase: nextPhase };
-    // Shared LOKIN voice: user-picked male/female voice + iOS silent-speech workarounds.
+    // Guidance voice: gateway TTS with the driver's picked guidance voice — plays
+    // inside the iOS web view where device speechSynthesis is silent.
   }, [maneuver?.leg_index, maneuver?.step_index, maneuver?.distance_from_driver_m, voiceGuidance]);
 
   // Arrival announcement: once per route, tell the driver which side the
   // destination is on so they find the front entrance, not the back of the block.
   useEffect(() => {
-    if (status !== "arrived" || !voiceGuidance || !voiceSupported()) return;
+    if (status !== "arrived" || !voiceGuidance) return;
     const routeKey = route?.generated_at || "";
     if (!routeKey || arrivalAnnouncedRef.current === routeKey) return;
     arrivalAnnouncedRef.current = routeKey;
@@ -965,7 +964,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const text = side === "left" || side === "right"
       ? `You have arrived${pinWord}. The destination is on your ${side}.`
       : `You have arrived${pinWord}. The destination is just ahead.`;
-    speakText(text, { rate: 1.02, pitch: 0.96, volume: 0.9 });
+    speakGuidance(text);
   }, [status, voiceGuidance, route?.generated_at, route?.destination_side, geocodedDestinations]);
 
   const retry = useCallback(() => {
