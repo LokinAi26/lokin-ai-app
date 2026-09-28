@@ -678,16 +678,41 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
 }
 
 // FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
-function CinematicFpsMeter({ fullscreen = false }) {
+function CinematicFpsMeter({ fullscreen = false, mapRef, showcaseRef }) {
   const [fps, setFps] = useState(0);
   useEffect(() => {
     let frames = 0;
     let raf = 0;
     let last = performance.now();
+    // Gate sampling on the map actually rendering (gmp-steadychange
+    // pattern): while the scene is idle the last reading holds instead of
+    // counting vsync, so the number reflects render load.
+    const mapActive = () => {
+      if (document.hidden) return false;
+      const map = mapRef?.current;
+      if (!map) return true;
+      try {
+        return (
+          map.isMoving() ||
+          map.isZooming() ||
+          map.isRotating() ||
+          showcaseRef?.current === true
+        );
+      } catch {
+        return true;
+      }
+    };
     const loop = (now) => {
-      frames += 1;
-      if (now - last >= 500) {
-        setFps(Math.round((frames * 1000) / (now - last)));
+      if (mapActive()) {
+        frames += 1;
+        if (now - last >= 500) {
+          setFps(Math.round((frames * 1000) / (now - last)));
+          frames = 0;
+          last = now;
+        }
+      } else {
+        // Idle or hidden tab: hold the last reading and restart the window
+        // so a stale burst can't inflate the next sample.
         frames = 0;
         last = now;
       }
@@ -725,17 +750,24 @@ export default function LiveVectorMap({
   const beamRef = useRef(null);
   const poiLayerRef = useRef(null);
   const poiRefreshTimer = useRef(null);
-  const orbitRef = useRef(null);
+  const poiIdleArmedRef = useRef(false);
+  // Showcase orbit — native animation chain (Map3DElement flyCameraAround
+  // pattern). One easeTo per orbit segment, chained on completion, supervised
+  // at 500 ms cadence. Replaces the old per-frame setBearing/setPitch rAF loop
+  // (3 camera writes + a full re-render every frame from JS). orbitTokenRef
+  // invalidates a superseded chain; orbitActiveRef tells moveend handlers to
+  // skip POI/extrusion churn for orbit segment ends.
   // Orbit-ownership state (Kendall's call 2026-09-27 — "orbit only when
   // stationary"): showcaseRef = the slow orbit currently owns the frame.
   const showcaseRef = useRef(false);
   // Path A perf (2026-09-27, Kendall: "Let's do path A"): terrain renders
   // ONLY for the parked showcase. This ref tracks whether terrain is
-  // currently applied so the orbit loop toggles it on state changes,
+  // currently applied so the supervisor toggles it on state changes,
   // never every frame.
   const terrainForShowcaseRef = useRef(null);
   const stationarySinceRef = useRef(null);
-  const showcaseBlendRef = useRef(0);
+  const orbitTokenRef = useRef(0);
+  const orbitActiveRef = useRef(false);
   // Parked-flicker gate: the follow camera has been eased onto the driver at
   // least once. Until then every fix positions the camera, even a ~0 m one.
   const followCamInitRef = useRef(false);
@@ -813,6 +845,25 @@ export default function LiveVectorMap({
 
   function schedulePoiRefresh() {
     window.clearTimeout(poiRefreshTimer.current);
+    const map = mapRef.current;
+    // gmp-steadychange pattern: when the scene is mid-animation, refresh
+    // once it settles instead of on a wall-clock guess. The flag keeps a
+    // long animation from stacking idle listeners; the timed path below
+    // still runs as a backstop.
+    if (map && !poiIdleArmedRef.current) {
+      try {
+        if (map.isMoving() || map.isZooming() || map.isRotating()) {
+          poiIdleArmedRef.current = true;
+          map.once("idle", () => {
+            poiIdleArmedRef.current = false;
+            schedulePoiRefresh();
+          });
+          return;
+        }
+      } catch {
+        // Fall through to the timed refresh.
+      }
+    }
     poiRefreshTimer.current = window.setTimeout(() => {
       refreshPoiAnchors();
     }, 900);
@@ -869,6 +920,7 @@ export default function LiveVectorMap({
           renderWorldCopies: false,
           fadeDuration: 0,
           maxPitch: 80,
+          minPitch: 0,
           minZoom: 2,
           maxZoom: 19,
           cooperativeGestures: false,
@@ -907,6 +959,9 @@ export default function LiveVectorMap({
         map.on("moveend", scheduleResume);
         map.on("moveend", () => {
           if (disposed) return;
+          // Showcase orbit segments end with a moveend too — skip the
+          // POI/extrusion churn for those; the frame is decorative.
+          if (orbitActiveRef.current) return;
           retailExtrusion.refresh(map.getBounds());
           schedulePoiRefresh();
         });
@@ -990,7 +1045,8 @@ export default function LiveVectorMap({
       window.clearTimeout(startupTimer);
       window.clearTimeout(resumeTimerRef.current);
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
-      if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
+      orbitTokenRef.current += 1; // kill any showcase orbit chain
+      orbitActiveRef.current = false;
       markerRef.current?.remove();
       markerRef.current = null;
       beamRef.current?.remove?.();
@@ -1097,76 +1153,135 @@ export default function LiveVectorMap({
   // to the normal follow camera the moment cinematic mode is switched off.
   const DRIVE_SPEED_MPS = 2;
   const SHOWCASE_STATIONARY_MS = 6000;
-  const SHOWCASE_BLEND_S = 1.2;
+  const ORBIT_STEP_DEG = 30;
+  const ORBIT_STEP_MS = 12500; // 30° @ 2.4°/s — the old orbit's rate
+  const ORBIT_PITCH = 70;
+  const ORBIT_PITCH_WOBBLE = 5;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     applyCinematicGrade(map, cinematic, styleRef.current);
-    // Path A perf: the grade turns terrain on; the loop below clears it on
-    // the first driving frame and restores it for the parked showcase.
+    // Path A perf: the grade turns terrain on; the supervisor below clears
+    // it on the first driving frame and restores it for the parked showcase.
     terrainForShowcaseRef.current = cinematic ? true : null;
-    if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
+    // Stop any running orbit chain.
+    orbitTokenRef.current += 1;
+    orbitActiveRef.current = false;
     showcaseRef.current = false;
     stationarySinceRef.current = null;
-    showcaseBlendRef.current = 0;
-    if (!cinematic) {
-      orbitRef.current = null;
-      return undefined;
-    }
-    let last = performance.now();
-    const orbit = (now) => {
-      orbitRef.current = window.requestAnimationFrame(orbit);
+    if (!cinematic) return undefined;
+
+    const killOrbitChain = () => {
+      if (!orbitActiveRef.current) return;
+      orbitTokenRef.current += 1; // invalidate; the moveend handler stays dead
+      orbitActiveRef.current = false;
+      showcaseRef.current = false;
+      try {
+        map.stop(); // also fires moveend, but the token is already bumped
+      } catch {
+        // Map mid-teardown; the token bump already killed the chain.
+      }
+    };
+
+    const driverStationary = () => {
+      if (status === "arrived") return false;
+      const speed = Number(lastAppliedRenderSampleRef.current?.speed_mps);
+      if (Number.isFinite(speed) && speed > DRIVE_SPEED_MPS) return false;
+      return true;
+    };
+
+    // One native easeTo per orbit segment, chained on completion
+    // (Map3DElement flyCameraAround pattern). The old design ran a 60 fps
+    // rAF issuing setCenter + setBearing + setPitch every frame.
+    const chainOrbitSegment = (token, blendIn) => {
       const live = mapRef.current;
-      if (!live || interactingRef.current) {
-        last = now;
+      if (!live || orbitTokenRef.current !== token) return;
+      if (interactingRef.current || !driverStationary()) {
+        // Yield: user gesture, driver moving, or arrived. The supervisor
+        // restarts the chain when conditions hold again.
+        orbitActiveRef.current = false;
+        showcaseRef.current = false;
         return;
       }
-      const dt = Math.min((now - last) / 1000, 0.1);
-      last = now;
+      // Flag BEFORE setCenter: setCenter is a jumpTo and fires moveend
+      // synchronously, and the moveend handlers must see the orbit as active.
+      orbitActiveRef.current = true;
+      showcaseRef.current = true;
       const driver = displayedRef.current.coordinate;
-      if (driver) live.setCenter(driver);
-      const sample = lastAppliedRenderSampleRef.current;
-      const deadReckoned = sample?.dead_reckoned === true;
-      const speed = Number(sample?.speed_mps);
-      const moving = Number.isFinite(speed) && speed > DRIVE_SPEED_MPS;
-      if (status === "arrived" || moving) {
-        // Drive framing: the follow camera owns the frame (see the
-        // snapped-position effect below). Never let the orbit drift the
-        // bearing while the driver is moving.
+      if (driver) live.setCenter(driver); // re-pin before the segment
+      const pitch = ORBIT_PITCH + Math.sin(performance.now() / 3200) * ORBIT_PITCH_WOBBLE;
+      live.easeTo({
+        bearing: live.getBearing() + ORBIT_STEP_DEG,
+        pitch,
+        duration: blendIn ? Math.round(ORBIT_STEP_MS * 1.4) : ORBIT_STEP_MS,
+        easing: blendIn ? (t) => t * t * (3 - 2 * t) : (t) => t,
+        essential: true,
+      });
+      live.once("moveend", () => {
+        if (orbitTokenRef.current !== token) return; // superseded
+        orbitActiveRef.current = false;
+        if (interactingRef.current || !driverStationary()) {
+          showcaseRef.current = false;
+          return;
+        }
+        chainOrbitSegment(token, false);
+      });
+    };
+
+    // A user grab mid-segment must kill the chain immediately — the
+    // supervisor only polls at 500 ms. dragstart is user-only (our easeTo
+    // never fires it); the zoomstart guard keeps programmatic zooms safe.
+    const onUserTakeover = (event) => {
+      if (event && "originalEvent" in event && !event.originalEvent) return;
+      killOrbitChain();
+    };
+    map.on("dragstart", onUserTakeover);
+    map.on("zoomstart", onUserTakeover);
+
+    // Supervisor at 500 ms — not 60 fps. Starts the chain after the 6 s
+    // stationary grace; yields the moment the driver moves, arrives, or the
+    // user grabs the map.
+    const supervisor = window.setInterval(() => {
+      const live = mapRef.current;
+      if (!live || !cinematicRef.current) return;
+      if (!driverStationary()) {
         stationarySinceRef.current = null;
-        showcaseRef.current = false;
-        showcaseBlendRef.current = 0;
         // Path A perf: terrain is parked-showcase only — drop it while driving.
         if (terrainForShowcaseRef.current !== false) {
           try { live.setTerrain(null); } catch { /* nothing to clear */ }
           terrainForShowcaseRef.current = false;
         }
+        killOrbitChain();
         return;
       }
-      if (!deadReckoned) {
-        if (stationarySinceRef.current == null) stationarySinceRef.current = now;
-        if (now - stationarySinceRef.current >= SHOWCASE_STATIONARY_MS) {
-          showcaseRef.current = true;
-          // Path A perf: parked 6 s+ — restore terrain for the showcase orbit.
-          if (terrainForShowcaseRef.current !== true) {
-            try { live.setTerrain({ source: TERRAIN_SOURCE, exaggeration: 1.15 }); } catch { /* DEM unavailable */ }
-            terrainForShowcaseRef.current = true;
-          }
-        }
+      if (interactingRef.current) {
+        killOrbitChain(); // user gesture: pause the chain, leave terrain as-is
+        return;
       }
-      if (!showcaseRef.current) return; // still inside the 6 s grace — hold frame
-      // Ease the orbit in so the pitch doesn't snap from the drive framing.
-      showcaseBlendRef.current = Math.min(1, showcaseBlendRef.current + dt / SHOWCASE_BLEND_S);
-      const b = showcaseBlendRef.current;
-      const blend = b * b * (3 - 2 * b);
-      live.setBearing((live.getBearing() + dt * 2.4 * blend + 360) % 360);
-      const orbitPitch = 70 + Math.sin(now / 3200) * 5;
-      live.setPitch(preferredPitchRef.current + (orbitPitch - preferredPitchRef.current) * blend);
-    };
-    orbitRef.current = window.requestAnimationFrame(orbit);
+      if (lastAppliedRenderSampleRef.current?.dead_reckoned === true) return;
+      if (stationarySinceRef.current == null) stationarySinceRef.current = performance.now();
+      if (performance.now() - stationarySinceRef.current < SHOWCASE_STATIONARY_MS) return;
+      // Parked 6 s+ — restore terrain for the showcase orbit (Path A perf).
+      if (terrainForShowcaseRef.current !== true) {
+        try { live.setTerrain({ source: TERRAIN_SOURCE, exaggeration: 1.15 }); } catch { /* DEM unavailable */ }
+        terrainForShowcaseRef.current = true;
+      }
+      if (!orbitActiveRef.current) chainOrbitSegment(orbitTokenRef.current, true);
+    }, 500);
+
     return () => {
-      if (orbitRef.current != null) window.cancelAnimationFrame(orbitRef.current);
-      orbitRef.current = null;
+      window.clearInterval(supervisor);
+      map.off("dragstart", onUserTakeover);
+      map.off("zoomstart", onUserTakeover);
+      orbitTokenRef.current += 1;
+      orbitActiveRef.current = false;
+      showcaseRef.current = false;
+      stationarySinceRef.current = null;
+      try {
+        map.stop();
+      } catch {
+        // Map mid-teardown; nothing to stop.
+      }
     };
   }, [cinematic, status]);
 
@@ -1276,13 +1391,16 @@ export default function LiveVectorMap({
     preferredPitchRef.current = perspective ? 78 : 0;
     setCameraPitch(preferredPitchRef.current);
     window.clearTimeout(resumeTimerRef.current);
-    map.easeTo({
+    // Parabolic fly-to (Map3DElement flyCameraTo pattern): the swoop reads as
+    // cinematic; the old linear easeTo snapped the frame.
+    map.flyTo({
       center: coordinate,
       offset: driverLockOffset(map, perspective),
       zoom: perspective ? 16.6 : 17,
       bearing: perspective ? Number(heading || 0) : 0,
       pitch: perspective ? 78 : 0,
-      duration: 420,
+      duration: 1400,
+      curve: 1.42,
       essential: true,
     });
   }, [resetRevision]);
@@ -1378,7 +1496,7 @@ export default function LiveVectorMap({
           CINEMATIC {cinematic ? "ON" : "OFF"}
         </button>
       )}
-      {cinematic && status === "ready" && <CinematicFpsMeter fullscreen={fullscreen} />}
+      {cinematic && status === "ready" && <CinematicFpsMeter fullscreen={fullscreen} mapRef={mapRef} showcaseRef={showcaseRef} />}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
