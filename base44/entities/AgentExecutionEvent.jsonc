@@ -70,17 +70,11 @@
     "occurred_at"
   ],
   "rls": {
-    "create": {
-      "data.owner_user_id": "{{user.id}}"
-    },
+    "create": false,
     "read": {
       "data.owner_user_id": "{{user.id}}"
     },
-    "update": {
-      "data.owner_user_id": "{{user.id}}"
-    },
-    "delete": {
-      "data.owner_user_id": "{{user.id}}"
-    }
+    "update": false,
+    "delete": false
   }
 }
