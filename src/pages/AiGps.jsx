@@ -580,9 +580,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 
       {/* Right control stack (2026-09-29 HUD cleanup, Google Maps reference):
-          circular controls above the ETA sheet. The mic is a permanent HUD
-          control — one tap opens LOKIN's voice assistant already listening,
-          so the driver can ask for a route update without looking away. */}
+          circular guidance-voice control above the ETA sheet. The pulsing Ask
+          LOKIN mic was removed 2026-09-29: the top-bar LOKIN pill triggers the
+          same Ask LOKIN action, so the mic was redundant. */}
       <div className="absolute bottom-[calc(9rem+env(safe-area-inset-bottom))] right-3 z-40 flex flex-col gap-2.5">
         {nav.route && (
           <button
@@ -594,14 +594,6 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             {voiceGuidance ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent("lokin:voice-mic-tap"))}
-          aria-label="Voice assistant: ask for a route update or report traffic"
-          className="lokin-mic-pulse flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-black/90 text-accent glow-cyan backdrop-blur active:scale-90"
-        >
-          <Mic className="h-7 w-7" strokeWidth={2.5} />
-        </button>
       </div>
 
       {/* Guidance voice panel: left-anchored below the maneuver banner (2026-09-29
