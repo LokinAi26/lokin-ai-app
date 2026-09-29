@@ -583,10 +583,10 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
         )}
       </div>
 
-      {/* Guidance voice panel: left-anchored below the maneuver banner (2026-09-29
-          HUD cleanup) so the banner and the map-style cluster can never cover it. */}
+      {/* Guidance voice panel: bottom-left above the ETA sheet (Kendall 2026-09-29:
+          "move the voice picker down on to the hud"). */}
       {voicePanelOpen && nav.route && (
-        <div className="absolute left-3 top-[calc(11rem+env(safe-area-inset-top))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute left-3 bottom-[calc(9rem+env(safe-area-inset-bottom))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="lokin-kicker">Guidance voice</div>
             <button
