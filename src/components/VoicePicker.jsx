@@ -10,6 +10,7 @@ import {
   getTtsVolume,
   setTtsVolume,
   speakLokin,
+  unlockVoiceAudio,
 } from "@/lib/lokinVoicePipeline";
 
 // LOKIN voice picker — gateway TTS voices. These are real spoken voices rendered
@@ -22,6 +23,7 @@ export default function VoicePicker({ compact = false, voiceKind = "lokin" }) {
   const isGuidance = voiceKind === "guidance";
   const [voiceId, setVoiceId] = useState(() => (isGuidance ? getGuidanceVoice() : getTtsVoice()));
   const [previewing, setPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState("");
   const [level, setLevel] = useState(() => getTtsVolume());
 
   function changeLevel(v) {
@@ -39,12 +41,24 @@ export default function VoicePicker({ compact = false, voiceKind = "lokin" }) {
   async function preview() {
     if (previewing) return;
     setPreviewing(true);
+    setPreviewError("");
     try {
+      // Unlock synchronously inside the tap gesture — iOS only honors the
+      // AudioContext resume and later audio.play() when they chain from a
+      // real user gesture. strict:true surfaces the real failure instead of
+      // falling back to device TTS, which is silent in the iOS web view.
+      unlockVoiceAudio();
       if (isGuidance) {
-        await speakLokin("In 500 feet, turn right onto Colley Avenue.", { voice: getGuidanceVoice() });
+        await speakLokin("In 500 feet, turn right onto Colley Avenue.", { voice: getGuidanceVoice(), strict: true });
       } else {
-        await speakLokin("Hey, this is LOKIN. Let's lock in and get that bag.");
+        await speakLokin("Hey, this is LOKIN. Let's lock in and get that bag.", { strict: true });
       }
+    } catch (e) {
+      setPreviewError(
+        e && e.code === "LOKIN_AI_CONSENT_REQUIRED"
+          ? "AI voice permission is off — enable it in LOKIN to hear previews."
+          : "Preview couldn't play — check your connection and try again."
+      );
     } finally {
       setPreviewing(false);
     }
@@ -70,6 +84,7 @@ export default function VoicePicker({ compact = false, voiceKind = "lokin" }) {
       >
         {previewing ? "Playing…" : "Preview"}
       </button>
+      {previewError ? <div className="text-[10px] leading-snug text-red-300/90">{previewError}</div> : null}
       {!compact && (
         <div className="pt-1">
           <div className="mb-1 flex items-center justify-between">
