@@ -40,6 +40,11 @@ export default function VoicePicker({ compact = false, voiceKind = "lokin" }) {
 
   async function preview() {
     if (previewing) return;
+    // A zeroed voice level plays silence with no error — say so instead.
+    if (getTtsVolume() === 0) {
+      setPreviewError("Guidance volume is set to 0 — raise the voice level to hear the preview.");
+      return;
+    }
     setPreviewing(true);
     setPreviewError("");
     try {
