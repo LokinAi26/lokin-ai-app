@@ -26,12 +26,14 @@ function safeScopes(capabilities:any){
 }
 
 async function getSession(base44:any,user:any,sessionId:string){
-  const rows=await base44.asServiceRole.entities.AgentExecutionSession.filter({session_id:sessionId,owner_user_id:user.id},'-created_at',2).catch(()=>[]);
+  const rows=await base44.asServiceRole.entities.AgentExecutionSession.filter({session_id:sessionId,owner_user_id:user.id},'-created_at',2);
   return rows?.[0]||null;
 }
 
 async function getEvents(base44:any,user:any,sessionId:string){
-  return await base44.asServiceRole.entities.AgentExecutionEvent.filter({session_id:sessionId,owner_user_id:user.id},'occurred_at',600).catch(()=>[]);
+  const rows=await base44.asServiceRole.entities.AgentExecutionEvent.filter({session_id:sessionId,owner_user_id:user.id},'occurred_at',600);
+  if(!Array.isArray(rows)||rows.length>=600)throw new Error('AUDIT_HISTORY_INCOMPLETE');
+  return rows;
 }
 
 async function appendEvent(base44:any,user:any,session:any,input:any){
@@ -58,7 +60,7 @@ export default async function(req:Request){
         status:'READY',
         versions:{capability_broker:CAPABILITY_BROKER_VERSION,agent_circuit_breaker:AGENT_CIRCUIT_BREAKER_VERSION,offer_normalizer:OFFER_NORMALIZER_VERSION,physical_capability_broker:PHYSICAL_CAPABILITY_BROKER_VERSION},
         controls:{persistent_agent_sessions:true,append_only_agent_events:true,automatic_high_risk_approval:false,direct_hardware_execution:false,automatic_platform_action:false},
-        concurrency_note:'Base44 entity mutations are serialized through this endpoint but are not represented as a transactional atomic-counter primitive. Authorization derives counters from append-only events and fails closed; strict distributed single-flight execution remains an executor responsibility.',
+        concurrency_note:'This endpoint does not serialize concurrent requests. Policy decisions are advisory preflight, not execution permits. A trusted executor must enforce single-flight admission and revalidate before each side effect.',
         physical_policies:listPhysicalCapabilityPolicies(),
       });
     }
@@ -100,10 +102,13 @@ export default async function(req:Request){
     if(action==='authorize_agent_action'){
       const session=await getSession(base44,user,txt(body.session_id,180));
       if(!session)return Response.json({error:'SESSION_NOT_FOUND'},{status:404});
+      if(session.status!=='ACTIVE')return Response.json({allowed:false,decision:'DENY',reason:'SESSION_'+session.status},{status:403});
+      const age=Date.now()-Date.parse(session.created_at);
+      if(!Number.isFinite(age)||age<0||age>=defaultAgentBudgets(session.budgets||{}).max_duration_ms)return Response.json({allowed:false,decision:'DENY',reason:'SESSION_EXPIRED'},{status:403});
       const requestId=txt(body.request_id,180)||crypto.randomUUID();
-      const prior=await base44.asServiceRole.entities.AgentExecutionEvent.filter({session_id:session.session_id,owner_user_id:user.id,request_id:requestId},'-occurred_at',3).catch(()=>[]);
+      const prior=await base44.asServiceRole.entities.AgentExecutionEvent.filter({session_id:session.session_id,owner_user_id:user.id,request_id:requestId},'-occurred_at',3);
       const priorDecision=prior.find((x:any)=>x.event_type==='ACTION_DECIDED');
-      if(priorDecision)return Response.json({idempotent:true,decision:priorDecision.decision,reason:priorDecision.reason,details:priorDecision.metadata});
+      if(priorDecision)return Response.json({allowed:false,idempotent:true,decision:'DENY',reason:'REQUEST_ALREADY_DECIDED',previous_decision:priorDecision.decision,execution_permitted:false},{status:409});
 
       const capability=txt(body.capability,180);
       const events=await getEvents(base44,user,session.session_id);
@@ -122,7 +127,7 @@ export default async function(req:Request){
         await appendEvent(base44,user,{...session,status:AGENT_SESSION_STATUS.FROZEN},{request_id:requestId,event_type:'SESSION_FROZEN',decision:'FREEZE',reason:breaker.reason,capability,metadata});
       }
       await base44.asServiceRole.entities.TaskObservation.create({owner_user_id:user.id,source:'AGENT_CIRCUIT_BREAKER',session_id:session.session_id,task_id:session.task_id||'',event_type:breaker.allowed?'TASK_PROGRESS':'POLICY_BLOCK',status:'OBSERVED',summary:`${breaker.decision}: ${breaker.reason}`,affected_components:['capability-broker','agent-circuit-breaker'],details:{request_id:requestId,capability,breaker},occurred_at:now()}).catch(()=>null);
-      return Response.json({allowed:breaker.allowed,decision:breaker.decision,reason:breaker.reason,session_status:breaker.freeze?AGENT_SESSION_STATUS.FROZEN:session.status,request_id:requestId,details:metadata},{status:breaker.allowed?200:breaker.decision==='REQUIRE_APPROVAL'?409:403});
+      return Response.json({execution_permitted:false,executor_integration:'SETUP_REQUIRED',allowed:breaker.allowed,decision:breaker.decision,reason:breaker.reason,session_status:breaker.freeze?AGENT_SESSION_STATUS.FROZEN:session.status,request_id:requestId,details:metadata},{status:breaker.allowed?200:breaker.decision==='REQUIRE_APPROVAL'?409:403});
     }
 
     if(action==='normalize_offer'){
