@@ -28,6 +28,22 @@ export default function AiGps() {
   const [routeLoadError, setRouteLoadError] = useState("");
   const [loadingStops, setLoadingStops] = useState(true);
   const [voiceGuidance, setVoiceGuidance] = useState(true);
+  // Guidance-audio health: gateway TTS is the only voice that works inside
+  // the iOS web view. On gateway failure the pipeline emits "guidance-error"
+  // (the device fallback is silent there) — the speaker button goes amber
+  // until a prompt plays through cleanly ("idle"). Never fails silently
+  // with the toggle showing ON (2026-09-29).
+  const [guidanceAudioError, setGuidanceAudioError] = useState(false);
+
+  useEffect(() => {
+    const onVoiceState = (e) => {
+      const st = e?.detail?.state;
+      if (st === "guidance-error") setGuidanceAudioError(true);
+      else if (st === "idle") setGuidanceAudioError(false);
+    };
+    window.addEventListener("lokin:voice-state", onVoiceState);
+    return () => window.removeEventListener("lokin:voice-state", onVoiceState);
+  }, []);
   const [mapView, setMapView] = useState(() => params.get("view") === "4d" ? "4d" : "real");
   // Cinematic action mode (locked art direction 2026-09-25): dusk grade,
   // terrain, orbit camera, FPS meter. Separate from the 4D perspective view.
@@ -200,6 +216,7 @@ export default function AiGps() {
         doorPinArrived={arrivedAtDoorPin}
         voiceGuidance={voiceGuidance}
         setVoiceGuidance={setVoiceGuidance}
+        guidanceAudioError={guidanceAudioError}
         onExit={() => navigate("/", { replace: true })}
       />
     );
@@ -409,12 +426,12 @@ export default function AiGps() {
         <>
           <div className="lokin-card p-4 border-accent/40">
             <div className="flex items-center gap-3">
-              <button onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }} className="h-12 w-12 shrink-0 rounded-full border border-accent/40 bg-black/60 flex items-center justify-center glow-cyan">
-                <Volume2 className={`h-5 w-5 ${voiceGuidance ? "text-accent" : "text-white/35"}`} />
+              <button onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }} title={guidanceAudioError ? "Guidance audio had an issue — the next prompt will retry" : undefined} className={`h-12 w-12 shrink-0 rounded-full border ${guidanceAudioError ? "border-amber-400/70" : "border-accent/40"} bg-black/60 flex items-center justify-center ${guidanceAudioError ? "" : "glow-cyan"}`}>
+                <Volume2 className={`h-5 w-5 ${guidanceAudioError ? "text-amber-400" : voiceGuidance ? "text-accent" : "text-white/35"}`} />
               </button>
               <div className="min-w-0 flex-1">
                 <div className="lokin-kicker lokin-kicker-cyan">LOKIN COPILOT · {nav.status === "navigating" ? "ROAD LOCKED" : nav.status.toUpperCase()}</div>
-                <div className="mt-1 text-base font-bold text-white">{voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
+                <div className="mt-1 text-base font-bold text-white">{guidanceAudioError ? "Guidance audio issue — retrying" : voiceGuidance ? "Voice guidance active" : "Voice guidance muted"}</div>
                 <div className="mt-0.5 text-[11px] text-white/45">Keep your eyes on the road. LOKIN reroutes only after repeated off-route GPS fixes.</div>
               </div>
             </div>
@@ -478,7 +495,7 @@ function formatArrivalClock(remainingDurationS) {
   return new Date(Date.now() + s * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
@@ -576,9 +593,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
             type="button"
             onClick={() => setVoicePanelOpen((v) => !v)}
             aria-label="Guidance voice settings"
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95"
+            className={`flex h-14 w-14 items-center justify-center rounded-full border ${guidanceAudioError ? "border-amber-400/70" : "border-accent/50"} bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95`}
           >
-            {voiceGuidance ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
+            {guidanceAudioError ? <Volume2 className="h-6 w-6 text-amber-400" /> : voiceGuidance ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
           </button>
         )}
       </div>
@@ -594,8 +611,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
               onClick={() => { unlockVoiceAudio(); setVoiceGuidance((v) => !v); }}
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-bold text-white/70 active:scale-95"
             >
-              {voiceGuidance ? <Volume2 className="h-3.5 w-3.5 text-accent" /> : <VolumeX className="h-3.5 w-3.5 text-white/35" />}
-              {voiceGuidance ? "ON" : "MUTED"}
+              {guidanceAudioError ? <Volume2 className="h-3.5 w-3.5 text-amber-400" /> : voiceGuidance ? <Volume2 className="h-3.5 w-3.5 text-accent" /> : <VolumeX className="h-3.5 w-3.5 text-white/35" />}
+              {guidanceAudioError ? "RETRYING" : voiceGuidance ? "ON" : "MUTED"}
             </button>
           </div>
           <VoicePicker compact voiceKind="guidance" />
