@@ -12,19 +12,19 @@ const SECTIONS = [
   {
     title: "Apparel Collection",
     items: [
-      { variant: "hoodie", name: "AI Pullover Hoodie", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d774b32eb_01_ai_pullover_hoodie.png" },
-      { variant: "hoodie", name: "AI Tech Jacket", sub: "Driver tech shell", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/7f79ced33_02_ai_tech_jacket.png" },
+      { variant: "hoodie", name: "AI Pullover Hoodie", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5150a2af3_ai-pullover-hoodie.webp" },
+      { variant: "hoodie", name: "AI Tech Jacket", sub: "Driver tech shell", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/29326f5eb_ai-tech-jacket.webp" },
       { variant: "tee", name: "Sleeve Detail Tee", sub: "Long sleeve", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ec05d855b_sleeve-detail-tee.jpg" },
-      { variant: "cap", name: "LOKIN Bucket Hat", sub: "Embroidered lock mark", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c748f4f87_04_ai_bucket_hat.png" },
-      { variant: "tee", name: "Long Sleeve Tee", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c58e33b60_05_long_sleeve.png" },
+      { variant: "cap", name: "LOKIN Bucket Hat", sub: "Embroidered lock mark", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fbdda6cc2_lokin-bucket-hat.webp" },
+      { variant: "tee", name: "Long Sleeve Tee", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f8d8d8ef9_long-sleeve-tee.webp" },
     ],
   },
   {
     title: "Driver Collection",
     items: [
-      { variant: "hoodie", name: "Driver Hoodie", sub: "Hi-vis trim", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/0221c6cf0_09_driver_hoodie.png" },
-      { variant: "tee", name: "Driver Polo", sub: "Reflective logo", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/bf2a416c7_12_driver_polo.png" },
-      { variant: "hoodie", name: "Reflective Driver Jacket", sub: "Night visibility", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3e4b46182_11_reflective_jacket.png" },
+      { variant: "hoodie", name: "Driver Hoodie", sub: "Hi-vis trim", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/eb4ccfc65_driver-hoodie.webp" },
+      { variant: "tee", name: "Driver Polo", sub: "Reflective logo", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/10d9289da_driver-polo.webp" },
+      { variant: "hoodie", name: "Reflective Driver Jacket", sub: "Night visibility", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d2e724b83_reflective-driver-jacket.webp" },
       { variant: "tee", name: "Hi-Vis Driver Vest", sub: "ANSI-style panels", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/33dd12d5e_hi-vis-driver-vest.jpg" },
     ],
   },
@@ -32,53 +32,53 @@ const SECTIONS = [
     title: "Bottoms & Headwear",
     items: [
       { variant: "joggers", name: "Driver Joggers", sub: "Athletic fit", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/dfb32d8ed_driver-joggers.jpg" },
-      { variant: "cap", name: "LOKIN Snapback", sub: "Embroidered lock mark", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b0e031123_07_snapback.png" },
+      { variant: "cap", name: "LOKIN Snapback", sub: "Embroidered lock mark", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/62b7bf1b1_lokin-snapback.webp" },
       { variant: "beanie", name: "Driver Beanie", sub: "Thermal knit", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/717ce2305_driver-beanie.jpg" },
     ],
   },
   {
     title: "Rain Gear Collection",
     items: [
-      { variant: "raincoat", name: "Rain Jacket", sub: "Waterproof shell", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/0f25ecc04_14_rain_jacket.png" },
-      { variant: "raincoat", name: "Long Rain Coat", sub: "Full coverage", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6f6bc4e5f_15_long_rain_coat.png" },
+      { variant: "raincoat", name: "Rain Jacket", sub: "Waterproof shell", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/73f2f863c_rain-jacket.webp" },
+      { variant: "raincoat", name: "Long Rain Coat", sub: "Full coverage", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3934328b1_long-rain-coat.webp" },
       { variant: "raincoat", name: "Driver Poncho", sub: "Packable", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/7822e3074_driver-poncho.jpg" },
-      { variant: "raincoat", name: "Packable Rain Jacket", sub: "Packs to pouch", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/a2e74e90a_17_packable_jacket.png" },
+      { variant: "raincoat", name: "Packable Rain Jacket", sub: "Packs to pouch", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/78dd7b01a_packable-rain-jacket.webp" },
     ],
   },
   {
     title: "Winter Headgear",
     items: [
-      { variant: "hoodie", name: "Thermal Hoodie", sub: "Fleece-lined", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/29cd6b881_21_thermal_hoodie.png" },
+      { variant: "hoodie", name: "Thermal Hoodie", sub: "Fleece-lined", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fa52fed35_thermal-hoodie.webp" },
       { variant: "shiesty", name: "Ski Mask", sub: "Full-face thermal", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1db89194e_ski-mask.jpg" },
-      { variant: "shiesty", name: "LOKIN Balaclava", sub: "Fleece · One size", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ccfbb2f55_23_balaclava.png" },
-      { variant: "shiesty", name: "Neck Gaiter", sub: "Fleece tube", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/7ec899f4f_09_neck_gaiter.png" },
-      { variant: "beanie", name: "Winter Beanie", sub: "Thermal knit", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d1c595098_glow_beanie.png" },
+      { variant: "shiesty", name: "LOKIN Balaclava", sub: "Fleece · One size", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/72d6884fe_lokin-balaclava.webp" },
+      { variant: "shiesty", name: "Neck Gaiter", sub: "Fleece tube", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/3955b5312_neck-gaiter.webp" },
+      { variant: "beanie", name: "Winter Beanie", sub: "Thermal knit", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/dd4293edd_winter-beanie.webp" },
     ],
   },
   {
     title: "Winter Outerwear",
     items: [
-      { variant: "hoodie", name: "Insulated Winter Coat", sub: "Heavy fill", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/396606124_19_insulated_coat.png" },
-      { variant: "hoodie", name: "Driver Puffer Jacket", sub: "Packable warmth", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/55692cf87_20_puffer_jacket.png" },
+      { variant: "hoodie", name: "Insulated Winter Coat", sub: "Heavy fill", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/87db6be7d_insulated-winter-coat.webp" },
+      { variant: "hoodie", name: "Driver Puffer Jacket", sub: "Packable warmth", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/608bf7f23_driver-puffer-jacket.webp" },
     ],
   },
   {
     title: "Glow in the Dark",
     items: [
       { variant: "hoodie", name: "Glow Hoodie", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fe110b995_glow-hoodie.jpg" },
-      { variant: "tee", name: "Glow Tee", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e80557fbc_31_glow_tee.png" },
-      { variant: "hoodie", name: "Glow Jacket", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/567ab9a0e_32_glow_jacket.png" },
-      { variant: "hoodie", name: "Glow Sweatshirt", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/8c5461798_33_glow_sweatshirt.png" },
+      { variant: "tee", name: "Glow Tee", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/9835091c7_glow-tee.webp" },
+      { variant: "hoodie", name: "Glow Jacket", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/a9d803b45_glow-jacket.webp" },
+      { variant: "hoodie", name: "Glow Sweatshirt", sub: "Glow-in-the-dark print", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e81cbcccf_glow-sweatshirt.webp" },
     ],
   },
   {
     title: "Pizza Bags — Insulated",
     items: [
-      { variant: "pizza", name: "Pizza Bag · Small", sub: "18\" · 1-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c957edcca_28_pizza_bag_small.png"},
-      { variant: "pizza", name: "Pizza Bag · Medium", sub: "20\" · 2-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/dbd7f8b40_29_pizza_bag_medium.png"},
-      { variant: "pizza", name: "Pizza Bag · Large", sub: "24\" · 3-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/62c8d1032_30_pizza_bag_large.png"},
-      { variant: "pizza", name: "Pizza Bag · XL", sub: "Multi-pie", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/37ae96dd1_31_pizza_bag_xlarge.png" },
-      { variant: "pizza", name: "Pizza Bag · XXL", sub: "Catering size", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1c7a411b5_32_pizza_bag_xxlarge.png" },
+      { variant: "pizza", name: "Pizza Bag · Small", sub: "18\" · 1-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/28101f1e4_pizza-bag-small.webp"},
+      { variant: "pizza", name: "Pizza Bag · Medium", sub: "20\" · 2-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/dfdf8e362_pizza-bag-medium.webp"},
+      { variant: "pizza", name: "Pizza Bag · Large", sub: "24\" · 3-pie" , thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fddafc4f1_pizza-bag-large.webp"},
+      { variant: "pizza", name: "Pizza Bag · XL", sub: "Multi-pie", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/cf67c24f9_pizza-bag-xl.webp" },
+      { variant: "pizza", name: "Pizza Bag · XXL", sub: "Catering size", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/96f64ef7d_pizza-bag-xxl.webp" },
     ],
   },
   {
@@ -127,7 +127,7 @@ const SECTIONS = [
   {
     title: "Bike Delivery Gear",
     items: [
-      { variant: "delivery", name: "Bike Delivery Bag", sub: "Frame-mount ready", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/db65fb12b_51_bike_delivery_bag.png" },
+      { variant: "delivery", name: "Bike Delivery Bag", sub: "Frame-mount ready", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b328a415b_bike-delivery-bag.webp" },
       { variant: "delivery", name: "Handlebar Bag", sub: "Quick access", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c39738542_handlebar-bag.jpg" },
       { variant: "delivery", name: "Pannier Bags · Pair", sub: "Rack-mount", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e51be2ace_pannier-bags.jpg" },
     ],
@@ -150,9 +150,9 @@ const SECTIONS = [
   {
     title: "Moisture-Wicking Socks",
     items: [
-      { variant: "socks", name: "Socks · Summer Low-Cut 3-Pack", sub: "Cool & dry", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f2949a341_59_summer_low_socks.png" },
-      { variant: "socks", name: "Socks · Summer Crew 3-Pack", sub: "Cool & dry", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d8725e5f4_60_summer_crew_socks.png" },
-      { variant: "socks", name: "Socks · Winter Crew 3-Pack", sub: "Thermal", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/4ff359b26_61_winter_socks.png" },
+      { variant: "socks", name: "Socks · Summer Low-Cut 3-Pack", sub: "Cool & dry", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5a887b6e9_socks-summer-low.webp" },
+      { variant: "socks", name: "Socks · Summer Crew 3-Pack", sub: "Cool & dry", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/2fe078706_socks-summer-crew.webp" },
+      { variant: "socks", name: "Socks · Winter Crew 3-Pack", sub: "Thermal", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/25aeef8dd_socks-winter-crew.webp" },
     ],
   },
   {
@@ -161,7 +161,7 @@ const SECTIONS = [
       { variant: "glasses", name: "Safety Glasses", sub: "Impact-rated", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f58f1199b_safety-glasses.jpg" },
       { variant: "glasses", name: "Anti-Glare Glasses", sub: "Day driving", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5ee9c1cc4_anti-glare-glasses.jpg" },
       { variant: "glasses", name: "Night Vision Glasses", sub: "Low-light", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/76364b932_night-vision-glasses.jpg" },
-      { variant: "gloves", name: "UV Protection Sleeves", sub: "Sun defense", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/8b9b3f066_65_uv_sleeves.png" },
+      { variant: "gloves", name: "UV Protection Sleeves", sub: "Sun defense", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/4739033db_uv-sleeves.webp" },
       { variant: "gloves", name: "Hand Warmers", sub: "Reusable", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/8131ae5d6_hand-warmers.jpg" },
     ],
   },
@@ -176,7 +176,7 @@ const SECTIONS = [
     title: "Tech & Phone Accessories",
     items: [
       { variant: "phonemount", name: "Bike/Moto Phone Holder", sub: "Handlebar mount", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/420083611_bike-phone-holder.jpg" },
-      { variant: "phonemount", name: "Magnetic Phone Mount", sub: "Dash mount", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/1ef63c577_70_magnetic_phone_mount.png" },
+      { variant: "phonemount", name: "Magnetic Phone Mount", sub: "Dash mount", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5d30777fa_magnetic-phone-mount.webp" },
       { variant: "pouch", name: "Waterproof Phone Pouch", sub: "Touch-through", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/02491cb90_waterproof-phone-pouch.jpg" },
     ],
   },
@@ -184,7 +184,7 @@ const SECTIONS = [
     title: "Lanyards & Keychains",
     items: [
       { variant: "keychain", name: "LOKIN Lanyard", sub: "Breakaway clasp", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/bb8c46fc7_lokin-lanyard.jpg" },
-      { variant: "keychain", name: "Retractable Keychain", sub: "Belt clip", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fe9724d3a_73_retractable_keychain.png" },
+      { variant: "keychain", name: "Retractable Keychain", sub: "Belt clip", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/763f9244b_retractable-keychain.webp" },
       { variant: "keychain", name: "LOKIN Keychain", sub: "Lock mark fob", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/a6bb4f431_lokin-keychain.jpg" },
     ],
   },
