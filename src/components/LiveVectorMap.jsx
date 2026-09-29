@@ -751,6 +751,8 @@ export default function LiveVectorMap({
   fullscreen = false,
   onReady,
   onUnavailable,
+  cinematic: cinematicProp = null,
+  onCinematicChange = null,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -803,7 +805,12 @@ export default function LiveVectorMap({
   // Cinematic art direction mode (locked 2026-09-25): dusk grade, real
   // terrain, warm haze, orbit camera, destination beam, FPS meter.
   // Defaults on in perspective view so the staged look is immediately visible.
-  const [cinematic, setCinematic] = useState(perspective);
+  // Lifted 2026-09-29 (Kendall: 4D view and cinematic mode are separate): the
+  // parent can own the state via cinematic/onCinematicChange props; otherwise
+  // the internal state is used as before.
+  const [cinematicInner, setCinematicInner] = useState(perspective);
+  const cinematic = cinematicProp ?? cinematicInner;
+  const setCinematic = onCinematicChange ?? setCinematicInner;
   const cinematicRef = useRef(perspective);
   cinematicRef.current = cinematic;
   // Honest retail data-service status: idle | loading | ready | error.
