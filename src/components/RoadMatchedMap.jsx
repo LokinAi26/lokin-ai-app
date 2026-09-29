@@ -111,7 +111,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onToggleCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onActivateCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -660,8 +660,8 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
                 )}
               </div>
             )}
-            {onToggleCinematic && (
-              <button type="button" aria-label="Toggle cinematic 4D camera" aria-pressed={mapView === "4d"} onClick={onToggleCinematic} className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg backdrop-blur active:scale-95 ${mapView === "4d" ? "border-accent/60 bg-accent/15 text-accent" : "border-white/15 bg-black/80 text-white/80"}`}>
+            {onActivateCinematic && (
+              <button type="button" aria-label="Activate cinematic 4D camera" aria-pressed={mapView === "4d"} title="Enter cinematic 4D" onClick={onActivateCinematic} className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg backdrop-blur active:scale-95 ${mapView === "4d" ? "border-accent/60 bg-accent/15 text-accent" : "border-white/15 bg-black/80 text-white/80"}`}>
                 <Clapperboard className="h-4 w-4" />
               </button>
             )}
