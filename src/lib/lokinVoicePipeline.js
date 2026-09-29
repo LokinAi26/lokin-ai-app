@@ -289,6 +289,11 @@ export async function speakLokin(text, opts = {}) {
     // instead of falling back to device speechSynthesis, which is silent
     // inside the iOS web view and would mask the problem.
     if (opts.strict) throw e;
+    // Guidance prompts must never fail silently (2026-09-29: a transient
+    // gateway failure fell back to device speechSynthesis — silent inside
+    // the iOS web view — while the HUD toggle still showed ON). Signal HUD
+    // surfaces so the speaker button can show the failure instead.
+    if (opts.guidance) emitVoiceState("guidance-error");
     // Consent or provider errors surface to the caller via the reply text path;
     // here we just try the device fallback so browsers still talk.
     try {
@@ -304,7 +309,7 @@ export async function speakLokin(text, opts = {}) {
 // speechSynthesis is silent. New prompts interrupt the current one
 // (speakLokin stops first) — correct for navigation.
 export function speakGuidance(text) {
-  return speakLokin(text, { voice: getGuidanceVoice() });
+  return speakLokin(text, { voice: getGuidanceVoice(), guidance: true });
 }
 
 export default {
