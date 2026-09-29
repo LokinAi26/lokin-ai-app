@@ -3,6 +3,8 @@ import { authorizeCapability, CAPABILITY_BROKER_VERSION } from '../../shared/cap
 import { AGENT_CIRCUIT_BREAKER_VERSION, AGENT_SESSION_STATUS, defaultAgentBudgets, evaluateAgentSession, summarizeAgentEvents } from '../../shared/agentCircuitBreaker.js';
 import { normalizeOffer, pruneNulls, OFFER_NORMALIZER_VERSION } from '../../shared/offerNormalizer.js';
 import { authorizePhysicalCapability, listPhysicalCapabilityPolicies, PHYSICAL_CAPABILITY_BROKER_VERSION } from '../../shared/physicalCapabilityBroker.js';
+import { summarizeTaskCosts } from '../../shared/taskCostAccounting.js';
+import { authorizeAgentTarget } from '../../shared/agentTargetScope.js';
 import { offerVisibleToUser } from '../../shared/offerAccess.js';
 
 const txt=(v:any,n=500)=>String(v??'').trim().slice(0,n);
@@ -65,6 +67,12 @@ export default async function(req:Request){
       });
     }
 
+    if(action==='summarize_task_costs'){
+      if(!Array.isArray(body.entries)||body.entries.length>500)return Response.json({error:'COST_ENTRIES_REQUIRED'},{status:400});
+      try{return Response.json(summarizeTaskCosts(body.entries,body.successful_tasks));}
+      catch{return Response.json({error:'INVALID_COST_REPORT'},{status:400});}
+    }
+
     if(action==='create_agent_session'){
       const agentId=txt(body.agent_id,180),taskId=txt(body.task_id,180);
       if(!agentId)return Response.json({error:'AGENT_ID_REQUIRED'},{status:400});
@@ -76,7 +84,7 @@ export default async function(req:Request){
         session_id:sessionId,owner_user_id:user.id,agent_id:agentId,agent_type:txt(body.agent_type,80)||'REMOTE_AGENT',task_id:taskId,
         status:AGENT_SESSION_STATUS.ACTIVE,risk_tier:['LOW','MEDIUM','HIGH'].includes(String(body.risk_tier||'').toUpperCase())?String(body.risk_tier).toUpperCase():'MEDIUM',
         budgets,granted_scopes:scopes,created_at:createdAt,updated_at:createdAt,
-        expires_at:new Date(Date.now()+budgets.max_duration_ms).toISOString(),metadata:body.metadata&&typeof body.metadata==='object'?body.metadata:{},
+        expires_at:new Date(Date.now()+budgets.max_duration_ms).toISOString(),metadata:{authorized_targets:(Array.isArray(body.authorized_targets)?body.authorized_targets:[]).slice(0,50).map((t:any)=>({capability:txt(t?.capability,180),target_type:txt(t?.target_type,120),target_id:txt(t?.target_id,240)}))},
       });
       await appendEvent(base44,user,session,{event_type:'SESSION_CREATED',decision:'INFO',reason:'OWNER_CREATED_SESSION',metadata:{granted_scopes:scopes,budgets}});
       return Response.json({ok:true,session});
@@ -112,7 +120,8 @@ export default async function(req:Request){
 
       const capability=txt(body.capability,180);
       const events=await getEvents(base44,user,session.session_id);
-      const capabilityDecision=authorizeCapability({capability,target_locked:body.target_locked===true,approval_verified:false},{scopes:Array.isArray(session.granted_scopes)?session.granted_scopes:[]});
+      const targetDecision=authorizeAgentTarget(session,{capability,target_type:txt(body.target_type,120),target_id:txt(body.target_id,240)});
+      const capabilityDecision=targetDecision.allowed?authorizeCapability({capability,target_locked:body.target_locked===true,approval_verified:false},{scopes:Array.isArray(session.granted_scopes)?session.granted_scopes:[]}):targetDecision;
       const breaker=evaluateAgentSession(session,events,{
         capability,is_write:body.is_write===true,external_communication:body.external_communication===true,
         unexpected_external_communication:body.unexpected_external_communication===true,credential_access:body.credential_access===true,
