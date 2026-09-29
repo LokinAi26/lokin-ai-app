@@ -111,7 +111,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onActivateCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onActivateCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null, cinematic = false, onCinematicChange = null }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -565,6 +565,8 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
               deliveryStops={deliveryStops}
               snappedPosition={snappedPosition}
               perspective={perspective}
+              cinematic={cinematic}
+              onCinematicChange={onCinematicChange}
               followDriver={followDriver}
               fullscreen={fullscreen}
               style={style}
@@ -651,7 +653,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             {mapMenuOpen && (
               <div className="flex flex-col items-end gap-2 rounded-2xl border border-white/10 bg-black/85 p-2 shadow-xl backdrop-blur-xl">
                 <div className="flex gap-1 rounded-full border border-white/10 bg-black/60 p-1">
-                  <button type="button" onClick={() => { setStyle("dark-v11"); setMapMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
+                  <button type="button" onClick={() => { onSelectMapView?.("real"); setStyle("dark-v11"); setMapMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${mapView === "real" ? "bg-primary text-black" : "text-white/60"}`}>MAP</button>
                   <button type="button" onClick={() => { setStyle("satellite-streets-v12"); setMapMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
                 </div>
                 <MapQualityMenu quality={quality} onChange={changeQuality} />
@@ -661,7 +663,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
               </div>
             )}
             {onActivateCinematic && (
-              <button type="button" aria-label="Activate cinematic 4D camera" aria-pressed={mapView === "4d"} title="Enter cinematic 4D" onClick={onActivateCinematic} className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg backdrop-blur active:scale-95 ${mapView === "4d" ? "border-accent/60 bg-accent/15 text-accent" : "border-white/15 bg-black/80 text-white/80"}`}>
+              <button type="button" aria-label="Activate cinematic mode" aria-pressed={cinematic} title="Enter cinematic mode" onClick={onActivateCinematic} className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg backdrop-blur active:scale-95 ${cinematic ? "border-accent/60 bg-accent/15 text-accent" : "border-white/15 bg-black/80 text-white/80"}`}>
                 <Clapperboard className="h-4 w-4" />
               </button>
             )}
@@ -672,7 +674,6 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             )}
             {onSelectMapView && (
               <div className="flex shrink-0 rounded-full border border-lokin-neon/30 bg-black/78 p-0.5 shadow-lg backdrop-blur">
-                <button type="button" onClick={() => onSelectMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
                 <button type="button" onClick={() => onSelectMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
               </div>
             )}
