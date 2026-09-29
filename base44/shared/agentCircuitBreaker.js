@@ -40,7 +40,8 @@ export function summarizeAgentEvents(events = []) {
   };
   for (const event of events || []) {
     if (event?.event_type === 'ACTION_REQUESTED') counters.calls += 1;
-    if (event?.decision === 'DENY' || event?.decision === 'FREEZE') counters.denials += 1;
+    if (event?.event_type === 'ACTION_DECIDED' && ['DENY','FREEZE','REQUIRE_APPROVAL'].includes(event?.decision)) counters.denials += 1;
+    if (event?.event_type !== 'ACTION_REQUESTED') continue;
     if (event?.metadata?.is_write === true) counters.writes += 1;
     if (event?.metadata?.external_communication === true) counters.external_communications += 1;
     if (event?.metadata?.credential_access === true) counters.credential_accesses += 1;
@@ -52,21 +53,21 @@ export function summarizeAgentEvents(events = []) {
 
 export function evaluateAgentSession(session = {}, events = [], request = {}, capabilityDecision = {}) {
   const now = Number.isFinite(Number(request.now_ms)) ? Number(request.now_ms) : Date.now();
-  const status = text(session.status, 30) || AGENT_SESSION_STATUS.ACTIVE;
+  const status = text(session.status, 30) || 'UNKNOWN';
   if (status !== AGENT_SESSION_STATUS.ACTIVE) {
     return { allowed: false, decision: 'DENY', freeze: false, reason: `SESSION_${status}`, status, version: AGENT_CIRCUIT_BREAKER_VERSION };
   }
 
   const created = Date.parse(String(session.created_at || ''));
   const budgets = defaultAgentBudgets(session.budgets || {});
-  if (!Number.isFinite(created) || now - created > budgets.max_duration_ms) {
+  if (!Number.isFinite(created) || created > now || now - created >= budgets.max_duration_ms) {
     return { allowed: false, decision: 'FREEZE', freeze: true, reason: 'SESSION_EXPIRED', status: AGENT_SESSION_STATUS.FROZEN, version: AGENT_CIRCUIT_BREAKER_VERSION };
   }
 
   const capability = text(request.capability, 180);
   const flags = {
-    is_write: request.is_write === true,
-    external_communication: request.external_communication === true,
+    is_write: request.is_write === true || ['data.write','asset.delete','production.master.modify','production.publish','infrastructure.modify'].includes(capability),
+    external_communication: request.external_communication === true || capability.startsWith('agent.external_communication'),
     credential_access: capability === 'credential.access' || request.credential_access === true,
     privilege_escalation: capability === 'agent.privilege.escalate' || request.privilege_escalation === true,
     persistent_instruction_write: capability.startsWith('agent.persistent_instructions.write') || request.persistent_instruction_write === true,
