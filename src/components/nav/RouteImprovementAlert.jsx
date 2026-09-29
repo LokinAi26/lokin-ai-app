@@ -10,7 +10,7 @@ export default function RouteImprovementAlert({ improvement, onApply, onDismiss,
       role="alert"
       className={
         floating
-          ? "pointer-events-auto absolute left-3 right-3 top-[calc(4.6rem+env(safe-area-inset-top))] z-40 lokin-card border-primary/50 p-3 backdrop-blur"
+          ? "pointer-events-auto absolute left-3 right-3 top-[calc(9.2rem+env(safe-area-inset-top))] z-40 lokin-card border-primary/50 p-3 backdrop-blur"
           : "lokin-card border-primary/50 p-4"
       }
     >
