@@ -570,7 +570,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       )}
 
       {nav.offlineRoute && (
-        <div className="pointer-events-none absolute left-1/2 top-[calc(9.2rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
+        <div className="pointer-events-none absolute left-1/2 top-[calc(11rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
           OFFLINE · CACHED ROUTE DATA
         </div>
       )}
@@ -605,7 +605,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
       {/* Guidance voice panel: left-anchored below the maneuver banner (2026-09-29
           HUD cleanup) so the banner and the map-style cluster can never cover it. */}
       {voicePanelOpen && nav.route && (
-        <div className="absolute left-3 top-[calc(9.2rem+env(safe-area-inset-top))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute left-3 top-[calc(11rem+env(safe-area-inset-top))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="lokin-kicker">Guidance voice</div>
             <button
