@@ -236,24 +236,48 @@ export async function speakLokin(text, opts = {}) {
     const vol = getTtsVolume();
     // Element volume for platforms that honor it (attenuation only).
     try { audio.volume = Math.min(1, vol / 100); } catch {}
-    // GainNode so the level slider works on iOS too. Only when the shared
-    // context is running — routing through a suspended context would silence
-    // the reply, so in that case the element plays directly.
-    const ctx = ensureVoiceCtx();
-    if (ctx && ctx.state === "running") {
-      try {
-        const src = ctx.createMediaElementSource(audio);
-        const gain = ctx.createGain();
-        gain.gain.value = Math.min(1.5, Math.max(0, vol / 100));
-        src.connect(gain);
-        gain.connect(ctx.destination);
-      } catch {}
+    // GainNode ONLY when the level differs from 100. iOS honors element.volume
+    // unreliably, so the slider needs the Web Audio path — but audio routed
+    // through an AudioContext is muted by the iOS silent switch, which kills
+    // navigation prompts. At the default 100 the element plays directly,
+    // audible regardless of the silent switch (verified 2026-09-27). Only
+    // route when the shared context is running — a suspended context would
+    // silence the reply, so then the element plays directly.
+    if (vol !== 100) {
+      const ctx = ensureVoiceCtx();
+      if (ctx && ctx.state === "running") {
+        try {
+          const src = ctx.createMediaElementSource(audio);
+          const gain = ctx.createGain();
+          gain.gain.value = Math.min(1.5, Math.max(0, vol / 100));
+          src.connect(gain);
+          gain.connect(ctx.destination);
+        } catch {}
+      }
     }
     currentAudio = audio;
     await audio.play();
-    await new Promise((resolve) => {
-      audio.onended = resolve;
-      audio.onerror = resolve;
+    // Reject — never silently swallow — decode errors and stalls. A preview
+    // that "plays" with no sound must surface, not reset quietly (2026-09-29:
+    // onerror used to resolve, masking broken audio as played).
+    await new Promise((resolve, reject) => {
+      let done = false;
+      let iv = null;
+      const finish = (err) => {
+        if (done) return;
+        done = true;
+        if (iv) clearInterval(iv);
+        if (err) reject(err); else resolve();
+      };
+      audio.onended = () => finish(null);
+      audio.onerror = () => finish(new Error("audio playback failed"));
+      const t0 = Date.now();
+      iv = setInterval(() => {
+        try {
+          if (audio.ended || audio.currentTime > 0.05) return; // progressing; onended finishes it
+          if (Date.now() - t0 > 5000) finish(new Error("audio stalled before producing sound"));
+        } catch { finish(new Error("audio playback failed")); }
+      }, 250);
     });
     // Single choke point for natural end-of-speech on the gateway path.
     emitVoiceState("idle");
