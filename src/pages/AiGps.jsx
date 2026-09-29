@@ -29,6 +29,9 @@ export default function AiGps() {
   const [loadingStops, setLoadingStops] = useState(true);
   const [voiceGuidance, setVoiceGuidance] = useState(true);
   const [mapView, setMapView] = useState(() => params.get("view") === "4d" ? "4d" : "real");
+  // Cinematic action mode (locked art direction 2026-09-25): dusk grade,
+  // terrain, orbit camera, FPS meter. Separate from the 4D perspective view.
+  const [cinematic, setCinematic] = useState(false);
   const [destinationInput, setDestinationInput] = useState(explicitDestination);
   const [probingProvider, setProbingProvider] = useState(false);
 
@@ -188,6 +191,8 @@ export default function AiGps() {
         nav={nav}
         mapView={mapView}
         setMapView={setMapView}
+        cinematic={cinematic}
+        setCinematic={setCinematic}
         routeLoadError={routeLoadError}
         loadingStops={loadingStops}
         deliveryStops={deliveryStops}
@@ -348,7 +353,7 @@ export default function AiGps() {
         <div ref={mapSectionRef} id="lokin-gps-map" className="space-y-2 scroll-mt-4">
           <div className="mx-auto flex w-fit gap-1 rounded-full border border-lokin-neon/30 bg-black/85 p-1">
             <button type="button" onClick={() => setMapView("real")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>REAL MAP</button>
-            <button type="button" onClick={() => setMapView("4d")} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
+            <button type="button" onClick={() => { setMapView("4d"); setCinematic(false); }} className={`rounded-full px-4 py-2 text-[10px] font-extrabold tracking-[0.12em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>REAL 4D</button>
           </div>
           {deliveryStops.length > 1 && (
             <div className="text-center text-[9px] font-extrabold tracking-[0.14em] text-primary/80">
@@ -473,7 +478,7 @@ function formatArrivalClock(remainingDurationS) {
   return new Date(Date.now() + s * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, onExit }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
@@ -500,9 +505,11 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           perspective={mapView === "4d"}
           fullscreen
           mapView={mapView}
-          onActivateCinematic={() => setMapView("4d")}
+          onActivateCinematic={() => { setMapView("4d"); setCinematic(true); }}
+          cinematic={cinematic}
+          onCinematicChange={setCinematic}
           onExit={onExit}
-          onSelectMapView={setMapView}
+          onSelectMapView={(v) => { setMapView(v); setCinematic(false); }}
           onAskLokin={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-view")}
           maneuvers={nav.route?.maneuvers || []}
           remainingDistanceM={nav.remainingDistanceM}
