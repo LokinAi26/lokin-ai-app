@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CircleCheck, Lock, MapPin, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, Route as RouteIcon, Satellite, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Split, Undo2, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -447,10 +447,45 @@ export default function AiGps() {
   );
 }
 
+// Turn-arrow icon for the maneuver banner, mapped from the Mapbox maneuver
+// type/modifier (2026-09-29 HUD cleanup, Google Maps reference layout).
+function maneuverTurnIcon(m) {
+  const type = String(m?.maneuver?.type || "").toLowerCase();
+  const mod = String(m?.maneuver?.modifier || "").toLowerCase();
+  if (type === "arrive") return Flag;
+  if (type === "depart") return CircleDot;
+  if (mod === "uturn") return Undo2;
+  if (type.includes("roundabout") || type.includes("rotary")) return RotateCw;
+  if (type === "merge") return Merge;
+  if (type === "fork") return Split;
+  if (mod.includes("sharp right")) return CornerUpRight;
+  if (mod.includes("sharp left")) return CornerUpLeft;
+  if (mod.includes("slight right") || type === "on ramp") return ArrowUpRight;
+  if (mod.includes("slight left")) return ArrowUpLeft;
+  if (mod.includes("right") || type === "off ramp") return ArrowRight;
+  if (mod.includes("left")) return ArrowLeft;
+  return ArrowUp;
+}
+
+function formatArrivalClock(remainingDurationS) {
+  const s = Number(remainingDurationS);
+  if (!Number.isFinite(s) || s <= 0) return "";
+  return new Date(Date.now() + s * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
 function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, onExit }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
+  const arrived = nav.status === "arrived";
+  const TurnIcon = maneuverTurnIcon(nav.maneuver);
+  const bannerStreet = arrived
+    ? "Destination reached"
+    : (nav.maneuver?.road_name || destinationAddresses[0] || "Follow the highlighted road");
+  const bannerDistance = nav.maneuver?.distance_from_driver_m != null
+    ? formatDistance(nav.maneuver.distance_from_driver_m)
+    : "\u2014";
+  const arrivalClock = formatArrivalClock(nav.remainingDurationS);
 
   return (
     <div className="fixed left-0 top-0 z-20 box-border h-[100dvh] w-screen max-w-[100vw] min-w-0 overflow-hidden overscroll-none bg-black text-white">
@@ -490,7 +525,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto_auto_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
         <button
           type="button"
           onClick={onExit}
@@ -511,45 +546,66 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
             <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
           </div>
         ) : <span />}
-        {nav.route && (
-          <button
-            type="button"
-            onClick={() => setVoicePanelOpen((v) => !v)}
-            aria-label="Guidance voice settings"
-            className="pointer-events-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95"
-          >
-            {voiceGuidance ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-          </button>
-        )}
       </div>
 
+      {/* Maneuver banner (2026-09-29 HUD cleanup, Google Maps reference):
+          big turn arrow + street name + distance until turn. Lane-guidance
+          and speed-limit elements are deliberately omitted — the route
+          pipeline carries no lane or speed data, and LOKIN never invents it. */}
+      {nav.route && (
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(3.9rem+env(safe-area-inset-top))] z-40 box-border px-[max(0.65rem,env(safe-area-inset-left))] [padding-right:max(0.65rem,env(safe-area-inset-right))]">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-3xl border border-primary/30 bg-black/85 px-4 py-3 shadow-[0_10px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/10 glow-primary">
+                <TurnIcon className="h-8 w-8 text-primary" />
+              </div>
+              <div className="text-[11px] font-extrabold text-white">{bannerDistance}</div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="lokin-kicker lokin-kicker-lime">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
+              <div className="truncate text-[clamp(1.35rem,6vw,1.8rem)] font-extrabold leading-tight text-white">{bannerStreet}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {nav.offlineRoute && (
-        <div className="pointer-events-none absolute left-1/2 top-[calc(3.7rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
+        <div className="pointer-events-none absolute left-1/2 top-[calc(9.2rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
           OFFLINE · CACHED ROUTE DATA
         </div>
       )}
 
       <RouteImprovementAlert improvement={nav.routeImprovement} onApply={nav.applyRouteImprovement} onDismiss={nav.dismissRouteImprovement} floating />
 
-      {/* Hands-free voice button (2026-09-27): one tap opens LOKIN's voice
-          assistant already listening — ask for a route update or report
-          traffic without taking your eyes off the road. Permanent HUD
-          control: shown on the locked surface even before a route resolves. */}
-      {(
+      {/* Right control stack (2026-09-29 HUD cleanup, Google Maps reference):
+          circular controls above the ETA sheet. The mic is a permanent HUD
+          control — one tap opens LOKIN's voice assistant already listening,
+          so the driver can ask for a route update without looking away. */}
+      <div className="absolute bottom-[calc(9rem+env(safe-area-inset-bottom))] right-3 z-40 flex flex-col gap-2.5">
+        {nav.route && (
+          <button
+            type="button"
+            onClick={() => setVoicePanelOpen((v) => !v)}
+            aria-label="Guidance voice settings"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/50 bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95"
+          >
+            {voiceGuidance ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent("lokin:voice-mic-tap"))}
           aria-label="Voice assistant: ask for a route update or report traffic"
-          className="lokin-mic-pulse absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-black/90 text-accent glow-cyan backdrop-blur active:scale-90"
+          className="lokin-mic-pulse flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-black/90 text-accent glow-cyan backdrop-blur active:scale-90"
         >
           <Mic className="h-7 w-7" strokeWidth={2.5} />
         </button>
-      )}
+      </div>
 
-      {/* Guidance voice panel (2026-09-27): top-anchored under the z-50 bar so the
-          maneuver card can never cover it. */}
+      {/* Guidance voice panel: left-anchored below the maneuver banner (2026-09-29
+          HUD cleanup) so the banner and the map-style cluster can never cover it. */}
       {voicePanelOpen && nav.route && (
-        <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+3.6rem)] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute left-3 top-[calc(9.2rem+env(safe-area-inset-top))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="lokin-kicker">Guidance voice</div>
             <button
@@ -563,6 +619,33 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           </div>
           <VoicePicker compact voiceKind="guidance" />
           <div className="mt-2 text-[10px] leading-relaxed text-white/40">Tap Preview to hear it, then drive. Saved on this device.</div>
+        </div>
+      )}
+
+      {/* ETA sheet (2026-09-29 HUD cleanup, Google Maps reference):
+          big remaining time, distance + arrival clock, Exit. Replaces the
+          old slim maneuver pill — the maneuver now lives in the top banner. */}
+      {nav.route && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 box-border px-[max(0.65rem,env(safe-area-inset-left))] pb-[calc(0.65rem+env(safe-area-inset-bottom))] [padding-right:max(0.65rem,env(safe-area-inset-right))]">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-[1.75rem] border border-white/10 bg-black/88 px-5 py-3.5 shadow-[0_10px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-[clamp(1.6rem,7vw,2.1rem)] font-black leading-none text-primary">
+                {arrived ? "Arrived" : formatDuration(nav.remainingDurationS)}
+              </div>
+              <div className="mt-1.5 truncate text-xs font-semibold text-white/55">
+                {arrived
+                  ? `Destination reached${doorPinArrived ? " \u00b7 saved door pin" : ""}`
+                  : `${nav.remainingDistanceM != null ? formatDistance(nav.remainingDistanceM) : "\u2014"}${arrivalClock ? ` \u00b7 ${arrivalClock}` : ""}`}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onExit}
+              className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-7 py-3.5 text-sm font-extrabold text-white/85 active:scale-95"
+            >
+              Exit
+            </button>
+          </div>
         </div>
       )}
 
