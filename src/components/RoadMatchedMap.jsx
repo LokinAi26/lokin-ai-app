@@ -174,7 +174,6 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   const lastMapRequestAtRef = useRef(0);
   const renderW = fullscreen ? 640 : MAP_W;
   const renderH = fullscreen ? 960 : MAP_H;
-  const hudSafeX = fullscreen ? "max(0.65rem, env(safe-area-inset-left))" : "0.5rem";
   const arrived = navigationStatus === "arrived";
   // Tells the driver which side of the street the entrance is on at arrival.
   const arrivalSideLabel = (destinationSide === "left" || destinationSide === "right")
@@ -636,7 +635,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
         )}
 
         {fullscreen && (
-          <div className="absolute right-3 top-[calc(5.25rem+env(safe-area-inset-top))] z-30 flex flex-col items-end gap-2">
+          <div className="absolute right-3 top-[calc(9.2rem+env(safe-area-inset-top))] z-30 flex flex-col items-end gap-2">
             <div className="flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 shadow-lg backdrop-blur">
               <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
               <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
@@ -651,29 +650,18 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
         <FuelDealsOverlay fullscreen={fullscreen} />
 
         {rerouting && (
-          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(4.9rem+env(safe-area-inset-top))]" : "top-14"}`}>
+          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(9.2rem+env(safe-area-inset-top))]" : "top-14"}`}>
             REROUTING · CONFIRMING ROAD
           </div>
         )}
 
         {!online && (
-          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(6.4rem+env(safe-area-inset-top))]" : "top-[4.4rem]"}`}>
+          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(11rem+env(safe-area-inset-top))]" : "top-[4.4rem]"}`}>
             OFFLINE · CACHED MAP
           </div>
         )}
 
-        {fullscreen ? (
-          <div
-            className="absolute z-30"
-            style={{ left: hudSafeX, right: "max(0.65rem, env(safe-area-inset-right))", bottom: "calc(0.7rem + env(safe-area-inset-bottom))" }}
-          >
-            {/* Slim driver bar: just the maneuver instruction. Street/ETA/duration
-                are already shown by the native pills below — no duplication. */}
-            <div className="w-full min-w-0 max-w-full truncate rounded-full border border-primary/25 bg-black/80 px-4 py-2.5 text-center text-[clamp(0.82rem,3.8vw,1rem)] font-extrabold text-white shadow-lg backdrop-blur">
-              {arrived ? `Destination reached${arrivalSideLabel}${arrivalPinLabel}` : maneuver?.maneuver?.instruction || "Follow the highlighted road"}
-            </div>
-          </div>
-        ) : (
+        {fullscreen ? null : (
           <div className="absolute bottom-3 left-2 right-2 z-30 flex min-w-0 items-end gap-2">
             <div className="lokin-card min-w-0 flex-1 overflow-hidden px-3 py-2 backdrop-blur">
               <div className="lokin-kicker lokin-kicker-lime truncate">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
