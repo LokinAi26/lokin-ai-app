@@ -501,6 +501,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           fullscreen
           mapView={mapView}
           onToggleCinematic={() => setMapView((v) => (v === "4d" ? "real" : "4d"))}
+          onExit={onExit}
+          onSelectMapView={setMapView}
+          onAskLokin={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-view")}
           maneuvers={nav.route?.maneuvers || []}
           remainingDistanceM={nav.remainingDistanceM}
           etaUpdatedAt={nav.etaUpdatedAt}
@@ -527,35 +530,12 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
         </div>
       )}
 
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 box-border grid min-w-0 grid-cols-[auto_minmax(44px,1fr)_auto] items-center gap-1.5 overflow-hidden px-[max(0.55rem,env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))] [padding-right:max(0.55rem,env(safe-area-inset-right))]">
-        <button
-          type="button"
-          onClick={onExit}
-          className="pointer-events-auto flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-lokin-neon/50 bg-black/85 px-2.5 text-[10px] font-extrabold tracking-[0.02em] text-lokin-neon shadow-lg active:scale-95"
-          aria-label="Back to LOKIN home"
-        >
-          ‹<span className="hidden min-[390px]:inline"> BACK</span>
-        </button>
-
-        <div className="pointer-events-auto min-w-0 truncate rounded-full border border-accent/50 bg-black/72 px-2.5 py-2 text-[8px] font-extrabold tracking-[0.04em] text-accent glow-cyan backdrop-blur">
-          ● <span className="hidden min-[410px]:inline">HEY </span>LOKIN
-        </div>
-
-        {nav.route ? (
-          <div className="pointer-events-auto flex shrink-0 rounded-full border border-lokin-neon/30 bg-black/78 p-0.5 shadow-lg backdrop-blur">
-            <button type="button" onClick={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-view")} aria-label="Ask LOKIN" className="min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] text-primary active:scale-95">LOKIN</button>
-            <button type="button" onClick={() => setMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
-            <button type="button" onClick={() => setMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
-          </div>
-        ) : <span />}
-      </div>
-
       {/* Maneuver banner (2026-09-29 HUD cleanup, Google Maps reference):
           big turn arrow + street name + distance until turn. Lane-guidance
           and speed-limit elements are deliberately omitted — the route
           pipeline carries no lane or speed data, and LOKIN never invents it. */}
       {nav.route && (
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(3.9rem+env(safe-area-inset-top))] z-40 box-border px-[max(0.65rem,env(safe-area-inset-left))] [padding-right:max(0.65rem,env(safe-area-inset-right))]">
+        <div className="pointer-events-none absolute inset-x-0 top-[calc(0.5rem+env(safe-area-inset-top))] z-40 box-border px-[max(0.65rem,env(safe-area-inset-left))] [padding-right:max(0.65rem,env(safe-area-inset-right))]">
           <div className="pointer-events-auto flex items-center gap-3 rounded-3xl border border-primary/30 bg-black/85 px-4 py-3 shadow-[0_10px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl">
             <div className="flex shrink-0 flex-col items-center gap-1">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/10 glow-primary">
