@@ -128,6 +128,23 @@ export function unlockVoiceAudio() {
   ensureVoiceCtx();
 }
 
+// Awaitable unlock for tap handlers: resolves once the shared context is
+// running (or after a short bounded wait when iOS will not honor resume).
+// Call this FIRST inside the tap, before any network await, so the resume
+// lands inside the user-gesture window.
+export async function unlockVoiceAudioAsync() {
+  const ctx = ensureVoiceCtx();
+  if (ctx && ctx.state !== "running") {
+    try {
+      await Promise.race([
+        ctx.resume(),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
+    } catch {}
+  }
+  return ctx;
+}
+
 let currentAudio = null;
 
 export function stopSpeaking() {
@@ -197,6 +214,11 @@ export async function speakLokin(text, opts = {}) {
   const clean = String(text || "").replace(/[*#_`]/g, "").trim();
   if (!clean) return false;
   stopSpeaking();
+  // Warm the audio pipeline before the network await: if this call came from
+  // a tap, the resume lands inside the gesture window and iOS lets the later
+  // audio.play() through. Bounded so gesture-less callers (nav prompts) can't
+  // hang here.
+  try { await unlockVoiceAudioAsync(); } catch {}
   // Emitted after stopSpeaking() (which reports idle) so a new utterance
   // reads as idle -> speaking, never speaking -> idle -> speaking.
   emitVoiceState("speaking");
@@ -239,6 +261,10 @@ export async function speakLokin(text, opts = {}) {
     return true;
   } catch (e) {
     currentAudio = null;
+    // Strict mode (voice previews): surface the real failure to the caller
+    // instead of falling back to device speechSynthesis, which is silent
+    // inside the iOS web view and would mask the problem.
+    if (opts.strict) throw e;
     // Consent or provider errors surface to the caller via the reply text path;
     // here we just try the device fallback so browsers still talk.
     try {
@@ -268,6 +294,7 @@ export default {
   setTtsVolume,
   canRecordVoice,
   unlockVoiceAudio,
+  unlockVoiceAudioAsync,
   stopSpeaking,
   startVoiceRecording,
   transcribeVoiceBlob,
