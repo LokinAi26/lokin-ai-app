@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Clapperboard, Crosshair, Layers3, Maximize2, Satellite } from "lucide-react";
+import { Clapperboard, Crosshair, Layers3, Maximize2, Satellite, Sparkles } from "lucide-react";
 import MapQualityMenu from "@/components/map/MapQualityMenu";
 import { base44LiveFunctions } from "@/api/base44Client";
 import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navigationGeometry";
@@ -665,22 +665,15 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
                 <Clapperboard className="h-4 w-4" />
               </button>
             )}
-            {onExit && (
-              <button type="button" aria-label="Back to LOKIN home" onClick={onExit} className="flex h-10 w-10 items-center justify-center rounded-full border border-lokin-neon/50 bg-black/80 text-lokin-neon shadow-lg backdrop-blur active:scale-95">
-                <ArrowLeft className="h-4 w-4" />
+            {onAskLokin && (
+              <button type="button" onClick={onAskLokin} aria-label="Ask LOKIN" title="Ask LOKIN" className="flex h-10 w-10 items-center justify-center rounded-full border border-accent/60 bg-black/80 text-accent shadow-lg backdrop-blur active:scale-95">
+                <Sparkles className="h-4 w-4" />
               </button>
             )}
-            {(onAskLokin || onSelectMapView) && (
+            {onSelectMapView && (
               <div className="flex shrink-0 rounded-full border border-lokin-neon/30 bg-black/78 p-0.5 shadow-lg backdrop-blur">
-                {onAskLokin && (
-                  <button type="button" onClick={onAskLokin} aria-label="Ask LOKIN" className="min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] text-primary active:scale-95">LOKIN</button>
-                )}
-                {onSelectMapView && (
-                  <>
-                    <button type="button" onClick={() => onSelectMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
-                    <button type="button" onClick={() => onSelectMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
-                  </>
-                )}
+                <button type="button" onClick={() => onSelectMapView("real")} className={`min-w-[42px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "real" ? "bg-primary text-black" : "text-white/55"}`}>MAP</button>
+                <button type="button" onClick={() => onSelectMapView("4d")} className={`min-w-[38px] rounded-full px-2 py-2 text-[8px] font-extrabold tracking-[0.04em] ${mapView === "4d" ? "bg-accent text-black" : "text-white/55"}`}>4D</button>
               </div>
             )}
           </div>
