@@ -499,6 +499,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           followDriver
           perspective={mapView === "4d"}
           fullscreen
+          mapView={mapView}
+          onToggleCinematic={() => setMapView((v) => (v === "4d" ? "real" : "4d"))}
           maneuvers={nav.route?.maneuvers || []}
           remainingDistanceM={nav.remainingDistanceM}
           etaUpdatedAt={nav.etaUpdatedAt}
