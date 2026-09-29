@@ -500,7 +500,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, routeLoadError, loadingSto
           perspective={mapView === "4d"}
           fullscreen
           mapView={mapView}
-          onToggleCinematic={() => setMapView((v) => (v === "4d" ? "real" : "4d"))}
+          onActivateCinematic={() => setMapView("4d")}
           onExit={onExit}
           onSelectMapView={setMapView}
           onAskLokin={() => dispatchLokinCommand(LOKIN_COMMANDS.ASK, { phrase: "what should I do next" }, "gps-view")}
