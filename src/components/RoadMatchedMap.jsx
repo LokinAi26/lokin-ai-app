@@ -148,6 +148,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   // Offline map caching (2026-09-28): a dead zone switches the map to its
   // cached basemap snapshots; the live vector map resumes on reconnect.
   const [online, setOnline] = useState(() => navigator.onLine !== false);
+  const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const rendererModeRef = useRef(rendererMode);
   rendererModeRef.current = rendererMode;
   const styleRef = useRef(style);
@@ -181,6 +182,14 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
     : "";
   const arrivalPinLabel = doorPinArrived ? " · saved door pin" : "";
   const rerouting = navigationStatus === "rerouting";
+  // Merged HUD status pill: offline > rerouting > low-bandwidth fallback (priority order)
+  const statusPillText = !online
+    ? "OFFLINE \u00b7 CACHED MAP"
+    : rerouting
+      ? "REROUTING \u00b7 CONFIRMING ROAD"
+      : (rendererMode === "fallback" && fallbackReason && image)
+        ? "LOW-BANDWIDTH MAP FALLBACK"
+        : null;
   const headingForward = fullscreen && followDriver;
 
   const activeCoords = useMemo(() => {
@@ -636,28 +645,29 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
 
         {fullscreen && (
           <div className="absolute right-3 top-[calc(11rem+env(safe-area-inset-top))] z-30 flex flex-col items-end gap-2">
-            <div className="flex gap-1 rounded-full border border-white/10 bg-black/75 p-1 shadow-lg backdrop-blur">
-              <button type="button" onClick={() => setStyle("dark-v11")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
-              <button type="button" onClick={() => setStyle("satellite-streets-v12")} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
-            </div>
-            <MapQualityMenu quality={quality} onChange={changeQuality} />
-            {(rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
-              <button type="button" aria-label="Return to live driver follow" onClick={resetView} className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+            <button type="button" aria-label="Map options" aria-expanded={mapMenuOpen} onClick={() => setMapMenuOpen((v) => !v)} className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-lg backdrop-blur active:scale-95 ${mapMenuOpen ? "border-primary/50 bg-primary/15 text-primary" : "border-white/15 bg-black/80 text-white/80"}`}>
+              <Layers3 className="h-4 w-4" />
+            </button>
+            {mapMenuOpen && (
+              <div className="flex flex-col items-end gap-2 rounded-2xl border border-white/10 bg-black/85 p-2 shadow-xl backdrop-blur-xl">
+                <div className="flex gap-1 rounded-full border border-white/10 bg-black/60 p-1">
+                  <button type="button" onClick={() => { setStyle("dark-v11"); setMapMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "dark-v11" ? "bg-primary text-black" : "text-white/60"}`}>NIGHT</button>
+                  <button type="button" onClick={() => { setStyle("satellite-streets-v12"); setMapMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold tracking-[0.08em] ${style === "satellite-streets-v12" ? "bg-primary text-black" : "text-white/60"}`}>AERIAL</button>
+                </div>
+                <MapQualityMenu quality={quality} onChange={changeQuality} />
+                {(rendererMode !== "fallback" || Math.abs(zoomOffset) > 0.03 || manualCenter) && (
+                  <button type="button" aria-label="Return to live driver follow" onClick={() => { resetView(); setMapMenuOpen(false); }} className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-black/80 text-primary shadow-lg backdrop-blur active:scale-95"><Crosshair className="h-4 w-4" /></button>
+                )}
+              </div>
             )}
           </div>
         )}
 
         <FuelDealsOverlay fullscreen={fullscreen} />
 
-        {rerouting && (
+        {statusPillText && (
           <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(11rem+env(safe-area-inset-top))]" : "top-14"}`}>
-            REROUTING · CONFIRMING ROAD
-          </div>
-        )}
-
-        {!online && (
-          <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(12.8rem+env(safe-area-inset-top))]" : "top-[4.4rem]"}`}>
-            OFFLINE · CACHED MAP
+            {statusPillText}
           </div>
         )}
 
@@ -671,12 +681,6 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
               <div className="lokin-kicker truncate">{arrived ? "STATUS" : etaLiveTraffic ? "LIVE ETA" : "ETA"}</div>
               <div className={`truncate font-display ${arrived ? "text-sm font-black text-primary" : "lokin-hero-number text-[clamp(1rem,5vw,1.35rem)]"}`}>{arrived ? "DONE" : formatDuration(remainingDurationS)}</div>
             </div>
-          </div>
-        )}
-
-        {rendererMode === "fallback" && fallbackReason && image && online && (
-          <div className="absolute left-1/2 top-[calc(11rem+env(safe-area-inset-top))] z-20 -translate-x-1/2 rounded-full border border-amber-300/25 bg-black/80 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-amber-200 backdrop-blur">
-            LOW-BANDWIDTH MAP FALLBACK
           </div>
         )}
 
