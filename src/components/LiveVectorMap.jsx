@@ -19,12 +19,14 @@ import {
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
+// Paint order for the ground route stack (last = top): glow -> casing -> core.
+const ROUTE_LAYER_IDS = ["lokin-live-route-glow", ROUTE_CASING, ROUTE_LINE];
 const LOKIN_NEON_ROUTE = "#8FE44E";
 // Route-line override (Kendall 2026-09-27): Lokin Lime neon for the route
-// line layers only — beam, pulse, pins, and POI rings stay LOKIN Green.
+// line only — beam, driver pulse, stop pins/clusters, and POI rings stay
+// LOKIN Green #8FE44E. (The 2026-09-25 cinematic lock's "#8FE44E route core"
+// note is superseded for the route line by this pick.)
 const LOKIN_LIME_ROUTE = "#A2EB1B";
-// Cinematic art direction lock (2026-09-25): the route core is LOKIN Green
-// #8FE44E — the single brand green, glowing against the dusk grade.
 // Stop pins keep the same green so they read as markers, not route.
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
@@ -251,9 +253,7 @@ function addNavigationLayers(map, routeGeometry) {
   }
   // Rebuild the route stack from scratch: guarantees the bright lime core is
   // never buried under a stale layer and never depends on style slots.
-  // Add-order is the paint order (last = top): glow -> casing -> core.
-  // No `slot` — explicit ordering only.
-  const ROUTE_LAYER_IDS = ["lokin-live-route-glow", ROUTE_CASING, ROUTE_LINE];
+  // No `slot` — explicit ordering only (see hoisted ROUTE_LAYER_IDS).
   for (const id of ROUTE_LAYER_IDS) {
     if (map.getLayer(id)) map.removeLayer(id);
   }
@@ -685,6 +685,259 @@ function updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops = []) 
   layer.setTarget(destination, roofH);
 }
 
+// ---------- Neon route ribbon (3D/cinematic visibility fix, 2026-09-29) ----------
+// Debug finding (Kendall: "/Debug the neon green route line"): the ground-level
+// route layers above are built correctly (#A2EB1B, rebuilt on style load), but
+// in pitched 3D views the extruded buildings depth-occlude them — the neon
+// route effectively vanishes in cinematic/4D mode, leaving only the beam.
+// A fill-extrusion ribbon would be re-lit slate-blue by the dusk preset (the
+// same reason the destination beam is a custom layer), and fading building
+// opacity cannot help because translucent extrusions still write depth. So the
+// route gets its own unlit custom WebGL layer: a flat miter-joined ribbon
+// floating 10 m above the road, drawn with depth testing OFF so it reads over
+// the 3D city the way Google/Apple 3D nav draws the route over buildings.
+// It is active only when the camera is pitched past 30°; in flat 2D the ground
+// line layers take over again (and the ribbon hides) to save fill rate.
+const RIBBON_LAYER_ID = "lokin-route-ribbon";
+const RIBBON_HALF_WIDTH_M = 3.6;
+const RIBBON_ALT_M = 10;
+const RIBBON_PITCH_THRESHOLD = 30;
+const RIBBON_LIME = [0xa2 / 255, 0xeb / 255, 0x1b / 255];
+
+const RIBBON_VERT = `
+attribute vec3 a_pos;
+attribute float a_side;
+uniform mat4 u_matrix;
+varying float v_side;
+void main() {
+  v_side = a_side;
+  gl_Position = u_matrix * vec4(a_pos, 1.0);
+}`;
+
+const RIBBON_FRAG = `
+precision mediump float;
+uniform vec3 u_color;
+uniform float u_time;
+varying float v_side;
+void main() {
+  float core = 1.0 - abs(v_side);
+  float alpha = smoothstep(0.05, 0.5, core);
+  if (alpha < 0.02) discard;
+  float pulse = 0.9 + 0.1 * sin(u_time * 2.4);
+  vec3 col = u_color * (0.9 + 0.3 * core) * pulse;
+  gl_FragColor = vec4(col, alpha * 0.96);
+}`;
+
+// Triangulate a lng/lat polyline into a flat miter-joined ribbon.
+// Returns a Float32Array of [x, y, z, side] per vertex (mercator + side),
+// or null when there is nothing to draw.
+function buildRibbonPositions(coords) {
+  const pts = (coords || []).filter(
+    (p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]),
+  );
+  if (pts.length < 2) return null;
+  const refLat = pts[0][1];
+  const kx = 111320 * Math.cos((refLat * Math.PI) / 180);
+  const ky = 110540;
+  const m = pts.map(([lng, lat]) => [lng * kx, lat * ky]);
+  const n = m.length;
+  const left = new Array(n);
+  const right = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const p = m[i];
+    const a = m[Math.max(0, i - 1)];
+    const b = m[Math.min(n - 1, i + 1)];
+    // Tangent from neighbors; miter scale from the incoming/outgoing angle.
+    let tx = b[0] - a[0];
+    let ty = b[1] - a[1];
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl;
+    ty /= tl;
+    let sx = p[0] - a[0];
+    let sy = p[1] - a[1];
+    const sl = Math.hypot(sx, sy);
+    let ndx = tx;
+    let ndy = ty;
+    const bl = Math.hypot(b[0] - p[0], b[1] - p[1]);
+    if (bl > 1e-9) {
+      ndx = (b[0] - p[0]) / bl;
+      ndy = (b[1] - p[1]) / bl;
+    }
+    let miter = 1;
+    if (sl > 1e-9) {
+      sx /= sl;
+      sy /= sl;
+      const cosT = sx * ndx + sy * ndy;
+      miter = 1 / Math.sqrt(Math.max(0.25, (1 + cosT) / 2));
+    }
+    const ox = -ty * RIBBON_HALF_WIDTH_M * miter;
+    const oy = tx * RIBBON_HALF_WIDTH_M * miter;
+    const lat = pts[i][1];
+    const lng = pts[i][0];
+    const mPerDegLng = 111320 * Math.cos((lat * Math.PI) / 180) || 1;
+    left[i] = [lng + ox / mPerDegLng, lat + oy / ky];
+    right[i] = [lng - ox / mPerDegLng, lat - oy / ky];
+  }
+  const verts = [];
+  const push = (lngLat, side) => {
+    const mc = mapboxgl.MercatorCoordinate.fromLngLat(
+      { lng: lngLat[0], lat: lngLat[1] },
+      RIBBON_ALT_M,
+    );
+    verts.push(mc.x, mc.y, mc.z, side);
+  };
+  for (let i = 0; i < n - 1; i++) {
+    push(left[i], -1);
+    push(right[i], 1);
+    push(left[i + 1], -1);
+    push(right[i], 1);
+    push(right[i + 1], 1);
+    push(left[i + 1], -1);
+  }
+  return new Float32Array(verts);
+}
+
+function compileRibbonShader(gl, type, src) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  return shader;
+}
+
+function createRouteRibbonLayer() {
+  let program = null;
+  let buffer = null;
+  let layerMap = null;
+  let positions = null;
+  let dirty = false;
+  const uniforms = {};
+  const attribs = {};
+  const state = { visible: false };
+  return {
+    id: RIBBON_LAYER_ID,
+    type: "custom",
+    renderingMode: "3d",
+    setRoute(coords) {
+      positions = buildRibbonPositions(coords);
+      dirty = true;
+      if (layerMap) layerMap.triggerRepaint();
+    },
+    setVisible(v) {
+      v = !!v;
+      if (state.visible === v) return;
+      state.visible = v;
+      if (layerMap) layerMap.triggerRepaint();
+    },
+    onAdd(map, gl) {
+      layerMap = map;
+      const vs = compileRibbonShader(gl, gl.VERTEX_SHADER, RIBBON_VERT);
+      const fs = compileRibbonShader(gl, gl.FRAGMENT_SHADER, RIBBON_FRAG);
+      program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      buffer = gl.createBuffer();
+      uniforms.u_matrix = gl.getUniformLocation(program, "u_matrix");
+      uniforms.u_color = gl.getUniformLocation(program, "u_color");
+      uniforms.u_time = gl.getUniformLocation(program, "u_time");
+      attribs.a_pos = gl.getAttribLocation(program, "a_pos");
+      attribs.a_side = gl.getAttribLocation(program, "a_side");
+    },
+    render(gl, matrix) {
+      if (!state.visible || !program || !buffer) return;
+      if (dirty) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions || new Float32Array(0), gl.STATIC_DRAW);
+        dirty = false;
+      }
+      if (!positions || positions.length === 0) return;
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      const stride = 16; // 4 floats: xyz + side
+      gl.enableVertexAttribArray(attribs.a_pos);
+      gl.vertexAttribPointer(attribs.a_pos, 3, gl.FLOAT, false, stride, 0);
+      gl.enableVertexAttribArray(attribs.a_side);
+      gl.vertexAttribPointer(attribs.a_side, 1, gl.FLOAT, false, stride, 12);
+      gl.uniformMatrix4fv(uniforms.u_matrix, false, matrix);
+      gl.uniform3f(uniforms.u_color, RIBBON_LIME[0], RIBBON_LIME[1], RIBBON_LIME[2]);
+      gl.uniform1f(uniforms.u_time, performance.now() / 1000);
+      // Draw over the 3D city: no depth test, no depth write, restore after.
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.CULL_FACE);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawArrays(gl.TRIANGLES, 0, positions.length / 4);
+      gl.enable(gl.CULL_FACE);
+      gl.enable(gl.DEPTH_TEST);
+      gl.disable(gl.BLEND);
+    },
+    onRemove(map, gl) {
+      if (buffer) gl.deleteBuffer(buffer);
+      if (program) gl.deleteProgram(program);
+      program = null;
+      buffer = null;
+      layerMap = null;
+      positions = null;
+    },
+  };
+}
+
+// Ensure the ribbon layer exists, feed it the current route, and sync which
+// route representation is live for the current camera pitch.
+function updateRouteRibbon(map, ribbonRef, routeGeometry) {
+  if (!map || typeof map.addLayer !== "function") return;
+  let ribbon = ribbonRef.current;
+  const alive =
+    ribbon && typeof ribbon.setRoute === "function" && map.getLayer(RIBBON_LAYER_ID);
+  if (!alive) {
+    try {
+      if (map.getLayer(RIBBON_LAYER_ID)) map.removeLayer(RIBBON_LAYER_ID);
+    } catch {
+      // Already gone (style swap); nothing to remove.
+    }
+    ribbon = createRouteRibbonLayer();
+    ribbonRef.current = ribbon;
+    try {
+      // Sit just under the stop pins so numbered pins stay crisp on top.
+      const before = map.getLayer("lokin-stop-cluster-halo")
+        ? "lokin-stop-cluster-halo"
+        : undefined;
+      if (before) map.addLayer(ribbon, before);
+      else map.addLayer(ribbon);
+    } catch {
+      ribbonRef.current = null;
+      return;
+    }
+  }
+  const coords = routeFeature(routeGeometry).geometry.coordinates;
+  try {
+    ribbon.setRoute(coords);
+  } catch {
+    // GL context not ready yet; the next update feeds it.
+  }
+  syncRouteRibbonVisibility(map, ribbonRef, map.getPitch());
+}
+
+// Pitched (3D) => ribbon on, ground line layers off. Flat => the reverse.
+function syncRouteRibbonVisibility(map, ribbonRef, pitch) {
+  if (!map || typeof map.getPitch !== "function") return;
+  const threeD = Number(pitch) > RIBBON_PITCH_THRESHOLD;
+  try {
+    const ribbon = ribbonRef ? ribbonRef.current : null;
+    if (ribbon && typeof ribbon.setVisible === "function") ribbon.setVisible(threeD);
+  } catch {
+    // Layer mid-rebuild; the next sync applies it.
+  }
+  for (const id of ROUTE_LAYER_IDS) {
+    try {
+      if (map.getLayer(id))
+        map.setLayoutProperty(id, "visibility", threeD ? "none" : "visible");
+    } catch {
+      // Style mid-swap; the next sync applies it.
+    }
+  }
+}
+
 // FPS meter for the cinematic mode — the 30 FPS shipping gate, measured live.
 function CinematicFpsMeter({ fullscreen = false, mapRef, showcaseRef }) {
   const [fps, setFps] = useState(0);
@@ -758,6 +1011,7 @@ export default function LiveVectorMap({
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const beamRef = useRef(null);
+  const ribbonRef = useRef(null);
   const poiLayerRef = useRef(null);
   const poiRefreshTimer = useRef(null);
   const poiIdleArmedRef = useRef(false);
@@ -981,8 +1235,10 @@ export default function LiveVectorMap({
           schedulePoiRefresh();
         });
         map.on("pitch", (event) => {
-          if (!event?.originalEvent) return; // programmatic pitch (showcase orbit) must not move the PULL HORIZON pill
           const nextPitch = clamp(map.getPitch(), 0, 80);
+          // Pitched 3D => neon ribbon over the buildings; flat => ground lines.
+          syncRouteRibbonVisibility(map, ribbonRef, nextPitch);
+          if (!event?.originalEvent) return; // programmatic pitch (showcase orbit) must not move the PULL HORIZON pill
           setCameraPitch(nextPitch);
           preferredPitchRef.current = nextPitch;
         });
@@ -991,6 +1247,7 @@ export default function LiveVectorMap({
           if (disposed) return;
           configureImmersiveStyle(map, styleRef.current);
           addNavigationLayers(map, routeRef.current);
+          updateRouteRibbon(map, ribbonRef, routeRef.current);
           addDeliveryStopLayers(map, stopsRef.current);
           retailExtrusion.reapplyAfterStyleLoad();
           if (style3dRef.current && qualityRef.current !== "performance") {
@@ -1089,6 +1346,7 @@ export default function LiveVectorMap({
     if (!map || !loadedRef.current) return;
     const apply = () => {
       addNavigationLayers(map, routeGeometry);
+      updateRouteRibbon(map, ribbonRef, routeGeometry);
       updateDestinationBeam(map, beamRef, routeGeometry, deliveryStops);
       refreshPoiAnchors();
       if (style3dRef.current && qualityRef.current !== "performance") {
@@ -1176,6 +1434,7 @@ export default function LiveVectorMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     applyCinematicGrade(map, cinematic, styleRef.current);
+    syncRouteRibbonVisibility(map, ribbonRef, map.getPitch());
     // Path A perf: the grade turns terrain on; the supervisor below clears
     // it on the first driving frame and restores it for the parked showcase.
     terrainForShowcaseRef.current = cinematic ? true : null;
