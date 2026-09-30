@@ -12,7 +12,7 @@ const SECTIONS = [
   {
     title: "Apparel Collection",
     items: [
-      { variant: "hoodie", name: "AI Pullover Hoodie", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5150a2af3_ai-pullover-hoodie.webp" },
+      { variant: "hoodie", name: "AI Pullover Hoodie", sub: "Signature lockup", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/92c98c258_ai-pullover-hoodie-crownfix.webp" },
       { variant: "hoodie", name: "AI Tech Jacket", sub: "Driver tech shell", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/29326f5eb_ai-tech-jacket.webp" },
       { variant: "tee", name: "Sleeve Detail Tee", sub: "Long sleeve", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ec05d855b_sleeve-detail-tee.jpg" },
       { variant: "cap", name: "LOKIN Bucket Hat", sub: "Embroidered lock mark", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fbdda6cc2_lokin-bucket-hat.webp" },
@@ -22,7 +22,7 @@ const SECTIONS = [
   {
     title: "Driver Collection",
     items: [
-      { variant: "hoodie", name: "Driver Hoodie", sub: "Hi-vis trim", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/eb4ccfc65_driver-hoodie.webp" },
+      { variant: "hoodie", name: "Driver Hoodie", sub: "Hi-vis trim", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b9fc94c63_driver-hoodie-crownfix.webp" },
       { variant: "tee", name: "Driver Polo", sub: "Reflective logo", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/10d9289da_driver-polo.webp" },
       { variant: "hoodie", name: "Reflective Driver Jacket", sub: "Night visibility", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d2e724b83_reflective-driver-jacket.webp" },
       { variant: "tee", name: "Hi-Vis Driver Vest", sub: "ANSI-style panels", thumb: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/33dd12d5e_hi-vis-driver-vest.jpg" },
