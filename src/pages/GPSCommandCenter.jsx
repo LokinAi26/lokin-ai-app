@@ -37,8 +37,17 @@ function formatAge(ms) {
   if (ms < 1000) return "just now";
   const s = Math.round(ms / 1000);
   if (s < 60) return `${s}s ago`;
-  return `${Math.floor(s / 60)}m ${s % 60}s ago`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return rem === 0 ? `${m}m ago` : `${m}m ${rem}s ago`;
 }
+
+// Short labels so the sources tile never truncates into "…".
+const SOURCE_SHORT = {
+  "web-geolocation": "WEB-GEO",
+  native: "NATIVE",
+  fused: "FUSED",
+};
 
 export default function GPSCommandCenter() {
   const [health, setHealth] = useState(() => gpsSuperAgent.getHealth());
@@ -69,8 +78,11 @@ export default function GPSCommandCenter() {
   const sourceSummary = useMemo(() => {
     const entries = Object.entries(health.sources || {});
     if (!entries.length) return "—";
-    return entries.map(([k, v]) => `${k} ×${v}`).join(" · ");
+    return entries.map(([k, v]) => `${SOURCE_SHORT[k] || k.toUpperCase()} ×${v}`).join(" · ");
   }, [health.sources]);
+  // Reactive enough: the 2s health poll re-renders, so this tracks the
+  // session coming and going as the hook mounts/unmounts.
+  const hasSession = gpsSuperAgent.hasActiveSession();
 
   async function changeMode(next) {
     if (next === mode) return;
@@ -100,7 +112,7 @@ export default function GPSCommandCenter() {
   }
 
   return (
-    <div className="p-4 space-y-4 pb-6">
+    <div className="p-4 space-y-4 pb-28">
       <div className="flex items-center gap-3">
         <Link
           to="/ai-gps"
@@ -167,6 +179,15 @@ export default function GPSCommandCenter() {
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-500/25 bg-red-500/[0.06] p-2.5">
             <AlertTriangle className="h-4 w-4 shrink-0 text-red-300 mt-0.5" />
             <div className="text-[11px] text-red-200">{health.lastError}</div>
+          </div>
+        )}
+        {!hasSession && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+            <Info className="h-4 w-4 shrink-0 text-white/40 mt-0.5" />
+            <div className="text-[11px] text-white/50">
+              No navigation session is running. This monitor reads the live session —
+              open Route and start navigation to watch it here.
+            </div>
           </div>
         )}
       </div>

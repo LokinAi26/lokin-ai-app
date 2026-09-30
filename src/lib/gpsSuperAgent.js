@@ -104,6 +104,15 @@ class GPSSuperAgent {
       // Monitoring must never throw into the host page.
     }
     this.pollBattery();
+    this.probeWebPermission();
+    // Re-probe when the app comes back: the user may have changed the
+    // location permission in iOS Settings while backgrounded.
+    if (typeof document !== "undefined" && !this._permVisHandler) {
+      this._permVisHandler = () => {
+        if (document.visibilityState === "visible") this.probeWebPermission();
+      };
+      document.addEventListener("visibilitychange", this._permVisHandler);
+    }
   }
 
   stopMonitoring() {
@@ -143,6 +152,35 @@ class GPSSuperAgent {
   }
 
   // -- Health ----------------------------------------------------------------
+  // Web fallback for the permission readout: the native bridge only reports
+  // authorization inside the native wrapper, so on the web engine the
+  // permission tile would otherwise stay blank forever. Never overrides a
+  // real native status.
+  async probeWebPermission() {
+    try {
+      const nav = typeof navigator !== "undefined" ? navigator : null;
+      if (!nav?.permissions?.query) return;
+      const p = await nav.permissions.query({ name: "geolocation" });
+      const state = p?.state;
+      const known = state === "granted" || state === "denied" || state === "prompt";
+      const currentKnown = this.authorization === "granted"
+        || this.authorization === "denied"
+        || this.authorization === "prompt";
+      if (known && !currentKnown) {
+        this.authorization = state;
+        this.emitHealth();
+      }
+    } catch {}
+  }
+
+  // True while a navigation session owns the location engine — i.e. there is
+  // a live session this monitor can actually observe and restart. The hook
+  // registers on mount and clears on unmount, so this is false on pages
+  // (like this one) where no session is running.
+  hasActiveSession() {
+    return this.restartHandler != null;
+  }
+
   getHealth() {
     const latest = this.samples[this.samples.length - 1] || null;
     const ageMs = latest ? Math.max(0, now() - Number(latest.timestamp || 0)) : Infinity;
