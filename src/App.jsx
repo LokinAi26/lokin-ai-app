@@ -42,6 +42,7 @@ import Awareness from './pages/Awareness';
 import Connectivity from './pages/Connectivity';
 import ShopDeliver from './pages/ShopDeliver';
 import AiGps from './pages/AiGps';
+import GPSCommandCenter from "./pages/GPSCommandCenter";
 import CommandIngress from './pages/CommandIngress';
 import Connect from './pages/Connect';
 import PrintfulConnect from './pages/PrintfulConnect';
@@ -150,6 +151,7 @@ const AuthenticatedApp = () => {
           <Route path="/connectivity" element={<Connectivity />} />
           <Route path="/shop-deliver" element={<ShopDeliver />} />
           <Route path="/ai-gps" element={<AiGps />} />
+          <Route path="/gps-command" element={<GPSCommandCenter />} />
           <Route path="/connect" element={<Connect />} />
           <Route path="/opportunities" element={<Opportunities />} />
           <Route path="/showcase" element={<Showcase />} />

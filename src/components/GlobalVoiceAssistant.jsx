@@ -11,6 +11,7 @@ import { createOrQueue } from "@/lib/offlineQueue";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
+import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
 
 // Navigation intents — broad matching so drivers don't need exact phrasing.
 // Each entry lists loose keywords; any hit triggers the intent.
@@ -34,6 +35,7 @@ const NAV_COMMANDS = [
   { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode", "ride along", "chat with me"], to: "/drive", label: "Opening Drive Mode" },
   { keys: ["find item", "item locator", "locate item", "where is", "smart shop", "find everything", "grocery", "shopping list", "locate product"], to: "/locator", label: "Opening Smart Shop Item Locator" },
   { keys: ["shop and deliver", "shopping order", "shopping route", "grocery delivery", "instacart order", "spark order"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
+  { keys: ["gps command", "gps dashboard", "gps diagnostics", "command center", "gps control"], to: "/gps-command", label: "Opening GPS Command Center" },
 ];
 
 function normalizeText(text) {
@@ -240,6 +242,13 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         destination,
       });
       setTimeout(() => navigate(`/ai-gps?${params.toString()}`), 350);
+      setBusy(false);
+      return;
+    }
+    if (includesAny(command, ["gps status", "how is my gps", "gps signal", "location status"])) {
+      const report = gpsSuperAgent.getStatusReport();
+      speak(report);
+      setReply(report);
       setBusy(false);
       return;
     }
