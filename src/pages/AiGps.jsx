@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Split, Undo2, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, PackageSearch, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Split, Undo2, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -15,6 +15,7 @@ import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
 import { saveSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import useRouteImprovementPush from "@/hooks/useRouteImprovementPush";
 import useNavHaptics from "@/hooks/useNavHaptics";
+import HudItemLocator from "@/components/vision/HudItemLocator";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -497,6 +498,7 @@ function formatArrivalClock(remainingDurationS) {
 
 function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [locatorOpen, setLocatorOpen] = useState(false);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
   const arrived = nav.status === "arrived";
@@ -591,6 +593,16 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
         {nav.route && (
           <button
             type="button"
+            onClick={() => setLocatorOpen(true)}
+            aria-label="Quick item locator — camera barcode homing"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/50 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"
+          >
+            <PackageSearch className="h-6 w-6" />
+          </button>
+        )}
+        {nav.route && (
+          <button
+            type="button"
             onClick={() => setVoicePanelOpen((v) => !v)}
             aria-label="Guidance voice settings"
             className={`flex h-14 w-14 items-center justify-center rounded-full border ${guidanceAudioError ? "border-amber-400/70" : "border-accent/50"} bg-black/85 text-accent shadow-lg backdrop-blur active:scale-95`}
@@ -646,6 +658,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
           </div>
         </div>
       )}
+
+      {locatorOpen && <HudItemLocator onClose={() => setLocatorOpen(false)} />}
 
       {error && !nav.route && (
         <div className="absolute inset-x-4 top-1/2 z-40 -translate-y-1/2 rounded-3xl border border-red-500/30 bg-black/90 p-5 text-center backdrop-blur">
