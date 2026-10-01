@@ -6,6 +6,7 @@ import { haversineMeters } from "@/lib/navigationGeometry";
 // footprints, park landscaping, and custom GLB landmarks.
 
 const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+const LANDMARK_VIEW_KEY = "lokin_landmark_view_v1";
 const OVERPASS_TIMEOUT_MS = 8000;
 
 const BUILDING_MATERIAL_COLORS = {
@@ -232,6 +233,10 @@ export class MasterBuilder {
     this.fountains = [];
     this.water = [];
     this.landmarks = new Map(); // name -> placement record
+    // Proximity-gated landmark definitions: queued at map load, GLB fetched
+    // only when the camera comes near (see placeLandmarksNear). The layer
+    // check in addLandmark keeps this correct across map recreations.
+    this.landmarkQueue = [];
     this._trafficTimers = []; // animated traffic interval/timeout ids
   }
 
@@ -459,6 +464,64 @@ export class MasterBuilder {
     }
   }
 
+  // --- Proximity-gated landmark loading (global-readiness fix) -----------------
+  // The 34 signature GLBs no longer all fetch at map init. Definitions are
+  // queued by the register*Landmarks() calls; placeLandmarksNear() fetches
+  // only the models within radiusM of the camera. Same landmarks, same
+  // visuals — only the loading strategy changes. The last camera viewport is
+  // persisted so a returning session places its nearby landmarks immediately
+  // (the GLB bytes themselves come from the browser HTTP cache).
+
+  queueLandmark(id, lng, lat, url) {
+    if (!id || !url) return;
+    if (this.landmarkQueue.some((lm) => lm.id === id)) return;
+    this.landmarkQueue.push({ id, lng: Number(lng), lat: Number(lat), url });
+  }
+
+  hasLandmarkLayer(id) {
+    try {
+      return Boolean(this.map?.getLayer(`master-landmark-${id}-layer`));
+    } catch {
+      return false;
+    }
+  }
+
+  placeLandmarksNear(centerLng, centerLat, radiusM = 15000) {
+    if (!this.map || !Number.isFinite(centerLng) || !Number.isFinite(centerLat)) return 0;
+    let placed = 0;
+    for (const lm of this.landmarkQueue) {
+      if (this.hasLandmarkLayer(lm.id)) continue;
+      if (haversineMeters([centerLng, centerLat], [lm.lng, lm.lat]) > radiusM) continue;
+      try {
+        if (this.addLandmark(lm.id, lm.lng, lm.lat, lm.url)) placed += 1;
+      } catch (e) {
+        console.warn("[baggz247] proximity landmark failed:", lm.id, e);
+      }
+    }
+    return placed;
+  }
+
+  persistLandmarkView(lng, lat) {
+    try {
+      localStorage.setItem(LANDMARK_VIEW_KEY, JSON.stringify({ lng, lat, at: Date.now() }));
+    } catch {
+      /* storage unavailable — proximity gating still works in-session */
+    }
+  }
+
+  placeLandmarksNearLastView(radiusM = 15000) {
+    try {
+      const raw = localStorage.getItem(LANDMARK_VIEW_KEY);
+      if (!raw) return 0;
+      const v = JSON.parse(raw);
+      if (!Number.isFinite(v?.lng) || !Number.isFinite(v?.lat)) return 0;
+      return this.placeLandmarksNear(v.lng, v.lat, radiusM);
+    } catch {
+      return 0;
+    }
+  }
+  // --- end proximity-gated landmark loading ----------------------------------
+
   // BAGGZ_247 Batch 1 — signature landmark models for the Hampton Roads market.
   // Stylized approximations, not survey-grade replicas.
   registerSignatureLandmarks() {
@@ -493,11 +556,9 @@ export class MasterBuilder {
       },
     ];
     for (const lm of landmarks) {
-      try {
-        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
-      } catch (e) {
-        console.warn("[baggz247] signature landmark failed:", lm.id, e);
-      }
+      // Proximity-gated: queue the definition; the GLB fetches when the
+      // camera comes near (see placeLandmarksNear).
+      this.queueLandmark(lm.id, lm.lng, lm.lat, lm.url);
     }
   }
 
@@ -640,11 +701,9 @@ export class MasterBuilder {
       },
     ];
     for (const lm of landmarks) {
-      try {
-        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
-      } catch (e) {
-        console.warn("[baggz247] batch2 landmark failed:", lm.id, e);
-      }
+      // Proximity-gated: queue the definition; the GLB fetches when the
+      // camera comes near (see placeLandmarksNear).
+      this.queueLandmark(lm.id, lm.lng, lm.lat, lm.url);
     }
   }
 
@@ -711,11 +770,9 @@ export class MasterBuilder {
       },
     ];
     for (const lm of landmarks) {
-      try {
-        this.addLandmark(lm.id, lm.lng, lm.lat, lm.url);
-      } catch (e) {
-        console.warn("[baggz247] batch3 landmark failed:", lm.id, e);
-      }
+      // Proximity-gated: queue the definition; the GLB fetches when the
+      // camera comes near (see placeLandmarksNear).
+      this.queueLandmark(lm.id, lm.lng, lm.lat, lm.url);
     }
   }
 

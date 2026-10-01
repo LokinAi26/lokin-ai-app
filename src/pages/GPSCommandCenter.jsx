@@ -81,15 +81,16 @@ export default function GPSCommandCenter() {
     return entries.map(([k, v]) => `${SOURCE_SHORT[k] || k.toUpperCase()} ×${v}`).join(" · ");
   }, [health.sources]);
   // Reactive enough: the 2s health poll re-renders, so this tracks the
-  // session coming and going as the hook mounts/unmounts.
+  // app-scope session state as acquisition starts, restarts, or errors.
   const hasSession = gpsSuperAgent.hasActiveSession();
 
   async function changeMode(next) {
     if (next === mode) return;
     gpsSuperAgent.setAccuracyMode(next);
     setMode(next);
-    // Ask the navigation session to re-acquire with the new parameters.
-    // The hook owns the session and decides whether it is safe right now.
+    // Ask the app-scope location session to re-acquire with the new
+    // parameters. The session owns acquisition and decides whether it is
+    // safe right now.
     setRestarting(true);
     try {
       await gpsSuperAgent.requestRestart("accuracy_mode_change");

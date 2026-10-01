@@ -75,7 +75,7 @@ const SECTIONS = [
       { to: "/compliance-handoff", icon: BadgeCheck, title: "Verified Handoff", desc: "ID check workflow" },
       { to: "/support", icon: Headphones, title: "AI Support", desc: "Help & billing" },
       { to: "/showcase", icon: Smartphone, title: "App Showcase", desc: "The LOKIN vision" },
-      { to: "/vision-bridge", icon: Glasses, title: "LOKIN Vision Bridge", desc: "Live simulator / glasses heartbeat" },
+      { to: "/vision-bridge", icon: Glasses, title: "LOKIN Vision Bridge", desc: "Live glasses heartbeat" },
       { to: "/printful-connect", icon: KeyRound, title: "Printful Connect", desc: "OAuth account tools" },
       { to: "/insurance-admin", icon: Lock, title: "Cover Admin", desc: "Bind insurance apps", requires: "insurance" },
       { to: "/funding-command", icon: BadgeDollarSign, title: "Funding Command", desc: "Virginia grants, contracts & readiness", requires: "admin" },

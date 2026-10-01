@@ -295,8 +295,9 @@ class GPSSuperAgent {
   }
 
   // -- Restart coordination ----------------------------------------------------
-  // The navigation hook registers its restart routine here. The agent requests;
-  // the hook owns the session and decides whether it is driving-safe.
+  // The app-scope location session (lokinLocationSession) registers its
+  // re-acquire routine here permanently at app launch. The agent requests;
+  // the session owns acquisition and decides whether it is driving-safe.
   registerRestartHandler(fn) {
     this.restartHandler = typeof fn === "function" ? fn : null;
   }

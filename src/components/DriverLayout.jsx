@@ -7,6 +7,7 @@ import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore";
+import { ensureStarted as ensureLocationSession } from "@/lib/lokinLocationSession";
 
 import CommandEngine from "@/components/CommandEngine";
 import GlobalVoiceAssistant from "@/components/GlobalVoiceAssistant";
@@ -55,6 +56,11 @@ export default function DriverLayout() {
     setPendingStatus(evt.pending);
     if (evt.confirmed) setWorkStatus(evt.confirmed);
   }), []);
+  // App-scope location session: start raw GPS acquisition once at app launch.
+  // It lives for the whole app lifetime — page navigation never stops it —
+  // so the GPS Command Center and every page see live fixes. Idempotent under
+  // React StrictMode double-mounts.
+  useEffect(() => { ensureLocationSession(); }, []);
   const effectiveStatus = pendingStatus || workStatus;
   const working = effectiveStatus === "working";
   const [appFreeRoam, setAppFreeRoam] = useState(() => typeof window !== "undefined" && sessionStorage.getItem("lokin_app_free_roam") === "1");

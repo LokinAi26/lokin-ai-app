@@ -32,7 +32,7 @@ const CARDS = [
     title: "SAFETY SENTINEL",
     desc: "PROTECT & PREPARE",
     detail: "Stay linked, stay aware, and stay covered on every mile.",
-    soon: false,
+    soon: true,
   },
 ];
 

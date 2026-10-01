@@ -34,6 +34,18 @@ export default defineConfig({
         legacy: resolve(process.cwd(), 'legacy.html'),
         legacyXr: resolve(process.cwd(), 'legacy-xr.html'),
       },
+      output: {
+        // Global-readiness fix: split the single bundle so first paint doesn't
+        // carry mapbox-gl and every page. Function form keeps the base44
+        // plugin's virtual modules on the default path. Route-level splitting
+        // happens via React.lazy in src/App.jsx (Home + AiGps stay eager).
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("mapbox-gl")) return "vendor-mapbox";
+          if (id.includes("framer-motion") || id.includes("lucide-react")) return "vendor-ui";
+          return "vendor";
+        },
+      },
     },
   },
 });

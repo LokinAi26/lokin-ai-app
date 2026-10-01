@@ -64,10 +64,18 @@ const reactBridge = fs.readFileSync("src/lib/nativeLocationBridge.js", "utf8");
 assert.match(reactBridge, /requestNativeRuntimeStatus/);
 assert.match(reactBridge, /subscribeNativeLocationRuntime/);
 const reactHook = fs.readFileSync("src/hooks/useLokinNavigation.js", "utf8");
-assert.match(reactHook, /nativeStartedRef/);
 assert.match(reactHook, /\["always", "whenInUse"\]/);
-assert.match(reactHook, /requestNativeRuntimeStatus\(\)/);
 assert.match(reactHook, /nativeRuntime/);
+// App-scope session owns acquisition: the engine lifecycle guards live in
+// lokinLocationSession.js (started once at app launch via DriverLayout, never
+// stopped on page navigation); the navigation hook is subscriber-only.
+const locationSession = fs.readFileSync("src/lib/lokinLocationSession.js", "utf8");
+assert.match(locationSession, /nativeEngineOn/);
+assert.match(locationSession, /requestNativeRuntimeStatus\(\)/);
+assert.match(locationSession, /stopNativeLocation\(\)/);
+assert.match(locationSession, /registerRestartHandler/);
+const driverLayout = fs.readFileSync("src/components/DriverLayout.jsx", "utf8");
+assert.match(driverLayout, /ensureLocationSession\(\)/);
 
 const androidManifest = fs.readFileSync("native/android/location-core/src/main/AndroidManifest.xml", "utf8");
 assert.match(androidManifest, /FOREGROUND_SERVICE_LOCATION/);

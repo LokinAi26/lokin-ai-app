@@ -12,19 +12,19 @@ import {
   evaluateArrivalState,
 } from "@/lib/navigationGeometry";
 import {
-  drainNativeLocationQueue,
   nativeLocationAvailable,
   normalizeNativeLocationSample,
-  requestNativeWhenInUse,
-  requestNativeRuntimeStatus,
-  startNativeLocation,
-  stopNativeLocation,
   subscribeNativeLocation,
   subscribeNativeLocationAuthorization,
   subscribeNativeLocationError,
-  subscribeNativeLocationQueue,
   subscribeNativeLocationRuntime,
 } from "@/lib/nativeLocationBridge";
+import {
+  LOCATION_SAMPLE_EVENT,
+  LOCATION_SESSION_EVENT,
+  getSessionState as getLocationSessionState,
+  reacquire as reacquireLocationSession,
+} from "@/lib/lokinLocationSession";
 import { reroutePolicy } from "@/lib/navigationQuality";
 import {
   navigationSampleIntervalMs,
@@ -124,7 +124,6 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const arrivalAnnouncedRef = useRef("");
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
-  const nativeStartedRef = useRef(false);
   const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon} for the grocery-geofence foreground re-check
   const webFixReceivedRef = useRef(false); // first web-geolocation fix arrived (watchdog guard)
   const lastAcceptedSampleRef = useRef(null);
@@ -138,8 +137,6 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const etaUpStreakRef = useRef(0);
   const positionWindowRef = useRef([]);
   const [etaDisplayS, setEtaDisplayS] = useState(null);
-  const [gpsModeVersion, setGpsModeVersion] = useState(() => gpsSuperAgent.getModeVersion());
-  const [gpsRestartCounter, setGpsRestartCounter] = useState(0);
   const fusionEngineRef = useRef(null);
   if (!fusionEngineRef.current) fusionEngineRef.current = new FusionEngine();
 
@@ -170,18 +167,12 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     arrivedRef.current = false;
   }, [destinationsKey]);
   // GPS Super Agent wiring (additive only — default mode preserves verified behavior).
-  // The agent never owns the location engine; it subscribes to mode changes and
-  // restart requests, and this hook re-acquires through its existing session.
+  // Raw acquisition now lives in the app-scope location session
+  // (lokinLocationSession): it registers the permanent restart handler and
+  // the accuracy-mode-change re-acquire at app launch. This hook only keeps
+  // the agent's health monitoring and subscribes to the session's sample bus.
   useEffect(() => {
     gpsSuperAgent.startMonitoring();
-    const offMode = gpsSuperAgent.onModeChange((_mode, version) => setGpsModeVersion(version));
-    gpsSuperAgent.registerRestartHandler(async () => {
-      setGpsRestartCounter((n) => n + 1);
-    });
-    return () => {
-      offMode();
-      gpsSuperAgent.registerRestartHandler(null);
-    };
   }, []);
   useEffect(() => { routeRef.current = route; }, [route]);
   useEffect(() => { geocodedRef.current = geocodedDestinations; }, [geocodedDestinations]);
@@ -727,177 +718,108 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     }
   }, [requestRoute]);
 
+  // App-scope location session UX: acquisition is owned by lokinLocationSession
+  // (started once at app launch, never stopped on page navigation). This maps
+  // the session lifecycle onto the navigation status / error / waiting-detail
+  // copy so every page shows the same honest state.
+  const applySessionState = useCallback((s) => {
+    if (!s) return;
+    if (s.state === "starting") {
+      setStatus("waiting_location");
+      setError("");
+      setWaitingDetail("");
+    } else if (s.state === "waiting") {
+      setWaitingDetail(s.message || "");
+    } else if (s.state === "denied" || s.state === "error") {
+      setStatus("error");
+      setError(s.message || "LOKIN could not read the current GPS position.");
+      setWaitingDetail("");
+    }
+    // "active" / "idle": live samples drive the UI from here.
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !normalizedDestinations.length) return;
+    applySessionState(getLocationSessionState());
+    const onSession = (event) => applySessionState(event?.detail);
+    window.addEventListener(LOCATION_SESSION_EVENT, onSession);
+    return () => window.removeEventListener(LOCATION_SESSION_EVENT, onSession);
+  }, [enabled, destinationsKey, normalizedDestinations.length, applySessionState]);
+
+  // Native sample subscription (subscriber-only). The app-scope session owns
+  // acquisition (permission flow, engine start/stop, warm-start drain); this
+  // effect only processes live native fixes and warm-start samples for the
+  // navigation pipeline and keeps the permission/runtime UX copy.
   useEffect(() => {
     if (!enabled || !normalizedDestinations.length || !nativeLocationAvailable()) return;
-    setStatus("waiting_location");
-    setError("");
-    setWaitingDetail("");
-
-    // Watchdog: the native engine speaks only through event callbacks. If the
-    // OS never delivers a permission decision or a fix (and no native error
-    // fires), the same honesty rule as the web path applies — name the
-    // blocker after 20s instead of spinning forever. A real fix clears it.
-    const nativeWatchdogId = window.setTimeout(() => {
-      setWaitingDetail("Still waiting on the LOKIN location engine — make sure location is allowed for LOKIN in device Settings and Location Services is on.");
-    }, 20000);
 
     const unsubscribeLocation = subscribeNativeLocation((raw) => {
       const sample = normalizeNativeLocationSample(raw);
       if (sample) {
-        window.clearTimeout(nativeWatchdogId);
         setWaitingDetail("");
         processLocationSample(sample, "native");
       }
     });
-    const nativeSessionId = `lokin-nav-${Date.now()}`;
+    // Warm-start samples arrive on the session's sample bus (the session owns
+    // the queue drain); they feed the same pipeline as live native fixes.
+    const onBusSample = (event) => {
+      const sample = event?.detail;
+      if (sample?.source === "native-warm-start") {
+        setWaitingDetail("");
+        processLocationSample(sample, "native");
+      }
+    };
+    const unsubscribeError = subscribeNativeLocationError((nativeError) => {
+      setStatus("error");
+      setError(nativeError?.message || "LOKIN native location engine reported an error.");
+    });
     const unsubscribeAuthorization = subscribeNativeLocationAuthorization((authorization) => {
       const authStatus = authorization?.status;
-      if (["always", "whenInUse"].includes(authStatus) && !nativeStartedRef.current) {
-        nativeStartedRef.current = true;
-        setError("");
-        setWaitingDetail("");
-        startNativeLocation({ mode: gpsSuperAgent.getNativeMode(), sessionId: nativeSessionId });
-        return;
-      }
       if (["denied", "restricted"].includes(authStatus)) {
-        window.clearTimeout(nativeWatchdogId);
-        setWaitingDetail("");
         setStatus("error");
         setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
         return;
       }
       // Unrecognized authorization string (e.g. "notDetermined"): the OS has
       // not delivered a usable decision yet. Say so instead of leaving the
-      // waiting screen on its generic copy. (Re-emitted "always"/"whenInUse"
-      // after the engine started is intentionally a no-op.)
-      else if (!["always", "whenInUse"].includes(authStatus)) {
+      // waiting screen on its generic copy.
+      if (!["always", "whenInUse"].includes(authStatus)) {
         setWaitingDetail("Waiting on your location permission — allow location for LOKIN when your device asks.");
+      } else {
+        setError("");
+        setWaitingDetail("");
       }
-    });
-    const unsubscribeError = subscribeNativeLocationError((nativeError) => {
-      setStatus("error");
-      setError(nativeError?.message || "LOKIN native location engine reported an error.");
     });
     const unsubscribeRuntime = subscribeNativeLocationRuntime((payload) => {
       if (payload && typeof payload === "object") setNativeRuntime(payload);
     });
-    const unsubscribeQueue = subscribeNativeLocationQueue((payload) => {
-      const points = Array.isArray(payload?.points) ? payload.points : [];
-      const latest = points
-        .map(normalizeNativeLocationSample)
-        .filter(Boolean)
-        .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
-      const ageMs = latest ? Math.max(0, Date.now() - Number(latest.timestamp || 0)) : Infinity;
-      if (latest && ageMs <= 45_000 && Number(latest.accuracy_m || 0) <= 100) {
-        processLocationSample({ ...latest, source: "native-warm-start" }, "native");
-      }
-    });
-
-    requestNativeRuntimeStatus();
-
-    // Start routing immediately from a recent trusted native fix while the OS
-    // acquires a fresh navigation-grade anchor.
-    drainNativeLocationQueue(12);
-
-    // Native engines start only after the OS confirms permission. This avoids
-    // racing Android's permission dialog and prevents a foreground service from
-    // starting and immediately stopping before ACCESS_FINE/COARSE is granted.
-    // Fail fast: the bridge exists but the shell did not accept the permission
-    // command — re-posting it on every retry just loops the honest copy with
-    // zero chance of a prompt. Name the real blocker immediately instead.
-    const permissionRequestAccepted = requestNativeWhenInUse();
-    if (!permissionRequestAccepted) {
-      window.clearTimeout(nativeWatchdogId);
-      setStatus("error");
-      setError("The LOKIN app shell did not ask iOS for location. Grant Location for LOKIN in iOS Settings (While Using, with Precise Location on), or use the LOKIN website in Safari.");
-    }
+    window.addEventListener(LOCATION_SAMPLE_EVENT, onBusSample);
 
     return () => {
-      window.clearTimeout(nativeWatchdogId);
       unsubscribeLocation();
-      unsubscribeAuthorization();
       unsubscribeError();
+      unsubscribeAuthorization();
       unsubscribeRuntime();
-      unsubscribeQueue();
-      if (nativeStartedRef.current) stopNativeLocation();
-      nativeStartedRef.current = false;
+      window.removeEventListener(LOCATION_SAMPLE_EVENT, onBusSample);
     };
-  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
 
+  // Web sample subscription (subscriber-only). The app-scope session owns the
+  // watchPosition registration; this effect only feeds session bus samples
+  // into the navigation pipeline.
   useEffect(() => {
     if (!enabled || !normalizedDestinations.length || nativeLocationAvailable()) return;
-    if (!navigator.geolocation) {
-      setStatus("error");
-      setError("This device does not expose GPS location to LOKIN.");
-      return;
-    }
-
-    setStatus("waiting_location");
-    setWaitingDetail("");
     webFixReceivedRef.current = false;
-
-    // Watchdog: watchPosition can hang forever when the OS never delivers a
-    // permission decision or a fix (common in embedded preview WebViews). After
-    // 20s with no fix, name the actual blocker instead of spinning forever.
-    const watchdogId = window.setTimeout(() => {
-      if (webFixReceivedRef.current) return;
-      const probe = navigator.permissions?.query
-        ? navigator.permissions.query({ name: "geolocation" }).then((p) => p?.state, () => "unknown")
-        : Promise.resolve("unknown");
-      probe.then((permissionState) => {
-        if (webFixReceivedRef.current) return;
-        if (permissionState === "denied") {
-          setStatus("error");
-          setError("Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings.");
-        } else if (permissionState === "prompt") {
-          // Honest copy: inside the stock app wrapper no device prompt is
-          // coming on its own — only the app shell can ask iOS for location.
-          // Never promise a prompt that can't arrive.
-          setWaitingDetail("Still waiting on your location permission. If a prompt appears, allow Precise Location. In the LOKIN app no prompt appears on its own — grant Location for LOKIN in iOS Settings (While Using, with Precise Location on), or use the LOKIN website in Safari.");
-        } else if (permissionState === "granted") {
-          setWaitingDetail("GPS fix is taking longer than usual — make sure Location Services is on and you have a clear view of the sky.");
-        } else {
-          setWaitingDetail("Still waiting for your device's GPS — check that Location Services is on and location is allowed for this page.");
-        }
-      });
-    }, 20000);
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const coord = asCoord(position);
-        if (!coord) return;
-        webFixReceivedRef.current = true;
-        setWaitingDetail("");
-        window.clearTimeout(watchdogId);
-        processLocationSample({
-          coordinate: coord,
-          latitude: coord[1],
-          longitude: coord[0],
-          accuracy_m: Number(position.coords.accuracy || 0),
-          heading: Number.isFinite(position.coords.heading) ? position.coords.heading : null,
-          speed_mps: Number.isFinite(position.coords.speed) ? position.coords.speed : null,
-          altitude_m: Number.isFinite(position.coords.altitude) ? position.coords.altitude : null,
-          timestamp: position.timestamp || Date.now(),
-          source: "web-geolocation",
-        }, "web");
-      },
-      (geoError) => {
-        window.clearTimeout(watchdogId);
-        setWaitingDetail("");
-        setStatus("error");
-        const message = geoError?.code === 1
-          ? "Location access is required for live LOKIN navigation. Enable Precise Location for LOKIN in device Settings."
-          : geoError?.message || "LOKIN could not read the current GPS position.";
-        setError(message);
-      },
-      gpsSuperAgent.getWebOptions(),
-    );
-
-    return () => {
-      window.clearTimeout(watchdogId);
-      navigator.geolocation.clearWatch(watchId);
+    const onBusSample = (event) => {
+      const sample = event?.detail;
+      if (!sample || sample.source !== "web-geolocation") return;
+      webFixReceivedRef.current = true;
+      setWaitingDetail("");
+      processLocationSample(sample, "web");
     };
-  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample, gpsModeVersion, gpsRestartCounter]);
+    window.addEventListener(LOCATION_SAMPLE_EVENT, onBusSample);
+    return () => window.removeEventListener(LOCATION_SAMPLE_EVENT, onBusSample);
+  }, [enabled, destinationsKey, normalizedDestinations.length, processLocationSample]);
 
   // Grocery-geofence foreground re-check: iOS suspends web GPS behind another
   // app (e.g. the Dasher app), so a store entry that happened while
@@ -974,8 +896,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     requestRoute(coord, destinationsRef.current, "initial");
   }, [rawPosition, requestRoute]);
 
-  // Re-run location acquisition (re-registers watchPosition / re-prompts).
-  // Used by RETRY GPS when no position was ever acquired (e.g. denied permission).
+  // Re-run location acquisition through the app-scope session (re-registers
+  // watchPosition / re-prompts). Used by RETRY GPS when no position was ever
+  // acquired (e.g. denied permission).
   const restartLocation = useCallback(() => {
     setError("");
     setWaitingDetail("");
@@ -984,6 +907,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     // bounded one-shot probe as well. A success feeds the same pipeline as a
     // watch fix; a timeout only surfaces as waiting detail while still
     // waiting, never clobbering a real error state.
+    reacquireLocationSession();
     if (navigator.geolocation) {
       withTimeout(
         new Promise((resolve, reject) =>
@@ -1012,7 +936,6 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         setWaitingDetail(err?.message || "GPS retry timed out — still waiting for a fix.");
       });
     }
-    setGpsRestartCounter((n) => n + 1);
   }, [processLocationSample]);
 
   const fallbackRemainingDistanceM = route && snapped ? Math.max(0, Number(route.distance_m || 0) * (1 - snapped.progress)) : Number(route?.distance_m || 0);

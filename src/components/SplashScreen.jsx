@@ -23,8 +23,29 @@ export default function SplashScreen() {
     if (done) return undefined;
 
     playChime();
-    // Auto-dismiss: real loading motion, no tap required.
-    const auto = window.setTimeout(() => dismiss(), 2800);
+    // Dismiss on app-ready instead of a forced floor: the window "load" event
+    // means the critical bundles and resources are in. A minimum beat keeps
+    // the branding from flashing by, and a maximum cap guarantees a stalled
+    // resource can never trap the user. Tap-to-dismiss still works throughout.
+    const MIN_SHOW_MS = 900;
+    const MAX_SHOW_MS = 6000;
+    const mountedAt = Date.now();
+    let loadFired = false;
+    let readyTimer = null;
+
+    const dismissWhenReady = () => {
+      if (loadFired) return;
+      loadFired = true;
+      const wait = Math.max(0, MIN_SHOW_MS - (Date.now() - mountedAt));
+      readyTimer = window.setTimeout(dismiss, wait);
+    };
+
+    if (typeof document !== "undefined" && document.readyState === "complete") {
+      dismissWhenReady();
+    } else {
+      window.addEventListener("load", dismissWhenReady, { once: true });
+    }
+    const cap = window.setTimeout(dismissWhenReady, MAX_SHOW_MS);
 
     const retryChime = () => {
       if (!playedRef.current) playChime();
@@ -33,8 +54,10 @@ export default function SplashScreen() {
     window.addEventListener("pointerdown", retryChime, { once: true });
 
     return () => {
+      window.removeEventListener("load", dismissWhenReady);
       window.removeEventListener("pointerdown", retryChime);
-      window.clearTimeout(auto);
+      window.clearTimeout(cap);
+      if (readyTimer) window.clearTimeout(readyTimer);
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
   }, [done]);

@@ -8,6 +8,7 @@ import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
 import { askBrain } from "@/lib/lokinBrain";
 import { createOrQueue } from "@/lib/offlineQueue";
+import { getCachedUserId, writeWorkStatus } from "@/lib/driverPrefsCache";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
@@ -73,6 +74,64 @@ function matchCommand(text) {
     if (c.keys.some((k) => t.includes(normalizeText(k)))) return c;
   }
   return null;
+}
+
+// Session actions — matched locally FIRST, before any network call, so voice
+// commands act instantly. Persistence happens fire-and-forget afterwards.
+const SESSION_ACTIONS = [
+  { kind: "start", keys: ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"], msg: "Locked in. You're live — let's get it.", nav: "/ai-gps?focus=locked&nav=1&view=real" },
+  { kind: "lockin", keys: ["lock in", "locked in", "focus mode", "focus", "lock me in"], msg: "Locked in.", nav: "/ai-gps?focus=locked&nav=1&view=real" },
+  { kind: "pause", keys: ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"], msg: "Paused. Say resume when you're back.", nav: "/break-time" },
+  { kind: "resume", keys: ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"], msg: "Back at it. Locked in.", nav: "/ai-gps?focus=locked&nav=1&view=real" },
+  { kind: "tapout", keys: ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"], msg: "Tapped out. Nice work — recap's on the home screen.", nav: "/" },
+];
+
+function matchSessionAction(text) {
+  if (!text) return null;
+  const t = normalizeText(text);
+  for (const a of SESSION_ACTIONS) {
+    if (a.keys.some((k) => t.includes(normalizeText(k)))) return a;
+  }
+  return null;
+}
+
+// Fire-and-forget persistence for a session action that already acted locally.
+// DriverPreference writes go through the local-first cache (write-through);
+// DriverSession writes use the offline-safe queue. Never throws.
+async function persistSessionAction(kind) {
+  try {
+    const patches = {
+      start: { work_status: "working", break_active: false },
+      pause: { work_status: "paused", break_active: true },
+      resume: { work_status: "working", break_active: false },
+      tapout: { work_status: "off", break_active: false },
+    };
+    const patch = patches[kind];
+    if (patch) await writeWorkStatus(patch);
+    if (kind === "lockin") return;
+    const uid = await getCachedUserId();
+    if (!uid) return;
+    if (kind === "start") {
+      // Offline-safe: the voice-started session is stored locally if there's
+      // no signal and syncs automatically once the connection returns.
+      await createOrQueue("DriverSession", { user_id: uid, status: "working", started_at: new Date().toISOString(), source: "voice" });
+      return;
+    }
+    const transitions = {
+      pause: { from: "working", to: "paused", at: "paused_at" },
+      resume: { from: "paused", to: "working", at: "resumed_at" },
+      tapout: { from: { $in: ["working", "paused"] }, to: "ended", at: "ended_at" },
+    };
+    const tr = transitions[kind];
+    if (!tr) return;
+    const sessions = await base44.entities.DriverSession.filter({ user_id: uid, status: tr.from }, "-started_at").catch(() => []);
+    const active = sessions?.[0];
+    if (active?.id) {
+      await base44.entities.DriverSession.update(active.id, { status: tr.to, [tr.at]: new Date().toISOString() }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn("LOKIN session persist failed", e?.message || e);
+  }
 }
 
 function extractNavigationDestination(raw) {
@@ -178,52 +237,17 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     // short commands. A full sentence that merely CONTAINS one of those phrases is
     // a question for the AI, not a button press.
     const actionText = core.split(/\s+/).filter(Boolean).length <= 6 ? core : "";
-    try {
-      const prefsList = await base44.entities.DriverPreference.filter({});
-      const prefs = prefsList[0] || null;
-      const me = await base44.auth.me().catch(() => null);
-
-      if (includesAny(actionText, ["level up", "start work", "start my shift", "begin work", "start shift", "begin shift", "go online", "start driving", "clock in", "start my day"])) {
-        const next = { work_status: "working", break_active: false };
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, next);
-        else await base44.entities.DriverPreference.create(next);
-        // Offline-safe: the voice-started session is stored locally if there's
-        // no signal and syncs automatically once the connection returns.
-        if (me?.id) await createOrQueue("DriverSession", { user_id: me.id, status: "working", started_at: new Date().toISOString(), source: "voice" });
-        const msg = "Locked in. You're live \u2014 let's get it.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
-      }
-
-      if (includesAny(actionText, ["lock in", "locked in", "focus mode", "focus", "lock me in"])) {
-        const msg = "Locked in.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 300); setBusy(false); return;
-      }
-
-      if (includesAny(actionText, ["lokin pause", "pause work", "pause my shift", "pause", "take a break", "need a break", "hold on", "one sec", "brb"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "paused", break_active: true });
-        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "working" }, "-started_at") : [];
-        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "paused", paused_at: new Date().toISOString() });
-        const msg = "Paused. Say resume when you're back.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/break-time"), 300); setBusy(false); return;
-      }
-
-      if (includesAny(actionText, ["resume", "resume work", "continue work", "lock back in", "back to work", "unpause", "lets go", "back at it"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "working", break_active: false });
-        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: "paused" }, "-started_at") : [];
-        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "working", resumed_at: new Date().toISOString() });
-        const msg = "Back at it. Locked in.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/ai-gps?focus=locked&nav=1&view=real"), 350); setBusy(false); return;
-      }
-
-      if (includesAny(actionText, ["tap out", "end work", "end my shift", "finish work", "end shift", "clock out", "done for today", "call it a day", "log off", "sign off"])) {
-        if (prefs?.id) await base44.entities.DriverPreference.update(prefs.id, { work_status: "off", break_active: false });
-        const sessions = me?.id ? await base44.entities.DriverSession.filter({ user_id: me.id, status: { $in: ["working", "paused"] } }, "-started_at") : [];
-        if (sessions?.[0]?.id) await base44.entities.DriverSession.update(sessions[0].id, { status: "ended", ended_at: new Date().toISOString() });
-        const msg = "Tapped out. Nice work \u2014 recap's on the home screen.";
-        setReply(msg); speak(msg); setTimeout(() => navigate("/"), 400); setBusy(false); return;
-      }
-    } catch (e) {
-      // fall through to normal assistant handling if a session command fails
+    // Local-first: session actions act instantly — reply, speak, and navigate
+    // in parallel with no artificial timeout — while the database writes
+    // persist fire-and-forget in the background.
+    const sessionAction = matchSessionAction(actionText);
+    if (sessionAction) {
+      setReply(sessionAction.msg);
+      speak(sessionAction.msg);
+      navigate(sessionAction.nav);
+      setBusy(false);
+      persistSessionAction(sessionAction.kind);
+      return;
     }
     const music = matchMusic(command);
     if (music) {

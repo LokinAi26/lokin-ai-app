@@ -1143,6 +1143,10 @@ export default function LiveVectorMap({
     let disposed = false;
     let startupTimer = null;
     let map = null;
+    // Proximity-gated landmark loading + deferred Overpass extrusion cleanup.
+    let landmarkMoveEndHandler = null;
+    let idleEnhanceId = null;
+    let idleEnhanceTimer = null;
     // Honest retail data-service status (error pill, auto-retrying).
     const offRetailStatus = retailExtrusion.onStatus(setRetailStatus);
 
@@ -1284,12 +1288,44 @@ export default function LiveVectorMap({
           baggz247Master.registerBatch2Landmarks();
           baggz247Master.registerBatch3Landmarks();
           baggz247Master.startAnimatedTraffic();
+          // Proximity-gated landmark loading (global-readiness fix): the
+          // register* calls above only queue definitions now. Fetch the GLBs
+          // near the camera (plus the last session's viewport) immediately;
+          // more load as the camera moves. The 34 models no longer all fetch
+          // at map init.
+          const placeNearbyLandmarks = () => {
+            if (disposed) return;
+            const c = map.getCenter();
+            baggz247Master.placeLandmarksNear(c.lng, c.lat);
+            baggz247Master.persistLandmarkView(c.lng, c.lat);
+          };
+          placeNearbyLandmarks();
+          // Returning session: the last viewport's landmarks place immediately
+          // (GLB bytes come from the browser HTTP cache).
+          baggz247Master.placeLandmarksNearLastView();
+          map.on("moveend", placeNearbyLandmarks);
+          landmarkMoveEndHandler = placeNearbyLandmarks;
           meshBuilder.map = map;
           if (style3dRef.current && qualityRef.current !== "performance") {
             mapArchitect.enable3DBuildings();
             mapArchitect.enable3DLandmarks();
             mapArchitect.setQuality(qualityRef.current);
-            baggz247Master.enhanceVisibleArea(map.getBounds());
+            // Deferred off the init path (global-readiness fix): the Overpass
+            // volunteer API is queried on idle with silent fallback if it is
+            // unreachable — map init never waits on it.
+            const enhanceArea = () => {
+              if (disposed) return;
+              try {
+                baggz247Master.enhanceVisibleArea(map.getBounds());
+              } catch {
+                /* silent fallback: the base 3D map stands on its own */
+              }
+            };
+            if (typeof window.requestIdleCallback === "function") {
+              idleEnhanceId = window.requestIdleCallback(enhanceArea, { timeout: 12000 });
+            } else {
+              idleEnhanceTimer = window.setTimeout(enhanceArea, 2000);
+            }
             meshBuilder.startAnimations();
           }
           retailExtrusion.map = map;
@@ -1316,6 +1352,13 @@ export default function LiveVectorMap({
       offRetailStatus?.();
       window.clearTimeout(startupTimer);
       window.clearTimeout(resumeTimerRef.current);
+      if (landmarkMoveEndHandler && map) {
+        try { map.off("moveend", landmarkMoveEndHandler); } catch { /* map may be gone */ }
+      }
+      if (idleEnhanceId != null && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleEnhanceId);
+      }
+      window.clearTimeout(idleEnhanceTimer);
       if (animationRef.current != null) window.cancelAnimationFrame(animationRef.current);
       orbitTokenRef.current += 1; // kill any showcase orbit chain
       orbitActiveRef.current = false;

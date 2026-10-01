@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -11,73 +12,82 @@ import FeatureTour from './components/FeatureTour';
 import DeepLinkHandler from './components/DeepLinkHandler';
 // Add page imports here
 import Home from './pages/Home';
-import RoutePlanner from './pages/RoutePlanner';
-import Categories from './pages/Categories';
-import Locator from './pages/Locator';
-import Fuel from './pages/Fuel';
-import LokinAI from './pages/LokinAI';
-import Earnings from './pages/Earnings';
-import EarningsIntelligence from './pages/EarningsIntelligence';
-import ShiftReport from './pages/ShiftReport';
-import DriverPlatforms from './pages/DriverPlatforms';
-import UberDriverCallback from './pages/UberDriverCallback';
-import More from './pages/More';
-import AvoidList from './pages/AvoidList';
-import Settings from './pages/Settings';
-import DrivingMode from './pages/DrivingMode';
-import Brand from './pages/Brand';
-import Oasis from './pages/Oasis';
-import Pricing from './pages/Pricing';
-import ThankYou from './pages/ThankYou';
-import Support from './pages/Support';
-import GigTasks from './pages/GigTasks';
-import Hotspots from './pages/Hotspots';
-import Tax from './pages/Tax';
-import Receipts from './pages/Receipts';
-import VehicleCare from './pages/VehicleCare';
-import Safety from './pages/Safety';
-import BreakTime from './pages/BreakTime';
-import OnTheRoad from './pages/OnTheRoad';
-import Awareness from './pages/Awareness';
-import Connectivity from './pages/Connectivity';
-import ShopDeliver from './pages/ShopDeliver';
-import AiGps from './pages/AiGps';
-import GPSCommandCenter from "./pages/GPSCommandCenter";
-import CommandIngress from './pages/CommandIngress';
-import Connect from './pages/Connect';
-import PrintfulConnect from './pages/PrintfulConnect';
-import PrintfulCallback from './pages/PrintfulCallback';
-import Opportunities from './pages/Opportunities';
-import Showcase from './pages/Showcase';
-import FiveG from './pages/FiveG';
-import ActiveDelivery from './pages/ActiveDelivery';
-import Certified from './pages/Certified';
-import MerchantHub from './pages/MerchantHub';
-import ComplianceHandoff from './pages/ComplianceHandoff';
-import DriverDispatch from './pages/DriverDispatch';
+const RoutePlanner = lazy(() => import('./pages/RoutePlanner'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Locator = lazy(() => import('./pages/Locator'));
+const Fuel = lazy(() => import('./pages/Fuel'));
+const LokinAI = lazy(() => import('./pages/LokinAI'));
+const Earnings = lazy(() => import('./pages/Earnings'));
+const EarningsIntelligence = lazy(() => import('./pages/EarningsIntelligence'));
+const ShiftReport = lazy(() => import('./pages/ShiftReport'));
+const DriverPlatforms = lazy(() => import('./pages/DriverPlatforms'));
+const UberDriverCallback = lazy(() => import('./pages/UberDriverCallback'));
+const More = lazy(() => import('./pages/More'));
+const AvoidList = lazy(() => import('./pages/AvoidList'));
+const Settings = lazy(() => import('./pages/Settings'));
+const DrivingMode = lazy(() => import('./pages/DrivingMode'));
+const Brand = lazy(() => import('./pages/Brand'));
+const Oasis = lazy(() => import('./pages/Oasis'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const ThankYou = lazy(() => import('./pages/ThankYou'));
+const Support = lazy(() => import('./pages/Support'));
+const GigTasks = lazy(() => import('./pages/GigTasks'));
+const Hotspots = lazy(() => import('./pages/Hotspots'));
+const Tax = lazy(() => import('./pages/Tax'));
+const Receipts = lazy(() => import('./pages/Receipts'));
+const VehicleCare = lazy(() => import('./pages/VehicleCare'));
+const Safety = lazy(() => import('./pages/Safety'));
+const BreakTime = lazy(() => import('./pages/BreakTime'));
+const OnTheRoad = lazy(() => import('./pages/OnTheRoad'));
+const Awareness = lazy(() => import('./pages/Awareness'));
+const Connectivity = lazy(() => import('./pages/Connectivity'));
+const ShopDeliver = lazy(() => import('./pages/ShopDeliver'));
+const AiGps = lazy(() => import('./pages/AiGps'));
+const GPSCommandCenter = lazy(() => import("./pages/GPSCommandCenter"));
+const CommandIngress = lazy(() => import('./pages/CommandIngress'));
+const Connect = lazy(() => import('./pages/Connect'));
+const PrintfulConnect = lazy(() => import('./pages/PrintfulConnect'));
+const PrintfulCallback = lazy(() => import('./pages/PrintfulCallback'));
+const Opportunities = lazy(() => import('./pages/Opportunities'));
+const Showcase = lazy(() => import('./pages/Showcase'));
+const FiveG = lazy(() => import('./pages/FiveG'));
+const ActiveDelivery = lazy(() => import('./pages/ActiveDelivery'));
+const Certified = lazy(() => import('./pages/Certified'));
+const MerchantHub = lazy(() => import('./pages/MerchantHub'));
+const ComplianceHandoff = lazy(() => import('./pages/ComplianceHandoff'));
+const DriverDispatch = lazy(() => import('./pages/DriverDispatch'));
 import DriverLayout from './components/DriverLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import OAuthConsent from './pages/OAuthConsent';
-import ShopifyEmbed from './pages/ShopifyEmbed';
-import Stash from './pages/Stash';
-import StashCart from './pages/StashCart';
-import GreenDelivery from './pages/GreenDelivery';
-import Insurance from './pages/Insurance';
-import InsuranceAdmin from './pages/InsuranceAdmin';
-import DriverOnboarding from './pages/DriverOnboarding';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import SupportInfo from './pages/SupportInfo';
-import FundingCommand from './pages/FundingCommand';
-import L3Ops from './pages/L3Ops';
-import VisionBridge from './pages/VisionBridge';
-import VisionHud from './pages/VisionHud';
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const OAuthConsent = lazy(() => import('./pages/OAuthConsent'));
+const ShopifyEmbed = lazy(() => import('./pages/ShopifyEmbed'));
+const Stash = lazy(() => import('./pages/Stash'));
+const StashCart = lazy(() => import('./pages/StashCart'));
+const GreenDelivery = lazy(() => import('./pages/GreenDelivery'));
+const Insurance = lazy(() => import('./pages/Insurance'));
+const InsuranceAdmin = lazy(() => import('./pages/InsuranceAdmin'));
+const DriverOnboarding = lazy(() => import('./pages/DriverOnboarding'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const SupportInfo = lazy(() => import('./pages/SupportInfo'));
+const FundingCommand = lazy(() => import('./pages/FundingCommand'));
+const L3Ops = lazy(() => import('./pages/L3Ops'));
+const VisionBridge = lazy(() => import('./pages/VisionBridge'));
+const VisionHud = lazy(() => import('./pages/VisionHud'));
 import ReleaseGate from './components/ReleaseGate';
 import { RELEASE_FLAGS } from './lib/releaseFlags';
+
+// Shown while a lazily-split route chunk loads. Only Home stays in the eager
+// bundle; every other page (including AiGps, so first paint never carries
+// mapbox-gl) loads on demand and never hits the splash floor twice.
+const RouteFallback = () => (
+  <div className="fixed inset-0 flex items-center justify-center bg-black">
+    <div className="w-8 h-8 border-4 border-[#8FE44E]/20 border-t-[#8FE44E] rounded-full animate-spin" />
+  </div>
+);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -88,10 +98,12 @@ const AuthenticatedApp = () => {
   const pathname = window.location.pathname;
   if (isShopifyEmbedRequest(pathname)) {
     return (
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/shopify" element={<ShopifyEmbed />} />
         <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
       </Routes>
+      </Suspense>
     );
   }
 
@@ -117,6 +129,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route element={<ProtectedRoute unauthenticatedElement={<Login />} />}>
         <Route element={<DriverLayout />}>
@@ -188,6 +201,7 @@ const AuthenticatedApp = () => {
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 
@@ -196,11 +210,13 @@ function ShopifyPublicApp() {
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/shopify" element={<ShopifyEmbed />} />
           <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
           <Route path="*" element={<ShopifyEmbed />} />
         </Routes>
+        </Suspense>
       </Router>
     </QueryClientProvider>
   );
