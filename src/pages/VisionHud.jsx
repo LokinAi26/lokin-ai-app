@@ -22,7 +22,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Navigation, MapPin, DoorOpen, Flame, Banknote, Mic, Glasses, ChevronRight,
+  Navigation, MapPin, DoorOpen, Flame, Banknote, Mic, Glasses, ChevronRight, PackageSearch,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
@@ -30,6 +30,7 @@ import useLokinNavigation from "@/hooks/useLokinNavigation";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { getDoorPin } from "@/lib/doorPins";
 import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
+import HudItemLocator from "@/components/vision/HudItemLocator";
 
 const GREEN = "#8FE44E"; // LOKIN Green — the only accent on this page.
 const FALLBACK_CENTER = [36.8529, -75.978]; // Virginia Beach, same as Hotspots.jsx
@@ -212,6 +213,9 @@ export default function VisionHud() {
   }, []);
   const voiceLabel = voiceState.toUpperCase();
 
+  // ---- ITEM LOCATOR (camera homing mode, src/components/vision/HudItemLocator) ----
+  const [locatorOpen, setLocatorOpen] = useState(false);
+
   // ---- GLASSES LINK (latest LokinVisionTelemetry record for this user) ----
   const [telemetry, setTelemetry] = useState(null);
   const [telemetryChecked, setTelemetryChecked] = useState(false);
@@ -257,6 +261,7 @@ export default function VisionHud() {
 
   return (
     <div className="min-h-screen bg-black p-4 pb-10 space-y-4">
+      {locatorOpen && <HudItemLocator onClose={() => setLocatorOpen(false)} />}
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[10px] font-extrabold tracking-[0.28em]" style={{ color: GREEN }}>LOKIN VISION XR</div>
@@ -386,6 +391,20 @@ export default function VisionHud() {
         >
           {voiceLabel}
         </span>
+      </Section>
+
+      {/* 6b. ITEM LOCATOR — camera barcode homing with proximity audio */}
+      <Section icon={PackageSearch} title="ITEM LOCATOR">
+        <div className="text-[11px] leading-relaxed text-white/45">
+          Lock onto a package's barcode, then sweep the shelf or stack — beeps quicken the closer that code fills the camera frame.
+        </div>
+        <button
+          type="button"
+          onClick={() => setLocatorOpen(true)}
+          className="mt-3 w-full rounded-xl border border-primary/25 bg-primary/[0.06] py-2.5 text-xs font-bold text-primary active:scale-[0.98]"
+        >
+          <PackageSearch className="mr-1 inline h-3.5 w-3.5" /> START CAMERA HOMING
+        </button>
       </Section>
 
       {/* 7. GLASSES LINK */}
