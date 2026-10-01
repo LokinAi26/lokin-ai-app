@@ -23,7 +23,8 @@
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
     "typecheck:arch": "tsc -p ./tsconfig.json",
-    "sync:contracts": "node scripts/sync-architecture.mjs"
+    "sync:contracts": "node scripts/sync-architecture.mjs",
+    "verify:arch-determinism": "node scripts/verify-architecture-determinism.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.52",
