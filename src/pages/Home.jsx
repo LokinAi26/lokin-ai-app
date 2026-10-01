@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Activity, Banknote, ToggleRight, ClipboardList, Milestone, Power, Settings } from "lucide-react";
+import { Activity, Banknote, ToggleRight, ClipboardList, Milestone, Power, Settings, Satellite } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { LOKIN_HEADER_LOCKUP, LOKIN_CENTER, LOKIN_CENTER_PAUSED } from "@/components/Brand";
 import { LkIconOnline, LkIconScooter } from "@/components/brand/LkIcons";
@@ -230,6 +230,11 @@ export default function Home() {
       <div className="relative z-10 flex items-center justify-between gap-2 pt-1 pb-1 shrink-0">
         <img src={LOKIN_HEADER_LOCKUP} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-12 w-auto object-contain object-left min-w-0" />
         <div className="flex items-center gap-1.5 shrink-0">
+          <Link to="/gps-command" aria-label="GPS Command Center"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-black/60 text-primary select-none active:scale-95 transition-transform"
+            style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
+            <Satellite className="h-4 w-4" />
+          </Link>
           <HomeSignalIndicator />
           <button onClick={() => setShowType(true)}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/[0.04] px-3 py-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.07em] text-white active:scale-95 transition-transform">

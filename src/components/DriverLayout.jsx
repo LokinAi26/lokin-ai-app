@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, Navigation } from "lucide-react";
+import { ChevronLeft, Navigation, Satellite } from "lucide-react";
 import { motion } from "framer-motion";
 import { LOKIN_NAV_CIRCLE, LOKIN_LOGO } from "@/components/Brand";
 import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from "@/components/brand/LkIcons";
@@ -152,6 +152,11 @@ export default function DriverLayout() {
               <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-9 w-auto" />
             </button>
           )}
+          <button onClick={() => navigate("/gps-command")} aria-label="GPS Command Center"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-black/60 text-primary select-none active:scale-95 transition-transform"
+            style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
+            <Satellite className="h-4 w-4" />
+          </button>
           {effectiveStatus !== "off" && (
             <span className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/[0.06] px-4 py-1.5 font-heading text-[13px] font-bold uppercase tracking-[0.07em] text-primary select-none"
               style={{ boxShadow: "0 0 14px rgba(124,252,30,.4)", textShadow: "0 0 8px rgba(124,252,30,.6)" }}>
