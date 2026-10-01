@@ -10,11 +10,17 @@
  * baked-in hash — every SESSION_STARTED event carries the architecture
  * identity of the build that produced it.
  *
- * Determinism contract: identical source tree + identical HEAD commit ->
- * byte-identical generated file. The manifest hash covers ONLY the version
- * content (commitSha + the four version records); generatedAt is
- * informational metadata and is EXCLUDED from the hash, so two builds from
- * the same tree hash identically regardless of when they ran.
+ * Determinism contract: identical architecture sources -> byte-identical
+ * generated file and identical manifest hash. The manifest hash covers ONLY
+ * the four version records (policy/schema/evaluator/registry) — the
+ * architecture CONTENT identity, which is what compatibility checks need.
+ * generatedAt and commitSha are build provenance (when/which commit the
+ * manifest was generated against) and are EXCLUDED from the hash, so two
+ * builds from identical architecture sources hash identically even across
+ * commits that touch nothing under src/architecture/. For the same reason,
+ * the --check / F5 freshness check normalizes both provenance fields and
+ * compares version content: it fails iff the sources changed without
+ * regenerating.
  *
  * Version-record conventions (M1):
  *   policyVersions:    { spec: "SPEC-001" } — M1 has no policy engine;
@@ -131,19 +137,21 @@ function buildManifest(allowDirty) {
     schemaVersions[`src/architecture/${pkg}`] = `sha256:${packageHash(pkg)}`;
   }
 
-  const versionContent = sortKeysDeep({
-    commitSha: dirty ? `${head}-dirty` : head,
+  // Hash input: the four version records ONLY. commitSha is provenance
+  // (recorded below but excluded from the hash) so that identical
+  // architecture sources hash identically across commits.
+  const hashInput = sortKeysDeep({
     policyVersions: { spec: "SPEC-001" },
     schemaVersions,
     evaluatorVersions: {},
     registryVersions: {},
   });
-
-  const manifestHash = sha256Hex(canonicalJson(versionContent));
+  const manifestHash = sha256Hex(canonicalJson(hashInput));
 
   return {
     manifest: {
-      ...versionContent,
+      ...hashInput,
+      commitSha: dirty ? `${head}-dirty` : head,
       generatedAt: new Date().toISOString(),
       manifestHash,
     },
