@@ -18,3 +18,7 @@ export { observeShiftEnd, observeGoalSet, appendObservationalEvent } from "./dua
 export type { DualWriteObservation } from "./dualWrite.js";
 export { considerBackendSnapshot } from "./snapshotGuard.js";
 export type { BackendShiftSnapshot, SnapshotDecision } from "./snapshotGuard.js";
+// M1 device-protocol test hook (Scenario C): exposes the snapshot guard +
+// relaunch report on globalThis.__LOKIN_M1__ for Safari Web Inspector.
+// Observational only; see debugHook.ts.
+import "./debugHook.js";
