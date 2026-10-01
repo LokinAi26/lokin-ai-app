@@ -11,10 +11,10 @@
 import type { ArchitectureRuntimeManifest } from "../contracts/index.js";
 
 export const RUNTIME_MANIFEST: ArchitectureRuntimeManifest = {
-  "commitSha": "27cf6e462729869a64ea9c36e3ec737fdf080c98",
+  "commitSha": "1e3a118b4dac1b207ffb37487e1616f39edb8bd6",
   "evaluatorVersions": {},
-  "generatedAt": "2026-10-01T21:47:24.405Z",
-  "manifestHash": "1941ec7af533e5a345a2a6fe42468e256bd13764f4de694667f1d3f2248aaaaa",
+  "generatedAt": "2026-10-01T21:51:11.651Z",
+  "manifestHash": "2b93161b5aaad7c8b91fa0b1a74c57ba44672b7f295dfc50f7570973211a97c8",
   "policyVersions": {
     "spec": "SPEC-001"
   },
@@ -23,7 +23,7 @@ export const RUNTIME_MANIFEST: ArchitectureRuntimeManifest = {
     "event-envelope": "1",
     "src/architecture/contracts": "sha256:9e061ba773b826bb2b0988021f1582f58410e9f2874369d62eb951cd1e8e2b44",
     "src/architecture/materializer": "sha256:7e1f5a0a00cd04e5c1940280404647ca4d16c75395313ea76129cb261671837b",
-    "src/architecture/seams": "sha256:03abe2b4a78cb3a33fac7c00b9157d8dfc8d594a094a5d62249e3e37824b4528",
+    "src/architecture/seams": "sha256:16bc33871df7c349ed778d405f395b59f37713cb22aba52a57a78177cee3f470",
     "src/architecture/store": "sha256:a90554b5a6b3f477e94cb2b003ce4066a8e017a1191faa1bafc5db0bf318d64b",
     "src/architecture/sync": "sha256:442692551f8191b22c1863d80eb36541a13a61620e380318095f864a7b731fcc"
   }
