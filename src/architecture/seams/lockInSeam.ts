@@ -18,9 +18,9 @@ import type {
   ShiftEvent,
   ShiftRecoveryManifest,
 } from "../contracts/index.js";
+import { RUNTIME_MANIFEST_HASH } from "../generated/runtimeManifest.js";
 import { getOperationalStore } from "../store/index.js";
 import { materialize } from "../materializer/index.js";
-import { EVENT_SCHEMA_VERSION } from "../store/index.js";
 
 export interface LockInObservation {
   eventId: string;
@@ -80,36 +80,16 @@ function newEventId(): string {
 /**
  * Runtime manifest hash for the SESSION_STARTED payload.
  *
- * M1: SHA-256 over stable build constants (app id + event schema version).
- * WP7 replaces this with the hash of the full build-time
- * ArchitectureRuntimeManifest. The FNV-1a fallback only engages outside a
- * secure context and is labeled in the digest input so a hash produced by
- * the fallback can never be confused with a SHA-256 one.
+ * M1 WP7: the hash is generated at build time by
+ * scripts/generate-runtime-manifest.mjs and baked into
+ * src/architecture/generated/runtimeManifest.ts. It identifies the exact
+ * architecture source tree (contracts, materializer, store, sync, seams)
+ * that produced the build — the backend can verify event/manifest
+ * compatibility from this hash alone. Regenerate after any change under
+ * src/architecture/ (`npm run generate:runtime-manifest`).
  */
-export async function getRuntimeManifestHash(): Promise<string> {
-  const appId =
-    (import.meta as unknown as { env?: Record<string, string> }).env
-      ?.["VITE_BASE44_APP_ID"] ?? "dev";
-  const input = JSON.stringify({
-    appId,
-    eventSchemaVersion: EVENT_SCHEMA_VERSION,
-  });
-  if (typeof crypto !== "undefined" && crypto.subtle) {
-    const digest = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(`sha256:${input}`)
-    );
-    return [...new Uint8Array(digest)]
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
-  let h = 0x811c9dc5;
-  const labeled = `fnv1a:${input}`;
-  for (let i = 0; i < labeled.length; i++) {
-    h ^= labeled.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return `fnv1a-${(h >>> 0).toString(16).padStart(8, "0")}`;
+export function getRuntimeManifestHash(): string {
+  return RUNTIME_MANIFEST_HASH;
 }
 
 /**
@@ -125,7 +105,7 @@ export async function observeLockIn(
   const nowIso = now.toISOString();
   const shiftId = shiftIdFor(driverId, now);
   const sessionId = newEventId();
-  const manifestHash = await getRuntimeManifestHash();
+  const manifestHash = getRuntimeManifestHash();
 
   const payload: SessionStartedPayload = {
     sessionId,

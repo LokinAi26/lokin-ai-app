@@ -24,7 +24,8 @@
     "preview": "vite preview",
     "typecheck:arch": "tsc -p ./tsconfig.json",
     "sync:contracts": "node scripts/sync-architecture.mjs",
-    "verify:arch-determinism": "node scripts/verify-architecture-determinism.mjs"
+    "verify:arch-determinism": "node scripts/verify-architecture-determinism.mjs",
+    "generate:runtime-manifest": "node scripts/generate-runtime-manifest.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.52",

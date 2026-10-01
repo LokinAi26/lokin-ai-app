@@ -13,6 +13,10 @@
  *   F3: Idempotent-ingest fixture — the shared decideIngest() partition
  *       (accepted / already-present / rejected) behaves byte-identically
  *       client-side and mirror-side; a retried batch accepts nothing new.
+ *   F5: Runtime-manifest determinism (WP7) — the build-time manifest
+ *       generator produces byte-identical output across runs (modulo the
+ *       informational generatedAt), a stable manifest hash, and the
+ *       committed manifest matches the current architecture tree.
  *
  * Compiles both trees with tsc into a temp dir and imports the compiled
  * output — no test framework, no new dependencies. Follows the repo's
@@ -185,6 +189,20 @@ try {
     dup.accepted.length === 2 && dup.alreadyPresentEventIds.length === 1,
     `accepted=${dup.accepted.length} alreadyPresent=${dup.alreadyPresentEventIds.length}`
   );
+  // ---- F5: build-time runtime manifest determinism (WP7) ----
+  const manifestA = join(tmp, "manifest-a.ts");
+  const manifestB = join(tmp, "manifest-b.ts");
+  execFileSync("node", ["scripts/generate-runtime-manifest.mjs", "--out", manifestA, "--allow-dirty"], { cwd: root, stdio: "pipe" });
+  execFileSync("node", ["scripts/generate-runtime-manifest.mjs", "--out", manifestB, "--allow-dirty"], { cwd: root, stdio: "pipe" });
+  const normManifest = (s) => s.replace(/"generatedAt": "[^"]*"/, '"generatedAt": "<normalized>"');
+  const textA = normManifest(readFileSync(manifestA, "utf8"));
+  const textB = normManifest(readFileSync(manifestB, "utf8"));
+  check("F5 manifest byte-identical across runs (modulo generatedAt)", textA === textB);
+  const hashOf = (t) => (t.match(/"manifestHash": "([0-9a-f]{64})"/) || [])[1];
+  check("F5 manifest hash stable across runs", Boolean(hashOf(textA)) && hashOf(textA) === hashOf(textB), hashOf(textA));
+  // The committed manifest must match the current tree (version content).
+  const committed = normManifest(readFileSync(join(root, "src", "architecture", "generated", "runtimeManifest.ts"), "utf8"));
+  check("F5 committed manifest matches current architecture tree", committed === textA);
 } catch (err) {
   console.error(`ERROR  ${err.message}`);
   failures += 1;
