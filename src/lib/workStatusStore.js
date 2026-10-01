@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, SESSION_STATUS } from "@/lib/sessionState";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
-import { observeLockIn } from "@/architecture/seams/index";
+import { observeLockIn, observeShiftEnd } from "@/architecture/seams/index";
 import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 
 // Optimistic work-status store: Shift/Pause/Start toggles flip the UI
@@ -47,6 +47,15 @@ export function setWorkStatusOptimistic(prefs, next, patch = {}) {
     // M1 WP6: opportunistic idempotent sync of the pending event log.
     getCachedUserId()
       .then((uid) => observeLockIn(uid || "unknown-driver"))
+      .then(() => syncPendingEventsSoon())
+      .catch(() => {});
+  } else if (status === SESSION_STATUS.off && prev !== SESSION_STATUS.off) {
+    // M1 WP8 observational dual-write (I75): the Tap Out moment appends
+    // SHIFT_ENDED to the IndexedDB event log. Guarded to the transition
+    // INTO "off" so repeated off-sets don't duplicate the event.
+    // Fire-and-forget — a seam failure must never break the legacy write.
+    getCachedUserId()
+      .then((uid) => observeShiftEnd(uid || "unknown-driver"))
       .then(() => syncPendingEventsSoon())
       .catch(() => {});
   }

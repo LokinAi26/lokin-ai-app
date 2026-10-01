@@ -58,7 +58,7 @@ export function shiftIdFor(driverId: string, at: Date = new Date()): string {
   return `${driverId}:${y}-${m}-${d}`;
 }
 
-function newEventId(): string {
+export function newEventId(): string {
   // Local untyped view: avoids `in`-narrowing quirks on the global crypto type.
   const c = (
     typeof crypto !== "undefined" ? crypto : undefined

@@ -17,6 +17,10 @@
  *       generator produces byte-identical output across runs (modulo the
  *       informational generatedAt), a stable manifest hash, and the
  *       committed manifest matches the current architecture tree.
+ *   F6: Observational dual-write (WP8) — session anchoring (live session
+ *       vs ${shiftId}:legacy fallback), monotonic sequencing, atomic
+ *       event+manifest pairing, and materialization of SHIFT_ENDED /
+ *       GOAL_SET, against an in-memory OperationalStore fake.
  *
  * Compiles both trees with tsc into a temp dir and imports the compiled
  * output — no test framework, no new dependencies. Follows the repo's
@@ -203,6 +207,97 @@ try {
   // The committed manifest must match the current tree (version content).
   const committed = normManifest(readFileSync(join(root, "src", "architecture", "generated", "runtimeManifest.ts"), "utf8"));
   check("F5 committed manifest matches current architecture tree", committed === textA);
+  // ---- F6: observational dual-write (WP8) ----
+  // Session anchoring, sequence continuity, and atomic event+manifest
+  // pairing, exercised against an in-memory OperationalStore fake. The
+  // real Dexie store is never instantiated (Dexie imports but does not
+  // touch IndexedDB at module load).
+  const seamOut = join(tmp, "seams");
+  // NOTE: the seams tree pulls in dexieStore -> dexie, whose types only
+  // resolve under the project's bundler-style module resolution (nodenext
+  // mis-resolves them). Compile with the project-matching settings; the
+  // emitted .js specifiers are still Node-ESM-importable.
+  execFileSync(
+    "npx",
+    ["tsc", "src/architecture/seams/dualWrite.ts", "--outDir", seamOut,
+      "--module", "esnext", "--target", "es2022", "--moduleResolution", "bundler",
+      "--esModuleInterop", "--skipLibCheck"],
+    { cwd: root, stdio: "pipe" }
+  );
+  const seams = await import(pathToFileURL(join(seamOut, "seams", "dualWrite.js")).href);
+  const seamUtils = await import(pathToFileURL(join(seamOut, "seams", "lockInSeam.js")).href);
+
+  function makeFakeStore() {
+    const events = [];
+    let manifest = null;
+    const txns = [];
+    return {
+      events,
+      txns,
+      getManifest: () => manifest,
+      async appendEventAndUpdateManifest(event, m) {
+        txns.push({ eventId: event.eventId, manifest: m }); // one call = one transaction
+        events.push(event);
+        manifest = m;
+      },
+      async getShiftEvents() { return [...events]; },
+      async getRecoveryManifest() { return manifest; },
+      async getPendingSyncEvents() { return []; },
+      async markEventsSynced() {},
+    };
+  }
+  function seedEvent(overrides) {
+    const now = new Date().toISOString();
+    return {
+      eventId: `seed-${Math.random().toString(36).slice(2)}`,
+      shiftId: overrides.shiftId,
+      driverId: "driver-1",
+      sessionId: "sess-abc",
+      sequenceNumber: 0,
+      type: "SESSION_STARTED",
+      occurredAt: now,
+      recordedAt: now,
+      origin: "DEVICE",
+      source: "wp8-fixture",
+      payload: {},
+      ...overrides,
+    };
+  }
+
+  const driverId = "driver-1";
+  const shiftId = seamUtils.shiftIdFor(driverId);
+
+  const fakeA = makeFakeStore();
+  const obsA = await seams.appendObservationalEvent(driverId, "SHIFT_ENDED", {}, fakeA);
+  check("F6 empty log anchors to ${shiftId}:legacy session", obsA.sessionId === `${shiftId}:legacy`, obsA.sessionId);
+  check("F6 first event sequence is 0", obsA.sequenceNumber === 0);
+  check("F6 event+manifest paired in one transaction", fakeA.txns.length === 1 && fakeA.txns[0].eventId === obsA.eventId);
+  const manA = fakeA.getManifest();
+  check("F6 manifest created for the shift", manA && manA.shiftId === shiftId && manA.sessionId === obsA.sessionId);
+  check("F6 manifest tracks the pending event", manA.pendingSyncEventIds.length === 1 && manA.pendingSyncEventIds[0] === obsA.eventId);
+
+  const obsB = await seams.appendObservationalEvent(driverId, "GOAL_SET", { targetEarnings: 150 }, fakeA);
+  check("F6 second event joins the same session", obsB.sessionId === obsA.sessionId);
+  check("F6 sequence continues monotonically", obsB.sequenceNumber === 1);
+  const manB = fakeA.getManifest();
+  check("F6 manifest updated in place (same shift)", manB.lastMaterializedSequence === 1 && manB.pendingSyncEventIds.length === 2);
+
+  const fakeC = makeFakeStore();
+  const seed = seedEvent({ shiftId });
+  await fakeC.appendEventAndUpdateManifest(seed, {
+    shiftId, sessionId: "sess-abc", lastMaterializedEventId: seed.eventId,
+    lastMaterializedSequence: 0, pendingSyncEventIds: [seed.eventId],
+    activeJobIds: [], updatedAt: seed.recordedAt,
+  });
+  const obsC = await seams.appendObservationalEvent(driverId, "SHIFT_ENDED", {}, fakeC);
+  check("F6 joins the live session when one exists", obsC.sessionId === "sess-abc" && obsC.sequenceNumber === 1, obsC.sessionId);
+
+  const ctxC = client.materialize(fakeC.events);
+  check("F6 SHIFT_ENDED materializes to ENDING", ctxC.shift.status === "ENDING", ctxC.shift.status);
+  const fakeD = makeFakeStore();
+  await seams.appendObservationalEvent(driverId, "GOAL_SET", { targetEarnings: 150 }, fakeD);
+  const ctxD = client.materialize(fakeD.events);
+  check("F6 GOAL_SET materializes targetEarnings", ctxD.goal.targetEarnings && ctxD.goal.targetEarnings.value === 150);
 } catch (err) {
   console.error(`ERROR  ${err.message}`);
   failures += 1;

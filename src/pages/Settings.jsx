@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Save, Check, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { getCachedUserId } from "@/lib/driverPrefsCache";
+import { observeGoalSet } from "@/architecture/seams/index";
+import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 import { OPTIMIZATION_MODES, DAILY_GOAL_PRESETS } from "@/lib/deliveryLabels";
 import { USER_TYPES } from "@/lib/userTypes";
 import {
@@ -89,10 +92,25 @@ export default function Settings() {
   async function save() {
     const data = { ...form };
     delete data.id; delete data.created_date; delete data.updated_date; delete data.created_by_id;
+    const prevGoal = prefs?.daily_goal;
     let res;
     if (prefs?.id) res = await base44.entities.DriverPreference.update(prefs.id, data);
     else res = await base44.entities.DriverPreference.create(data);
     setPrefs(res); setSaved(true);
+    // M1 WP8 observational dual-write (I75): an explicit daily-goal change
+    // appends GOAL_SET to the IndexedDB event log. The legacy
+    // DriverPreference write above is already committed and unaffected —
+    // this is fire-and-forget and never throws into the save flow.
+    const nextGoal = data.daily_goal;
+    if (
+      typeof nextGoal === "number" && Number.isFinite(nextGoal) && nextGoal > 0 &&
+      nextGoal !== prevGoal
+    ) {
+      getCachedUserId()
+        .then((uid) => observeGoalSet(uid || "unknown-driver", nextGoal))
+        .then(() => syncPendingEventsSoon())
+        .catch(() => {});
+    }
   }
 
   if (!form) return <div className="p-6 text-sm text-white/60">Loading…</div>;

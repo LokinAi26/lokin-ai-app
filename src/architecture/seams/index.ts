@@ -1,11 +1,12 @@
 /**
- * LOKIN AI — Observational seams barrel (M1 WP5)
+ * LOKIN AI — Observational seams barrel (M1 WP5, WP8)
  */
 
 export {
   observeLockIn,
   observeRelaunch,
   shiftIdFor,
+  newEventId,
   getRuntimeManifestHash,
 } from "./lockInSeam.js";
 export type {
@@ -13,3 +14,5 @@ export type {
   RelaunchOutcome,
   RelaunchReport,
 } from "./lockInSeam.js";
+export { observeShiftEnd, observeGoalSet, appendObservationalEvent } from "./dualWrite.js";
+export type { DualWriteObservation } from "./dualWrite.js";
