@@ -104,6 +104,14 @@ export default function HudItemLocator({ onClose }) {
     seekerRef.current?.setProximity({ proximity: 0, onTarget: false });
   }
 
+  // Hands-free voice close ("Hey LOKIN, stop scanning") — no screen touch
+  // needed to end the camera session.
+  useEffect(() => {
+    const onVoiceClose = () => onClose?.();
+    window.addEventListener("lokin:close-item-locator", onVoiceClose);
+    return () => window.removeEventListener("lokin:close-item-locator", onVoiceClose);
+  }, [onClose]);
+
   // Camera + detection loop (continuous, ~7 reads/sec).
   useEffect(() => {
     let stopped = false;

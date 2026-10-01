@@ -215,6 +215,16 @@ export default function VisionHud() {
 
   // ---- ITEM LOCATOR (camera homing mode, src/components/vision/HudItemLocator) ----
   const [locatorOpen, setLocatorOpen] = useState(false);
+  // Hands-free voice entry ("Hey LOKIN, start item locator") — same event bus
+  // as the locked GPS surface; this page consumes it when mounted.
+  useEffect(() => {
+    const onVoiceLocator = (e) => {
+      if (e?.detail) e.detail.handled = true;
+      setLocatorOpen(true);
+    };
+    window.addEventListener("lokin:open-item-locator", onVoiceLocator);
+    return () => window.removeEventListener("lokin:open-item-locator", onVoiceLocator);
+  }, []);
 
   // ---- GLASSES LINK (latest LokinVisionTelemetry record for this user) ----
   const [telemetry, setTelemetry] = useState(null);

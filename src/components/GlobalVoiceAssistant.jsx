@@ -33,6 +33,13 @@ const NAV_COMMANDS = [
   { keys: ["brand", "merch", "apparel", "shiesty", "gear", "store", "shop brand"], to: "/brand", label: "Opening Brand" },
   { keys: ["setting", "preference", "goal", "config", "options"], to: "/settings", label: "Opening Settings" },
   { keys: ["companion", "keep me company", "talk to me", "road companion", "drive mode", "driving mode", "ride along", "chat with me"], to: "/drive", label: "Opening Drive Mode" },
+  // HUD camera commands (2026-10-01): open/close the item-locator camera in place
+  // on whichever HUD surface is live (locked GPS nav or Vision HUD) — never a
+  // mid-drive navigation away from the active route. If no HUD surface is open,
+  // the open command falls back to the /locator page; the close command just
+  // reports that nothing is running.
+  { keys: ["barcode scanner", "scan barcode", "start item locator", "open item locator", "item locator mode", "camera locator", "beep seek", "start the locator", "locator camera"], event: "lokin:open-item-locator", to: "/locator", label: "Item locator camera on. Confirm the target on screen.", fallbackLabel: "Opening the item locator." },
+  { keys: ["close item locator", "stop item locator", "close locator", "stop locator", "stop scanning", "close scanner", "close the camera", "stop the camera"], event: "lokin:close-item-locator", label: "Item locator closed.", unhandledLabel: "The item locator isn't open." },
   { keys: ["find item", "item locator", "locate item", "where is", "smart shop", "find everything", "grocery", "shopping list", "locate product"], to: "/locator", label: "Opening Smart Shop Item Locator" },
   { keys: ["shop and deliver", "shopping order", "shopping route", "grocery delivery", "instacart order", "spark order"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
   { keys: ["gps command", "gps dashboard", "gps diagnostics", "command center", "gps control"], to: "/gps-command", label: "Opening GPS Command Center" },
@@ -253,9 +260,27 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       return;
     }
     if (nav) {
-      speak(nav.label);
-      setReply(nav.label);
-      setTimeout(() => { navigate(nav.to); }, 500);
+      if (nav.event) {
+        // HUD-surface commands: a mounted surface (locked GPS nav, Vision HUD)
+        // consumes the event synchronously by setting detail.handled.
+        const detail = { handled: false, source: "voice" };
+        window.dispatchEvent(new CustomEvent(nav.event, { detail }));
+        if (detail.handled) {
+          speak(nav.label);
+          setReply(nav.label);
+        } else if (nav.fallbackLabel !== undefined) {
+          speak(nav.fallbackLabel);
+          setReply(nav.fallbackLabel);
+          setTimeout(() => { navigate(nav.to); }, 500);
+        } else {
+          speak(nav.unhandledLabel || nav.label);
+          setReply(nav.unhandledLabel || nav.label);
+        }
+      } else {
+        speak(nav.label);
+        setReply(nav.label);
+        setTimeout(() => { navigate(nav.to); }, 500);
+      }
       setBusy(false);
       return;
     }

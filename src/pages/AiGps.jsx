@@ -499,6 +499,18 @@ function formatArrivalClock(remainingDurationS) {
 function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const [locatorOpen, setLocatorOpen] = useState(false);
+  // Hands-free voice entry ("Hey LOKIN, start item locator"): the locked nav
+  // surface consumes the open event so the camera homing overlay mounts ON TOP
+  // of live navigation instead of navigating away mid-drive.
+  useEffect(() => {
+    if (!nav.route) return undefined;
+    const onVoiceLocator = (e) => {
+      if (e?.detail) e.detail.handled = true;
+      setLocatorOpen(true);
+    };
+    window.addEventListener("lokin:open-item-locator", onVoiceLocator);
+    return () => window.removeEventListener("lokin:open-item-locator", onVoiceLocator);
+  }, [nav.route]);
   const error = nav.error || routeLoadError;
   const waiting = loadingStops || nav.status === "waiting_location" || nav.status === "routing" || nav.status === "rerouting";
   const arrived = nav.status === "arrived";
