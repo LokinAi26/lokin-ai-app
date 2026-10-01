@@ -11,10 +11,10 @@
 import type { ArchitectureRuntimeManifest } from "../contracts/index.js";
 
 export const RUNTIME_MANIFEST: ArchitectureRuntimeManifest = {
-  "commitSha": "c46f1f7f545a17320a74a7076999e6f36b103497",
+  "commitSha": "27cf6e462729869a64ea9c36e3ec737fdf080c98",
   "evaluatorVersions": {},
-  "generatedAt": "2026-10-01T21:45:57.935Z",
-  "manifestHash": "ae2f1fea782e097e0422bf28538d46866c4bb93e84ab84f00179046165118d2d",
+  "generatedAt": "2026-10-01T21:47:24.405Z",
+  "manifestHash": "1941ec7af533e5a345a2a6fe42468e256bd13764f4de694667f1d3f2248aaaaa",
   "policyVersions": {
     "spec": "SPEC-001"
   },
