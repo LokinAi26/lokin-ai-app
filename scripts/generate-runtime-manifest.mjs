@@ -178,9 +178,15 @@ function main() {
 
   if (args.check) {
     const existing = existsSync(args.out) ? readFileSync(args.out, "utf8") : null;
-    // generatedAt is informational and excluded from the manifest hash;
-    // normalize it so --check verifies version content, not the clock.
-    const normalize = (s) => s.replace(/"generatedAt": "[^"]*"/, '"generatedAt": "<normalized>"');
+    // generatedAt and commitSha are build provenance, excluded from the
+    // freshness check: the recorded commitSha is always the commit the
+    // manifest was generated AGAINST (an ancestor of the commit carrying
+    // the file), so it can never equal a fresh generation's HEAD. The
+    // package-content hashes are the freshness signal.
+    const normalize = (s) =>
+      s
+        .replace(/"generatedAt": "[^"]*"/, '"generatedAt": "<normalized>"')
+        .replace(/"commitSha": "[^"]*"/, '"commitSha": "<normalized>"');
     if (existing === null || normalize(existing) !== normalize(rendered)) {
       console.error(
         `runtime manifest CHECK FAILED: ${relative(root, args.out)} differs from generated output.\n` +

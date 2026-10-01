@@ -198,7 +198,13 @@ try {
   const manifestB = join(tmp, "manifest-b.ts");
   execFileSync("node", ["scripts/generate-runtime-manifest.mjs", "--out", manifestA, "--allow-dirty"], { cwd: root, stdio: "pipe" });
   execFileSync("node", ["scripts/generate-runtime-manifest.mjs", "--out", manifestB, "--allow-dirty"], { cwd: root, stdio: "pipe" });
-  const normManifest = (s) => s.replace(/"generatedAt": "[^"]*"/, '"generatedAt": "<normalized>"');
+  const normManifest = (s) =>
+    s
+      .replace(/"generatedAt": "[^"]*"/, '"generatedAt": "<normalized>"')
+      // commitSha is build provenance (the commit generated AGAINST, always
+      // an ancestor of the carrying commit) — the package-content hashes
+      // below it are the freshness signal.
+      .replace(/"commitSha": "[^"]*"/, '"commitSha": "<normalized>"');
   const textA = normManifest(readFileSync(manifestA, "utf8"));
   const textB = normManifest(readFileSync(manifestB, "utf8"));
   check("F5 manifest byte-identical across runs (modulo generatedAt)", textA === textB);
