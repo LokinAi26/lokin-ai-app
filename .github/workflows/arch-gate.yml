@@ -1,0 +1,19 @@
+# M1 WP0 — mandatory architecture gate.
+# Runs on every push and pull request: the TypeScript architecture
+# toolchain, the deterministic fixture suite (F1–F6), and the runtime
+# manifest freshness check must all pass before merge/publish.
+name: arch-gate
+on:
+  push:
+  pull_request:
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run release:gate

@@ -25,7 +25,8 @@
     "typecheck:arch": "tsc -p ./tsconfig.json",
     "sync:contracts": "node scripts/sync-architecture.mjs",
     "verify:arch-determinism": "node scripts/verify-architecture-determinism.mjs",
-    "generate:runtime-manifest": "node scripts/generate-runtime-manifest.mjs"
+    "generate:runtime-manifest": "node scripts/generate-runtime-manifest.mjs",
+    "release:gate": "npm run typecheck:arch && npm run verify:arch-determinism && node scripts/generate-runtime-manifest.mjs --check"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.52",
