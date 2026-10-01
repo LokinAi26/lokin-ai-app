@@ -13,6 +13,7 @@ import VehicleComparison from "@/components/earnings/VehicleComparison";
 import TaxExport from "@/components/earnings/TaxExport";
 import EarningsScreenshotImport from "@/components/EarningsScreenshotImport";
 import CategoryComparison from "@/components/earnings/CategoryComparison";
+import WeeklyCategorySummary from "@/components/earnings/WeeklyCategorySummary";
 import MonthlyTrends from "@/components/earnings/MonthlyTrends";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
@@ -246,6 +247,7 @@ export default function Earnings() {
 
       {!loading && <HourlyProfitability records={records} />}
 
+      {!loading && <WeeklyCategorySummary records={records} />}
       {!loading && <WeeklyZoneTrend records={records} />}
       {!loading && <ZoneComparison records={records} />}
 
