@@ -7,7 +7,7 @@
  * and SHALL NOT bury incompleteness after exact-looking totals.
  */
 
-import type { Provenance } from "./provenance.js";
+import type { Provenance } from "./provenance.ts";
 
 export interface ShiftRecapFacts {
   shiftId: string;

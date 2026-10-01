@@ -10,11 +10,11 @@
  * event log remains the source of truth.
  */
 
-import type { ContextValue } from "./provenance.js";
-import type { ApprovalRequest } from "./approval.js";
-import type { AttentionState } from "./attention.js";
-import type { DriverStrategy } from "./strategy.js";
-import type { RuntimeHealth } from "./runtime.js";
+import type { ContextValue } from "./provenance.ts";
+import type { ApprovalRequest } from "./approval.ts";
+import type { AttentionState } from "./attention.ts";
+import type { DriverStrategy } from "./strategy.ts";
+import type { RuntimeHealth } from "./runtime.ts";
 
 /**
  * SPEC-001 gap: referenced but not field-defined in frozen text.

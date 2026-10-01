@@ -9,6 +9,7 @@ import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel 
 import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
 import { observeRelaunch } from "@/architecture/seams/index";
+import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 import { ensureStarted as ensureLocationSession } from "@/lib/lokinLocationSession";
 
 import CommandEngine from "@/components/CommandEngine";
@@ -86,9 +87,11 @@ export default function DriverLayout() {
       // M1 WP5 observational seam (I75): materialize the IndexedDB event log
       // and compare against the legacy restored status. Report only —
       // DriverPreference.work_status remains the sole restore authority.
+      // M1 WP6: opportunistic idempotent sync of any events still pending.
       getCachedUserId()
         .then((uid) => observeRelaunch(uid || "unknown-driver", restoredStatus))
         .then((report) => console.info("[m1-seam] relaunch equivalence", report))
+        .then(() => syncPendingEventsSoon())
         .catch(() => {});
       const roamActive = sessionStorage.getItem("lokin_app_free_roam") === "1";
       setAppFreeRoam(roamActive);

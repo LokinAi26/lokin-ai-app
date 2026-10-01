@@ -10,6 +10,7 @@ import { askBrain } from "@/lib/lokinBrain";
 import { createOrQueue } from "@/lib/offlineQueue";
 import { getCachedUserId, writeWorkStatus } from "@/lib/driverPrefsCache";
 import { observeLockIn } from "@/architecture/seams/index";
+import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 import { setAiConsent } from "@/lib/aiConsent";
 import { speakLokin, canRecordVoice, startVoiceRecording, transcribeVoiceBlob, unlockVoiceAudio, stopSpeaking } from "@/lib/lokinVoicePipeline";
 import VoicePicker from "@/components/VoicePicker";
@@ -113,8 +114,10 @@ async function persistSessionAction(kind) {
     if (patch?.work_status === "working") {
       // M1 WP5 observational seam (I75): voice lock-in / resume appends
       // SESSION_STARTED to the IndexedDB event log. Fire-and-forget.
+      // M1 WP6: opportunistic idempotent sync of the pending event log.
       getCachedUserId()
         .then((uid) => observeLockIn(uid || "unknown-driver"))
+        .then(() => syncPendingEventsSoon())
         .catch(() => {});
     }
     const uid = await getCachedUserId();

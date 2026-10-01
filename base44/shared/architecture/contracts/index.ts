@@ -6,14 +6,14 @@
  * No component may create its own incompatible representation of these concepts.
  */
 
-export * from "./provenance.js";
-export * from "./events.js";
-export * from "./context.js";
-export * from "./strategy.js";
-export * from "./attention.js";
-export * from "./runtime.js";
-export * from "./sync.js";
-export * from "./approval.js";
-export * from "./learning.js";
-export * from "./recap.js";
-export * from "./schemas.js";
+export * from "./provenance.ts";
+export * from "./events.ts";
+export * from "./context.ts";
+export * from "./strategy.ts";
+export * from "./attention.ts";
+export * from "./runtime.ts";
+export * from "./sync.ts";
+export * from "./approval.ts";
+export * from "./learning.ts";
+export * from "./recap.ts";
+export * from "./schemas.ts";

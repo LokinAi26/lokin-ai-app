@@ -10,7 +10,7 @@
  * strategy.
  */
 
-import type { Assumption, Provenance } from "./provenance.js";
+import type { Assumption, Provenance } from "./provenance.ts";
 
 export interface StrategyValue<T> {
   value: T;

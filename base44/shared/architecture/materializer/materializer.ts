@@ -37,7 +37,7 @@ import type {
   LiveContext,
   Provenance,
   ShiftEvent,
-} from "../contracts/index.js";
+} from "../contracts/index.ts";
 
 export interface CorrectionConflict {
   correctedEventId: string;

@@ -14,7 +14,7 @@
  *   taken from frozen I5's rejected element { eventId, reason }.
  */
 
-import type { ShiftEvent } from "./events.js";
+import type { ShiftEvent } from "./events.ts";
 
 export interface EventSyncBatch {
   shiftId: string;

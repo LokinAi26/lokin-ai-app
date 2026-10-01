@@ -10,5 +10,5 @@ export {
   applyCorrections,
   materialize,
   materializeWithEvidence,
-} from "./materializer.js";
-export type { CorrectionConflict, MaterializeResult } from "./materializer.js";
+} from "./materializer.ts";
+export type { CorrectionConflict, MaterializeResult } from "./materializer.ts";

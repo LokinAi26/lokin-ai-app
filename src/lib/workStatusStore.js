@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, SESSION_STATUS } from "@/lib/sessionState";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
 import { observeLockIn } from "@/architecture/seams/index";
+import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 
 // Optimistic work-status store: Shift/Pause/Start toggles flip the UI
 // immediately while the DriverPreference write syncs in the background.
@@ -43,8 +44,10 @@ export function setWorkStatusOptimistic(prefs, next, patch = {}) {
     // M1 WP5 observational seam (I75): the Lock In moment appends
     // SESSION_STARTED to the IndexedDB event log. Fire-and-forget — a seam
     // failure must never break the legacy DriverPreference write.
+    // M1 WP6: opportunistic idempotent sync of the pending event log.
     getCachedUserId()
       .then((uid) => observeLockIn(uid || "unknown-driver"))
+      .then(() => syncPendingEventsSoon())
       .catch(() => {});
   }
   const write = prefs?.id
