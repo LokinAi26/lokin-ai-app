@@ -48,7 +48,7 @@ If the change touches auth, entitlements, user data, location, voice, provider c
 
 ## 7. Definition of done
 
-Do not declare completion until: requested behavior is implemented; root cause or architectural rationale is documented; relevant tests exist and pass; existing tests remain passing; error states are handled; no fake data was introduced; security impact was reviewed; performance impact was considered; the diff was reviewed for unrelated changes; remaining risks are explicitly listed.
+Do not declare completion until: requested behavior is implemented; root cause or architectural rationale is documented; relevant tests exist and pass; existing tests remain passing; error states are handled; no fake data was introduced; security impact was reviewed; performance impact was considered; the diff was reviewed for unrelated changes; the Review gate in `AGENTS.md` was passed (fresh read-only reviewer, ship verdict); remaining risks are explicitly listed.
 
 Never claim a command, test, build, deployment, or verification succeeded unless you actually executed or observed it.
 

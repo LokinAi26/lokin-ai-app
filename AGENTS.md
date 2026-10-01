@@ -41,6 +41,10 @@ Keep commits and diffs scoped. Do not mix feature work, unrelated cleanup, depen
 
 Never claim a command, test, build, deployment, or verification succeeded unless you actually executed or observed it.
 
+## Review gate
+
+No change is complete until the actual diff has been inspected by a reviewer working in fresh context — not the implementation session's context — with read-only access to the working tree. The reviewer returns exactly one verdict: **ship**, **fix-first**, or **rethink**. A fix-first verdict requires the fix **and** a new review of the new diff; a rethink verdict voids the approach and the replacement is reviewed the same way. Never self-review: the implementer does not review their own diff. The reviewer's verdict does not replace the implementer's own verification — both are required.
+
 ## Testing
 
 Tests should verify behavior, not implementation trivia. For regressions, first create or identify a reproducer when practical. Critical areas require explicit regression coverage: authentication, entitlements, session persistence, routing, navigation state, earnings calculations, provider normalization, permissions, account isolation. Never weaken a valid test simply to make CI pass.
