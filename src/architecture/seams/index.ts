@@ -16,3 +16,5 @@ export type {
 } from "./lockInSeam.js";
 export { observeShiftEnd, observeGoalSet, appendObservationalEvent } from "./dualWrite.js";
 export type { DualWriteObservation } from "./dualWrite.js";
+export { considerBackendSnapshot } from "./snapshotGuard.js";
+export type { BackendShiftSnapshot, SnapshotDecision } from "./snapshotGuard.js";

@@ -304,6 +304,120 @@ try {
   await seams.appendObservationalEvent(driverId, "GOAL_SET", { targetEarnings: 150 }, fakeD);
   const ctxD = client.materialize(fakeD.events);
   check("F6 GOAL_SET materializes targetEarnings", ctxD.goal.targetEarnings && ctxD.goal.targetEarnings.value === 150);
+
+  console.log("\nF4 — older-snapshot injection");
+  {
+    // F4 (M1 WP9): a backend snapshot older than the local recovery
+    // manifest is LOGGED and NOT APPLIED — local active-shift state
+    // must be preserved byte-for-byte.
+    const lockInSeam = await import(pathToFileURL(join(seamOut, "seams", "lockInSeam.js")).href);
+    const guard = await import(pathToFileURL(join(seamOut, "seams", "snapshotGuard.js")).href);
+    const { considerBackendSnapshot } = guard;
+    const { observeRelaunch } = lockInSeam;
+
+    const SHIFT = "shift-1";
+    const LOCAL_SEQ = 10;
+    const seedManifest = () => ({
+      shiftId: SHIFT,
+      lastMaterializedSequence: LOCAL_SEQ,
+      pendingSyncEventIds: ["e-10"],
+      updatedAt: "2026-10-01T10:00:00.000Z",
+    });
+    const fake = makeFakeStore();
+    await fake.appendEventAndUpdateManifest(
+      seedEvent({ shiftId: SHIFT, eventId: "e-1", type: "SESSION_STARTED", sequenceNumber: 8, payload: { manifestHash: "h" } }),
+      seedManifest()
+    );
+    await fake.appendEventAndUpdateManifest(
+      seedEvent({ shiftId: SHIFT, eventId: "e-2", type: "GOAL_SET", sequenceNumber: 9, payload: { targetEarnings: 200 } }),
+      seedManifest()
+    );
+    await fake.appendEventAndUpdateManifest(
+      seedEvent({ shiftId: SHIFT, eventId: "e-3", type: "SHIFT_ENDED", sequenceNumber: 10, payload: {} }),
+      seedManifest()
+    );
+
+    const snapshotOf = (shiftId, lastSequence) => ({
+      shiftId,
+      lastSequence,
+      lastEventId: `snap-${lastSequence}`,
+      updatedAt: "2026-10-01T09:00:00.000Z",
+    });
+    const before = JSON.stringify({ events: fake.events, manifest: fake.getManifest() });
+
+    // Capture the "logged" evidence: F4 requires the stale snapshot to be
+    // LOGGED, not just ignored.
+    const logs = [];
+    const origInfo = console.info;
+    console.info = (...args) => { logs.push(args); };
+
+    let dOlder, dNewer, dMismatch, dNoManifest;
+    try {
+      dOlder = await considerBackendSnapshot(snapshotOf(SHIFT, 4), fake);
+      dNewer = await considerBackendSnapshot(snapshotOf(SHIFT, 15), fake);
+      dMismatch = await considerBackendSnapshot(snapshotOf("other-shift", 99), fake);
+      dNoManifest = await considerBackendSnapshot(snapshotOf(SHIFT, 4), makeFakeStore());
+    } finally {
+      console.info = origInfo;
+    }
+
+    check("F4 older snapshot is not applied", dOlder.applied === false);
+    check("F4 older snapshot reason is OLDER_THAN_LOCAL", dOlder.reason === "OLDER_THAN_LOCAL");
+    check(
+      "F4 local events and manifest preserved byte-for-byte",
+      JSON.stringify({ events: fake.events, manifest: fake.getManifest() }) === before
+    );
+    check(
+      "F4 newer snapshot still not applied (M1 has no pull path)",
+      dNewer.applied === false && dNewer.reason === "NO_PULL_PATH_M1"
+    );
+    check(
+      "F4 mismatched shift not applied",
+      dMismatch.applied === false && dMismatch.reason === "SHIFT_MISMATCH"
+    );
+    check(
+      "F4 no local manifest not applied",
+      dNoManifest.applied === false && dNoManifest.reason === "NO_LOCAL_MANIFEST"
+    );
+    check(
+      "F4 stale snapshot was logged",
+      logs.some(
+        (a) => String(a[0]).includes("[m1-recovery]") && a[1]?.decision?.reason === "OLDER_THAN_LOCAL"
+      )
+    );
+
+    // Integration: observeRelaunch guards the snapshot before recovery reads
+    // and records the decision in the report (device Scenario C path).
+    const relaunchFake = makeFakeStore();
+    await relaunchFake.appendEventAndUpdateManifest(
+      seedEvent({ shiftId: SHIFT, eventId: "e-1", type: "SESSION_STARTED", sequenceNumber: 8, payload: { manifestHash: "h" } }),
+      seedManifest()
+    );
+    await relaunchFake.appendEventAndUpdateManifest(
+      seedEvent({ shiftId: SHIFT, eventId: "e-2", type: "GOAL_SET", sequenceNumber: 9, payload: { targetEarnings: 200 } }),
+      seedManifest()
+    );
+    const relaunchLogs = [];
+    console.info = (...args) => { relaunchLogs.push(args); };
+    let report;
+    try {
+      report = await observeRelaunch("driver-9", "off", snapshotOf(SHIFT, 4), relaunchFake);
+    } finally {
+      console.info = origInfo;
+    }
+    check(
+      "F4 relaunch records the snapshot decision",
+      report.snapshotDecision?.reason === "OLDER_THAN_LOCAL" && report.snapshotDecision.applied === false
+    );
+    check(
+      "F4 relaunch notes name the decision",
+      report.notes.some((n) => n.includes("OLDER_THAN_LOCAL"))
+    );
+    check(
+      "F4 relaunch still recovers the local goal state",
+      report.goalTarget === 200
+    );
+  }
 } catch (err) {
   console.error(`ERROR  ${err.message}`);
   failures += 1;

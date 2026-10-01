@@ -20,7 +20,13 @@ import type {
 } from "../contracts/index.js";
 import { RUNTIME_MANIFEST_HASH } from "../generated/runtimeManifest.js";
 import { getOperationalStore } from "../store/index.js";
+import type { OperationalStore } from "../store/index.js";
 import { materialize } from "../materializer/index.js";
+import {
+  considerBackendSnapshot,
+  type BackendShiftSnapshot,
+  type SnapshotDecision,
+} from "./snapshotGuard.js";
 
 export interface LockInObservation {
   eventId: string;
@@ -44,6 +50,8 @@ export interface RelaunchReport {
   activeJobCount: number | null;
   hasNavigationIdentifiers: boolean;
   notes: string[];
+  /** M1 WP9 F4: present when a backend snapshot was offered to recovery. */
+  snapshotDecision?: SnapshotDecision;
 }
 
 /**
@@ -146,14 +154,31 @@ export async function observeLockIn(
 /**
  * Relaunch bootstrap: read the log, materialize, compare against the legacy
  * restored status. Observational — returns a report, changes nothing.
+ *
+ * M1 WP9 F4: when `snapshot` is supplied, the backend snapshot is guarded
+ * BEFORE any recovery reads — an older snapshot is logged and never
+ * applied. The trailing `store` parameter is a test seam.
  */
 export async function observeRelaunch(
   driverId: string,
-  legacyStatus: string
+  legacyStatus: string,
+  snapshot?: BackendShiftSnapshot,
+  store: OperationalStore = getOperationalStore()
 ): Promise<RelaunchReport> {
   const notes: string[] = [];
-  const store = getOperationalStore();
   const manifest = await store.getRecoveryManifest();
+
+  // M1 WP9 F4: an offered backend snapshot is guarded BEFORE any recovery
+  // reads — an older snapshot is logged and never applied, so it cannot
+  // overwrite newer local active-shift state.
+  let snapshotDecision: SnapshotDecision | undefined;
+  if (snapshot) {
+    snapshotDecision = await considerBackendSnapshot(snapshot, store);
+    notes.push(
+      `backend snapshot offered (lastSequence ${snapshot.lastSequence}): ` +
+        `${snapshotDecision.reason} — ${snapshotDecision.detail}`
+    );
+  }
 
   if (!manifest) {
     return {
@@ -165,6 +190,7 @@ export async function observeRelaunch(
       activeJobCount: null,
       hasNavigationIdentifiers: false,
       notes: ["no recovery manifest in IndexedDB (first run or pre-M1 install)"],
+      snapshotDecision,
     };
   }
 
@@ -216,5 +242,6 @@ export async function observeRelaunch(
         manifest.navigation?.activeStopId
     ),
     notes,
+    snapshotDecision,
   };
 }
