@@ -51,6 +51,21 @@
     "platform": {
       "type": "string",
       "default": "mixed"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food_pickup",
+        "grocery_shop_deliver",
+        "grocery_pickup",
+        "retail",
+        "package",
+        "alcohol",
+        "pharmacy",
+        "mixed"
+      ],
+      "default": "mixed",
+      "description": "Order type these earnings came from (food, grocery, package, etc.) so historical earnings can be filtered and compared by category."
     }
   },
   "required": [

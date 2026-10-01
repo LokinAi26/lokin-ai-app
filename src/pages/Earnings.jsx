@@ -24,10 +24,23 @@ const RANGES = [
 
 function dayKey(d) { return d.toISOString().slice(0, 10); }
 
+// Earnings filter groups — each maps to one or more stored order-type tags.
+const CATEGORY_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "food_pickup", label: "Food" },
+  { value: "grocery", label: "Grocery" },
+  { value: "package", label: "Package" },
+  { value: "retail", label: "Retail" },
+  { value: "alcohol", label: "Alcohol" },
+  { value: "pharmacy", label: "Pharmacy" },
+  { value: "mixed", label: "Mixed" },
+];
+
 export default function Earnings() {
   const [records, setRecords] = useState([]);
   const [prefs, setPrefs] = useState(null);
   const [range, setRange] = useState("today");
+  const [cat, setCat] = useState("all");
   const [score, setScore] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,12 +78,15 @@ export default function Earnings() {
   const filtered = useMemo(() => {
     const now = new Date();
     const today = dayKey(now);
-    if (range === "today") return records.filter((r) => r.date === today);
-    const days = range === "week" ? 7 : 30;
-    const cutoff = new Date(now); cutoff.setDate(now.getDate() - (days - 1));
-    const ck = dayKey(cutoff);
-    return records.filter((r) => r.date >= ck);
-  }, [records, range]);
+    const byRange = (r) => (range === "today" ? r.date === today : r.date >= (() => { const c = new Date(now); c.setDate(now.getDate() - ((range === "week" ? 7 : 30) - 1)); return dayKey(c); })());
+    let rows = records.filter(byRange);
+    if (cat !== "all") {
+      rows = cat === "grocery"
+        ? rows.filter((r) => r.category === "grocery_shop_deliver" || r.category === "grocery_pickup")
+        : rows.filter((r) => (r.category || "mixed") === cat);
+    }
+    return rows;
+  }, [records, range, cat]);
 
   const gross = filtered.reduce((s, r) => s + (r.amount || 0), 0);
   const miles = filtered.reduce((s, r) => s + (r.miles || 0), 0);
@@ -170,6 +186,19 @@ export default function Earnings() {
           <button key={r.value} onClick={() => setRange(r.value)}
             className={`flex-1 rounded-xl py-1.5 font-medium transition-colors ${range === r.value ? "bg-lokin-lime font-bold text-black" : "text-lokin-dim"}`}>
             {r.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" role="group" aria-label="Filter earnings by order type">
+        {CATEGORY_FILTERS.map((c) => (
+          <button key={c.value} onClick={() => setCat(c.value)}
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+              cat === c.value
+                ? "border-lokin-neon/60 bg-lokin-neon/15 text-white"
+                : "border-white/10 bg-white/[0.03] text-white/55"
+            }`}>
+            {c.label}
           </button>
         ))}
       </div>

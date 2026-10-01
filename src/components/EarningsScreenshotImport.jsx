@@ -7,6 +7,7 @@ import {
   normalizeParsedEarning,
   EARNING_PLATFORMS,
 } from "@/lib/earningsOcr";
+import { CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
 
 // Screenshot -> AI parse -> confirm -> Earning record.
 // The driver snaps their gig-app earnings screen; the gateway vision model
@@ -16,7 +17,7 @@ export default function EarningsScreenshotImport({ onSaved }) {
   const fileRef = useRef(null);
   const [phase, setPhase] = useState("idle"); // idle | reading | parsed | saving | done | error
   const [preview, setPreview] = useState(null);
-  const [form, setForm] = useState({ amount: "", platform: "", date: "", trips: "", confidence: "low", note: "" });
+  const [form, setForm] = useState({ amount: "", platform: "", date: "", trips: "", category: "food_pickup", confidence: "low", note: "" });
   const [error, setError] = useState("");
 
   function set(k, v) {
@@ -33,7 +34,7 @@ export default function EarningsScreenshotImport({ onSaved }) {
       const dataUrl = await screenshotToDataUrl(file);
       setPreview(dataUrl);
       const result = await parseEarningsScreenshot(dataUrl);
-      setForm(normalizeParsedEarning(result.parsed));
+      setForm({ ...normalizeParsedEarning(result.parsed), category: "food_pickup" });
       setPhase("parsed");
     } catch (err) {
       setError(err?.message || "Could not read that screenshot. Try a clearer one, or enter it manually.");
@@ -56,6 +57,7 @@ export default function EarningsScreenshotImport({ onSaved }) {
         amount: Math.round(amount * 100) / 100,
         trips: Number(form.trips) > 0 ? Math.round(Number(form.trips)) : 0,
         platform: form.platform || "Other",
+        category: form.category || "mixed",
       });
       setPhase("done");
       onSaved?.();
@@ -69,7 +71,7 @@ export default function EarningsScreenshotImport({ onSaved }) {
     setPhase("idle");
     setPreview(null);
     setError("");
-    setForm({ amount: "", platform: "", date: "", trips: "", confidence: "low", note: "" });
+    setForm({ amount: "", platform: "", date: "", trips: "", category: "food_pickup", confidence: "low", note: "" });
   }
 
   const inputCls =
@@ -146,6 +148,26 @@ export default function EarningsScreenshotImport({ onSaved }) {
                 <div>
                   <div className="text-[10px] text-white/35 mb-1">Date</div>
                   <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} className={inputCls} />
+                </div>
+                <div className="col-span-2">
+                  <div className="text-[10px] text-white/35 mb-1">Order type</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => set("category", c.value)}
+                        aria-pressed={form.category === c.value}
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                          form.category === c.value
+                            ? "border-lokin-neon/60 bg-lokin-neon/15 text-white"
+                            : "border-white/10 bg-white/[0.03] text-white/55"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               {!form.platform && (
