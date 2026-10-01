@@ -39,7 +39,7 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -90,9 +90,13 @@ function gitHead() {
 
 function gitDirty() {
   try {
+    // Untracked files (??) are ignored: the manifest inputs are the tracked
+    // architecture sources + HEAD. An untracked file — including the
+    // generator's own not-yet-committed output — cannot change the hash.
     const out = execFileSync("git", ["status", "--porcelain"], { cwd: root, stdio: "pipe" })
       .toString()
-      .trim();
+      .split("\n")
+      .filter((line) => line.trim() !== "" && !line.startsWith("??"));
     return out.length > 0;
   } catch {
     return true;
@@ -102,7 +106,10 @@ function gitDirty() {
 function parseArgs(argv) {
   const args = { out: DEFAULT_OUT, check: false, allowDirty: false };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--out") args.out = join(root, argv[++i]);
+    if (argv[i] === "--out") {
+      const p = argv[++i];
+      args.out = isAbsolute(p) ? p : join(root, p);
+    }
     else if (argv[i] === "--check") args.check = true;
     else if (argv[i] === "--allow-dirty") args.allowDirty = true;
     else throw new Error(`unknown argument: ${argv[i]}`);
