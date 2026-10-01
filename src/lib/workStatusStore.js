@@ -40,31 +40,36 @@ export function setWorkStatusOptimistic(prefs, next, patch = {}) {
   const token = ++seq;
   pending = { status, token };
   emit(status);
-  if (status === SESSION_STATUS.working) {
-    // M1 WP5 observational seam (I75): the Lock In moment appends
-    // SESSION_STARTED to the IndexedDB event log. Fire-and-forget — a seam
-    // failure must never break the legacy DriverPreference write.
-    // M1 WP6: opportunistic idempotent sync of the pending event log.
-    getCachedUserId()
-      .then((uid) => observeLockIn(uid || "unknown-driver"))
-      .then(() => syncPendingEventsSoon())
-      .catch(() => {});
-  } else if (status === SESSION_STATUS.off && prev !== SESSION_STATUS.off) {
-    // M1 WP8 observational dual-write (I75): the Tap Out moment appends
-    // SHIFT_ENDED to the IndexedDB event log. Guarded to the transition
-    // INTO "off" so repeated off-sets don't duplicate the event.
-    // Fire-and-forget — a seam failure must never break the legacy write.
-    getCachedUserId()
-      .then((uid) => observeShiftEnd(uid || "unknown-driver"))
-      .then(() => syncPendingEventsSoon())
-      .catch(() => {});
-  }
+  // M1 observational seams (I75, X3): the legacy state update IS the fact
+  // being observed, so observation fires only AFTER the legacy write
+  // commits. Observing before the write resolves would record events for
+  // transitions that never happened when the write fails and the UI reverts.
+  // Fire-and-forget — a seam failure must never break the legacy write.
+  const observeAfterCommit = () => {
+    if (status === SESSION_STATUS.working) {
+      // M1 WP5: the Lock In moment appends SESSION_STARTED to the IndexedDB
+      // event log. M1 WP6: opportunistic idempotent sync of the pending log.
+      getCachedUserId()
+        .then((uid) => observeLockIn(uid || "unknown-driver"))
+        .then(() => syncPendingEventsSoon())
+        .catch(() => {});
+    } else if (status === SESSION_STATUS.off && prev !== SESSION_STATUS.off) {
+      // M1 WP8: the Tap Out moment appends SHIFT_ENDED to the IndexedDB
+      // event log. Guarded to the transition INTO "off" so repeated
+      // off-sets don't duplicate the event.
+      getCachedUserId()
+        .then((uid) => observeShiftEnd(uid || "unknown-driver"))
+        .then(() => syncPendingEventsSoon())
+        .catch(() => {});
+    }
+  };
   const write = prefs?.id
     ? base44.entities.DriverPreference.update(prefs.id, { work_status: status, ...patch })
     : base44.entities.DriverPreference.create({ work_status: status, ...patch });
   return write.then(
     (updated) => {
       if (pending?.token === token) { pending = null; emit(null, status); }
+      observeAfterCommit();
       return { ok: true, prefs: updated || prefs, status };
     },
     (error) => {

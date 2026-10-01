@@ -305,6 +305,42 @@ try {
   const ctxD = client.materialize(fakeD.events);
   check("F6 GOAL_SET materializes targetEarnings", ctxD.goal.targetEarnings && ctxD.goal.targetEarnings.value === 150);
 
+  // X4 regression: replicate Dexie's [shiftId+sequenceNumber] index ordering
+  // (sequence-major across sessions). After a second Lock In, the index
+  // tail belongs to the STALE first session; the manifest sessionId pointer
+  // is the live session. The event must join sess-new, not sess-old.
+  const fakeE = makeFakeStore();
+  for (let i = 0; i < 50; i++) {
+    const ev = seedEvent({ shiftId, sessionId: "sess-old", sequenceNumber: i, type: "EARNINGS_UPDATED" });
+    await fakeE.appendEventAndUpdateManifest(ev, {
+      shiftId, sessionId: "sess-old", lastMaterializedEventId: ev.eventId,
+      lastMaterializedSequence: i, pendingSyncEventIds: [ev.eventId],
+      activeJobIds: [], updatedAt: ev.recordedAt,
+    });
+  }
+  const newSess = seedEvent({ shiftId, sessionId: "sess-new", sequenceNumber: 0, type: "SESSION_STARTED" });
+  await fakeE.appendEventAndUpdateManifest(newSess, {
+    shiftId, sessionId: "sess-new", lastMaterializedEventId: newSess.eventId,
+    lastMaterializedSequence: 0, pendingSyncEventIds: [newSess.eventId],
+    activeJobIds: [], updatedAt: newSess.recordedAt,
+  });
+  const indexOrdered = [...fakeE.events].sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  fakeE.getShiftEvents = async () => indexOrdered; // Dexie index order, not insertion order
+  const obsE = await seams.appendObservationalEvent(driverId, "SHIFT_ENDED", {}, fakeE);
+  check("F6 X4: joins the live session from the manifest pointer, not the index tail", obsE.sessionId === "sess-new", obsE.sessionId);
+  check("F6 X4: sequence continues the live session's max", obsE.sequenceNumber === 1, String(obsE.sequenceNumber));
+  check("F6 X4: manifest sessionId does not regress", fakeE.getManifest().sessionId === "sess-new", fakeE.getManifest().sessionId);
+
+  // X6 regression: two concurrent observers must not compute the same next
+  // sequenceNumber. The single-writer chain serializes the appends.
+  const fakeF = makeFakeStore();
+  const [obsF1, obsF2] = await Promise.all([
+    seams.appendObservationalEvent(driverId, "GOAL_SET", { targetEarnings: 100 }, fakeF),
+    seams.appendObservationalEvent(driverId, "GOAL_SET", { targetEarnings: 200 }, fakeF),
+  ]);
+  const seqs = [obsF1.sequenceNumber, obsF2.sequenceNumber].sort((a, b) => a - b);
+  check("F6 X6: concurrent appends get distinct sequences", seqs[0] === 0 && seqs[1] === 1, seqs.join(","));
+
   console.log("\nF4 — older-snapshot injection");
   {
     // F4 (M1 WP9): a backend snapshot older than the local recovery

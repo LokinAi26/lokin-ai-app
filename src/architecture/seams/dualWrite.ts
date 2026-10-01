@@ -15,12 +15,18 @@
  *      "paused" has no frozen M1 event type and is therefore NOT observed.
  *   2. Settings daily_goal maps to GOAL_SET.payload.targetEarnings — the
  *      exact field the WP4 materializer reads (SPEC-001-derived).
- *   3. Session anchoring: the event joins the CURRENT session (sessionId of
- *      the latest event in today's shift bucket, next sequenceNumber after
- *      that session's max). If the log has no events for the shift yet
- *      (legacy wrote before any Lock In observation), the event anchors to
- *      `${shiftId}:legacy` — the same legacy-session identity the v0 upcast
- *      rule establishes.
+ *   3. Session anchoring (X4): the event joins the CURRENT session, resolved
+ *      from the recovery manifest's `sessionId` pointer — maintained by
+ *      `observeLockIn` and every append. NOT the last element of
+ *      `getShiftEvents`: Dexie's `[shiftId+sequenceNumber]` index is
+ *      sequence-major across sessions, so after a second Lock In the index
+ *      tail belongs to the stale first session. If the log has no manifest
+ *      for the shift yet (legacy wrote before any Lock In observation), the
+ *      event anchors to `${shiftId}:legacy` — the same legacy-session
+ *      identity the v0 upcast rule establishes.
+ *   4. Sequence monotonicity (X6): observational appends are serialized
+ *      through a module-level promise chain (`appendQueue.ts`) so two
+ *      concurrent observers cannot compute the same next sequenceNumber.
  *   4. The shift-end observation fires only on a transition INTO "off"
  *      (prev !== "off"); repeated off-sets must not duplicate SHIFT_ENDED.
  *      The guard lives at the call site, next to the WP5 working-transition
@@ -31,6 +37,7 @@ import type { ShiftEvent, ShiftRecoveryManifest } from "../contracts/index.js";
 import { getOperationalStore } from "../store/index.js";
 import type { OperationalStore } from "../store/index.js";
 import { newEventId, shiftIdFor } from "./lockInSeam.js";
+import { enqueueAppend } from "./appendQueue.js";
 
 export interface DualWriteObservation {
   eventId: string;
@@ -54,21 +61,39 @@ export async function appendObservationalEvent(
   payload: Record<string, unknown>,
   store: OperationalStore = getOperationalStore()
 ): Promise<DualWriteObservation> {
+  // X6: serialize behind the single-writer chain so concurrent observers
+  // cannot assign the same next sequenceNumber.
+  return enqueueAppend(() =>
+    appendObservationalEventInner(driverId, type, payload, store)
+  );
+}
+
+async function appendObservationalEventInner(
+  driverId: string,
+  type: "SHIFT_ENDED" | "GOAL_SET",
+  payload: Record<string, unknown>,
+  store: OperationalStore
+): Promise<DualWriteObservation> {
   const now = new Date();
   const nowIso = now.toISOString();
   const shiftId = shiftIdFor(driverId, now);
 
-  // Resolve the current session: latest event's session, else the legacy anchor.
-  const existing = await store.getShiftEvents(shiftId);
+  // X4: resolve the current session from the recovery manifest's sessionId
+  // pointer (the live session, maintained by observeLockIn and every
+  // append). The Dexie index tail is NOT recency — see header §3.
+  const prev = await store.getRecoveryManifest();
   let sessionId = `${shiftId}:legacy`;
+  if (prev && prev.shiftId === shiftId && prev.sessionId) {
+    sessionId = prev.sessionId;
+  }
+
+  // Next sequence after this session's max (order of `existing` is
+  // irrelevant — max is order-independent).
+  const existing = await store.getShiftEvents(shiftId);
   let nextSequence = 0;
-  if (existing.length > 0) {
-    const latest = existing[existing.length - 1];
-    sessionId = latest.sessionId;
-    for (const e of existing) {
-      if (e.sessionId === sessionId && e.sequenceNumber >= nextSequence) {
-        nextSequence = e.sequenceNumber + 1;
-      }
+  for (const e of existing) {
+    if (e.sessionId === sessionId && e.sequenceNumber >= nextSequence) {
+      nextSequence = e.sequenceNumber + 1;
     }
   }
 
@@ -86,7 +111,6 @@ export async function appendObservationalEvent(
     payload,
   };
 
-  const prev = await store.getRecoveryManifest();
   const manifest: ShiftRecoveryManifest =
     prev && prev.shiftId === shiftId
       ? {

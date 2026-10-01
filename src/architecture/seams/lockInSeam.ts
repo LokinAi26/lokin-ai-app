@@ -19,6 +19,7 @@ import type {
   ShiftRecoveryManifest,
 } from "../contracts/index.js";
 import { RUNTIME_MANIFEST_HASH } from "../generated/runtimeManifest.js";
+import { enqueueAppend } from "./appendQueue.js";
 import { getOperationalStore } from "../store/index.js";
 import type { OperationalStore } from "../store/index.js";
 import { materialize } from "../materializer/index.js";
@@ -147,7 +148,9 @@ export async function observeLockIn(
     updatedAt: nowIso,
   };
 
-  await store.appendEventAndUpdateManifest(event, manifest);
+  // X6: serialize behind the single-writer chain shared with the dual-write
+  // seam, so a concurrent observational append cannot interleave.
+  await enqueueAppend(() => store.appendEventAndUpdateManifest(event, manifest));
   return { eventId: event.eventId, shiftId, sessionId, appendedAt: nowIso };
 }
 
@@ -201,11 +204,14 @@ export async function observeRelaunch(
   // Expected materialized status for each legacy restore value.
   // "paused" has no frozen event type in M1, so any materialized status is
   // an expected divergence — legacy remains authoritative.
-  const expected =
+  // X5: legacy "off" may materialize as IDLE (nothing ever observed) or
+  // ENDING (a SHIFT_ENDED was observed on tap-out) — both are correct
+  // reconstructions of an off shift.
+  const expected: string[] | null =
     legacyStatus === "working"
-      ? "ACTIVE"
+      ? ["ACTIVE"]
       : legacyStatus === "off"
-        ? "IDLE"
+        ? ["IDLE", "ENDING"]
         : null;
 
   let outcome: RelaunchOutcome;
@@ -214,12 +220,12 @@ export async function observeRelaunch(
     notes.push(
       `legacy status "${legacyStatus}" has no frozen M1 event equivalent; materialized "${materializedStatus}" recorded for inspection only`
     );
-  } else if (materializedStatus === expected) {
+  } else if (expected.includes(materializedStatus)) {
     outcome = "equivalent";
   } else {
     outcome = "divergent";
     notes.push(
-      `legacy "${legacyStatus}" restored but materialized "${materializedStatus}" (expected "${expected}"); legacy remains authoritative under I75`
+      `legacy "${legacyStatus}" restored but materialized "${materializedStatus}" (expected one of: ${expected.join(", ")}); legacy remains authoritative under I75`
     );
   }
 

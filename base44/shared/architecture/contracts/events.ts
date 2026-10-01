@@ -38,7 +38,8 @@ export type ShiftEventType =
   | "MEMORY_CANDIDATE_CREATED"
   | "MEMORY_PROMOTED"
   | "MEMORY_REVOKED"
-  | "FACT_CORRECTED";
+  | "FACT_CORRECTED"
+  | "STRATEGY_UPDATED";
 
 export interface ShiftEvent<T = unknown> {
   eventId: string; // UUID, immutable
