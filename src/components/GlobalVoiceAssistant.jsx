@@ -41,6 +41,9 @@ const NAV_COMMANDS = [
   // reports that nothing is running.
   { keys: ["barcode scanner", "scan barcode", "start item locator", "open item locator", "item locator mode", "camera locator", "beep seek", "start the locator", "locator camera"], event: "lokin:open-item-locator", to: "/locator", label: "Item locator camera on. Confirm the target on screen.", fallbackLabel: "Opening the item locator." },
   { keys: ["close item locator", "stop item locator", "close locator", "stop locator", "stop scanning", "close scanner", "close the camera", "stop the camera"], event: "lokin:close-item-locator", label: "Item locator closed.", unhandledLabel: "The item locator isn't open." },
+  // Traffic/hazard report: while navigation is live the nav hook speaks the
+  // real report itself (label empty so the assistant never double-speaks).
+  { keys: ["traffic report", "check traffic", "any traffic", "traffic delay", "traffic update", "road hazard", "road hazards", "hazards", "how is traffic", "hows traffic", "traffic ahead"], event: "lokin:traffic-report", label: "", unhandledLabel: "Navigation isn't active, so there's no route traffic to check." },
   { keys: ["find item", "item locator", "locate item", "where is", "smart shop", "find everything", "grocery", "shopping list", "locate product"], to: "/locator", label: "Opening Smart Shop Item Locator" },
   { keys: ["shop and deliver", "shopping order", "shopping route", "grocery delivery", "instacart order", "spark order"], to: "/shop-deliver", label: "Opening Shop and Deliver" },
   { keys: ["gps command", "gps dashboard", "gps diagnostics", "command center", "gps control"], to: "/gps-command", label: "Opening GPS Command Center" },
@@ -332,8 +335,14 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
         const detail = { handled: false, source: "voice" };
         window.dispatchEvent(new CustomEvent(nav.event, { detail }));
         if (detail.handled) {
-          speak(nav.label);
-          setReply(nav.label);
+          // An empty label means the consuming surface spoke the real report
+          // itself (e.g. the live traffic readout) — don't double-speak.
+          if (nav.label) {
+            speak(nav.label);
+            setReply(nav.label);
+          } else {
+            setReply("Report read out on your route audio.");
+          }
         } else if (nav.fallbackLabel !== undefined) {
           speak(nav.fallbackLabel);
           setReply(nav.fallbackLabel);

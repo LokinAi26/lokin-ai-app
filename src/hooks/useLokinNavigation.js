@@ -97,6 +97,13 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const [liveVectorConfigured, setLiveVectorConfigured] = useState(null);
   const [providerProbeError, setProviderProbeError] = useState("");
   const [trafficEta, setTrafficEta] = useState(null);
+  // Mirror + dedupe refs for the spoken traffic-delay warning and the
+  // on-demand "check traffic" voice report.
+  const trafficEtaRef = useRef(null);
+  const trafficAlertDelayRef = useRef(0);
+  useEffect(() => { trafficEtaRef.current = trafficEta; }, [trafficEta]);
+  const voiceGuidanceRef = useRef(voiceGuidance);
+  voiceGuidanceRef.current = voiceGuidance;
   const [routeImprovement, setRouteImprovement] = useState(null);
   const [offlineRoute, setOfflineRoute] = useState(false);
   const [nativeRuntime, setNativeRuntime] = useState(null);
@@ -389,6 +396,26 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (!eta || !Number.isFinite(Number(eta.duration_s))) return null;
       const stamped = { ...eta, received_at_ms: Date.now() };
       setTrafficEta(stamped);
+      // Spoken traffic-delay warning: compare the fresh live ETA with what the
+      // current plan would take from this position. A meaningful slowdown is
+      // announced once — attention chime + voice — so the driver never has to
+      // look at the screen. Re-arms once the delay clears; a further slowdown
+      // of a minute or more re-announces with the new number.
+      if (voiceGuidanceRef.current) {
+        const planRemainingS = Math.max(0, Number(activeRoute.duration_s || 0) * (1 - Number(snap.progress || 0)));
+        const delayS = Number(eta.duration_s) - planRemainingS;
+        if (planRemainingS > 60 && delayS >= 120 && delayS >= 0.15 * planRemainingS) {
+          const prevAnnounced = trafficAlertDelayRef.current;
+          if (prevAnnounced === 0 || Math.abs(delayS - prevAnnounced) >= 60) {
+            trafficAlertDelayRef.current = Math.round(delayS);
+            const mins = Math.max(1, Math.round(delayS / 60));
+            playNavCue("imminent");
+            speakGuidance(`Heads up — traffic on your route. You're running about ${mins} minute${mins === 1 ? "" : "s"} slower than planned.`);
+          }
+        } else {
+          trafficAlertDelayRef.current = 0;
+        }
+      }
       return stamped;
     } catch {
       // Keep the last valid traffic ETA rather than replacing it with a fabricated estimate.
@@ -401,6 +428,37 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const timer = window.setInterval(refreshTrafficEta, 30000);
     return () => window.clearInterval(timer);
   }, [enabled, route?.generated_at, refreshTrafficEta]);
+
+  // Voice-activated traffic/hazard report ("Hey LOKIN, check traffic"): the
+  // voice assistant dispatches lokin:traffic-report; while navigation is live
+  // this answers with the freshest real traffic ETA spoken through the same
+  // guidance audio. No route live → the event stays unhandled and the
+  // assistant reports that navigation isn't active.
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const onTrafficReport = (e) => {
+      const activeRoute = routeRef.current;
+      if (!activeRoute) return;
+      const snap = snappedRef.current;
+      const eta = trafficEtaRef.current;
+      if (e?.detail) e.detail.handled = true;
+      const etaS = Number(eta?.duration_s);
+      if (!Number.isFinite(etaS)) {
+        speakGuidance("No traffic data yet for your route. LOKIN will warn you if that changes.");
+        return;
+      }
+      const mins = Math.max(1, Math.round(etaS / 60));
+      const planRemainingS = Math.max(0, Number(activeRoute.duration_s || 0) * (1 - Number(snap?.progress || 0)));
+      const delayS = etaS - planRemainingS;
+      const text = planRemainingS > 60 && delayS >= 120
+        ? `Traffic check: about ${mins} minutes to your last stop — running roughly ${Math.max(1, Math.round(delayS / 60))} minutes behind plan.`
+        : `Traffic check: about ${mins} minutes to your last stop. No significant delays.`;
+      playNavCue("approach");
+      speakGuidance(text);
+    };
+    window.addEventListener("lokin:traffic-report", onTrafficReport);
+    return () => window.removeEventListener("lokin:traffic-report", onTrafficReport);
+  }, [enabled]);
 
   // Proactive faster-route detection: while mid-delivery, periodically request a
   // fresh traffic-aware route from the live position to the remaining stops and
