@@ -105,9 +105,13 @@ export default function HudItemLocator({ onClose }) {
   }
 
   // Hands-free voice close ("Hey LOKIN, stop scanning") — no screen touch
-  // needed to end the camera session.
+  // needed to end the camera session. Sets detail.handled so the assistant
+  // confirms "Item locator closed." instead of claiming it wasn't open.
   useEffect(() => {
-    const onVoiceClose = () => onClose?.();
+    const onVoiceClose = (e) => {
+      if (e?.detail) e.detail.handled = true;
+      onClose?.();
+    };
     window.addEventListener("lokin:close-item-locator", onVoiceClose);
     return () => window.removeEventListener("lokin:close-item-locator", onVoiceClose);
   }, [onClose]);
