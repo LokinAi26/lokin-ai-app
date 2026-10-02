@@ -405,32 +405,6 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
     return () => window.clearTimeout(timer);
   }, [viewportKey, perspective, staticRouteGeometry, fullscreen, mapRefreshNonce, rendererMode, online]);
 
-  // TEMPORARY DEBUG: on-device size readout for GPS map strip investigation.
-  // REMOVE BEFORE APP STORE SUBMISSION.
-  useEffect(() => {
-    if (!fullscreen) return undefined;
-    const el = document.createElement("div");
-    el.id = "gps-size-debug";
-    el.style.cssText = "position:fixed;top:60px;left:8px;z-index:9999;background:#c00;color:#fff;padding:8px 10px;font-size:11px;font-family:monospace;border-radius:6px;max-width:90vw;white-space:pre-wrap;";
-    document.body.appendChild(el);
-    const update = () => {
-      const outer = document.querySelector("[data-map-outer]");
-      const liveRoot = outer?.querySelector(":scope > div > div.absolute.inset-0");
-      const container = document.querySelector('[aria-label="LOKIN live vector navigation map"]');
-      const canvas = container?.querySelector("canvas");
-      const cs = container ? window.getComputedStyle(container) : null;
-      el.textContent =
-        `winH:${window.innerHeight} docH:${document.documentElement.clientHeight}\n` +
-        `outerH:${outer?.clientHeight ?? "?"} pos:${outer ? window.getComputedStyle(outer).position : "?"}\n` +
-        `liveRootH:${liveRoot?.clientHeight ?? "?"}\n` +
-        `contH:${container?.clientHeight ?? "?"} contPos:${cs?.position ?? "?"} contTop:${cs?.top ?? "?"}\n` +
-        `canvasH:${canvas?.clientHeight ?? "?"} canvasStyleH:${canvas?.style?.height ?? "?"}`;
-    };
-    update();
-    const id = window.setInterval(update, 1500);
-    return () => { window.clearInterval(id); el.remove(); };
-  }, [fullscreen]);
-
   const routePoints = useMemo(() => {
     // Project against the viewport the DISPLAYED image was rendered for; the
     // live viewport can already be ahead of the image still on screen.
@@ -572,7 +546,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   if (!viewport) return null;
 
   return (
-    <div data-map-outer className={`box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "fixed inset-0 rounded-none border-0 shadow-none" : "relative w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+    <div className={`box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "fixed inset-0 rounded-none border-0 shadow-none" : "relative w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
       {/* Fullscreen: fixed inset-0 pins the map to the viewport itself, bypassing
           the navigation root entirely. The root's 100dvh can resolve short in
           some WKWebView shells, which left the map as a strip at the top. */}

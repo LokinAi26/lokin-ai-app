@@ -1143,6 +1143,8 @@ export default function LiveVectorMap({
     let disposed = false;
     let startupTimer = null;
     let map = null;
+    let forceFullHeightFn = null;
+    let fullHeightTimer = null;
     // Proximity-gated landmark loading + deferred Overpass extrusion cleanup.
     let landmarkMoveEndHandler = null;
     let idleEnhanceId = null;
@@ -1210,6 +1212,31 @@ export default function LiveVectorMap({
         // leave the map rendered as a small strip. A ResizeObserver on the
         // container is the authoritative signal (assigned to the effect-scope
         // containerObserver declared above, torn down in the cleanup).
+        //
+        // Belt-and-suspenders for the native shell: CSS inset-0 has failed to
+        // size the container in TestFlight (Builds 24-26 rendered a ~120px
+        // strip). Force the container to the visual viewport height via JS
+        // and re-assert on window resize/orientationchange. This bypasses any
+        // CSS containing-block issue in the WKWebView shell.
+        const forceFullHeight = () => {
+          try {
+            const el = containerRef.current;
+            if (!el) return;
+            const h = window.innerHeight || document.documentElement.clientHeight || 0;
+            const w = window.innerWidth || document.documentElement.clientWidth || 0;
+            if (h > 0) el.style.height = `${h}px`;
+            if (w > 0) el.style.width = `${w}px`;
+            if (mapRef.current) mapRef.current.resize();
+          } catch {
+            // Non-fatal; Mapbox window-resize tracking remains.
+          }
+        };
+        forceFullHeightFn = forceFullHeight;
+        forceFullHeight();
+        window.addEventListener("resize", forceFullHeight);
+        window.addEventListener("orientationchange", forceFullHeight);
+        // Re-assert shortly after init in case layout settles late.
+        fullHeightTimer = window.setTimeout(forceFullHeight, 500);
         try {
           const containerEl = containerRef.current;
           if (containerEl && typeof ResizeObserver !== "undefined") {
@@ -1408,6 +1435,11 @@ export default function LiveVectorMap({
       } catch {
         // Observer already gone.
       }
+      if (forceFullHeightFn) {
+        window.removeEventListener("resize", forceFullHeightFn);
+        window.removeEventListener("orientationchange", forceFullHeightFn);
+      }
+      window.clearTimeout(fullHeightTimer);
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
