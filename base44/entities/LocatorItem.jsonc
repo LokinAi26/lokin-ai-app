@@ -50,6 +50,36 @@
     "map_verified": {
       "type": "boolean"
     },
+    "geofence_latitude": {
+      "type": "number"
+    },
+    "geofence_longitude": {
+      "type": "number"
+    },
+    "geofence_radius_meters": {
+      "type": "number",
+      "default": 1.5
+    },
+    "store_api_source": {
+      "type": "string"
+    },
+    "store_api_sync_status": {
+      "type": "string"
+    },
+    "store_api_last_sync": {
+      "type": "string"
+    },
+    "driver_reports_count": {
+      "type": "number",
+      "default": 0
+    },
+    "confidence_weight_total": {
+      "type": "number",
+      "default": 0
+    },
+    "last_driver_report": {
+      "type": "string"
+    },
     "verification": {
       "type": "string"
     },

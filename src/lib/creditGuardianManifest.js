@@ -31,6 +31,11 @@ export const CREDIT_GUARDIAN_MANIFEST = {
   "motivationCoach": { tier: "EXTERNALIZE", ttl: 300000, reason: "nonessential generative AI" },
   "tax-advisor": { tier: "ON_DEMAND", ttl: 0, reason: "sensitive advisory; explicit request only" },
   "locateItem": { tier: "ON_DEMAND", ttl: 300000, reason: "explicit item lookup" },
+  "saveDoorPin": { tier: "MISSION_CRITICAL", ttl: 0, reason: "driver-confirmed delivery location write" },
+  "getDoorPin": { tier: "CACHE", ttl: 120000, reason: "driver door-pin read for location recall" },
+  "triggerItemLocator": { tier: "ON_DEMAND", ttl: 0, reason: "gps-triggered geofence evaluation" },
+  "reportItemLocation": { tier: "MISSION_CRITICAL", ttl: 0, reason: "crowd-sourced item position write" },
+  "syncStoreInventory": { tier: "CACHE", ttl: 3600000, reason: "store inventory sync with one-hour cache window" },
 };
 
 export function guardianPolicyFor(name) {

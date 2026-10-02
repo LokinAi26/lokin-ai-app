@@ -8,6 +8,10 @@ import BeepSeekScanner from "@/components/locator/BeepSeekScanner";
 import ScanToSearch from "@/components/locator/ScanToSearch";
 import OrderItemsImport from "@/components/OrderItemsImport";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import useItemLocator from "@/hooks/useItemLocator";
+import GeofenceBanner from "@/components/locator/GeofenceBanner";
+import DriverReportModal from "@/components/locator/DriverReportModal";
+import SharedErrorBoundary from "@/components/SharedErrorBoundary";
 
 const STEPS = ["SEARCH", "STORE MAP", "AISLE / SHELF"];
 
@@ -30,7 +34,7 @@ function derivePoint(item) {
   return null;
 }
 
-export default function Locator() {
+function LocatorContent() {
   const [searchParams] = useSearchParams();
   const autoImport = searchParams.get("import") === "1";
   const [query, setQuery] = useState("");
@@ -39,6 +43,7 @@ export default function Locator() {
   const [error, setError] = useState("");
   const [beepSeek, setBeepSeek] = useState(false);
   const [scanSearch, setScanSearch] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [tripItems, setTripItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lokin_smart_shop") || "[]"); } catch { return []; }
   });
@@ -70,6 +75,12 @@ export default function Locator() {
   const mapPoint = derivePoint(item);
   const hasRealMap = !!mapPoint;
   const optimizedTrip = optimizeStoreRoute(tripItems);
+  const {
+    geofenceResult,
+    dismissGeofence,
+    reportItemLocation,
+    currentCoords,
+  } = useItemLocator({ enabled: true });
 
   function addToTrip() {
     if (!item || tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode))) return;
@@ -111,6 +122,7 @@ export default function Locator() {
   return (
     <div className="p-4 space-y-4 pb-8">
       <div className="lokin-kicker lokin-kicker-lime">LOCATOR</div>
+      <GeofenceBanner geofenceResult={geofenceResult} onDismiss={dismissGeofence} />
       <div className="rounded-3xl border border-primary/25 lokin-panel radial-fade p-5">
         <div>
           <div className="flex items-center gap-2 text-primary"><PackageSearch className="h-5 w-5"/><span className="text-[11px] tracking-[0.2em] font-display">LOKIN ITEM LOCATOR</span></div>
@@ -146,6 +158,9 @@ export default function Locator() {
             {item.map_zone && <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/60"><Layers3 className="inline h-3.5 w-3.5 mr-1"/>Zone {item.map_zone}</span>}
           </div>
           <button onClick={addToTrip} className="mt-3 w-full rounded-xl border border-primary/25 bg-primary/[0.06] py-2 text-xs font-bold text-primary disabled:opacity-40" disabled={tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode))}>{tripItems.some((x) => (x.id || x.barcode) === (item.id || item.barcode)) ? "ADDED TO SMART SHOP" : "+ ADD TO SMART SHOP"}</button>
+          <button type="button" onClick={() => setReportOpen(true)} className="mt-2 w-full rounded-xl border border-primary/25 bg-primary/[0.04] py-2 text-xs font-bold text-primary">
+            Found It! Report exact location
+          </button>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/35">
             <span className="flex items-center gap-1"><Clock3 className="h-3 w-3"/>{freshness.label}</span>
             <span className={item.inventory_verified ? "text-primary/70" : "text-amber-300/70"}>{item.inventory_verified ? "VERIFIED STORE FEED" : "ESTIMATE / UNVERIFIED"}</span>
@@ -203,7 +218,23 @@ export default function Locator() {
         />
       )}
 
+      <DriverReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        item={item}
+        currentCoords={currentCoords}
+        onSubmit={reportItemLocation}
+      />
+
       {!result && <div className="rounded-3xl border border-dashed border-white/12 p-8 text-center text-sm text-white/40"><Store className="h-8 w-8 mx-auto mb-2 text-primary/50"/><div className="font-semibold text-white/65">Store intelligence, not just a barcode scanner.</div><div className="mt-1">LOKIN can show where the item should be and how many units the connected store says are available.</div></div>}
     </div>
+  );
+}
+
+export default function Locator() {
+  return (
+    <SharedErrorBoundary feature="item-locator">
+      <LocatorContent />
+    </SharedErrorBoundary>
   );
 }

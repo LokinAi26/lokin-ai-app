@@ -2,6 +2,51 @@
   "type": "object",
   "name": "DoorPin",
   "properties": {
+    "address": {
+      "type": "string",
+      "description": "Normalized address key used as the logical unique lookup key per driver"
+    },
+    "zip_code": {
+      "type": "string",
+      "description": "ZIP code for Virginia-only filtering"
+    },
+    "gps_latitude": {
+      "type": "number",
+      "description": "Driver GPS latitude captured at delivery confirmation"
+    },
+    "gps_longitude": {
+      "type": "number",
+      "description": "Driver GPS longitude captured at delivery confirmation"
+    },
+    "map_x": {
+      "type": "number",
+      "description": "LiveVectorMap map coordinate X"
+    },
+    "map_y": {
+      "type": "number",
+      "description": "LiveVectorMap map coordinate Y"
+    },
+    "precise_location_description": {
+      "type": "string",
+      "description": "Driver-provided marker description such as front door or side entrance"
+    },
+    "last_updated": {
+      "type": "string",
+      "description": "ISO timestamp for the most recent update"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO timestamp when the door pin was first created"
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "Driver/user id that owns this door pin"
+    },
+    "verified_by_delivery_count": {
+      "type": "number",
+      "description": "Incremented each time the same address is confirmed again by the same driver",
+      "default": 1
+    },
     "accuracy_m": {
       "type": "number",
       "description": "GPS accuracy in meters at capture time, when known"
@@ -39,8 +84,9 @@
     }
   },
   "required": [
-    "address_key",
-    "latitude",
-    "longitude"
+    "address",
+    "driver_id",
+    "gps_latitude",
+    "gps_longitude"
   ]
 }

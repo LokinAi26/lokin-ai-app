@@ -5,12 +5,18 @@ import { Navigation, MapPin, Clock, DollarSign, Check, ChevronLeft, ChevronRight
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import { guardedInvoke } from "@/lib/creditGuardian";
-import { saveDoorPin, captureDoorFix, hasDoorPin } from "@/lib/doorPins";
+import { captureDoorFix } from "@/lib/doorPins";
+import useDoorPin from "@/hooks/useDoorPin";
 
 // Mirrors the LOKIN "Active Delivery" mockup: customer card, ETA/distance,
 // earnings + $/hr, quick status actions, auto-update messages toggle.
 const STATUS = ["5 MIN AWAY", "AT PICKUP", "ON MY WAY", "OUTSIDE"];
 const AUTO_MSGS = ["Order Confirmed", "On My Way", "Arriving Soon", "Delivered"];
+
+function zipFromAddress(address) {
+  const match = String(address || "").match(/\b(\d{5})(?:-\d{4})?\b/);
+  return match?.[1] || "";
+}
 
 export default function ActiveDelivery() {
   const [data, setData] = useState(null);
@@ -24,11 +30,23 @@ export default function ActiveDelivery() {
 
   // Auto-learn the door: when a drop-off is marked delivered, quietly save
   // where the driver actually stopped. A manual pin later overrides it.
-  function autoLearnDoor(address) {
-    if (!address || hasDoorPin(address)) return;
-    captureDoorFix(12000)
-      .then((fix) => saveDoorPin({ address, ...fix, source: "auto" }))
-      .catch(() => {});
+  async function autoLearnDoor(address) {
+    if (!address || hasDoorPinForAddress(address)) return false;
+    try {
+      const fix = await captureDoorFix(12000);
+      await saveDoorPinRemote({
+        targetAddress: address,
+        zip_code: zipFromAddress(address),
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        description: "auto delivery confirmation",
+        source: "auto",
+      });
+      await refreshDoorPin({ address, zip_code: zipFromAddress(address) });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async function pinTheDoor() {
@@ -37,7 +55,15 @@ export default function ActiveDelivery() {
     setPinState("pinning");
     try {
       const fix = await captureDoorFix(15000);
-      saveDoorPin({ address, ...fix, source: "manual" });
+      await saveDoorPinRemote({
+        targetAddress: address,
+        zip_code: zipFromAddress(address),
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        description: "manual driver pin",
+        source: "manual",
+      });
+      await refreshDoorPin({ address, zip_code: zipFromAddress(address) });
       setPinState("pinned");
     } catch {
       setPinState("error");
@@ -67,6 +93,12 @@ export default function ActiveDelivery() {
   const stops = data?.sequenced || [];
   const total = stops.length;
   const current = stops[idx];
+  const currentZip = zipFromAddress(current?.dropoff_address || "");
+  const {
+    saveDoorPin: saveDoorPinRemote,
+    hasDoorPinForAddress,
+    refresh: refreshDoorPin,
+  } = useDoorPin(current?.dropoff_address || "", currentZip);
   const delivered = statusIdx === 4;
 
   useEffect(() => {
@@ -76,11 +108,12 @@ export default function ActiveDelivery() {
   }, [current?.id]);
 
   function pickStop(i) { setIdx(i); setStatusIdx(-1); setPinState("idle"); }
-  function markDelivered() {
+  async function markDelivered() {
     setStatusIdx(4);
     setAuto(true); // ensure delivered auto-message
-    autoLearnDoor(current?.dropoff_address || "");
-    setPinState(hasDoorPin(current?.dropoff_address || "") ? "pinned" : "idle");
+    const address = current?.dropoff_address || "";
+    const learned = await autoLearnDoor(address);
+    setPinState(learned || hasDoorPinForAddress(address) ? "pinned" : "idle");
   }
   function nextDelivery() {
     if (idx < total - 1) { setIdx(idx + 1); setStatusIdx(-1); }
