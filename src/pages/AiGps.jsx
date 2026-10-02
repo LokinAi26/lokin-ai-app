@@ -526,6 +526,19 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
   const bannerStreet = arrived
     ? "Destination reached"
     : (nav.maneuver?.road_name || destinationAddresses[0] || "Follow the highlighted road");
+  // Current street (Kendall 2026-10-02): the road the driver is ON right now,
+  // from the most recently passed maneuver. Distinct from bannerStreet (next maneuver).
+  const currentStreet = (() => {
+    if (arrived) return null;
+    const maneuvers = nav.route?.maneuvers || [];
+    const alongM = Number(nav.snappedPosition?.along_route_m || 0);
+    let current = null;
+    for (const m of maneuvers) {
+      if (Number(m?.along_route_m || 0) > alongM + 5) break;
+      if (m?.road_name) current = m.road_name;
+    }
+    return current;
+  })();
   const bannerDistance = nav.maneuver?.distance_from_driver_m != null
     ? formatDistance(nav.maneuver.distance_from_driver_m)
     : "\u2014";
@@ -652,6 +665,19 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
           </div>
           <VoicePicker compact voiceKind="guidance" />
           <div className="mt-2 text-[10px] leading-relaxed text-white/40">Tap Preview to hear it, then drive. Saved on this device.</div>
+        </div>
+      )}
+
+      {/* Current street banner (Kendall 2026-10-02): small pill just above the
+          ETA sheet showing the road the driver is actually on. */}
+      {nav.route && currentStreet && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/75 px-4 py-2 backdrop-blur-xl">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <div className="max-w-[70vw] truncate text-xs font-bold tracking-wide text-white/90">
+              {currentStreet}
+            </div>
+          </div>
         </div>
       )}
 
