@@ -1147,6 +1147,9 @@ export default function LiveVectorMap({
     let landmarkMoveEndHandler = null;
     let idleEnhanceId = null;
     let idleEnhanceTimer = null;
+    // ResizeObserver for the map container (assigned in start(), torn down in
+    // the cleanup below — so it must live in this effect's scope).
+    let containerObserver = null;
     // Honest retail data-service status (error pill, auto-retrying).
     const offRetailStatus = retailExtrusion.onStatus(setRetailStatus);
 
@@ -1205,8 +1208,8 @@ export default function LiveVectorMap({
         // WKWebView does not reliably fire window resize when the container
         // size changes (launch layout, rotation, safe-area shifts), which can
         // leave the map rendered as a small strip. A ResizeObserver on the
-        // container is the authoritative signal.
-        let containerObserver = null;
+        // container is the authoritative signal (assigned to the effect-scope
+        // containerObserver declared above, torn down in the cleanup).
         try {
           const containerEl = containerRef.current;
           if (containerEl && typeof ResizeObserver !== "undefined") {

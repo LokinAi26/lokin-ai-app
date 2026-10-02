@@ -578,7 +578,14 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     wake.lang = "en-US";
     wake.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const heard = e.results?.[i]?.[0]?.transcript || "";
+        const result = e.results?.[i];
+        // Driving-mode noise gate: interim transcripts flicker on road/engine
+        // noise, so only finalized results are considered — and a finalized
+        // result the engine itself scored as low-confidence is ignored too.
+        if (drivingMode && !result?.isFinal) continue;
+        const confidence = Number(result?.[0]?.confidence || 0);
+        if (drivingMode && confidence > 0 && confidence < 0.5) continue;
+        const heard = result?.[0]?.transcript || "";
         const wakeCommand = extractWakeCommand(heard);
         if (!wakeCommand.matched) continue;
         const now = Date.now();
