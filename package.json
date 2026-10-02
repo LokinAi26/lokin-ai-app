@@ -21,7 +21,12 @@
     "verify:control-plane": "node scripts/verify-control-plane.mjs",
     "verify:platform": "node scripts/verify-platform-architecture.mjs && node scripts/verify-control-plane.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck:arch": "tsc -p ./tsconfig.json",
+    "sync:contracts": "node scripts/sync-architecture.mjs",
+    "verify:arch-determinism": "node scripts/verify-architecture-determinism.mjs",
+    "generate:runtime-manifest": "node scripts/generate-runtime-manifest.mjs",
+    "release:gate": "npm run typecheck:arch && npm run verify:arch-determinism && node scripts/generate-runtime-manifest.mjs --check"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.52",
@@ -64,6 +69,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dexie": "4.4.6",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^11.16.4",
     "html2canvas": "^1.4.1",
