@@ -68,6 +68,20 @@ function matchMusic(text) {
   return null;
 }
 
+// Session earnings readout — spoken so the driver never looks at the screen.
+// Matched BEFORE the /earnings nav command (whose keys include "earning"),
+// so "read my earnings" speaks the number instead of opening the page.
+const SESSION_EARNINGS_KEYS = [
+  "session earnings", "read my earnings", "read out my earnings",
+  "read out earnings", "current earnings", "say my earnings",
+  "what are my earnings", "how are my earnings", "earnings so far",
+];
+
+function matchSessionEarningsReadout(text) {
+  const t = normalizeText(text);
+  return SESSION_EARNINGS_KEYS.some((k) => t.includes(normalizeText(k)));
+}
+
 function matchCommand(text) {
   const t = normalizeText(text);
   for (const c of NAV_COMMANDS) {
@@ -252,6 +266,29 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       navigate(sessionAction.nav);
       setBusy(false);
       persistSessionAction(sessionAction.kind);
+      return;
+    }
+    if (matchSessionEarningsReadout(command)) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const rows = await base44.entities.Earning.filter({});
+        const todays = rows.filter((e) => e.date === today);
+        const gross = todays.reduce((s, e) => s + (e.amount || 0), 0);
+        const trips = todays.reduce((s, e) => s + (e.trips || 0), 0);
+        let msg;
+        if (!todays.length) {
+          msg = "No earnings logged yet today.";
+        } else {
+          msg = `You're at $${gross.toFixed(2)} today` + (trips ? ` across ${trips} trip${trips === 1 ? "" : "s"}` : "") + ".";
+        }
+        speak(msg);
+        setReply(msg);
+      } catch {
+        const msg = "I couldn't read your earnings right now. Try again in a moment.";
+        speak(msg);
+        setReply(msg);
+      }
+      setBusy(false);
       return;
     }
     const music = matchMusic(command);
