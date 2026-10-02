@@ -205,7 +205,12 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
   } catch { return "mixed"; } })();
   const voiceSupported = Boolean(speechRecognitionCtor());
   const voiceInputAvailable = voiceSupported || canRecordVoice();
-  const wakeEnabled = (drivingMode || alwaysOn) && !wakeBlocked;
+  // The WAKE WORD toggle is the single source of truth for wake-word
+  // listening. drivingMode must NOT force it on: the toggle visibly says
+  // "Off" while the recognizer would otherwise keep running (toggle/label
+  // vs actual state mismatch). drivingMode still shapes presentation
+  // (compact sheet vs full hero) elsewhere.
+  const wakeEnabled = alwaysOn && !wakeBlocked;
   alwaysOnRef.current = wakeEnabled;
   // Presentation: full-screen hero when opened from the LOKIN tab;
   // compact bottom sheet for in-flow (driving) invocations.
@@ -974,14 +979,14 @@ const VOICE_CSS = `
                         <div className="wake-row">
                           <div>
                             <div className="kicker">Wake word</div>
-                            <div className="wake-title">Hey LOKIN · <span>{!voiceInputAvailable ? "Unavailable" : alwaysOn ? "App Open" : "Off"}</span></div>
+                            <div className="wake-title">Hey LOKIN · <span>{!voiceInputAvailable ? "Unavailable" : wakeEnabled ? "App Open" : "Off"}</span></div>
                           </div>
                           <button
                             className="toggle"
                             type="button"
                             role="switch"
-                            aria-checked={alwaysOn}
-                            aria-pressed={alwaysOn ? "true" : "false"}
+                            aria-checked={wakeEnabled}
+                            aria-pressed={wakeEnabled ? "true" : "false"}
                             aria-label="Toggle Hey LOKIN wake word"
                             onClick={toggleAlwaysOn}
                           />
@@ -1071,13 +1076,13 @@ const VOICE_CSS = `
 
                   <button
                     onClick={toggleAlwaysOn}
-                    className={`lokin-card rounded-2xl mt-4 w-full flex items-center justify-between px-3 py-2.5 ${alwaysOn ? "border-accent/50 bg-accent/10" : ""}`}
+                    className={`lokin-card rounded-2xl mt-4 w-full flex items-center justify-between px-3 py-2.5 ${wakeEnabled ? "border-accent/50 bg-accent/10" : ""}`}
                   >
                     <span className="flex items-center gap-2 text-sm text-white/80">
-                      Hey LOKIN · App Open
+                      Hey LOKIN · {wakeEnabled ? "App Open" : "Off"}
                     </span>
-                    <span className={`text-xs font-bold ${alwaysOn ? "text-accent" : "text-white/40"}`}>
-                      {!voiceInputAvailable ? "UNAVAILABLE" : alwaysOn ? "ON" : "OFF"}
+                    <span className={`text-xs font-bold ${wakeEnabled ? "text-accent" : "text-white/40"}`}>
+                      {!voiceInputAvailable ? "UNAVAILABLE" : wakeEnabled ? "ON" : "OFF"}
                     </span>
                   </button>
                   <div className="mt-1.5 text-center text-[10px] text-white/50">
