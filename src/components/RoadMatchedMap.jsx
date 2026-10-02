@@ -546,7 +546,10 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
   if (!viewport) return null;
 
   return (
-    <div className={`relative box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "h-[100dvh] w-screen max-w-[100vw] rounded-none border-0 shadow-none" : "w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+    <div className={`box-border min-w-0 overflow-hidden bg-[#111820] ${fullscreen ? "absolute inset-0 rounded-none border-0 shadow-none" : "relative w-full max-w-full rounded-[2rem] border border-accent/30 shadow-[0_0_40px_-20px_hsl(188_95%_50%)]"}`}>
+      {/* Fullscreen: absolute inset-0 pins the map to the fixed navigation root
+          instead of relying on 100dvh, which can resolve short in some
+          WKWebView shells and leave the map rendered as a strip at the top. */}
       <div
         className={`relative w-full max-w-full overflow-hidden bg-[#121820] ${fullscreen ? "h-full" : perspective ? "aspect-[4/5] min-h-[430px]" : "aspect-[16/10] min-h-[280px]"}`}
         style={{ touchAction: rendererMode === "fallback" ? "none" : "auto" }}

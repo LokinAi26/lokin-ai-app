@@ -1201,6 +1201,28 @@ export default function LiveVectorMap({
         mapRef.current = map;
         map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
 
+        // Keep the GL canvas matched to its container. The native shell's
+        // WKWebView does not reliably fire window resize when the container
+        // size changes (launch layout, rotation, safe-area shifts), which can
+        // leave the map rendered as a small strip. A ResizeObserver on the
+        // container is the authoritative signal.
+        let containerObserver = null;
+        try {
+          const containerEl = containerRef.current;
+          if (containerEl && typeof ResizeObserver !== "undefined") {
+            containerObserver = new ResizeObserver(() => {
+              try {
+                if (mapRef.current) mapRef.current.resize();
+              } catch {
+                // Map may be mid-teardown; the next observation retries.
+              }
+            });
+            containerObserver.observe(containerEl);
+          }
+        } catch {
+          // ResizeObserver unavailable; Mapbox's window-resize tracking remains.
+        }
+
         const markerElement = createDriverMarker();
         markerRef.current = new mapboxgl.Marker({
           element: markerElement,
@@ -1378,6 +1400,11 @@ export default function LiveVectorMap({
       baggz247Master.destroy();
       meshBuilder.destroy();
       retailExtrusion.destroy();
+      try {
+        if (containerObserver) containerObserver.disconnect();
+      } catch {
+        // Observer already gone.
+      }
       map?.remove();
       mapRef.current = null;
       loadedRef.current = false;
