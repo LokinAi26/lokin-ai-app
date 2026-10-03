@@ -26,6 +26,7 @@ import {
   reacquire as reacquireLocationSession,
 } from "@/lib/lokinLocationSession";
 import { reroutePolicy } from "@/lib/navigationQuality";
+import { logTrafficDelay, streetFromInstruction } from "@/lib/trafficDelayLog";
 import {
   navigationSampleIntervalMs,
   shouldAcceptNavigationSample,
@@ -411,6 +412,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
             const mins = Math.max(1, Math.round(delayS / 60));
             playNavCue("imminent");
             speakGuidance(`Heads up — traffic on your route. You're running about ${mins} minute${mins === 1 ? "" : "s"} slower than planned.`);
+            // Delay log (2026-10-03): each announced slowdown is recorded with
+            // its location, magnitude and day part so the driver can review
+            // which areas to avoid at which hours.
+            const loggedManeuver = nextManeuverForSnap(activeRoute.maneuvers || [], snap, activeRoute.geometry?.coordinates || []);
+            logTrafficDelay({
+              coordinate: snap?.coordinate,
+              streetName: streetFromInstruction(loggedManeuver?.maneuver?.instruction || ""),
+              delayMinutes: mins,
+              source: "auto_warning",
+            });
           }
         } else {
           trafficAlertDelayRef.current = 0;
@@ -455,6 +466,16 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         : `Traffic check: about ${mins} minutes to your last stop. No significant delays.`;
       playNavCue("approach");
       speakGuidance(text);
+      // A voice-reported slowdown is logged too, tagged as a driver report.
+      if (planRemainingS > 60 && delayS >= 120) {
+        const loggedManeuver = nextManeuverForSnap(activeRoute.maneuvers || [], snap, activeRoute.geometry?.coordinates || []);
+        logTrafficDelay({
+          coordinate: snap?.coordinate,
+          streetName: streetFromInstruction(loggedManeuver?.maneuver?.instruction || ""),
+          delayMinutes: Math.max(1, Math.round(delayS / 60)),
+          source: "voice_report",
+        });
+      }
     };
     window.addEventListener("lokin:traffic-report", onTrafficReport);
     return () => window.removeEventListener("lokin:traffic-report", onTrafficReport);

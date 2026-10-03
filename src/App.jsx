@@ -33,6 +33,7 @@ const ThankYou = lazy(() => import('./pages/ThankYou'));
 const Support = lazy(() => import('./pages/Support'));
 const GigTasks = lazy(() => import('./pages/GigTasks'));
 const Hotspots = lazy(() => import('./pages/Hotspots'));
+const TrafficLog = lazy(() => import('./pages/TrafficLog'));
 const Tax = lazy(() => import('./pages/Tax'));
 const Receipts = lazy(() => import('./pages/Receipts'));
 const VehicleCare = lazy(() => import('./pages/VehicleCare'));
@@ -154,6 +155,7 @@ const AuthenticatedApp = () => {
           <Route path="/support" element={<Support />} />
           <Route path="/gigs" element={<GigTasks />} />
           <Route path="/hotspots" element={<Hotspots />} />
+          <Route path="/traffic" element={<TrafficLog />} />
           <Route path="/tax" element={<Tax />} />
           <Route path="/receipts" element={<Receipts />} />
           <Route path="/vehicle-care" element={<VehicleCare />} />

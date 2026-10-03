@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Satellite, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, BadgeDollarSign, Glasses, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
+import { Satellite, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, Timer, BadgeDollarSign, Glasses, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import PartnerApps from "@/components/PartnerApps";
@@ -16,6 +16,7 @@ const SECTIONS = [
       { to: "/settings", icon: SettingsIcon, title: "Settings", desc: "Goals, vehicle & pay targets" },
       { to: "/categories", icon: ListFilter, title: "Work Filters", desc: "Choose your work" },
       { to: "/avoid", icon: Ban, title: "Avoid List", desc: "Block unwanted stops" },
+      { to: "/traffic", icon: Timer, title: "Traffic Delay Log", desc: "Areas & times to avoid" },
       { to: "/connect", icon: Plug, title: "AI Connections", desc: "ChatGPT, Claude, Cursor" },
       { to: "/5g", icon: Signal, title: "Connection Diagnostics", desc: "Device-reported network metrics" },
       { to: "/gps-command", icon: Satellite, title: "GPS Command Center", desc: "Signal, accuracy modes & agent log" },

@@ -1,0 +1,81 @@
+{
+  "name": "TrafficDelay",
+  "type": "object",
+  "properties": {
+    "area": {
+      "type": "string",
+      "description": "Area label for the delay \u2014 street or road name near the slowdown, or coordinates."
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "delay_minutes": {
+      "type": "number",
+      "description": "Extra minutes the live traffic ETA ran behind plan at report time."
+    },
+    "day_part": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "lunch",
+        "afternoon",
+        "dinner",
+        "evening",
+        "late_night"
+      ],
+      "description": "Part of day when the delay was reported, for time-of-day avoid patterns."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "auto_warning",
+        "voice_report"
+      ],
+      "default": "auto_warning",
+      "description": "How the delay was reported \u2014 automatic navigation warning or a driver voice check."
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "area",
+    "delay_minutes"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
