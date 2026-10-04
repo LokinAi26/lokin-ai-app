@@ -16,6 +16,8 @@ import {
   getPoiAnchors,
 } from "@/lib/poiAnchors";
 
+import GpsVoiceAnnotation from "@/components/gps/GpsVoiceAnnotation";
+
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
 const ROUTE_LINE = "lokin-live-route-line";
@@ -1880,6 +1882,14 @@ export default function LiveVectorMap({
         </button>
       )}
       {cinematic && status === "ready" && <CinematicFpsMeter fullscreen={fullscreen} mapRef={mapRef} showcaseRef={showcaseRef} />}
+      {/* GPS voice annotation (SPEC-002 section 6): mic button + provisional
+          DRIVER_REPORTED annotations. Only new chrome on the map surface. */}
+      {status === "ready" && (
+        <GpsVoiceAnnotation
+          mapRef={mapRef}
+          coordinate={normalizeCoordinate(snappedPosition?.coordinate)}
+        />
+      )}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
           <div className="flex items-center gap-2 text-xs font-semibold text-accent">
