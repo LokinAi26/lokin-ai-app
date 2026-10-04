@@ -1,0 +1,94 @@
+{
+  "name": "DeliveryZone",
+  "type": "object",
+  "properties": {
+    "subtype": {
+      "type": "string",
+      "enum": [
+        "DROP_OFF",
+        "PICKUP",
+        "STAGING"
+      ],
+      "description": "Delivery-zone sub-type."
+    },
+    "label": {
+      "type": "string",
+      "description": "Short display label, e.g. 'DROP OFF \u2014 at current position'."
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "radius_m": {
+      "type": "number",
+      "default": 50,
+      "description": "Annotation radius in meters. Driver-reported annotations default to 50m around the GPS fix."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "provisional",
+        "confirmed"
+      ],
+      "default": "provisional",
+      "description": "Provisional until the driver taps the annotation to confirm it."
+    },
+    "provenance": {
+      "type": "string",
+      "enum": [
+        "DRIVER_REPORTED"
+      ],
+      "default": "DRIVER_REPORTED",
+      "description": "Data provenance shown on the map label \u2014 never simulated or invented."
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Verbatim driver speech that produced this annotation."
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the driver reported it."
+    }
+  },
+  "required": [
+    "subtype",
+    "label",
+    "latitude",
+    "longitude"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
