@@ -8,7 +8,7 @@
     },
     "do": [
       {
-        "scan": {
+        "scan_jobs": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "scanOpportunities",
@@ -18,10 +18,28 @@
               "internal_job_key": "REPLACE_WITH_LOKIN_INTERNAL_JOB_KEY"
             }
           },
+          "then": "scan_gigs",
+          "x-base44": {
+            "title": "Run Hampton Roads jobs scan",
+            "description": "Live verification scan for current delivery & courier openings"
+          }
+        }
+      },
+      {
+        "scan_gigs": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "scanOpportunities",
+            "args": {
+              "scheduled": true,
+              "mode": "gigs",
+              "internal_job_key": "REPLACE_WITH_LOKIN_INTERNAL_JOB_KEY"
+            }
+          },
           "then": "end",
           "x-base44": {
-            "title": "Run Hampton Roads scan",
-            "description": "Live verification scan for current delivery & courier openings"
+            "title": "Run Hampton Roads gigs scan",
+            "description": "Live verification scan for mystery shop, food review, product test & paid research gigs"
           }
         }
       }
@@ -33,7 +51,7 @@
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 7 * * 1",
+      "cron_expression": "0 7 * * *",
       "one_time_date": null,
       "timezone": "America/New_York",
       "interval_value": null,
@@ -45,5 +63,5 @@
     }
   },
   "name": "Monday Opportunity Scan",
-  "description": "Weekly backup scan that live-verifies current Hampton Roads delivery & courier openings. App pages also refresh on demand and hide expired/unverified records."
+  "description": "Daily auto-scan that live-verifies current Hampton Roads gig opportunities \u2014 delivery/courier jobs plus mystery shopping, food review, product testing and paid research. App pages also refresh on demand and hide expired/unverified records."
 }
