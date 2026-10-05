@@ -147,6 +147,19 @@ export default function DriverLayout() {
     navigate(resumeUrl);
   }
 
+  // Every page gets a Back affordance in the shared header.
+  // Nested pages return to their owning tab (locator keeps its shop-flow step);
+  // everything else pops the navigation history when one exists, falling back
+  // to the delivery home root when the app was opened directly on this page.
+  function goBack() {
+    if (isNested) {
+      navigate(isShopFlow && loc.pathname === "/locator" ? "/shop-deliver" : TAB_ROOTS[currentTab]);
+      return;
+    }
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate("/");
+  }
+
   function handleTabClick(tabKey) {
     if (tabKey === currentTab) {
       // Tapping the active tab pops to its root (iOS convention)
@@ -160,16 +173,17 @@ export default function DriverLayout() {
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
       {!lockedGps && loc.pathname !== "/" && <header className="chrome-shell sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
-          {isNested ? (
-            <button onClick={() => navigate(isShopFlow && loc.pathname === "/locator" ? "/shop-deliver" : TAB_ROOTS[currentTab])} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
+          <div className="flex items-center gap-2">
+            <button onClick={goBack} aria-label="Go back" className="flex items-center gap-1 -ml-1 py-1 select-none">
               <ChevronLeft className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-white/80">Back</span>
             </button>
-          ) : (
-            <button onClick={() => setCmdOpen(true)} aria-label="LOKIN command engine" className="flex items-center gap-1.5 select-none">
-              <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-9 w-auto" />
-            </button>
-          )}
+            {!isNested && (
+              <button onClick={() => setCmdOpen(true)} aria-label="LOKIN command engine" className="select-none">
+                <img src={LOKIN_LOGO} alt="LOKIN AI — Unlock your potential" draggable="false" className="h-7 w-auto" />
+              </button>
+            )}
+          </div>
           <button onClick={() => navigate("/gps-command")} aria-label="GPS Command Center"
             className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-black/60 text-primary select-none active:scale-95 transition-transform"
             style={{ boxShadow: "0 0 10px rgba(124,252,30,.35)" }}>
