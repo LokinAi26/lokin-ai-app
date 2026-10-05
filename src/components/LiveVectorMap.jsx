@@ -1341,12 +1341,13 @@ export default function LiveVectorMap({
           baggz247Master.registerSignatureLandmarks();
           baggz247Master.registerBatch2Landmarks();
           baggz247Master.registerBatch3Landmarks();
+          baggz247Master.registerCityModels();
           baggz247Master.startAnimatedTraffic();
           // Proximity-gated landmark loading (global-readiness fix): the
           // register* calls above only queue definitions now. Fetch the GLBs
           // near the camera (plus the last session's viewport) immediately;
-          // more load as the camera moves. The 34 models no longer all fetch
-          // at map init.
+          // more load as the camera moves. The signature + city models no
+          // longer all fetch at map init.
           const placeNearbyLandmarks = () => {
             if (disposed) return;
             const c = map.getCenter();

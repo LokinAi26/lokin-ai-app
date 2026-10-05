@@ -776,6 +776,52 @@ export class MasterBuilder {
     }
   }
 
+  // BAGGZ_247 City models — all 22 pipeline cities as real-geometry GLBs.
+  // Built 2026-10-03 from real OSM footprints: meter units, Y-up, true
+  // heights, vertical windows with emissive dusk materials (windows rebuilt
+  // via BVH because the Blender glTF exporter drops Geometry-Nodes point
+  // instances). Each model is anchored at its bbox-center origin
+  // (origin_lon/origin_lat from the .glb.json sidecar) and extends in true
+  // meters around that anchor, so the Mapbox model layer renders it at
+  // real-world scale with no extra transform — same convention as the
+  // Batch 3 landmarks. Proximity-gated like the signature landmarks:
+  // definitions queue here; GLB bytes fetch only when the camera comes
+  // within radiusM (see placeLandmarksNear).
+  // NOTE: these GLBs predate the street-detail pass. Refreshed GLBs
+  // (storefronts/awnings/lights/bollards) swap in by updating the url
+  // strings below — one array, no other code changes.
+  registerCityModels() {
+    const cities = [
+      { id: "city-ashland", name: "Ashland", lat: 37.7625, lng: -77.475, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f21a013e8_ashland-facade-2026-10-03.glb" },
+      { id: "city-chesapeake", name: "Chesapeake", lat: 36.775, lng: -76.245, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/977f25d7e_chesapeake-facade-2026-10-03.glb" },
+      { id: "city-chester", name: "Chester", lat: 37.3625, lng: -77.44, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/fc78e24dc_chester-facade-2026-10-03.glb" },
+      { id: "city-colonial-heights", name: "Colonial Heights", lat: 37.245, lng: -77.41, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6b9a6c1ee_colonial-heights-facade-2026-10-03.glb" },
+      { id: "city-franklin", name: "Franklin", lat: 36.678, lng: -76.923, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/87956168c_franklin-facade-2026-10-03.glb" },
+      { id: "city-fredericksburg", name: "Fredericksburg", lat: 38.305, lng: -77.465, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/40013a811_fredericksburg-facade-2026-10-03.glb" },
+      { id: "city-hampton", name: "Hampton", lat: 37.028, lng: -76.342, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/e906ad5d0_hampton-facade-2026-10-03.glb" },
+      { id: "city-hopewell", name: "Hopewell", lat: 37.2975, lng: -77.29, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f650774fb_hopewell-facade-2026-10-03.glb" },
+      { id: "city-mechanicsville", name: "Mechanicsville", lat: 37.6225, lng: -77.365, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/6b1bde874_mechanicsville-facade-2026-10-03.glb" },
+      { id: "city-midlothian", name: "Midlothian", lat: 37.5005, lng: -77.65, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/bd0e69db4_midlothian-facade-2026-10-03.glb" },
+      { id: "city-newport-news", name: "Newport News", lat: 36.982, lng: -76.432, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/ed52ab0a3_newport-news-facade-2026-10-03.glb" },
+      { id: "city-norfolk", name: "Norfolk", lat: 36.853, lng: -76.29, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/f1f6acdba_norfolk-facade-2026-10-03.glb" },
+      { id: "city-petersburg", name: "Petersburg", lat: 37.2325, lng: -77.405, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/4f698ebbe_petersburg-facade-2026-10-03.glb" },
+      { id: "city-poquoson", name: "Poquoson", lat: 37.128, lng: -76.372, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/212d58fa8_poquoson-facade-2026-10-03.glb" },
+      { id: "city-portsmouth", name: "Portsmouth", lat: 36.8365, lng: -76.3035, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/d74a11d04_portsmouth-facade-2026-10-03.glb" },
+      { id: "city-richmond", name: "Richmond", lat: 37.5405, lng: -77.4455, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/4754fbb26_richmond-facade-2026-10-03.glb" },
+      { id: "city-short-pump", name: "Short Pump", lat: 37.6525, lng: -77.525, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/c9656ac67_short-pump-facade-2026-10-03.glb" },
+      { id: "city-suffolk", name: "Suffolk", lat: 36.732, lng: -76.582, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/811fc5eac_suffolk-facade-2026-10-03.glb" },
+      { id: "city-tappahannock", name: "Tappahannock", lat: 37.9275, lng: -76.86, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/b6e7c496a_tappahannock-facade-2026-10-03.glb" },
+      { id: "city-virginia-beach", name: "Virginia Beach", lat: 36.8525, lng: -75.98, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/287d12bd0_vb-oceanfront-facade-2026-10-02.glb" },
+      { id: "city-west-point", name: "West Point", lat: 37.5355, lng: -76.8, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/5afac2533_west-point-facade-2026-10-03.glb" },
+      { id: "city-williamsburg", name: "Williamsburg", lat: 37.272, lng: -76.708, url: "https://base44.app/api/apps/6a7a1c830b6bae64604c3139/files/mp/public/6a7a1c830b6bae64604c3139/bcb9c36f0_williamsburg-facade-2026-10-03.glb" },
+    ];
+    for (const c of cities) {
+      // Proximity-gated: queue the definition; the GLB fetches when the
+      // camera comes near (see placeLandmarksNear).
+      this.queueLandmark(c.id, c.lng, c.lat, c.url);
+    }
+  }
+
   // Moves a placed traffic entity by rewriting its GeoJSON point source.
   _setTrafficPoint(record, lng, lat) {
     if (!this.map || !record) return;
