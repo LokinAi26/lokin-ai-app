@@ -542,6 +542,132 @@ async function directions(
   };
 }
 
+const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+
+// Multi-candidate place search for the GPS quick-search sheet — same live
+// Mapbox geocoder the route engine uses.
+async function searchPlaces(query: string, accessToken: string, proximity: { longitude: number; latitude: number } | null) {
+  const q = String(query || "").trim();
+  if (!q) return [];
+  const params = new URLSearchParams({
+    q,
+    access_token: accessToken,
+    limit: "8",
+    language: "en",
+    country: "US",
+    types: "poi,address",
+    auto_complete: "true",
+    show_closed_pois: "false",
+  });
+  if (proximity) {
+    params.set("proximity", `${proximity.longitude},${proximity.latitude}`);
+    params.set("origin", `${proximity.longitude},${proximity.latitude}`);
+    params.set("rank_strategy", "distance");
+    params.set("bbox", localSearchBBox(proximity).join(","));
+  }
+  const data = await fetchJson(`${MAPBOX_SEARCH}/forward?${params.toString()}`);
+  return (data?.features || [])
+    .map((feature: any) => {
+      const geometry = feature?.geometry?.coordinates;
+      if (!Array.isArray(geometry) || geometry.length < 2 || !Number.isFinite(Number(geometry[0])) || !Number.isFinite(Number(geometry[1]))) return null;
+      const properties = feature?.properties || {};
+      const coordinate = { longitude: Number(geometry[0]), latitude: Number(geometry[1]) };
+      return {
+        longitude: coordinate.longitude,
+        latitude: coordinate.latitude,
+        name: properties?.name_preferred || properties?.name || feature?.text || "",
+        full_address: properties?.full_address || properties?.place_formatted || feature?.place_name || "",
+        distance_miles: proximity ? milesBetween(proximity, coordinate) : null,
+        category: Array.isArray(properties?.poi_category) ? String(properties.poi_category[0] || "") : String(properties?.poi_category || ""),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+// Destination operating hours, looked up live from OpenStreetMap. Only an OSM
+// feature whose name matches the destination carries its hours — a nearby
+// unmatched business's hours are never shown (honest-data rule).
+async function fetchOpeningHours(coord: { longitude: number; latitude: number }, destinationName: string) {
+  const lat = Number(coord.latitude);
+  const lon = Number(coord.longitude);
+  const query = `[out:json][timeout:10];(node(around:120,${lat},${lon})["opening_hours"];way(around:120,${lat},${lon})["opening_hours"];);out center tags 30;`;
+  // Overpass rejects requests without a User-Agent (406) and the primary
+  // endpoint intermittently answers 521 when overloaded — send the verifier
+  // UA and fall back to a public mirror.
+  let data: any = null;
+  for (const endpoint of [OVERPASS_ENDPOINT, "https://overpass.kumi.systems/api/interpreter"]) {
+    try {
+      // Overpass can hang under load — abort after 9s and move to the next mirror.
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), 9000);
+      let response: Response;
+      try {
+        response = await fetch(endpoint, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            "user-agent": "Mozilla/5.0 (compatible; LOKINOpportunityVerifier/1.0)",
+            accept: "application/json",
+          },
+          body: `data=${encodeURIComponent(query)}`,
+        });
+      } finally {
+        clearTimeout(abortTimer);
+      }
+      if (!response.ok) continue;
+      const parsed = await response.json().catch(() => null);
+      if (parsed?.elements?.length) { data = parsed; break; }
+    } catch {
+      // Try the next mirror.
+    }
+  }
+  const wanted = String(destinationName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!data) {
+    // Overpass degraded/blocked — Nominatim reverse lookup returns the nearest
+    // OSM feature's opening_hours through extratags. Still OSM, same honesty
+    // rule: only accepted when the feature name matches the destination.
+    try {
+      const nomRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&extratags=1&zoom=18`,
+        {
+          headers: {
+            "user-agent": "Mozilla/5.0 (compatible; LOKINOpportunityVerifier/1.0)",
+            accept: "application/json",
+          },
+        },
+      );
+      const nom = await nomRes.json().catch(() => null);
+      const hours = String(nom?.extratags?.opening_hours || "").trim();
+      const name = String(nom?.name || "").trim();
+      const key = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (hours && name && wanted && (key.includes(wanted) || wanted.includes(key))) {
+        return { opening_hours: hours, osm_name: name };
+      }
+    } catch {
+      // Fall through to the honest empty result.
+    }
+    return { opening_hours: null, osm_name: null };
+  }
+  const rows = (data?.elements || [])
+    .map((el: any) => {
+      const hours = String(el?.tags?.opening_hours || "").trim();
+      const name = String(el?.tags?.name || el?.tags?.["name:en"] || "").trim();
+      const center = el?.center || (Number.isFinite(Number(el?.lat)) && Number.isFinite(Number(el?.lon)) ? { lat: Number(el.lat), lon: Number(el.lon) } : null);
+      if (!hours || !name || !center) return null;
+      const osmCoord = { longitude: Number(center.lon), latitude: Number(center.lat) };
+      const key = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const nameMatch = Boolean(wanted) && (key.includes(wanted) || wanted.includes(key));
+      return { hours, name, nameMatch, distance_m: milesBetween(coord, osmCoord) * 1609.344 };
+    })
+    .filter(Boolean)
+    .filter((r: any) => r.nameMatch);
+  if (!rows.length) return { opening_hours: null, osm_name: null };
+  rows.sort((a: any, b: any) => a.distance_m - b.distance_m);
+  return { opening_hours: rows[0].hours, osm_name: rows[0].name };
+}
+
 export default async function navigationEngine(req: Request) {
   try {
     const base44 = createClientFromRequest(req);
@@ -631,6 +757,18 @@ export default async function navigationEngine(req: Request) {
     if (action === "geocode") {
       const proximity = validCoord(body?.proximity);
       return json({ ok: true, result: await geocodeAddress(body?.address, accessToken, proximity) });
+    }
+
+    if (action === "search_places") {
+      const proximity = validCoord(body?.proximity);
+      return json({ ok: true, results: await searchPlaces(String(body?.query || ""), accessToken, proximity) });
+    }
+
+    if (action === "dest_hours") {
+      const coord = validCoord(body?.coordinate);
+      if (!coord) return json({ error: "Valid destination coordinate is required" }, 400);
+      const result = await fetchOpeningHours(coord, String(body?.name || "")).catch(() => null);
+      return json({ ok: true, ...(result || { opening_hours: null, osm_name: null }) });
     }
 
     if (action === "reverse_geocode") {

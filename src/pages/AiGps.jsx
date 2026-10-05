@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, PackageSearch, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Split, Undo2, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, PackageSearch, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Search, Split, Undo2, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -17,6 +17,8 @@ import { saveSessionRouteRecord } from "@/lib/sessionRouteRecord";
 import useRouteImprovementPush from "@/hooks/useRouteImprovementPush";
 import useNavHaptics from "@/hooks/useNavHaptics";
 import HudItemLocator from "@/components/vision/HudItemLocator";
+import GpsQuickSearch from "@/components/gps/GpsQuickSearch";
+import DestinationHours from "@/components/gps/DestinationHours";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -52,6 +54,7 @@ export default function AiGps() {
   const [cinematic, setCinematic] = useState(false);
   const [destinationInput, setDestinationInput] = useState(explicitDestination);
   const [probingProvider, setProbingProvider] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => { setDestinationInput(explicitDestination); }, [explicitDestination]);
 
@@ -170,6 +173,18 @@ export default function AiGps() {
     setParams(next);
   }
 
+  // Quick search (locked GPS): re-point live navigation at the picked place.
+  function navigateToSearchedDestination(destination) {
+    if (!destination) return;
+    const next = new URLSearchParams(params);
+    next.set("focus", "locked");
+    next.set("destination", destination);
+    next.set("nav", "1");
+    next.set("view", mapView);
+    setParams(next, { replace: true });
+    setSearchOpen(false);
+  }
+
   async function loadDeliveryRoute() {
     if (loadingStops) return;
     setLoadingStops(true);
@@ -220,6 +235,9 @@ export default function AiGps() {
         setVoiceGuidance={setVoiceGuidance}
         guidanceAudioError={guidanceAudioError}
         onExit={() => navigate("/", { replace: true })}
+        searchOpen={searchOpen}
+        setSearchOpen={setSearchOpen}
+        onQuickSearch={navigateToSearchedDestination}
       />
     );
   }
@@ -504,7 +522,7 @@ function formatArrivalClock(remainingDurationS) {
   return new Date(Date.now() + s * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit }) {
+function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit, searchOpen, setSearchOpen, onQuickSearch }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const [locatorOpen, setLocatorOpen] = useState(false);
   // Hands-free voice entry ("Hey LOKIN, start item locator"): the locked nav
@@ -543,6 +561,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
     ? formatDistance(nav.maneuver.distance_from_driver_m)
     : "\u2014";
   const arrivalClock = formatArrivalClock(nav.remainingDurationS);
+  // The destination the ETA card counts down to — the last geocoded stop.
+  const finalDestination = (nav.geocodedDestinations || [])[(nav.geocodedDestinations || []).length - 1] || null;
 
   return (
     <div className="fixed left-0 top-0 z-20 box-border h-[100dvh] w-screen max-w-[100vw] min-w-0 overflow-hidden overscroll-none bg-black text-white">
@@ -629,6 +649,16 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
         {nav.route && (
           <button
             type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Quick search a destination"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/50 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"
+          >
+            <Search className="h-6 w-6" />
+          </button>
+        )}
+        {nav.route && (
+          <button
+            type="button"
             onClick={() => setLocatorOpen(true)}
             aria-label="Quick item locator — camera barcode homing"
             className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/50 bg-black/85 text-primary shadow-lg backdrop-blur active:scale-95"
@@ -696,6 +726,13 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
                   ? `Destination reached${doorPinArrived ? " \u00b7 saved door pin" : ""}`
                   : `${nav.remainingDistanceM != null ? formatDistance(nav.remainingDistanceM) : "\u2014"}${arrivalClock ? ` \u00b7 ${arrivalClock}` : ""}`}
               </div>
+              {finalDestination && (
+                <DestinationHours
+                  name={finalDestination.name}
+                  latitude={finalDestination.latitude}
+                  longitude={finalDestination.longitude}
+                />
+              )}
             </div>
             <button
               type="button"
@@ -706,6 +743,18 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
             </button>
           </div>
         </div>
+      )}
+
+      {/* GPS quick search: re-point live navigation at a searched place. */}
+      {searchOpen && (
+        <GpsQuickSearch
+          onClose={() => setSearchOpen(false)}
+          proximity={(() => {
+            const c = nav.snappedPosition?.coordinate;
+            return Array.isArray(c) && c.length >= 2 ? { longitude: Number(c[0]), latitude: Number(c[1]) } : null;
+          })()}
+          onSelect={onQuickSearch}
+        />
       )}
 
       {locatorOpen && <HudItemLocator onClose={() => setLocatorOpen(false)} />}
