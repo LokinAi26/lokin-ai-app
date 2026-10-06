@@ -232,8 +232,24 @@ export default async function(req: Request) {
       is_new: true,
     }));
 
+    // Create one record at a time: bulkCreate skips per-record side effects,
+    // which would also skip the Opportunity Match Alerts entity trigger —
+    // scanned opportunities would never fire driver match alerts. Skip any
+    // listing whose apply URL is already in the Hub so re-scans don't dupe.
     let created: any[] = [];
-    if (records.length) created = await base44.asServiceRole.entities.OpportunityScan.bulkCreate(records);
+    if (records.length) {
+      const existing = await base44.asServiceRole.entities.OpportunityScan.filter({}, '-created_date', 500);
+      const known = new Set(existing.map((r) => String(r.apply_url || '').toLowerCase()));
+      const fresh = records.filter((r) => !known.has(String(r.apply_url || '').toLowerCase()));
+      for (const record of fresh) {
+        try {
+          const rec = await base44.asServiceRole.entities.OpportunityScan.create(record);
+          if (rec) created.push(rec);
+        } catch (e) {
+          console.warn("opportunity create failed:", (e as Error)?.message || e);
+        }
+      }
+    }
 
     return Response.json({
       ok: true,

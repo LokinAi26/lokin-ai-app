@@ -8,6 +8,26 @@ import { hasInternalJobKey } from '../../shared/internalJobKey.ts';
 // threshold (opportunity_alert_min_pay vs opportunity.pay_amount). For each
 // match, writes an in-app OpportunityAlert and emails the driver. Service role.
 // read every driver's preferences and email across all users.
+// Normalize the listed pay into an hourly figure for the driver's high-value
+// bar. Uses the stored pay_amount when present; otherwise parses the listed
+// pay string (hourly/daily/weekly, low end of a range) and marks the result
+// estimated. An unknown pay basis returns 0 so it never silently passes the bar.
+function normalizePay(opp) {
+  const stored = Number(opp.pay_amount || 0);
+  if (stored > 0) return { pay: stored, estimated: false };
+  const pay = String(opp.pay || '').toLowerCase();
+  if (!pay) return { pay: 0, estimated: false };
+  const nums = (pay.match(/\$?\d[\d,]*(?:\.\d+)?/g) || [])
+    .map((s) => parseFloat(s.replace(/[$,]/g, '')))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (!nums.length) return { pay: 0, estimated: false };
+  const low = Math.min(...nums);
+  if (/per hour|\/ ?hr|\/ ?hour|hourly/.test(pay)) return { pay: low, estimated: true };
+  if (/per day|\/ ?day|daily/.test(pay)) return { pay: low / 8, estimated: true };
+  if (/per week|\/ ?wk|\/ ?week|weekly/.test(pay)) return { pay: low / 40, estimated: true };
+  return { pay: 0, estimated: false };
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -33,8 +53,16 @@ export default async function(req) {
 
     const oppRole = (opp.role_type || 'any').toLowerCase();
     const oppRegion = (opp.region || '').trim().toLowerCase();
-    // Normalized pay figure compared against each driver's high-value bar.
-    const oppPay = Number(opp.pay_amount || 0);
+    // Strip trailing state labels so "Hampton Roads, VA" and
+    // "Hampton Roads, Virginia" compare as the same market.
+    const regionBase = (r) =>
+      String(r || '').trim().toLowerCase()
+        .replace(/,?\s*(va|virginia|nc|north carolina|md|maryland|sc|south carolina|dc)\.?$/, '')
+        .trim();
+    const oppRegionBase = regionBase(oppRegion);
+    // Hourly-normalized pay figure compared against each driver's high-value bar.
+    const payInfo = normalizePay(opp);
+    const oppPay = payInfo.pay;
 
     const prefs = await base44.asServiceRole.entities.DriverPreference.filter(
       { alert_enabled: true },
@@ -58,11 +86,14 @@ export default async function(req) {
         driverVehicle === oppRole;
 
       // Region match: if either side is blank, treat as a match (broadest reach).
-      // Containment covers "Hampton Roads" vs "Hampton Roads, VA" style labels.
+      // Compares the market name with state labels stripped, plus raw-string
+      // containment for longer labels like "Hampton Roads, VA" vs "Hampton Roads".
+      const driverRegionBase = regionBase(driverRegion);
       const regionOk =
         !oppRegion ||
         !driverRegion ||
-        oppRegion === driverRegion ||
+        (oppRegionBase && oppRegionBase === driverRegionBase) ||
+        (oppRegionBase && driverRegionBase && (oppRegionBase.includes(driverRegionBase) || driverRegionBase.includes(oppRegionBase))) ||
         oppRegion.includes(driverRegion) ||
         driverRegion.includes(oppRegion);
 
@@ -84,7 +115,11 @@ export default async function(req) {
       }
 
       const reasons = [];
-      if (minPay > 0) reasons.push(`high-value ${opp.pay || '$' + oppPay}`);
+      if (minPay > 0) {
+        reasons.push(payInfo.estimated
+          ? `high-value ~$${oppPay.toFixed(0)}/hr (estimated from "${opp.pay}")`
+          : `high-value ${opp.pay || '$' + oppPay}`);
+      }
       if (oppRegion && driverRegion) reasons.push(`region "${opp.region}"`);
       if (oppRole !== 'any' && driverVehicle && driverVehicle !== 'other') {
         reasons.push(`vehicle ${driverVehicle.replace(/_/g, ' ')}`);
