@@ -4,10 +4,11 @@ import { ChevronLeft, Navigation, Satellite } from "lucide-react";
 import { motion } from "framer-motion";
 import { LOKIN_NAV_CIRCLE, LOKIN_LOGO } from "@/components/Brand";
 import { LkNavDelivery, LkNavRoute, LkNavEarnings, LkNavMore, LkIconVoice } from "@/components/brand/LkIcons";
-import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus, resolveSessionRestoreRedirect, sessionStatusLabel } from "@/lib/sessionState";
 import { getPendingWorkStatus, subscribeWorkStatus } from "@/lib/workStatusStore";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
+import { DriverPrefsProvider, loadDriverPrefs } from "@/context/DriverPrefsContext";
+import { EarningsProvider } from "@/context/EarningsContext";
 import { observeRelaunch } from "@/architecture/seams/index";
 import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 import { ensureStarted as ensureLocationSession } from "@/lib/lokinLocationSession";
@@ -80,9 +81,11 @@ export default function DriverLayout() {
 
   useEffect(() => {
     let alive = true;
-    base44.entities.DriverPreference.filter({}).then((p) => {
+    // Shared single-flight loader: this joins the provider's one mount fetch
+    // instead of issuing a second GET.
+    loadDriverPrefs().then((prefsRow) => {
       if (!alive) return;
-      const restoredStatus = normalizeWorkStatus(p[0]?.work_status);
+      const restoredStatus = normalizeWorkStatus(prefsRow?.work_status);
       setWorkStatus(restoredStatus);
       // M1 WP5 observational seam (I75): materialize the IndexedDB event log
       // and compare against the legacy restored status. Report only —
@@ -169,7 +172,7 @@ export default function DriverLayout() {
     navigate(lastPaths[tabKey] || TAB_ROOTS[tabKey]);
   }
 
-  return (
+  const tree = (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col w-full">
       {!lockedGps && loc.pathname !== "/" && <header className="chrome-shell sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
         <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between">
@@ -257,5 +260,11 @@ export default function DriverLayout() {
       <OfflineSyncMonitor showPill={!lockedGps} />
       <GlobalVoiceAssistant open={voiceOpen} onOpenChange={setVoiceOpen} drivingMode={activeNavigation || (working && appFreeRoam)} />
     </div>
+  );
+
+  return (
+    <DriverPrefsProvider>
+      <EarningsProvider>{tree}</EarningsProvider>
+    </DriverPrefsProvider>
   );
 }

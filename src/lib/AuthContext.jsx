@@ -170,6 +170,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Silent re-read of the current user (e.g. after a plan change). Unlike
+  // checkUserAuth it never touches the global loading flags, so a page can
+  // refresh its view of the user without flashing the app-level spinner.
+  // This is the single place components reach for a fresh user — no component
+  // calls base44.auth.me() directly.
+  const refreshUser = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      return currentUser;
+    } catch (error) {
+      return null;
+    }
+  };
+
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
@@ -200,7 +215,8 @@ export const AuthProvider = ({ children }) => {
       logout,
       navigateToLogin,
       checkUserAuth,
-      checkAppState
+      checkAppState,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>
