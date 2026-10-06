@@ -454,6 +454,10 @@ export class MasterBuilder {
         type: "model",
         source: sourceId,
         layout: { "model-id": modelId },
+        // Mapbox defaults model-emissive-strength to 0 ("no emission"), which
+        // kills the glTF emissive windows our city/landmark models depend on.
+        // 1.0 restores the designed glow; above 1.0 blooms light outward.
+        paint: { "model-emissive-strength": 1.25 },
       });
       const record = { name, lng, lat, modelUrl, scale, modelId, sourceId, layerId };
       this.landmarks.set(name, record);
