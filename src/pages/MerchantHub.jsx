@@ -19,7 +19,6 @@ const WORKFLOW_STEPS = [
 ];
 
 export default function MerchantHub() {
-  const { refreshUser } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "orders" ? "orders" : "merchants";
   const setTab = (t) => setParams(t === "merchants" ? {} : { tab: t }, { replace: true });
@@ -94,6 +93,7 @@ function MerchantsTab() {
 }
 
 function OrdersTab() {
+  const { refreshUser } = useAuth();
   const [me, setMe] = useState(null);
   const [partners, setPartners] = useState([]);
   const [orders, setOrders] = useState([]);
