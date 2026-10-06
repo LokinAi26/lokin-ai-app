@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Save, Check, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
 import { observeGoalSet } from "@/architecture/seams/index";
 import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
 import { OPTIMIZATION_MODES, DAILY_GOAL_PRESETS } from "@/lib/deliveryLabels";
@@ -22,6 +23,9 @@ export default function Settings() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
+
+  // Shared single-fetch source for the DriverPreference row.
+  const { prefs: sharedPrefs, refreshPrefs } = useDriverPrefs();
 
   async function deleteAccount() {
     setDeleting(true);
@@ -63,29 +67,30 @@ export default function Settings() {
     }
   }
 
+  // Seed the form once from the shared preference row (one app-level fetch);
+  // never clobber edits already in progress.
   useEffect(() => {
-    base44.entities.DriverPreference.filter({}).then((p) => {
-      const def = p[0];
-      setPrefs(def);
-      setForm({
-        user_type: "driver",
-        vehicle_mpg: 26,
-        gas_price: 3.45,
-        min_per_hour: 22,
-        target_per_mile: 1.5,
-        max_wait_minutes: 15,
-        earnings_intelligence_enabled: true,
-        mileage_cost: 0.67,
-        daily_goal: 150,
-        weekly_goal: 850,
-        daily_hours_goal: 8,
-        optimization_mode: "most_profit",
-        accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
-        ...(def || {}),
-        human_acceptance_required: true,
-      });
+    if (!sharedPrefs || form) return;
+    const def = sharedPrefs;
+    setPrefs(def);
+    setForm({
+      user_type: "driver",
+      vehicle_mpg: 26,
+      gas_price: 3.45,
+      min_per_hour: 22,
+      target_per_mile: 1.5,
+      max_wait_minutes: 15,
+      earnings_intelligence_enabled: true,
+      mileage_cost: 0.67,
+      daily_goal: 150,
+      weekly_goal: 850,
+      daily_hours_goal: 8,
+      optimization_mode: "most_profit",
+      accepted_categories: ["food_pickup", "grocery_shop_deliver", "grocery_pickup", "retail", "package"],
+      ...(def || {}),
+      human_acceptance_required: true,
     });
-  }, []);
+  }, [sharedPrefs, form]);
 
   function set(k, v) { setForm({ ...form, [k]: v }); setSaved(false); }
 
@@ -97,6 +102,7 @@ export default function Settings() {
     if (prefs?.id) res = await base44.entities.DriverPreference.update(prefs.id, data);
     else res = await base44.entities.DriverPreference.create(data);
     setPrefs(res); setSaved(true);
+    refreshPrefs(); // keep the shared row in sync for every consumer
     // M1 WP8 observational dual-write (I75): an explicit daily-goal change
     // appends GOAL_SET to the IndexedDB event log. The legacy
     // DriverPreference write above is already committed and unaffected —

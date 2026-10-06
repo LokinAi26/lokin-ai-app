@@ -23,6 +23,9 @@ import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
 import { setWorkStatusOptimistic, withPendingWorkStatus } from "@/lib/workStatusStore";
+import { loadDriverPrefs, useDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
+import { useAuth } from "@/lib/AuthContext";
 
 function greeting() {
   const h = new Date().getHours();
@@ -43,6 +46,15 @@ export default function Home() {
   const [showType, setShowType] = useState(false);
   const [summary, setSummary] = useState(null);
   const [locking, setLocking] = useState(false);
+  // Shared single-fetch sources (DriverPrefsContext / EarningsContext).
+  const { prefs: sharedPrefs } = useDriverPrefs();
+  const { earnings: sharedEarnings } = useEarnings();
+  const { refreshUser } = useAuth();
+  // Mirror the shared preference row into page state (keeps pending markers).
+  useEffect(() => {
+    if (!sharedPrefs) return;
+    setPrefs(withPendingWorkStatus(sharedPrefs));
+  }, [sharedPrefs]);
   const lockStartRef = useRef(false);
 
   function startLockIn() {
@@ -152,8 +164,7 @@ export default function Home() {
   }
 
   async function loadPrefs() {
-    const p = await base44.entities.DriverPreference.filter({});
-    let pref = p[0] || null;
+    let pref = await loadDriverPrefs();
     // Never open on a phantom shift: a stale "working" flag (sign-in,
     // force-close, failed tap-out write) with no live shift behind it is
     // reset, so locked-in only ever means a real session is running.
@@ -183,26 +194,19 @@ export default function Home() {
 
   useEffect(() => {
     loadCommand();
-    base44.auth.me().then(setMe).catch(() => {});
+    refreshUser().then((u) => u && setMe(u));
   }, []);
 
   // Real-time goal progress: recompute today's earnings whenever a delivery
   // is logged (or edited), so the progress bar updates without a refresh.
-  async function refreshTodayEarnings() {
-    try {
-      const key = new Date().toISOString().slice(0, 10);
-      const rows = await base44.entities.Earning.filter({ date: key });
-      setTodayEarnings(rows.reduce((s, r) => s + (r.amount || 0), 0));
-    } catch {
-      /* keep the last known value */
-    }
-  }
-
+  // Today's earnings come from the shared earnings state (one app-level
+  // fetch, kept fresh by its realtime subscription).
   useEffect(() => {
-    refreshTodayEarnings();
-    const unsubscribe = base44.entities.Earning.subscribe(() => refreshTodayEarnings());
-    return unsubscribe;
-  }, []);
+    const key = new Date().toISOString().slice(0, 10);
+    setTodayEarnings(sharedEarnings
+      .filter((r) => r.date === key)
+      .reduce((s, r) => s + (r.amount || 0), 0));
+  }, [sharedEarnings]);
 
   const dailyGoal = prefs?.daily_goal || 150;
   const today = todayEarnings ?? (data?.todayEarnings || 0);

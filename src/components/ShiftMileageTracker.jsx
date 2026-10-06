@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeWorkStatus } from "@/lib/sessionState";
 import { createOrQueue } from "@/lib/offlineQueue";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
 import {
   beginShiftTracking,
   DEDUCTION_RATE_PER_MILE,
@@ -17,10 +18,15 @@ const WATCHDOG_INTERVAL_MS = 60000; // re-check the GPS watch every minute
 const WATCHDOG_STALE_MS = 120000; // no fix for 2 min while working = dead watch
 
 // Invisible controller that keeps GPS shift tracking aligned with the
-// persisted work session: working → track, paused → suspend, off → commit
-// the shift's miles to the mileage log.
+// shared DriverPreference row: working → track, paused → suspend, off →
+// commit the shift's miles to the mileage log. Status comes from the single
+// shared prefs fetch (DriverPrefsContext) — no per-mount GET, and the shared
+// provider's realtime subscription keeps it fresh on every write.
 export default function ShiftMileageTracker() {
+  const { prefs } = useDriverPrefs();
   const statusRef = useRef(null);
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
 
   useEffect(() => {
     let alive = true;
@@ -52,7 +58,7 @@ export default function ShiftMileageTracker() {
     // tap-out write. The local shift state is the authority: with no live
     // shift behind the flag, nobody is locked in — flip it off so a fresh
     // sign-in never opens on a phantom shift.
-    async function reconcileStaleWorking(pref) {
+    function reconcileStaleWorking(pref) {
       const status = normalizeWorkStatus(pref?.work_status);
       if ((status === "working" || status === "paused") && !getShiftSnapshot().active) {
         if (pref?.id) {
@@ -63,16 +69,6 @@ export default function ShiftMileageTracker() {
       return status;
     }
 
-    async function sync() {
-      try {
-        const rows = await base44.entities.DriverPreference.filter({});
-        if (!alive) return;
-        applyStatus(await reconcileStaleWorking(rows[0] || null));
-      } catch {
-        /* preferences unavailable — keep the last known status */
-      }
-    }
-
     // Returning from another app (e.g. the Dasher app): iOS may have silently
     // killed the GPS watch while LOKIN was backgrounded. If the shift is
     // still live, re-register the watch so mileage keeps accumulating
@@ -81,32 +77,33 @@ export default function ShiftMileageTracker() {
       if (statusRef.current === "working" && getShiftSnapshot().active) beginShiftTracking();
     }
 
-    const resyncOnFocus = () => {
-      sync();
+    const align = () => {
+      if (!alive) return;
+      applyStatus(reconcileStaleWorking(prefsRef.current));
       resumeWatchIfWorking();
     };
 
-    sync();
-    const unsubscribe = base44.entities.DriverPreference.subscribe(() => sync());
-    window.addEventListener("focus", resyncOnFocus);
-    document.addEventListener("visibilitychange", resyncOnFocus);
+    align();
+    window.addEventListener("focus", align);
+    document.addEventListener("visibilitychange", align);
 
-    // Watchdog: if no GPS fix has arrived for a while during a live shift,
-    // the watch died silently — re-register it.
+    return () => {
+      alive = false;
+      window.removeEventListener("focus", align);
+      document.removeEventListener("visibilitychange", align);
+    };
+  }, [prefs]);
+
+  // Watchdog: if no GPS fix has arrived for a while during a live shift,
+  // the watch died silently — re-register it.
+  useEffect(() => {
     const watchdog = setInterval(() => {
       if (statusRef.current !== "working") return;
       if (!getShiftSnapshot().active) return;
       if (Date.now() - getLastFixAt() < WATCHDOG_STALE_MS) return;
       beginShiftTracking();
     }, WATCHDOG_INTERVAL_MS);
-
-    return () => {
-      alive = false;
-      unsubscribe?.();
-      clearInterval(watchdog);
-      window.removeEventListener("focus", resyncOnFocus);
-      document.removeEventListener("visibilitychange", resyncOnFocus);
-    };
+    return () => clearInterval(watchdog);
   }, []);
 
   return null;

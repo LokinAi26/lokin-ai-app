@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Link2, Loader2, LockKeyhole, MapPin, Mic, Sparkles, Target, UserCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 import { LokinGlyph } from "@/components/Brand";
 import { normalizeWorkStatus } from "@/lib/sessionState";
 
@@ -42,6 +44,8 @@ export default function DriverOnboarding() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState(null);
   const [prefs, setPrefs] = useState(null);
+  // Shared single-fetch sources (AuthContext / DriverPrefsContext).
+  const { refreshUser } = useAuth();
   const [locationGranted, setLocationGranted] = useState(false);
   const [microphoneGranted, setMicrophoneGranted] = useState(false);
   const [permissionBusy, setPermissionBusy] = useState(false);
@@ -69,13 +73,13 @@ export default function DriverOnboarding() {
         // The SDK promises have no client-side timeout: bound the initial
         // load so a hung network can never trap the page on its spinner.
         // A timeout falls through to the degraded-but-usable page below.
-        const [user, rows] = await withTimeout(Promise.all([
-          base44.auth.me(),
-          base44.entities.DriverPreference.filter({}).catch(() => []),
+        const [user, prefsRow] = await withTimeout(Promise.all([
+          refreshUser(),
+          loadDriverPrefs(),
         ]), 20000, "Loading your profile is taking too long");
         if (!alive) return;
         setMe(user);
-        setPrefs(rows?.[0] || null);
+        setPrefs(prefsRow || null);
         await refreshPermissionStates();
       } finally {
         if (alive) setLoading(false);

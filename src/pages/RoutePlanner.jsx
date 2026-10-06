@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Route as RouteIcon, MapPin, Clock, DollarSign, ChevronRight, Sparkles, Navigation, Store } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
 import { CATEGORY_LABELS, OPTIMIZATION_MODES } from "@/lib/deliveryLabels";
 import LockInScore from "@/components/LockInScore";
 import SealDecisionCard from "@/components/SealDecisionCard";
@@ -19,15 +20,14 @@ export default function RoutePlanner() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [prefs, setPrefs] = useState(null);
+  // Shared single-fetch source for the DriverPreference row.
+  const { prefs, refreshPrefs } = useDriverPrefs();
   const [offerRevision, setOfferRevision] = useState(0);
 
+  // Adopt the driver's saved optimization mode once the shared row loads.
   useEffect(() => {
-    base44.entities.DriverPreference.filter({}).then((p) => {
-      setPrefs(p[0] || null);
-      if (p[0]?.optimization_mode) setMode(p[0].optimization_mode);
-    });
-  }, []);
+    if (prefs?.optimization_mode) setMode(prefs.optimization_mode);
+  }, [prefs?.optimization_mode]);
 
   async function optimizeAndLaunchGps() {
     const directDestination = origin.trim();
@@ -75,6 +75,7 @@ export default function RoutePlanner() {
 
       if (prefs?.id) {
         await base44.entities.DriverPreference.update(prefs.id, { optimization_mode: mode }).catch(() => null);
+        refreshPrefs(); // keep the shared row in sync for every consumer
       }
       navigate("/ai-gps?focus=locked&nav=1&view=real&source=optimizer");
     } catch (e) {

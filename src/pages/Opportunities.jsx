@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Radar, RefreshCw, Sparkles, GitCompare, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 import { rankSealOpportunities } from "@/lib/sealDecisionEngine";
 import OpportunityFilters from "@/components/opportunities/OpportunityFilters";
 import OpportunityCard from "@/components/opportunities/OpportunityCard";
@@ -58,8 +59,7 @@ export default function Opportunities() {
       const recs = await base44.entities.OpportunityScan.list("-verified_at", 250);
       setItems(dedupeLive(recs));
       try {
-        const p = await base44.entities.DriverPreference.filter({});
-        setPrefs(p[0] || {});
+        setPrefs((await loadDriverPrefs()) || {});
       } catch {}
     } catch (e) {
       console.error(e);

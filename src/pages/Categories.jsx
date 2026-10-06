@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { SlidersHorizontal, Ban, Plus, X, Check } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
 import { CATEGORY_OPTIONS } from "@/lib/deliveryLabels";
 
 export default function Categories() {
+  // Shared single-fetch source for the DriverPreference row.
+  const { prefs: sharedPrefs, refreshPrefs } = useDriverPrefs();
   const [prefs, setPrefs] = useState(null);
   const [blocked, setBlocked] = useState([]);
   const [newName, setNewName] = useState("");
   const [newReason, setNewReason] = useState("");
   const [savingCat, setSavingCat] = useState(false);
 
+  // Mirror the shared row into the local editing state.
+  useEffect(() => { setPrefs(sharedPrefs); }, [sharedPrefs]);
+
   async function load() {
-    const [p, b] = await Promise.all([
-      base44.entities.DriverPreference.filter({}),
-      base44.entities.BlockedCustomer.filter({}),
-    ]);
-    setPrefs(p[0] || null);
+    const b = await base44.entities.BlockedCustomer.filter({});
     setBlocked(b);
   }
   useEffect(() => { load(); }, []);
@@ -32,6 +34,7 @@ export default function Categories() {
         accepted_categories: next,
       });
       setPrefs(updated);
+      refreshPrefs(); // keep the shared row in sync for every consumer
     } catch (e) {
       // revert on failure
       setPrefs({ ...prefs, accepted_categories: prev });

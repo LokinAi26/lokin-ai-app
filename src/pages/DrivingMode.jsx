@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Navigation, MapPin, Clock, DollarSign, Check, Radar, Flag, RefreshCw, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import DriveMusicPlayer from "@/components/DriveMusicPlayer";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
@@ -32,8 +33,7 @@ export default function DrivingMode() {
     setLoading(true);
     setIdx(0);
     try {
-      const pl = await base44.entities.DriverPreference.filter({});
-      const p = pl[0] || null;
+      const p = await loadDriverPrefs();
       setPrefs(p);
       const res = await guardedInvoke(base44, "optimizeRoute", { mode: p?.optimization_mode || "most_profit" }, { force, userInitiated: force });
       setData(res.data);

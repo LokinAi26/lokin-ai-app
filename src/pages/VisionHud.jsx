@@ -26,6 +26,9 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
+import { useAuth } from "@/lib/AuthContext";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { getDoorPin } from "@/lib/doorPins";
@@ -88,19 +91,26 @@ export default function VisionHud() {
     : "";
   const headingText = compassLabel(nav.rawPosition?.coords?.heading);
 
+  // Shared single-fetch sources (driver prefs + earnings rows).
+  const { prefs: sharedPrefs, loaded: prefsLoaded } = useDriverPrefs();
+  const { earnings: sharedRecords } = useEarnings();
+  const { refreshUser } = useAuth();
+
   // ---- CURRENT STOP (optimizeRoute + Offer.get, read-only mirror of ActiveDelivery.jsx) ----
   const [stopData, setStopData] = useState(null);
   const [stopLoading, setStopLoading] = useState(true);
   const [offer, setOffer] = useState(null);
   useEffect(() => {
     let alive = true;
+    // Waits for the shared preference row (one app-level fetch) so the
+    // optimizer runs once with the driver's real mode.
+    if (!prefsLoaded) return;
     (async () => {
       try {
-        const prefs = await base44.entities.DriverPreference.filter({});
         const res = await guardedInvoke(
           base44,
           "optimizeRoute",
-          { mode: prefs[0]?.optimization_mode || "most_profit" },
+          { mode: sharedPrefs?.optimization_mode || "most_profit" },
           { userInitiated: false }
         );
         if (!alive) return;
@@ -112,7 +122,7 @@ export default function VisionHud() {
       }
     })();
     return () => { alive = false; };
-  }, []);
+  }, [prefsLoaded, sharedPrefs?.optimization_mode]);
   const sequenced = stopData?.sequenced || [];
   const current = sequenced[0] || null;
   useEffect(() => {
@@ -170,34 +180,20 @@ export default function VisionHud() {
     return ranked[0] || null;
   }, [zonesPayload]);
 
-  // ---- EARNINGS (Earning entity, today's records — same math as Earnings.jsx) ----
+  // ---- EARNINGS (shared earnings rows — same math as Earnings.jsx) ----
   const [earnings, setEarnings] = useState(null);
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const [records, prefsList] = await Promise.all([
-          base44.entities.Earning.filter({}, "date"),
-          base44.entities.DriverPreference.filter({}),
-        ]);
-        if (!alive) return;
-        const prefs = prefsList[0] || null;
-        const today = dayKey(new Date());
-        const todays = records.filter((r) => r.date === today);
-        if (!todays.length) { setEarnings(null); return; }
-        const gross = todays.reduce((s, r) => s + (r.amount || 0), 0);
-        const miles = todays.reduce((s, r) => s + (r.miles || 0), 0);
-        const trips = todays.reduce((s, r) => s + (r.trips || 0), 0);
-        const fuel = miles > 0 ? (miles / (prefs?.vehicle_mpg || 26)) * (prefs?.gas_price || 3.45) : 0;
-        const net = gross - fuel;
-        const hours = trips * 0.4;
-        setEarnings({ gross, hourly: hours > 0 ? net / hours : 0, hasRecords: true });
-      } catch {
-        if (alive) setEarnings(null);
-      }
-    })();
-    return () => { alive = false; };
-  }, []);
+    const today = dayKey(new Date());
+    const todays = sharedRecords.filter((r) => r.date === today);
+    if (!todays.length) { setEarnings(null); return; }
+    const gross = todays.reduce((s, r) => s + (r.amount || 0), 0);
+    const miles = todays.reduce((s, r) => s + (r.miles || 0), 0);
+    const trips = todays.reduce((s, r) => s + (r.trips || 0), 0);
+    const fuel = miles > 0 ? (miles / (sharedPrefs?.vehicle_mpg || 26)) * (sharedPrefs?.gas_price || 3.45) : 0;
+    const net = gross - fuel;
+    const hours = trips * 0.4;
+    setEarnings({ gross, hourly: hours > 0 ? net / hours : 0, hasRecords: true });
+  }, [sharedRecords, sharedPrefs?.vehicle_mpg, sharedPrefs?.gas_price]);
   const earningsToday = earnings ? `$${earnings.gross.toFixed(2)}` : "";
   const hourlyAvgText = earnings ? `$${earnings.hourly.toFixed(2)}/hr` : "";
 
@@ -233,7 +229,7 @@ export default function VisionHud() {
     let alive = true;
     (async () => {
       try {
-        const me = await base44.auth.me().catch(() => null);
+        const me = await refreshUser();
         if (!me?.id) { if (alive) setTelemetryChecked(true); return; }
         const rows = await base44.entities.LokinVisionTelemetry
           .filter({ user_id: me.id }, "-last_seen_at", 1)

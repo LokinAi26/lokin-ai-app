@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Navigation, MapPin, Clock, DollarSign, Check, ChevronLeft, ChevronRight, MessageSquare, Package, Flame, ArrowUpRight, Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 import { CATEGORY_LABELS } from "@/lib/deliveryLabels";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { captureDoorFix } from "@/lib/doorPins";
@@ -78,8 +79,7 @@ export default function ActiveDelivery() {
     setIdx(0);
     setStatusIdx(-1);
     try {
-      const pl = await base44.entities.DriverPreference.filter({});
-      const p = pl[0] || null;
+      const p = await loadDriverPrefs();
       setPrefs(p);
       const res = await guardedInvoke(base44, "optimizeRoute", { mode: p?.optimization_mode || "most_profit" }, { force, userInitiated: force });
       setData(res.data);

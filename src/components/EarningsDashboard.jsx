@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Cell, Tooltip } from "recharts";
 import { Target, TrendingUp } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { useEarnings } from "@/context/EarningsContext";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
 
 function fmtDate(d) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -11,19 +12,16 @@ function dayKey(d) {
 }
 
 export default function EarningsDashboard() {
-  const [records, setRecords] = useState([]);
-  const [prefs, setPrefs] = useState(null);
+  // Shared single-fetch sources — no per-dashboard GETs.
+  const { earnings: sharedEarnings } = useEarnings();
+  const { prefs } = useDriverPrefs();
   const [view, setView] = useState("daily"); // daily | weekly
 
-  async function load() {
-    const [e, p] = await Promise.all([
-      base44.entities.Earning.filter({}, "date"),
-      base44.entities.DriverPreference.filter({}),
-    ]);
-    setRecords(e);
-    setPrefs(p[0] || null);
-  }
-  useEffect(() => { load(); }, []);
+  // Chronological order (oldest first) for the chart buckets.
+  const records = useMemo(
+    () => [...sharedEarnings].sort((a, b) => String(a.date).localeCompare(String(b.date))),
+    [sharedEarnings]
+  );
 
   const dailyGoal = prefs?.daily_goal ?? 150;
   const weeklyGoal = prefs?.weekly_goal ?? 850;

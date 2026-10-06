@@ -3,6 +3,8 @@ import { Mic, Send, Volume2, Radio, ThumbsUp, ThumbsDown, ChevronLeft } from "lu
 import SelectSheet from "@/components/ui/SelectSheet";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
 import AiKeyboardBar from "@/components/AiKeyboardBar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import { askBrain } from "@/lib/lokinBrain";
@@ -293,6 +295,9 @@ export default function LokinAI() {
   const [learning, setLearning] = useState({ enabled: true, memoryCount: 0, profileVersion: 1 });
   const [consentRequired, setConsentRequired] = useState(false);
   const [pendingAiCommand, setPendingAiCommand] = useState("");
+  // Shared single-fetch sources for the AI context gather.
+  const { prefs: sharedPrefs } = useDriverPrefs();
+  const { earnings: sharedEarnings } = useEarnings();
   const navigate = useNavigate();
 
   function goBack() {
@@ -320,14 +325,11 @@ export default function LokinAI() {
     setLog((l) => [...l, { role: "you", text: command }]);
     setTranscript("");
     try {
-      // gather lightweight context from earnings + prefs
-      const [earnings, prefsList] = await Promise.all([
-        base44.entities.Earning.filter({}),
-        base44.entities.DriverPreference.filter({}),
-      ]);
+      // Gather lightweight context from the shared earnings + prefs state
+      // (single app-level fetch — no per-request GETs).
       const today = new Date().toISOString().slice(0, 10);
-      const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
-      const p = prefsList[0] || {};
+      const todayEarnings = sharedEarnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
+      const p = sharedPrefs || {};
       // Jarvis fusion: Full AI chat goes to the Ask LOKIN brain
       // (multi-engine, same auth/consent/budget guardrails).
       const res = await askBrain({

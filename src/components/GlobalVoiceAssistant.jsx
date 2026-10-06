@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Radio, Volume2, Pause, Play, Power, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
 import VoiceClockHands from "@/components/VoiceClockHands";
 import { consumeExternalCommandFromLocation } from "@/lib/lokinCommandBus";
 import { validateExternalCommand } from "@/lib/lokinCommandPolicy";
@@ -197,6 +199,11 @@ function extractWakeCommand(raw) {
 // Tap the orb to talk, or enable "Always Listening" for wake-word ("Hey LOKIN") activation.
 export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChange, drivingMode = false }) {
   const navigate = useNavigate();
+  // Shared single-fetch sources for earnings + prefs (one app-level fetch).
+  const { prefs: sharedPrefs } = useDriverPrefs();
+  const { earnings: sharedEarnings } = useEarnings();
+  const sharedStateRef = useRef({ sharedPrefs, sharedEarnings });
+  sharedStateRef.current = { sharedPrefs, sharedEarnings };
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
   const setOpen = onOpenChange || setUncontrolledOpen;
@@ -285,7 +292,7 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
     if (matchSessionEarningsReadout(command)) {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const rows = await base44.entities.Earning.filter({});
+        const rows = sharedStateRef.current.sharedEarnings;
         const todays = rows.filter((e) => e.date === today);
         const gross = todays.reduce((s, e) => s + (e.amount || 0), 0);
         const trips = todays.reduce((s, e) => s + (e.trips || 0), 0);
@@ -371,13 +378,10 @@ export default function GlobalVoiceAssistant({ open: controlledOpen, onOpenChang
       return;
     }
     try {
-      const [earnings, prefsList] = await Promise.all([
-        base44.entities.Earning.filter({}),
-        base44.entities.DriverPreference.filter({}),
-      ]);
+      const { sharedPrefs: prefsRow, sharedEarnings: earningsRows } = sharedStateRef.current;
       const today = new Date().toISOString().slice(0, 10);
-      const todayEarnings = earnings.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
-      const p = prefsList[0] || {};
+      const todayEarnings = earningsRows.filter((e) => e.date === today).reduce((s, e) => s + (e.amount || 0), 0);
+      const p = prefsRow || {};
       const now = new Date();
       const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
       const history = (transcriptHistoryRef.current || []).slice(-6).map((h) => `${h.role}: ${h.text}`).join("\n");

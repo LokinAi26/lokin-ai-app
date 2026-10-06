@@ -16,6 +16,8 @@ import CategoryComparison from "@/components/earnings/CategoryComparison";
 import WeeklyCategorySummary from "@/components/earnings/WeeklyCategorySummary";
 import MonthlyTrends from "@/components/earnings/MonthlyTrends";
 import { guardedInvoke } from "@/lib/creditGuardian";
+import { useDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
 
 const RANGES = [
   { value: "today", label: "Today" },
@@ -38,19 +40,24 @@ const CATEGORY_FILTERS = [
 ];
 
 export default function Earnings() {
-  const [records, setRecords] = useState([]);
-  const [prefs, setPrefs] = useState(null);
+  // Shared single-fetch sources: earnings rows and the DriverPreference row
+  // come from the app-level providers, not a per-page GET.
+  const { earnings: sharedEarnings, loaded, refreshEarnings } = useEarnings();
+  const { prefs } = useDriverPrefs();
   const [range, setRange] = useState("today");
   const [cat, setCat] = useState("all");
   const [score, setScore] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Chronological order (oldest first) — what the charts expect.
+  const records = useMemo(
+    () => [...sharedEarnings].sort((a, b) => String(a.date).localeCompare(String(b.date))),
+    [sharedEarnings]
+  );
+
   useEffect(() => {
-    Promise.all([
-      base44.entities.Earning.filter({}, "date"),
-      base44.entities.DriverPreference.filter({}),
-    ]).then(([e, p]) => { setRecords(e); setPrefs(p[0] || null); }).finally(() => setLoading(false));
-  }, []);
+    if (loaded) setLoading(false);
+  }, [loaded]);
 
   // lightweight Lock In Score for the earnings view
   useEffect(() => {
@@ -62,14 +69,9 @@ export default function Earnings() {
   }, [prefs?.optimization_mode]);
 
   async function refresh() {
-    const [e, p] = await Promise.all([
-      base44.entities.Earning.filter({}, "date"),
-      base44.entities.DriverPreference.filter({}),
-    ]);
-    setRecords(e);
-    setPrefs(p[0] || null);
+    await refreshEarnings();
     try {
-      const res = await guardedInvoke(base44, "optimizeRoute", { mode: p[0]?.optimization_mode || "most_profit" }, { force: true, userInitiated: true });
+      const res = await guardedInvoke(base44, "optimizeRoute", { mode: prefs?.optimization_mode || "most_profit" }, { force: true, userInitiated: true });
       setScore(res.data?.lockInScore || null);
     } catch {}
   }

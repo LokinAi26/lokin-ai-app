@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
 import { Plus, Trash2, TrendingUp } from "lucide-react";
 import SyncStatusBadge from "@/components/ui/SyncStatusBadge";
@@ -14,8 +15,8 @@ export default function IncomeSection() {
 
   // Default the vehicle tag to the driver's profile vehicle class.
   useEffect(() => {
-    base44.entities.DriverPreference.filter({}).then((p) => {
-      setForm((f) => (f.vehicle ? f : { ...f, vehicle: tagFromProfileType(p[0]?.vehicle_type) }));
+    loadDriverPrefs().then((p) => {
+      setForm((f) => (f.vehicle ? f : { ...f, vehicle: tagFromProfileType(p?.vehicle_type) }));
     }).catch(() => {});
   }, []);
 
