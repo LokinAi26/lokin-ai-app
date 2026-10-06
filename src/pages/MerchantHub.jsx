@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Store, ShieldCheck, PackageCheck, AlertTriangle, RotateCcw, UserCheck, Lock, Plus, PackagePlus, Clock3, Truck, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const TABS = [
   { key: "merchants", label: "Merchants" },
@@ -18,6 +19,7 @@ const WORKFLOW_STEPS = [
 ];
 
 export default function MerchantHub() {
+  const { refreshUser } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "orders" ? "orders" : "merchants";
   const setTab = (t) => setParams(t === "merchants" ? {} : { tab: t }, { replace: true });
@@ -101,7 +103,7 @@ function OrdersTab() {
   async function load() {
     setBusy(true);
     try {
-      const user = await base44.auth.me();
+      const user = await refreshUser();
       setMe(user);
       const [p, o, c] = await Promise.all([
         base44.entities.MerchantPartner.filter({}),

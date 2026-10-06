@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Headphones, Send, LifeBuoy, Sparkles, ThumbsUp, ThumbsDown, UserRound } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { useToast } from "@/components/ui/use-toast";
 import SupportMessageBubble from "@/components/support/SupportMessageBubble";
@@ -21,6 +22,7 @@ function toUi(m) {
 }
 
 export default function Support() {
+  const { refreshUser } = useAuth();
   const { toast } = useToast();
   const [mode, setMode] = useState("agent");
   const [conversationId, setConversationId] = useState(null);
@@ -108,7 +110,7 @@ export default function Support() {
     setMessages((prev) => prev.map((x, i) => (i === idx ? { ...x, rated: true, rating } : x)));
     try {
       let user = null;
-      try { user = await base44.auth.me(); } catch {}
+      try { user = await refreshUser(); } catch {}
       const prevUser = messages[idx - 1]?.text || "";
       await base44.entities.SupportFeedback.create({
         user_id: user?.id || null,
@@ -128,7 +130,7 @@ export default function Support() {
     setMessages((prev) => prev.map((x, i) => (i === idx ? { ...x, escalated: true } : x)));
     try {
       let user = null;
-      try { user = await base44.auth.me(); } catch {}
+      try { user = await refreshUser(); } catch {}
       const prevUser = messages[idx - 1]?.text || "";
       await base44.entities.SupportFeedback.create({
         user_id: user?.id || null,

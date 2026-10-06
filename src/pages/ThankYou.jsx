@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { LokinGlyph } from "@/components/Brand";
 
 export default function ThankYou() {
+  const { refreshUser } = useAuth();
   const [plan, setPlan] = useState(null);
 
   useEffect(() => {
@@ -12,7 +14,7 @@ export default function ThankYou() {
     const t = setInterval(async () => {
       tries++;
       try {
-        const u = await base44.auth.me();
+        const u = await refreshUser();
         if (u?.plan && u.plan !== "free") {
           setPlan(u.plan);
           clearInterval(t);

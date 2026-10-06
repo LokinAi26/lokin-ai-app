@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, ScanLine, CheckCircle2, XCircle, RotateCcw, AlertTriangle, PackageCheck } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function ComplianceHandoff(){
  const [params]=useSearchParams(); const navigate=useNavigate(); const orderId=params.get("order")||"";
+ const { refreshUser } = useAuth();
  const [step,setStep]=useState(0); const [status,setStatus]=useState("ready"); const [note,setNote]=useState(""); const [order,setOrder]=useState(null); const [loading,setLoading]=useState(Boolean(orderId));
 
  useEffect(()=>{(async()=>{if(!orderId)return; try{const rows=await base44.entities.MerchantOrder.filter({id:orderId});setOrder(rows?.[0]||null);}finally{setLoading(false);}})();},[orderId]);
@@ -17,7 +19,7 @@ export default function ComplianceHandoff(){
  ],[order?.id_check_required]);
 
  async function log(category,result,reason=""){
-  try{const me=await base44.auth.me(); await base44.entities.ComplianceEvent.create({user_id:me?.id||"",merchant_id:order?.merchant_id||"",delivery_reference:orderId,category,result,reason,occurred_at:new Date().toISOString(),audit_note:note});}catch{}
+  try{const me=await refreshUser(); await base44.entities.ComplianceEvent.create({user_id:me?.id||"",merchant_id:order?.merchant_id||"",delivery_reference:orderId,category,result,reason,occurred_at:new Date().toISOString(),audit_note:note});}catch{}
  }
  async function pass(){
   const category=step===0?"pickup_custody":step===2?(order?.id_check_required?"id_verified":"age_check"):step>=3?"handoff":"age_check";

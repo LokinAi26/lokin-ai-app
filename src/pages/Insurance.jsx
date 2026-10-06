@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, Loader2, CheckCircle2, Clock, FileText, Car, ChevronRight, ChevronLeft, Package, HeartPulse, Wrench } from "lucide-react";
 import SelectSheet from "@/components/ui/SelectSheet";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 const COVERAGE = [
@@ -44,6 +45,7 @@ function inputCls() {
 }
 
 export default function Insurance() {
+  const { refreshUser } = useAuth();
   const { toast } = useToast();
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ export default function Insurance() {
     setSubmitting(true);
     try {
       let user = null;
-      try { user = await base44.auth.me(); } catch {}
+      try { user = await refreshUser(); } catch {}
       await base44.entities.InsuranceApplication.create({
         user_id: user?.id || null,
         coverage_type: form.coverage_type,

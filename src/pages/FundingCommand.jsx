@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BadgeDollarSign, CheckCircle2, CircleDot, ExternalLink, FileText, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const STATUS_TONE = {
   verified: "text-emerald-300 border-emerald-400/20 bg-emerald-400/[0.05]",
@@ -35,6 +36,7 @@ function deadline(value) {
 }
 
 export default function FundingCommand() {
+  const { refreshUser } = useAuth();
   const [me, setMe] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -48,7 +50,7 @@ export default function FundingCommand() {
     (async () => {
       setLoading(true);
       try {
-        const user = await base44.auth.me();
+        const user = await refreshUser();
         if (!alive) return;
         setMe(user);
         if (user?.role !== "admin") return;

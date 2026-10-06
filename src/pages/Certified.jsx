@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { GraduationCap, ShieldCheck, Lock, Award, Store, QrCode, Clock3, BadgeCheck, ScanLine, PackageCheck, Undo2, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const LESSONS = [
   { title: "Virginia cannabis law", desc: "Know what is legal today and what changes when the regulated retail market opens." },
@@ -28,6 +29,7 @@ const FLOW = [
 ];
 
 export default function Certified() {
+  const { refreshUser } = useAuth();
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [cert, setCert] = useState(null);
@@ -37,7 +39,7 @@ export default function Certified() {
   useEffect(() => {
     (async () => {
       try {
-        const user = await base44.auth.me();
+        const user = await refreshUser();
         setMe(user);
         const rows = await base44.entities.DriverCertification.filter({ program: "cannabis_training" });
         setCert(rows[0] || null);

@@ -5,6 +5,7 @@ import {
   TrendingUp, X
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import SelectSheet from "@/components/ui/SelectSheet";
 import OasisDesignStudio from "@/components/OasisDesignStudio";
 import OasisProductization from "@/components/OasisProductization";
@@ -223,6 +224,7 @@ function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequest
 }
 
 export default function Oasis() {
+  const { refreshUser } = useAuth();
   const [projects, setProjects] = useState([]);
   const [assets, setAssets] = useState([]);
   const [specs, setSpecs] = useState([]);
@@ -245,7 +247,7 @@ export default function Oasis() {
     setLoading(true);
     setError("");
     try {
-      const user = await base44.auth.me();
+      const user = await refreshUser();
       const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
       const [records, designAssets, productSpecs, candidates, samples] = await Promise.all([
         base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
@@ -331,7 +333,7 @@ export default function Oasis() {
         }),
       });
       const result = response?.data || response || {};
-      const user = await base44.auth.me().catch(() => null);
+      const user = await refreshUser();
       const now = new Date().toISOString();
 
       if (result.analysis_status === "setup_required" || result.configured === false) {
@@ -429,7 +431,7 @@ export default function Oasis() {
     setReviewingId(asset.id);
     setError("");
     try {
-      const user = await base44.auth.me().catch(() => null);
+      const user = await refreshUser();
       const now = new Date().toISOString();
       const assetUpdate = {
         status: decision,

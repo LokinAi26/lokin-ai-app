@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Leaf, PackageCheck, Truck, MapPin, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 // Live tracking for a buyer's LOKIN Green (cannabis) orders.
 // Subscribes to CannabisOrder realtime updates so the moment a driver accepts,
@@ -38,12 +39,13 @@ function timeAgo(iso) {
 }
 
 export default function GreenOrderTracker({ limit = 3 }) {
+  const { refreshUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     try {
-      const me = await base44.auth.me();
+      const me = await refreshUser();
       if (!me?.id) { setLoading(false); return; }
       const rows = await base44.entities.CannabisOrder.filter(
         { buyer_user_id: me.id },

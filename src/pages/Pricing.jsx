@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Sparkles, Crown, Zap, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { LokinGlyph } from "@/components/Brand";
 import { useToast } from "@/components/ui/use-toast";
 import { RELEASE_FLAGS } from "@/lib/releaseFlags";
@@ -64,12 +65,13 @@ const TIERS = [
 ];
 
 export default function Pricing() {
+  const { refreshUser } = useAuth();
   const { toast } = useToast();
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then((u) => setPlan(u?.plan || "free")).catch(() => {});
+    refreshUser().then((u) => setPlan(u?.plan || "free")).catch(() => {});
   }, []);
 
   async function subscribe(productId) {

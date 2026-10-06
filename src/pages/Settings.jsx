@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Save, Check, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { getCachedUserId } from "@/lib/driverPrefsCache";
+import { useAuth } from "@/lib/AuthContext";
 import { useDriverPrefs } from "@/context/DriverPrefsContext";
 import { observeGoalSet } from "@/architecture/seams/index";
 import { syncPendingEventsSoon } from "@/lib/eventSyncWiring";
@@ -17,6 +18,7 @@ import StockAlertSetup from "@/components/StockAlertSetup";
 import OpenAICreditUsageGuardian from "@/components/OpenAICreditUsageGuardian";
 
 export default function Settings() {
+  const { refreshUser } = useAuth();
   const [prefs, setPrefs] = useState(null);
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
@@ -30,7 +32,7 @@ export default function Settings() {
   async function deleteAccount() {
     setDeleting(true);
     try {
-      const me = await base44.auth.me();
+      const me = await refreshUser();
       const uid = me?.id;
       if (!uid) throw new Error("no user session");
       const [prefsList, blocked, fuel, avoid, earnings, offers, locators, gigs, purchases] = await Promise.all([

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Activity, CheckCircle2, Clock3, DollarSign, PackageCheck, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 import { guardedInvoke } from "@/lib/creditGuardian";
 
@@ -14,6 +15,7 @@ function badge(status = "") {
 }
 
 export default function CommerceCommandCenter() {
+  const { refreshUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [printfulOrders, setPrintfulOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function CommerceCommandCenter() {
     setLoading(true); setError("");
     try {
       const [me, healthRes] = await Promise.all([
-        base44.auth.me().catch(() => null),
+        refreshUser(),
         guardedInvoke(base44, "commerce-health", {}, { force, userInitiated: force }).catch(() => null),
       ]);
       const health = healthRes?.data || healthRes || null;

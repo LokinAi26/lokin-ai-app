@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Satellite, SlidersHorizontal, ScanLine, ShoppingBag, Fuel as FuelIcon, Ban, Settings as SettingsIcon, LogOut, Sparkles, ClipboardList, Receipt as ReceiptIcon, Headphones, ShieldAlert, Coffee, Truck, Flame, Calculator, Plug, Radar, MapPin, Signal, Package, GraduationCap, Store, BadgeCheck, Building2, Link2, Leaf, ShieldCheck, ChevronDown, Wallet, Route as Road, Cpu, Timer, BadgeDollarSign, Glasses, Shirt, Send, KeyRound, Lock, ListFilter, Search, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import PartnerApps from "@/components/PartnerApps";
 import { RELEASE_FLAGS } from "@/lib/releaseFlags";
 
@@ -129,11 +130,12 @@ function Section({ section, defaultOpen }) {
 }
 
 export default function More() {
+  const { refreshUser } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [q, setQ] = useState("");
   useEffect(() => {
     let alive = true;
-    base44.auth.me().then((user) => { if (alive) setIsAdmin(user?.role === "admin"); }).catch(() => {});
+    refreshUser().then((user) => { if (alive) setIsAdmin(user?.role === "admin"); }).catch(() => {});
     return () => { alive = false; };
   }, []);
   const query = q.trim().toLowerCase();

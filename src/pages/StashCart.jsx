@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ShoppingBag, Leaf, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 function readCart() { try { return JSON.parse(localStorage.getItem("lokin_green_cart") || "[]"); } catch { return []; } }
 function saveCart(c) { localStorage.setItem("lokin_green_cart", JSON.stringify(c)); window.dispatchEvent(new Event("lokin_green_cart")); }
 
 export default function StashCart() {
+  const { refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [items, setItems] = useState(readCart());
@@ -41,7 +43,7 @@ export default function StashCart() {
     setPlacing(true);
     try {
       let user = null;
-      try { user = await base44.auth.me(); } catch {}
+      try { user = await refreshUser(); } catch {}
       const dispensary = [...new Set(items.map((i) => i.dispensary).filter(Boolean))][0] || "LOKIN Green";
       const order = await base44.entities.CannabisOrder.create({
         buyer_user_id: user?.id || null,
