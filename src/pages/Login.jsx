@@ -4,12 +4,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
+import { LogIn, Mail, Lock, Loader2, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -53,6 +55,14 @@ export default function Login() {
         </>
       }
     >
+      <button
+        onClick={() => navigate(-1)}
+        aria-label="Go back"
+        className="mb-4 flex items-center gap-1 text-sm font-medium text-primary select-none"
+      >
+        <ChevronLeft className="h-4 w-4" /> Back
+      </button>
+
       <Button
         variant="outline"
         className="w-full h-12 text-sm font-medium mb-6"

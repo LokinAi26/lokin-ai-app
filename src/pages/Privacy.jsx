@@ -1,8 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 
 export default function Privacy() {
+  const navigate = useNavigate();
   return <main className="min-h-screen bg-background text-foreground px-5 py-10"><div className="mx-auto max-w-2xl space-y-5">
+    <button onClick={() => navigate(-1)} aria-label="Go back" className="flex items-center gap-1 text-sm font-medium text-primary select-none"><ChevronLeft className="h-4 w-4" /> Back</button>
     <h1 className="text-3xl font-bold">LOKIN AI Privacy Policy</h1><p className="text-sm text-muted-foreground">Last updated: August 19, 2026</p>
     <p>LOKIN AI provides driver productivity, routing, earnings, safety, support, commerce-related tools, and optional AI assistance. This policy explains the categories of information the app may process and why.</p>
     <h2 className="text-xl font-semibold">Information and device features</h2><p>Depending on the features you choose to use, LOKIN AI may process account and contact information, location and route information, delivery and earnings information, vehicle information, support messages, commerce activity, and information you submit in forms. Features may request access to device capabilities such as location, microphone, camera, or files only when needed for a feature you activate.</p>
