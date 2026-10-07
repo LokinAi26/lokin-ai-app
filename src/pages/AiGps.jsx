@@ -380,7 +380,6 @@ export default function AiGps() {
             speedMps={nav.rawPosition?.speed_mps}
             latitude={nav.rawPosition?.latitude}
             longitude={nav.rawPosition?.longitude}
-            heading={nav.rawPosition?.heading}
           />
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <NavMetric label="remaining" value={formatDistance(nav.remainingDistanceM)} />
@@ -654,16 +653,16 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
       )}
 
       {/* Digital speedometer on the live navigation HUD (the card version
-          only renders on the pre-navigation screen). Left edge under the
-          banner, clear of the right control stack and the FPS meter. */}
+          only renders on the pre-navigation screen). Bottom-left above the
+          current-street pill, level with the right control stack; the voice
+          panel and annotation chips sit above it when opened. */}
       {nav.route && !arrived && (
-        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] top-[calc(9.5rem+env(safe-area-inset-top))] z-40">
+        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] bottom-[calc(9rem+env(safe-area-inset-bottom))] z-20">
           <Speedometer
             variant="hud"
             speedMps={nav.rawPosition?.speed_mps}
             latitude={nav.rawPosition?.latitude}
             longitude={nav.rawPosition?.longitude}
-            heading={nav.rawPosition?.heading}
           />
         </div>
       )}
