@@ -59,7 +59,7 @@ export default function Speedometer({ speedMps, latitude, longitude, variant = "
   const known = speedMps != null && Number.isFinite(Number(speedMps));
   const mph = known ? Math.max(0, Math.round(Number(speedMps) * MPS_TO_MPH)) : null;
   const displayLimit = limit && Date.now() - limit.fetched_at < LIMIT_STALE_MS ? limit : null;
-  const overLimit = Boolean(displayLimit && mph != null && mph > displayLimit.mph + 4);
+  const overLimit = Boolean(displayLimit && mph != null && mph > displayLimit.mph);
 
   // Compact floating gauge for the full-screen navigation HUD.
   if (variant === "hud") {
