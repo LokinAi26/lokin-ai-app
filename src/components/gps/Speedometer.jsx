@@ -19,7 +19,10 @@ export default function Speedometer({ speedMps, latitude, longitude, variant = "
   const lastQueryRef = useRef(null);        // { lat, lon, at, ok }
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   // The position changes on every GPS fix (~1 Hz) while an Overpass lookup
   // takes seconds, so the request must outlive effect re-runs: one lookup at
