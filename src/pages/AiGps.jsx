@@ -19,6 +19,7 @@ import useNavHaptics from "@/hooks/useNavHaptics";
 import HudItemLocator from "@/components/vision/HudItemLocator";
 import GpsQuickSearch from "@/components/gps/GpsQuickSearch";
 import DestinationHours from "@/components/gps/DestinationHours";
+import Speedometer from "@/components/gps/Speedometer";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -375,6 +376,12 @@ export default function AiGps() {
               <div className="lokin-kicker mt-1">UNTIL TURN</div>
             </div>
           </div>
+          <Speedometer
+            speedMps={nav.rawPosition?.speed_mps}
+            latitude={nav.rawPosition?.latitude}
+            longitude={nav.rawPosition?.longitude}
+            heading={nav.rawPosition?.heading}
+          />
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <NavMetric label="remaining" value={formatDistance(nav.remainingDistanceM)} />
             <NavMetric label="eta" value={formatDuration(nav.remainingDurationS)} />
