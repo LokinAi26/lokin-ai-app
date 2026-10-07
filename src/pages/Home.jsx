@@ -19,6 +19,7 @@ import AwarenessBanner from "@/components/AwarenessBanner";
 import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import GoalMilestoneAlerts from "@/components/earnings/GoalMilestoneAlerts";
 import ShiftNudgeMonitor from "@/components/ShiftNudgeMonitor";
+import TopPaysSpotlight from "@/components/opportunities/TopPaysSpotlight";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
@@ -313,6 +314,7 @@ export default function Home() {
         ))}
       </div>
 
+      <TopPaysSpotlight />
       <ShiftMileageCard workStatus={workStatus} />
 
       {/* The lock is the visual center and the single primary action. */}
