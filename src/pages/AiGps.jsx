@@ -653,6 +653,21 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
         </div>
       )}
 
+      {/* Digital speedometer on the live navigation HUD (the card version
+          only renders on the pre-navigation screen). Left edge under the
+          banner, clear of the right control stack and the FPS meter. */}
+      {nav.route && !arrived && (
+        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] top-[calc(9.5rem+env(safe-area-inset-top))] z-40">
+          <Speedometer
+            variant="hud"
+            speedMps={nav.rawPosition?.speed_mps}
+            latitude={nav.rawPosition?.latitude}
+            longitude={nav.rawPosition?.longitude}
+            heading={nav.rawPosition?.heading}
+          />
+        </div>
+      )}
+
       {nav.offlineRoute && (
         <div className="pointer-events-none absolute left-1/2 top-[calc(11rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-amber-300/40 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur">
           OFFLINE · CACHED ROUTE DATA
