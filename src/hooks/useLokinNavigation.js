@@ -255,7 +255,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         origin: { longitude: originCoord[0], latitude: originCoord[1] },
         destination_addresses: addresses,
         destination_coordinates: doorPinCoordinates(addresses),
-        options: { profile: "driving-traffic", curbApproach: true },
+        options: { profile: "driving-traffic", curbApproach: true, originHeading: originHeadingForRoute(lastAcceptedSampleRef.current) },
       });
       if (requestId !== routeRequestRef.current) return null;
       const nextRoute = response.data?.route;
@@ -1098,4 +1098,19 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     voiceSupported: voiceSupported(),
     nativeRuntime,
   };
+}
+
+// Direction of travel for the route request. Without it the provider may
+// start the route on the opposite carriageway, so a reroute while moving
+// opened with a U-turn behind the driver. Only a fresh fix taken while moving
+// carries a trustworthy course; parked or stale fixes send none.
+function originHeadingForRoute(sample) {
+  if (!sample) return null;
+  const heading = Number(sample.heading);
+  const speed = Number(sample.speed_mps);
+  const ageMs = Date.now() - Number(sample.timestamp || 0);
+  if (sample.heading == null || !Number.isFinite(heading) || heading < 0) return null;
+  if (!Number.isFinite(speed) || speed < 3) return null;
+  if (!Number.isFinite(ageMs) || ageMs > 10000) return null;
+  return Math.round(heading) % 360;
 }

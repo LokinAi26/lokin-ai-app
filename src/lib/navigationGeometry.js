@@ -197,17 +197,53 @@ export function nearestGeometryIndex(coord, geometry = []) {
   return bestIndex;
 }
 
+// Places each maneuver on the route line. Routes that pass the same spot
+// twice (a U-turn back through an intersection, a cloverleaf ramp under its
+// own overpass) used to snap a later maneuver onto the earlier pass, so the
+// banner announced a turn the driver should drive straight through. Steps
+// arrive in driving order and their distances sum to the route length, so
+// each maneuver is searched forward from the previous one, near where the
+// step distances say it should be.
 export function prepareManeuvers(route) {
   const geometry = route?.geometry?.coordinates || [];
   const cumulative = routeCumulativeDistances(geometry);
-  return (route?.maneuvers || []).map((m) => {
-    const geometryIndex = m?.maneuver?.location ? nearestGeometryIndex(m.maneuver.location, geometry) : 0;
+  const geometryTotalM = Number(cumulative[cumulative.length - 1] || 0);
+  const maneuvers = route?.maneuvers || [];
+  const stepTotalM = maneuvers.reduce((sum, m) => sum + Math.max(0, Number(m?.distance_m) || 0), 0);
+  const scale = stepTotalM > 0 && geometryTotalM > 0 ? geometryTotalM / stepTotalM : 1;
+  let stepStartM = 0;
+  let minIndex = 0;
+  return maneuvers.map((m) => {
+    const expectedAlongM = stepStartM * scale;
+    stepStartM += Math.max(0, Number(m?.distance_m) || 0);
+    const geometryIndex = maneuverGeometryIndex(m?.maneuver?.location, geometry, cumulative, minIndex, expectedAlongM);
+    minIndex = geometryIndex;
     return {
       ...m,
       geometry_index: geometryIndex,
       along_route_m: Number(cumulative?.[geometryIndex] || 0),
     };
   }).sort((a, b) => Number(a.along_route_m || 0) - Number(b.along_route_m || 0));
+}
+
+function maneuverGeometryIndex(location, geometry, cumulative, minIndex, expectedAlongM) {
+  if (!geometry.length) return 0;
+  // Haversine and the provider's step distances drift apart slightly over a
+  // long route, so the search window widens with distance.
+  const windowM = 150 + expectedAlongM * 0.02;
+  let bestInWindow = -1, bestInWindowD = Infinity;
+  let bestAhead = minIndex, bestAheadD = Infinity;
+  let closestToExpected = minIndex, closestToExpectedGap = Infinity;
+  for (let i = minIndex; i < geometry.length; i++) {
+    const gap = Math.abs(Number(cumulative[i] || 0) - expectedAlongM);
+    if (gap < closestToExpectedGap) { closestToExpectedGap = gap; closestToExpected = i; }
+    if (!location) continue;
+    const d = haversineMeters(location, geometry[i]);
+    if (d < bestAheadD) { bestAheadD = d; bestAhead = i; }
+    if (gap <= windowM && d < bestInWindowD) { bestInWindowD = d; bestInWindow = i; }
+  }
+  if (!location) return closestToExpected;
+  return bestInWindow >= 0 ? bestInWindow : bestAhead;
 }
 
 export function nextManeuverForSnap(maneuvers = [], snap, geometry = []) {

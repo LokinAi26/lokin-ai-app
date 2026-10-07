@@ -1176,26 +1176,38 @@ export class MeshBuilder {
   // Drives the arch bridge animation each frame: spans rise from the road when
   // placed, the geometry tracks camera zoom through short paint transitions,
   // and the arches shimmer subtly so the spans read as part of the living scene.
-  renderBridgeFrame(timestamp) {
+  //
+  // Perf (2026-10-07 drive, 15-39 FPS in 4D): every paint change here forces
+  // the extrusion layer to re-evaluate. The camera moves on every GPS fix
+  // while driving, and this used to restyle the spans on every move frame,
+  // with the height re-quantized to 1% of a speed-dependent zoom. Height now
+  // steps in 5% increments (the 320 ms transition hides the steps), and the
+  // shimmer only runs while the camera is still.
+  renderBridgeFrame(timestamp, { shimmer = true } = {}) {
     const map = this.map;
     if (!map || !map.getLayer(BRIDGE_LAYER_ID) || this.bridges.length === 0) return;
     try {
-      const scale = Math.round(this.bridgeScaleFactor(timestamp) * 100) / 100;
+      const rising = this.riseStartedAt != null;
+      const factor = this.bridgeScaleFactor(timestamp);
+      const scale = rising ? Math.round(factor * 100) / 100 : Math.round(factor * 20) / 20;
       if (scale !== this.lastBridgeScale) {
         this.lastBridgeScale = scale;
         map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height-transition", { duration: BRIDGE_SCALE_TRANSITION_MS, delay: 0 });
         map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-height", ["*", ["get", "height"], scale]);
       }
-      const shimmer = (Math.sin((timestamp / BRIDGE_SHIMMER_PERIOD_MS) * Math.PI * 2) + 1) / 2;
-      map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-opacity", 0.9 + shimmer * 0.1);
+      if (shimmer && !map.isMoving()) {
+        const wave = (Math.sin((timestamp / BRIDGE_SHIMMER_PERIOD_MS) * Math.PI * 2) + 1) / 2;
+        map.setPaintProperty(BRIDGE_LAYER_ID, "fill-extrusion-opacity", 0.9 + wave * 0.1);
+      }
     } catch {
       // Style may be mid-switch; the next frame retries.
     }
   }
 
-  // Camera-move hook: keeps scaling smooth between animation frames.
+  // Camera-move hook: keeps the span height tracking zoom between animation
+  // frames. Height only; the shimmer belongs to the timed tick.
   renderBridgeScale() {
-    this.renderBridgeFrame(performance.now());
+    this.renderBridgeFrame(performance.now(), { shimmer: false });
   }
 
   startAnimations() {

@@ -12,6 +12,8 @@ import {
   evaluateArrivalState,
   remainingRouteLine,
   haversineMeters,
+  prepareManeuvers,
+  nextManeuverForSnap,
 } from "../src/lib/navigationGeometry.js";
 import { reroutePolicy } from "../src/lib/navigationQuality.js";
 
@@ -207,6 +209,37 @@ check("reroute gate satisfiable off-route", () => {
   const bad = reroutePolicy({ accuracy_m: 200 }, { distance_m: 500, match_confidence: 0.01 });
   assert(bad.canReroute === false, "very poor GPS fix must not authorize a reroute");
   results.rerouteGate = "satisfiable";
+});
+
+// ---------------------------------------------------------------------------
+// T-loop: a route that passes the same intersection twice (2026-10-07 Virginia
+// Beach drive: U-turn and cloverleaf banners). The later "turn left" at X must
+// stay on the second pass, not snap onto the first one, or the banner tells
+// the driver to turn at an intersection they should drive straight through.
+// ---------------------------------------------------------------------------
+check("maneuvers on a looping route stay in driving order", () => {
+  const lat0 = 36.85, lon0 = -76.0;
+  const d = 200 / 111320;
+  const dLon = 300 / (111320 * Math.cos((lat0 * Math.PI) / 180));
+  const X = [lon0, lat0 + d];
+  const geometry = [[lon0, lat0], X, [lon0, lat0 + 2 * d], X, [lon0 + dLon, lat0 + d]];
+  const route = {
+    geometry: { coordinates: geometry },
+    maneuvers: [
+      { distance_m: 400, road_name: "Main", maneuver: { type: "depart", location: geometry[0] } },
+      { distance_m: 200, road_name: "Main", maneuver: { type: "continue", modifier: "uturn", location: geometry[2] } },
+      { distance_m: 300, road_name: "Side", maneuver: { type: "turn", modifier: "left", location: X } },
+      { distance_m: 0, road_name: "Side", maneuver: { type: "arrive", location: geometry[4] } },
+    ],
+  };
+  const prepared = prepareManeuvers(route);
+  assert(prepared.map((m) => m.maneuver.type).join(",") === "depart,continue,turn,arrive",
+    `maneuvers out of driving order: ${prepared.map((m) => m.maneuver.type).join(",")}`);
+  const turn = prepared.find((m) => m.maneuver.type === "turn");
+  assert(turn.geometry_index === 3, `turn snapped to geometry index ${turn.geometry_index}, expected the second pass (3)`);
+  const next = nextManeuverForSnap(prepared, { along_route_m: 150, coordinate: [lon0, lat0 + 150 / 111320] }, geometry);
+  assert(next.maneuver.type === "continue", `50 m before X the next maneuver must be the U-turn, got ${next.maneuver.type}`);
+  results.loopingRoute = `turn at ${Math.round(turn.along_route_m)} m`;
 });
 
 console.log(JSON.stringify({ ok: true, suite: "navigation-regressions", results }, null, 2));

@@ -491,6 +491,13 @@ async function directions(
     params.set("approaches", coordinates.map((_, i) => (i === 0 ? "" : "curb")).join(";"));
   }
 
+  // Start the route in the driver's direction of travel so a reroute while
+  // moving doesn't begin with a U-turn on the opposite carriageway.
+  const originHeading = Number(opts.originHeading);
+  if (opts.originHeading != null && Number.isFinite(originHeading) && originHeading >= 0 && originHeading < 360) {
+    params.set("bearings", coordinates.map((_, i) => (i === 0 ? `${Math.round(originHeading) % 360},45` : "")).join(";"));
+  }
+
   const data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${params.toString()}`);
   if (data?.code && data.code !== "Ok") throw new Error(data?.message || data.code);
   const route = data?.routes?.[0];

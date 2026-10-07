@@ -125,6 +125,9 @@ export default function GpsVoiceAnnotation({ mapRef, coordinate }) {
     const typeText = annotationTypeLabel(kind, subtype) || "ANNOTATION";
     try {
       const record = await base44.entities[ENTITY_FOR_KIND[kind]].create({
+        // DeliveryZone requires its sub-type; leaving it out rejected every
+        // DROP OFF / PICKUP / STAGING save.
+        ...(kind === "DELIVERY_ZONE" ? { subtype } : {}),
         label: `${typeText} — at current position`,
         latitude: coordinate[1],
         longitude: coordinate[0],
@@ -139,8 +142,11 @@ export default function GpsVoiceAnnotation({ mapRef, coordinate }) {
         { localId, recordId: record.id, kind, subtype, coordinate, status: "provisional", createdAt: Date.now() },
       ]);
       setChip({ mode: "pending", localId });
-    } catch {
-      setChip({ mode: "error", message: "Couldn't save the annotation. Tap the mic to try again." });
+    } catch (error) {
+      // Logged without the transcript or position (sensitive driver data).
+      console.warn(`[GpsVoiceAnnotation] ${ENTITY_FOR_KIND[kind]} save failed: ${error?.message || error}`);
+      // Keep what the driver already said so a retry is one tap, not a re-recording.
+      setChip({ mode: "confirm", transcript, kind, subtype, busy: false, failed: true });
     }
   }
 
@@ -205,6 +211,9 @@ export default function GpsVoiceAnnotation({ mapRef, coordinate }) {
                 {annotationTypeLabel(chip.kind, chip.subtype)}
                 {!hasPosition && <span className="ml-1 font-bold text-white/50">· NO GPS FIX</span>}
               </div>
+              {chip.failed && (
+                <div className="mt-1.5 text-[11px] leading-snug text-amber-200">Couldn't save the annotation. Tap RETRY.</div>
+              )}
               <div className="mt-2.5 flex items-center gap-2">
                 <button
                   type="button"
@@ -212,7 +221,7 @@ export default function GpsVoiceAnnotation({ mapRef, coordinate }) {
                   onClick={() => createAnnotation(chip.kind, chip.subtype, chip.transcript)}
                   className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#FFB020] bg-[#FFB020]/15 text-xs font-extrabold tracking-[0.1em] text-[#FFB020] active:scale-95 disabled:opacity-50"
                 >
-                  <Check className="h-4 w-4" /> {chip.busy ? "SAVING…" : "CONFIRM"}
+                  <Check className="h-4 w-4" /> {chip.busy ? "SAVING…" : chip.failed ? "RETRY" : "CONFIRM"}
                 </button>
                 <button
                   type="button"
