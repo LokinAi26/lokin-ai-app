@@ -37,6 +37,11 @@ export function playNavCue(kind) {
   if (kind === "imminent") {
     tone(880, 0.09);
     tone(1180, 0.12, 0.11);
+  } else if (kind === "speeding") {
+    // Low, short double tone — distinct from the turn chirps so the driver
+    // can tell a speeding alert from a navigation cue without looking.
+    tone(520, 0.09);
+    tone(650, 0.1, 0.13);
   } else {
     tone(720, 0.08);
   }

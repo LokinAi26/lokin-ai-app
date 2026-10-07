@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Gauge } from "lucide-react";
 import { fetchSpeedLimit } from "@/lib/speedLimit";
 import { haversineMeters } from "@/lib/navigationGeometry";
+import { playNavCue } from "@/lib/navAudioCue";
 
 // Real-time digital speedometer + posted speed limit for the GPS HUD.
 // Speed comes from the device GPS fix feed (nav.rawPosition.speed_mps) —
@@ -60,6 +61,28 @@ export default function Speedometer({ speedMps, latitude, longitude, variant = "
   const mph = known ? Math.max(0, Math.round(Number(speedMps) * MPS_TO_MPH)) : null;
   const displayLimit = limit && Date.now() - limit.fetched_at < LIMIT_STALE_MS ? limit : null;
   const overLimit = Boolean(displayLimit && mph != null && mph > displayLimit.mph);
+
+  // Speeding alert (2026-10-07): one subtle haptic pulse + soft chime the
+  // moment the driver crosses the posted limit, re-armed only after they
+  // drop back to it — GPS jitter can never re-fire it mid-speeding.
+  const alertedRef = useRef(false);
+  useEffect(() => {
+    if (!overLimit) {
+      alertedRef.current = false;
+      return;
+    }
+    if (alertedRef.current) return;
+    alertedRef.current = true;
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        navigator.vibrate(reduced ? [20] : [35, 70, 35]);
+      }
+    } catch {
+      // The OS can refuse vibration; a silent no-op is fine.
+    }
+    playNavCue("speeding");
+  }, [overLimit]);
 
   // Compact floating gauge for the full-screen navigation HUD.
   if (variant === "hud") {
