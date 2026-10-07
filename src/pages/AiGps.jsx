@@ -368,7 +368,7 @@ export default function AiGps() {
             <div className="min-w-0 flex-1">
               <div className="lokin-kicker lokin-kicker-lime">NEXT MANEUVER</div>
               <div className="mt-1 text-lg font-extrabold leading-tight text-white">{nav.maneuver?.maneuver?.instruction || "Continue on route"}</div>
-              <div className="mt-1 text-xs text-white/45 truncate">{maneuverBannerText(nav.maneuver) || destinationAddresses[0] || "LOKIN road route"}</div>
+              <div className="mt-1 text-xs text-white/45 truncate">{nav.maneuver?.road_name || nav.maneuver?.destinations || destinationAddresses[0] || "LOKIN road route"}</div>
             </div>
             <div className="text-right shrink-0">
               <div className="lokin-hero-number font-display text-xl">{nav.maneuver?.distance_from_driver_m != null ? formatDistance(nav.maneuver.distance_from_driver_m) : "—"}</div>

@@ -492,13 +492,25 @@ async function directions(
   }
 
   // Start the route in the driver's direction of travel so a reroute while
-  // moving doesn't begin with a U-turn on the opposite carriageway.
+  // moving doesn't begin with a U-turn on the opposite carriageway. The
+  // origin radius keeps the heading filter from snapping to some distant
+  // road that happens to match; if no nearby road matches, the request is
+  // retried once without the constraint so the driver always gets a route.
   const originHeading = Number(opts.originHeading);
-  if (opts.originHeading != null && Number.isFinite(originHeading) && originHeading >= 0 && originHeading < 360) {
-    params.set("bearings", coordinates.map((_, i) => (i === 0 ? `${Math.round(originHeading) % 360},45` : "")).join(";"));
+  const headed = opts.originHeading != null && Number.isFinite(originHeading) && originHeading >= 0 && originHeading < 360;
+  let data: any = null;
+  if (headed) {
+    const headedParams = new URLSearchParams(params);
+    headedParams.set("bearings", coordinates.map((_, i) => (i === 0 ? `${Math.round(originHeading) % 360},45` : "")).join(";"));
+    headedParams.set("radiuses", coordinates.map((_, i) => (i === 0 ? "50" : "unlimited")).join(";"));
+    try {
+      data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${headedParams.toString()}`);
+      if (data?.code && data.code !== "Ok") data = null;
+    } catch {
+      data = null;
+    }
   }
-
-  const data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${params.toString()}`);
+  if (!data) data = await fetchJson(`${MAPBOX_DIRECTIONS}/${profile}/${coordPath}?${params.toString()}`);
   if (data?.code && data.code !== "Ok") throw new Error(data?.message || data.code);
   const route = data?.routes?.[0];
   if (!light && !route?.geometry?.coordinates?.length) throw new Error("No drivable road route was returned");

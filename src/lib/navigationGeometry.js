@@ -216,7 +216,7 @@ export function prepareManeuvers(route) {
   return maneuvers.map((m) => {
     const expectedAlongM = stepStartM * scale;
     stepStartM += Math.max(0, Number(m?.distance_m) || 0);
-    const geometryIndex = maneuverGeometryIndex(m?.maneuver?.location, geometry, cumulative, minIndex, expectedAlongM);
+    const geometryIndex = maneuverGeometryIndex(m?.maneuver?.location, geometry, cumulative, minIndex, stepTotalM > 0 ? expectedAlongM : null);
     minIndex = geometryIndex;
     return {
       ...m,
@@ -228,9 +228,11 @@ export function prepareManeuvers(route) {
 
 function maneuverGeometryIndex(location, geometry, cumulative, minIndex, expectedAlongM) {
   if (!geometry.length) return 0;
+  // Without step distances there is no expected position: nearest vertex ahead.
+  const guided = expectedAlongM != null;
   // Haversine and the provider's step distances drift apart slightly over a
   // long route, so the search window widens with distance.
-  const windowM = 150 + expectedAlongM * 0.02;
+  const windowM = guided ? 150 + expectedAlongM * 0.02 : 0;
   let bestInWindow = -1, bestInWindowD = Infinity;
   let bestAhead = minIndex, bestAheadD = Infinity;
   let closestToExpected = minIndex, closestToExpectedGap = Infinity;
@@ -240,10 +242,12 @@ function maneuverGeometryIndex(location, geometry, cumulative, minIndex, expecte
     if (!location) continue;
     const d = haversineMeters(location, geometry[i]);
     if (d < bestAheadD) { bestAheadD = d; bestAhead = i; }
-    if (gap <= windowM && d < bestInWindowD) { bestInWindowD = d; bestInWindow = i; }
+    if (guided && gap <= windowM && d < bestInWindowD) { bestInWindowD = d; bestInWindow = i; }
   }
-  if (!location) return closestToExpected;
-  return bestInWindow >= 0 ? bestInWindow : bestAhead;
+  if (!location) return guided ? closestToExpected : minIndex;
+  // Distances that disagree with the geometry must not drag a maneuver far
+  // from where it actually is.
+  return bestInWindow >= 0 && bestInWindowD <= bestAheadD + 50 ? bestInWindow : bestAhead;
 }
 
 export function nextManeuverForSnap(maneuvers = [], snap, geometry = []) {

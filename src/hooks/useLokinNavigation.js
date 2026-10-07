@@ -255,7 +255,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
         origin: { longitude: originCoord[0], latitude: originCoord[1] },
         destination_addresses: addresses,
         destination_coordinates: doorPinCoordinates(addresses),
-        options: { profile: "driving-traffic", curbApproach: true, originHeading: originHeadingForRoute(lastAcceptedSampleRef.current) },
+        options: { profile: "driving-traffic", curbApproach: true, originHeading: reason === "initial" ? null : originHeadingForRoute(lastAcceptedSampleRef.current) },
       });
       if (requestId !== routeRequestRef.current) return null;
       const nextRoute = response.data?.route;
