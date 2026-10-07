@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { loadDriverPrefs } from "@/context/DriverPrefsContext";
+import { useEarnings } from "@/context/EarningsContext";
 import { createOrQueue, getPendingByEntity, subscribeOfflineQueue } from "@/lib/offlineQueue";
 import { Plus, Trash2, TrendingUp } from "lucide-react";
 import SyncStatusBadge from "@/components/ui/SyncStatusBadge";
@@ -8,9 +9,11 @@ import SelectSheet from "@/components/ui/SelectSheet";
 import { VEHICLES, tagFromProfileType, vehicleLabel } from "@/lib/vehicleTags";
 
 export default function IncomeSection() {
-  const [items, setItems] = useState([]);
+  // Shared single-fetch source: the Tax page reads the same Earning rows as
+  // every other earnings surface through EarningsContext, not its own GET.
+  const { earnings: items, loaded, refreshEarnings } = useEarnings();
+  const loading = !loaded;
   const [pending, setPending] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), amount: "", trips: 1, platform: "mixed", zone: "", vehicle: "" });
 
   // Default the vehicle tag to the driver's profile vehicle class.
@@ -20,13 +23,7 @@ export default function IncomeSection() {
     }).catch(() => {});
   }, []);
 
-  async function load() {
-    setLoading(true);
-    const data = await base44.entities.Earning.list("-date", 200);
-    setItems(data || []);
-    setLoading(false);
-  }
-  useEffect(() => { load(); return subscribeOfflineQueue(() => setPending(getPendingByEntity("Earning"))); }, []);
+  useEffect(() => subscribeOfflineQueue(() => setPending(getPendingByEntity("Earning"))), []);
 
   async function add(e) {
     e.preventDefault();
@@ -36,9 +33,9 @@ export default function IncomeSection() {
     const res = await createOrQueue("Earning", { date: form.date, amount: Number(form.amount), trips: Number(form.trips) || 0, platform: form.platform, ...(form.zone ? { zone: form.zone } : {}), ...(form.vehicle ? { vehicle: form.vehicle } : {}) });
     setForm({ ...form, amount: "" });
     setPending(getPendingByEntity("Earning"));
-    if (!res.queued) load();
+    if (!res.queued) refreshEarnings();
   }
-  async function del(id) { await base44.entities.Earning.delete(id); load(); }
+  async function del(id) { await base44.entities.Earning.delete(id); refreshEarnings(); }
 
   const ytd = items.filter((i) => (i.date || "").startsWith(String(new Date().getFullYear()))).reduce((s, i) => s + (Number(i.amount) || 0), 0);
 
