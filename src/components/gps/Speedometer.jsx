@@ -14,39 +14,79 @@ const QUERY_MIN_INTERVAL_MS = 12000;
 const FAILED_RETRY_MS = 60000;
 const LIMIT_STALE_MS = 360000; // OSM limit older than 6 min is dropped
 
-export default function Speedometer({ speedMps, latitude, longitude, heading }) {
+export default function Speedometer({ speedMps, latitude, longitude, variant = "card" }) {
   const [limit, setLimit] = useState(null); // { mph, fetched_at, road_name }
   const lastQueryRef = useRef(null);        // { lat, lon, at, ok }
+  const inFlightRef = useRef(false);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
+  // The position changes on every GPS fix (~1 Hz) while an Overpass lookup
+  // takes seconds, so the request must outlive effect re-runs: one lookup at
+  // a time, and its answer lands as long as the gauge is still mounted.
   useEffect(() => {
     if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) return;
+    if (inFlightRef.current) return;
     const now = Date.now();
     const last = lastQueryRef.current;
     if (last) {
-      const moved = haversineMeters(last.lat, last.lon, latitude, longitude);
+      // haversineMeters takes [lon, lat] pairs; four bare numbers made this NaN,
+      // so every GPS fix re-queried OSM.
+      const moved = haversineMeters([last.lon, last.lat], [longitude, latitude]);
       // Cooldown since the last attempt, unless the driver moved well past it.
       if (now - last.at < (last.ok ? QUERY_MIN_INTERVAL_MS : FAILED_RETRY_MS) && moved < QUERY_MOVE_M) return;
       // A fresh on-screen limit is only refreshed after real movement.
       if (limit && now - limit.fetched_at < LIMIT_STALE_MS && moved < QUERY_MOVE_M) return;
     }
-    lastQueryRef.current = { lat: latitude, lon: longitude, at: now };
-    let alive = true;
-    fetchSpeedLimit(latitude, longitude, heading)
+    const query = { lat: latitude, lon: longitude, at: now, ok: true };
+    lastQueryRef.current = query;
+    inFlightRef.current = true;
+    fetchSpeedLimit(latitude, longitude)
       .then((res) => {
-        if (!alive) return;
-        lastQueryRef.current = { lat: latitude, lon: longitude, at: Date.now(), ok: Boolean(res) };
-        setLimit(res ? { mph: res.speed_limit_mph, fetched_at: Date.now(), road_name: res.road_name } : null);
+        query.ok = Boolean(res);
+        query.at = Date.now();
+        if (mountedRef.current) setLimit(res ? { mph: res.speed_limit_mph, fetched_at: Date.now(), road_name: res.road_name } : null);
       })
-      .catch(() => {
-        if (alive) lastQueryRef.current.ok = false;
-      });
-    return () => { alive = false; };
-  }, [latitude, longitude, limit, heading]);
+      .catch(() => { query.ok = false; })
+      .finally(() => { inFlightRef.current = false; });
+  }, [latitude, longitude, limit]);
 
-  const known = Number.isFinite(Number(speedMps));
+  // A missing GPS speed arrives as null; Number(null) is 0, which would show
+  // a moving car as "0 MPH". Unknown renders as "—".
+  const known = speedMps != null && Number.isFinite(Number(speedMps));
   const mph = known ? Math.max(0, Math.round(Number(speedMps) * MPS_TO_MPH)) : null;
   const displayLimit = limit && Date.now() - limit.fetched_at < LIMIT_STALE_MS ? limit : null;
   const overLimit = Boolean(displayLimit && mph != null && mph > displayLimit.mph + 4);
+
+  // Compact floating gauge for the full-screen navigation HUD.
+  if (variant === "hud") {
+    return (
+      <div className="pointer-events-none flex items-center gap-2">
+        <div
+          className={`flex h-16 w-16 flex-col items-center justify-center rounded-2xl border bg-black/85 shadow-lg backdrop-blur ${overLimit ? "border-red-500/80" : "border-accent/40"}`}
+          aria-live="polite"
+          aria-label={mph != null ? `Speed ${mph} miles per hour` : "Speed unavailable"}
+        >
+          <span className={`font-display text-2xl font-black leading-none ${overLimit ? "text-red-400" : "text-white"}`}>{mph != null ? mph : "—"}</span>
+          <span className="mt-0.5 text-[9px] font-bold tracking-[0.12em] text-white/50">MPH</span>
+        </div>
+        {displayLimit && (
+          <div
+            className="flex h-14 w-12 flex-col items-center justify-center rounded-lg border-[3px] border-black bg-white text-black shadow-lg"
+            role="img"
+            aria-label={`Posted speed limit ${displayLimit.mph} miles per hour, from OpenStreetMap`}
+          >
+            <span className="text-[8px] font-bold leading-tight">SPEED</span>
+            <span className="text-[8px] font-bold leading-tight">LIMIT</span>
+            <span className="font-display text-lg font-black leading-none">{displayLimit.mph}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
@@ -73,8 +113,8 @@ export default function Speedometer({ speedMps, latitude, longitude, heading }) 
           aria-label={`Posted speed limit ${displayLimit.mph} miles per hour, from OpenStreetMap`}
           title={`Posted limit · OpenStreetMap${displayLimit.road_name ? ` · ${displayLimit.road_name}` : ""}`}
         >
-          <span className="text-[6px] font-bold leading-tight tracking-tight">SPEED</span>
-          <span className="text-[6px] font-bold leading-tight tracking-tight">LIMIT</span>
+          <span className="text-[8px] font-bold leading-tight tracking-tight">SPEED</span>
+          <span className="text-[8px] font-bold leading-tight tracking-tight">LIMIT</span>
           <span className="font-display text-xl font-black leading-none">{displayLimit.mph}</span>
         </div>
       )}

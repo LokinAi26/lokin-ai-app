@@ -369,7 +369,7 @@ export default function AiGps() {
             <div className="min-w-0 flex-1">
               <div className="lokin-kicker lokin-kicker-lime">NEXT MANEUVER</div>
               <div className="mt-1 text-lg font-extrabold leading-tight text-white">{nav.maneuver?.maneuver?.instruction || "Continue on route"}</div>
-              <div className="mt-1 text-xs text-white/45 truncate">{nav.maneuver?.road_name || destinationAddresses[0] || "LOKIN road route"}</div>
+              <div className="mt-1 text-xs text-white/45 truncate">{nav.maneuver?.road_name || nav.maneuver?.destinations || destinationAddresses[0] || "LOKIN road route"}</div>
             </div>
             <div className="text-right shrink-0">
               <div className="lokin-hero-number font-display text-xl">{nav.maneuver?.distance_from_driver_m != null ? formatDistance(nav.maneuver.distance_from_driver_m) : "—"}</div>
@@ -380,7 +380,6 @@ export default function AiGps() {
             speedMps={nav.rawPosition?.speed_mps}
             latitude={nav.rawPosition?.latitude}
             longitude={nav.rawPosition?.longitude}
-            heading={nav.rawPosition?.heading}
           />
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <NavMetric label="remaining" value={formatDistance(nav.remainingDistanceM)} />
@@ -523,6 +522,19 @@ function maneuverTurnIcon(m) {
   return ArrowUp;
 }
 
+// Unnamed steps (ramps, forks, exits) used to fall straight through to the
+// destination address, so a fork 0.4 mi ahead read "6633 East Virginia B…".
+// Signed destinations ("I 264 East: Norfolk") and the provider's own
+// instruction describe the maneuver itself; the address is the last resort.
+function maneuverBannerText(m) {
+  const road = String(m?.road_name || "").trim();
+  if (road) return road;
+  const signed = String(m?.destinations || "").trim();
+  if (signed) return signed;
+  const instruction = String(m?.maneuver?.instruction || "").trim();
+  return instruction && instruction !== "Continue" ? instruction : "";
+}
+
 function formatArrivalClock(remainingDurationS) {
   const s = Number(remainingDurationS);
   if (!Number.isFinite(s) || s <= 0) return "";
@@ -550,7 +562,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
   const TurnIcon = maneuverTurnIcon(nav.maneuver);
   const bannerStreet = arrived
     ? "Destination reached"
-    : (nav.maneuver?.road_name || destinationAddresses[0] || "Follow the highlighted road");
+    : (maneuverBannerText(nav.maneuver) || destinationAddresses[0] || "Follow the highlighted road");
   // Current street (Kendall 2026-10-02): the road the driver is ON right now,
   // from the most recently passed maneuver. Distinct from bannerStreet (next maneuver).
   const currentStreet = (() => {
@@ -634,9 +646,24 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
             </div>
             <div className="min-w-0 flex-1">
               <div className="lokin-kicker lokin-kicker-lime">{arrived ? "ARRIVED" : "NEXT MANEUVER"}</div>
-              <div className="truncate text-[clamp(1.35rem,6vw,1.8rem)] font-extrabold leading-tight text-white">{bannerStreet}</div>
+              <div className="line-clamp-2 break-words text-[clamp(1.15rem,5.2vw,1.6rem)] font-extrabold leading-tight text-white">{bannerStreet}</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Digital speedometer on the live navigation HUD (the card version
+          only renders on the pre-navigation screen). Bottom-left above the
+          current-street pill, level with the right control stack; the voice
+          panel and annotation chips sit above it when opened. */}
+      {nav.route && !arrived && (
+        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] bottom-[calc(9rem+env(safe-area-inset-bottom))] z-20">
+          <Speedometer
+            variant="hud"
+            speedMps={nav.rawPosition?.speed_mps}
+            latitude={nav.rawPosition?.latitude}
+            longitude={nav.rawPosition?.longitude}
+          />
         </div>
       )}
 

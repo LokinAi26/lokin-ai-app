@@ -26,7 +26,9 @@ function parseMaxspeedMph(tag) {
 function distanceToWay(lat, lon, geometry) {
   let best = Infinity;
   for (const point of geometry || []) {
-    const d = haversineMeters(lat, lon, Number(point[1]), Number(point[0]));
+    // haversineMeters takes [lon, lat] pairs; the old four-number call was
+    // NaN, which rejected every way and hid the limit sign.
+    const d = haversineMeters([Number(lon), Number(lat)], [Number(point?.lon ?? point?.[0]), Number(point?.lat ?? point?.[1])]);
     if (d < best) best = d;
   }
   return best;
