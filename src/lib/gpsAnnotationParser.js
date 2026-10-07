@@ -39,8 +39,15 @@ export function parseAnnotationTranscript(text) {
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return { kind: null, subtype: null };
-  // Spec: "starts with hazard" → HAZARD entity.
+  // Spec: "starts with hazard" → HAZARD entity. Hazard keywords ("gate code",
+  // "restricted", …) match anywhere in the note — drivers say the words mid-
+  // sentence, not as a command.
   if (/^hazard\b/.test(t)) return { kind: "HAZARD", subtype: null };
+  if (/\bgate\s?code\b/.test(t)) return { kind: "HAZARD", subtype: null };
+  if (/\brestricted\b/.test(t)) return { kind: "HAZARD", subtype: null };
+  if (/\bprivate\s?property\b/.test(t)) return { kind: "HAZARD", subtype: null };
+  if (/\bno\s?access\b/.test(t)) return { kind: "HAZARD", subtype: null };
+  if (/\bdo\s?not\s?enter\b/.test(t)) return { kind: "HAZARD", subtype: null };
   if (/\bdrop\s?off\b/.test(t)) return { kind: "DELIVERY_ZONE", subtype: "DROP_OFF" };
   if (/\bpick\s?up\b/.test(t)) return { kind: "DELIVERY_ZONE", subtype: "PICKUP" };
   if (/\bstaging\b/.test(t)) return { kind: "DELIVERY_ZONE", subtype: "STAGING" };
