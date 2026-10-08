@@ -20,6 +20,7 @@ import HomeSignalIndicator from "@/components/HomeSignalIndicator";
 import GoalMilestoneAlerts from "@/components/earnings/GoalMilestoneAlerts";
 import ShiftNudgeMonitor from "@/components/ShiftNudgeMonitor";
 import TopPaysSpotlight from "@/components/opportunities/TopPaysSpotlight";
+import StoreHoursQuickSearch from "@/components/dashboard/StoreHoursQuickSearch";
 import { getRoleMeta } from "@/lib/userTypes";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import { normalizeWorkStatus, sessionStatusLabel } from "@/lib/sessionState";
@@ -313,6 +314,8 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      <StoreHoursQuickSearch />
 
       <TopPaysSpotlight />
       <ShiftMileageCard workStatus={workStatus} />
