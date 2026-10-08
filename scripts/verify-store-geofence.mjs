@@ -139,6 +139,24 @@ assert(events.join() === "enter:n6", `corner shop entered, got ${events}`);
 }
 assert(events.join() === "enter:n6,exit:n6,enter:arrival:aldi", `arrival elsewhere must hand over, got ${events}`);
 
+// 3c2. Same store, two positions: parking 120 m from the map point and
+// walking in keeps one visit, both ways round.
+reset();
+stores = [{ type: "way", id: 9, center: offset(120), tags: { shop: "supermarket", name: "Walmart Supercenter" } }];
+{
+  const p = offset(0);
+  reportStoreArrival("Walmart Supercenter", p.lat, p.lon, 0);
+}
+await walk(2_000, 40_000, (t) => t / 400); // walk 100 m toward the building
+assert(events.filter((e) => e.startsWith("enter")).length === 1, `walking in must not start a second visit, got ${events}`);
+reset();
+await fix(40, 0); // geofence enters the map point from 80 m out
+{
+  const p = offset(-10);
+  reportStoreArrival("Walmart Supercenter, 123 Main St", p.lat, p.lon, 2_000);
+}
+assert(events.join() === "enter:w9", `same-name arrival 130 m from the map point upgrades the visit, got ${events}`);
+
 // 3d. Geofence handover: held store fell out of its enter radius and another
 // store is now within its own.
 reset();

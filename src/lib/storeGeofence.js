@@ -299,6 +299,14 @@ async function refreshStores(lat, lon) {
 // walking-pace dwell. When already inside a store it upgrades that visit
 // instead. No-op when the geofence is disabled or the name is not a
 // grocery/retail place. Never throws.
+// "Walmart Supercenter" vs "Walmart Supercenter, 123 Main St": same store
+// when the first meaningful word matches.
+function sameStoreName(a, b) {
+  const first = (v) => (String(v || "").toLowerCase().match(/[a-z0-9']{3,}/) || [""])[0];
+  const fa = first(a);
+  return Boolean(fa) && fa === first(b);
+}
+
 export function reportStoreArrival(name, lat, lon, t = Date.now()) {
   try {
     if (!isStoreGeofenceEnabled()) return;
@@ -313,7 +321,8 @@ export function reportStoreArrival(name, lat, lon, t = Date.now()) {
     if (STREET_RE.test(n) && !BRAND_RE.test(n)) return;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const at = Number.isFinite(t) ? t : Date.now();
-    if (insideStore && haversineMeters({ lat, lon }, insideStore) <= ENTER_RADIUS_M) {
+    const heldD = insideStore ? haversineMeters({ lat, lon }, insideStore) : Infinity;
+    if (insideStore && (heldD <= ENTER_RADIUS_M || (heldD <= EXIT_RADIUS_M && sameStoreName(insideStore.name, name)))) {
       // Already inside (the geofence caught the approach): navigation
       // arriving here upgrades the open visit so it settles on the arrival
       // dwell instead of being ignored.
@@ -378,7 +387,9 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
           // and the held one no longer is (passed a corner shop, parked at the
           // supermarket next door). Drift between two stores that are both
           // still within the enter radius keeps the visit.
-          const switched = nearest && nearest.id !== insideStore.id
+          // An arrival visit sits at the parked car, not the store's map
+          // point, so walking toward the building is not a handover.
+          const switched = insideStore.kind !== "arrival" && nearest && nearest.id !== insideStore.id
             && nearestD <= ENTER_RADIUS_M && heldD > ENTER_RADIUS_M;
           if (heldD > EXIT_RADIUS_M || switched) {
             const left = insideStore;
