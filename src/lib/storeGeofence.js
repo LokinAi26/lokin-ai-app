@@ -125,6 +125,8 @@ let insideStore = null; // the store object we are currently inside, or null
 let insideSince = 0; // when the current visit started (ms)
 let arrivedAt = null; // when navigation arrived at this store (ms), null if it has not
 let settled = false; // driver has dwelt at walking pace; cleared if they speed up again
+let settledMaxMps = 0; // pace limit the visit settled under; moving faster un-settles it
+let unsettledAt = 0; // when the driver last moved off after settling (ms)
 const activeNavigators = new Set(); // owners currently running turn-by-turn navigation
 let visitFixes = []; // recent {lat, lon, t} fixes during the current visit
 let lastFetchAt = 0;
@@ -137,6 +139,8 @@ function startVisit(store, t) {
   insideSince = t;
   arrivedAt = null;
   settled = false;
+  settledMaxMps = 0;
+  unsettledAt = 0;
   visitFixes = [];
 }
 
@@ -145,6 +149,8 @@ function endVisit() {
   insideSince = 0;
   arrivedAt = null;
   settled = false;
+  settledMaxMps = 0;
+  unsettledAt = 0;
   visitFixes = [];
 }
 
@@ -180,12 +186,26 @@ function steadyFor(now, startedAt, windowMs, maxMps) {
   return pace != null && pace <= maxMps;
 }
 
-function shouldSettle(now) {
+// Pace limit the visit settles under right now, or 0 when it does not.
+function settleLimit(now) {
   // After navigation arrived: a short near-standstill (sliding window, so the
   // car rolling to a stop only delays it). A parking-lot crawl is faster than
   // ARRIVAL_MAX_MPS and falls through to the regular walking-pace dwell.
-  if (arrivedAt != null && steadyFor(now, arrivedAt, ARRIVAL_SETTLE_MS, ARRIVAL_MAX_MPS)) return true;
-  return steadyFor(now, insideSince, SETTLE_MS, WALKING_MAX_MPS);
+  // After moving off from a settle, the dwell starts over from that moment.
+  if (arrivedAt != null && steadyFor(now, Math.max(arrivedAt, unsettledAt), ARRIVAL_SETTLE_MS, ARRIVAL_MAX_MPS)) return ARRIVAL_MAX_MPS;
+  if (steadyFor(now, Math.max(insideSince, unsettledAt), SETTLE_MS, WALKING_MAX_MPS)) return WALKING_MAX_MPS;
+  return 0;
+}
+
+// Pace between the last two fixes at least 1 s apart: reacts to the car
+// moving off within a couple of seconds, where the 5 s segments lag.
+function latestStepPace() {
+  const last = visitFixes.length - 1;
+  for (let i = last - 1; i >= 0; i -= 1) {
+    const dt = visitFixes[last].t - visitFixes[i].t;
+    if (dt >= 1000) return haversineMeters(visitFixes[i], visitFixes[last]) / (dt / 1000);
+  }
+  return null;
 }
 
 // Turn-by-turn navigation (AI GPS, Vision HUD) reports whether it is actively
@@ -207,7 +227,10 @@ export function canAutoOpenItemLocator({ pathname = "", storeId = null, now = Da
   if (activeNavigators.size > 0) return false;
   if (!settled) return false;
   const last = visitFixes[visitFixes.length - 1];
-  return Boolean(last) && now - last.t <= FRESH_FIX_MS;
+  if (!last || now - last.t > FRESH_FIX_MS) return false;
+  // Still at the pace the visit settled under, by the most recent step too.
+  const step = latestStepPace();
+  return step == null || step <= settledMaxMps;
 }
 
 function notify(evt) {
@@ -375,10 +398,17 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
             visitFixes.push({ lat, lon, t: at });
             while (visitFixes.length && at - visitFixes[0].t > FIX_HISTORY_MS) visitFixes.shift();
             if (!settled) {
-              settled = shouldSettle(at);
+              settledMaxMps = settleLimit(at);
+              settled = settledMaxMps > 0;
             } else {
+              // Moving faster than the visit settled under: settle again first.
               const pace = segmentPace(visitFixes.length - 1);
-              if (pace != null && pace > WALKING_MAX_MPS) settled = false; // moving again
+              if (pace != null && pace > settledMaxMps) {
+                settled = false;
+                unsettledAt = at;
+                settledMaxMps = settleLimit(at);
+                settled = settledMaxMps > 0;
+              }
             }
           }
           // Re-announced on every fix while settled, so a switch held back by

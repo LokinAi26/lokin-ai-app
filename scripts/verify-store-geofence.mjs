@@ -101,6 +101,22 @@ await walk(6_000, 26_000, (t) => 30 - (t - 6_000) / 2_000);
 assert(settled().join() === "settled:n5", `arrival after approach must settle, got ${events}`);
 assert(canAutoOpenItemLocator({ pathname: "/ai-gps", storeId: "n5", now: 26_000 }), "arrived visit may auto-open");
 
+// 3a. Arrival settled during a wait in the lot, then the car creeps into a
+// space at 1.4 m/s: the gate must refuse within a couple of fixes.
+reset();
+stores = [];
+{
+  const p = offset(0);
+  reportStoreArrival("Kroger", p.lat, p.lon, 0);
+}
+await walk(2_000, 18_000, () => 0);
+assert(settled().length === 1, `waiting in the lot settles the arrival, got ${events}`);
+assert(canAutoOpenItemLocator({ pathname: "/", now: 18_000 }), "gate open while stopped");
+await walk(20_000, 22_000, (t) => ((t - 18_000) / 1_000) * 1.4);
+assert(!canAutoOpenItemLocator({ pathname: "/", now: 22_000 }), "creeping at 1.4 m/s after an arrival settle blocks the switch");
+await walk(24_000, 50_000, (t) => ((t - 18_000) / 1_000) * 1.4);
+assert(!canAutoOpenItemLocator({ pathname: "/", now: 50_000 }), "the dwell starts over after moving off, not from the earlier wait");
+
 // 3b. Parking-lot crawl at ~2.2 m/s (8 km/h) after arrival, for a full
 // minute: neither the arrival nor the walking-pace dwell settles.
 reset();
