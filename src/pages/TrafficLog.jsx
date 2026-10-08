@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trash2, Timer, ShieldAlert } from "lucide-react";
+import { Trash2, Timer, ShieldAlert, CalendarRange } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DAY_PART_LABELS } from "@/lib/trafficDelayLog";
+import DelayTimeline from "@/components/traffic/DelayTimeline";
 
 export default function TrafficLog() {
   const [items, setItems] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [view, setView] = useState("timeline");
 
   async function load() {
     const rows = await base44.entities.TrafficDelay.filter({}, "-created_date", 300);
@@ -62,13 +64,43 @@ export default function TrafficLog() {
         Slowdowns announced during navigation (or reported by voice) are logged automatically. Use the patterns below to know which areas to avoid at which times.
       </p>
 
+      {/* View switch: timeline of every logged delay vs. the avoid-patterns breakdown */}
+      <div className="lk-seg w-full" role="tablist" aria-label="Traffic log view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "timeline"}
+          onClick={() => setView("timeline")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 font-display text-[12px] tracking-[0.1em] uppercase ${view === "timeline" ? "text-primary" : "text-white/55"}`}
+          style={view === "timeline" ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+        >
+          <CalendarRange className="h-3.5 w-3.5" /> Timeline
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "patterns"}
+          onClick={() => setView("patterns")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 font-display text-[12px] tracking-[0.1em] uppercase ${view === "patterns" ? "text-primary" : "text-white/55"}`}
+          style={view === "patterns" ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+        >
+          <ShieldAlert className="h-3.5 w-3.5" /> Patterns
+        </button>
+      </div>
+
       {loaded && items.length === 0 ? (
         <div className="text-sm text-white/45 text-center py-6">
           No delays logged yet. LOKIN records them as you drive — check back after a shift.
         </div>
       ) : null}
 
-      {patterns.length > 0 && (
+      {view === "timeline" && loaded && items.length > 0 && (
+        <section className="space-y-2">
+          <DelayTimeline items={items} onRemove={remove} />
+        </section>
+      )}
+
+      {view === "patterns" && patterns.length > 0 && (
         <section className="space-y-2">
           <div className="flex items-center gap-2 text-[11px] tracking-[0.2em] text-primary/70 font-display">
             <ShieldAlert className="h-3.5 w-3.5" /> WHEN TO AVOID
@@ -93,7 +125,7 @@ export default function TrafficLog() {
         </section>
       )}
 
-      {items.length > 0 && (
+      {view === "patterns" && items.length > 0 && (
         <section className="space-y-2">
           <div className="text-[11px] tracking-[0.2em] text-primary/70 font-display">RECENT LOG</div>
           {items.slice(0, 30).map((i) => (
