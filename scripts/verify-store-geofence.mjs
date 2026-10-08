@@ -218,6 +218,31 @@ await flush();
 await flush();
 assert(settled().length === 0, `replayed fixes must not create a dwell, got ${events}`);
 
+// 6d. Two GPS feeds disagreeing by ~8 m while the driver stands still in
+// the store: only the nav feed feeds the pace history, so the visit settles
+// and the gate stays open.
+reset();
+{
+  const p0 = offset(20);
+  for (let t = 0; t <= 60_000; t += 1_000) {
+    checkStoreGeofence(p0.lat, p0.lon, t, "nav");
+    const p1 = offset(28);
+    checkStoreGeofence(p1.lat, p1.lon, t + 500, "shift");
+    await flush();
+    await flush();
+  }
+}
+assert(settled().join() === "settled:n2", `standing still with two feeds settles, got ${events}`);
+assert(canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 60_500 }), "cross-feed disagreement must not block the gate");
+
+// 6e. A GPS gap longer than the pace history clears the settle, and a lone
+// fix after it cannot open the locator.
+reset();
+await walk(0, 50_000, () => 20);
+assert(canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 50_000 }), "settled before the gap");
+await fix(60, 200_000);
+assert(!canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 200_000 }), "a lone fix after a long gap fails closed");
+
 // 7. Neighbouring stores: drift that makes a neighbour "nearest" must not
 // bounce the visit (exit then re-enter re-announced the store).
 reset();

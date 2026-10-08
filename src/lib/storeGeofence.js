@@ -32,6 +32,8 @@ const PACE_WINDOW_MS = 5 * 1000; // min span used to measure pace (smooths indoo
 const WALKING_MAX_MPS = 2.0; // ~7 km/h, brisk walking: faster than this is still driving
 const FIX_HISTORY_MS = 90 * 1000;
 const FRESH_FIX_MS = 30 * 1000;
+const STEP_SPAN_MS = 3 * 1000; // shortest span the countdown gate reads pace over
+const NAV_FEED_PRIORITY_MS = 10 * 1000; // nav feed owns pace history while this fresh
 
 const SHOP_RE = "^(supermarket|grocery|convenience|department_store|variety_store|wholesale|general|deli|bakery|greengrocer|farm)$";
 
@@ -129,6 +131,7 @@ let settledMaxMps = 0; // pace limit the visit settled under; moving faster un-s
 let unsettledAt = 0; // when the driver last moved off after settling (ms)
 const activeNavigators = new Set(); // owners currently running turn-by-turn navigation
 let visitFixes = []; // recent {lat, lon, t} fixes during the current visit
+let lastNavFixAt = -Infinity; // newest nav-feed fix time (ms)
 let lastFetchAt = 0;
 let lastFetchPos = null;
 let lastStores = []; // in-memory store list from the most recent lookup
@@ -197,13 +200,14 @@ function settleLimit(now) {
   return 0;
 }
 
-// Pace between the last two fixes at least 1 s apart: reacts to the car
-// moving off within a couple of seconds, where the 5 s segments lag.
+// Pace over the latest span of at least STEP_SPAN_MS: reacts to the car
+// moving off sooner than the 5 s segments, without reading single-second
+// GPS jitter as motion.
 function latestStepPace() {
   const last = visitFixes.length - 1;
   for (let i = last - 1; i >= 0; i -= 1) {
     const dt = visitFixes[last].t - visitFixes[i].t;
-    if (dt >= 1000) return haversineMeters(visitFixes[i], visitFixes[last]) / (dt / 1000);
+    if (dt >= STEP_SPAN_MS) return haversineMeters(visitFixes[i], visitFixes[last]) / (dt / 1000);
   }
   return null;
 }
@@ -229,8 +233,9 @@ export function canAutoOpenItemLocator({ pathname = "", storeId = null, now = Da
   const last = visitFixes[visitFixes.length - 1];
   if (!last || now - last.t > FRESH_FIX_MS) return false;
   // Still at the pace the visit settled under, by the most recent step too.
+  // Fails closed: no recent span to measure means no switch.
   const step = latestStepPace();
-  return step == null || step <= settledMaxMps;
+  return step != null && step <= settledMaxMps;
 }
 
 function notify(evt) {
@@ -353,7 +358,10 @@ export function reportStoreArrival(name, lat, lon, t = Date.now()) {
 
 // Called (fire-and-forget) on every accepted shift/nav GPS fix. Never throws.
 // `t` is the fix time in ms (defaults to now).
-export function checkStoreGeofence(lat, lon, t = Date.now()) {
+// `source` is "shift" or "nav". Both feeds drive enter/exit, but only one
+// feeds the pace history at a time (nav while it is delivering), because two
+// receivers' fixes disagree by metres and read as motion when interleaved.
+export function checkStoreGeofence(lat, lon, t = Date.now(), source = "shift") {
   try {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     if (!isStoreGeofenceEnabled()) {
@@ -364,6 +372,8 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
       return;
     }
     const at = Number.isFinite(t) ? t : Date.now();
+    if (source === "nav" && at > lastNavFixAt) lastNavFixAt = at;
+    const feedsPace = source === "nav" || at - lastNavFixAt > NAV_FEED_PRIORITY_MS;
     refreshStores(lat, lon)
       .then((stores) => {
         const here = { lat, lon };
@@ -405,9 +415,15 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
           const prev = visitFixes[visitFixes.length - 1];
           // Replayed or out-of-order fixes (e.g. the foreground re-check) add
           // no motion information; only newer fixes feed the pace history.
-          if (!prev || at > prev.t) {
+          if (feedsPace && (!prev || at > prev.t)) {
             visitFixes.push({ lat, lon, t: at });
             while (visitFixes.length && at - visitFixes[0].t > FIX_HISTORY_MS) visitFixes.shift();
+            if (settled && visitFixes.length < 2) {
+              // A long GPS gap (e.g. backgrounded) emptied the history: what
+              // the driver did meanwhile is unknown, so settle again.
+              settled = false;
+              unsettledAt = at;
+            }
             if (!settled) {
               settledMaxMps = settleLimit(at);
               settled = settledMaxMps > 0;
@@ -439,6 +455,7 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
 // Test seam: clear in-memory geofence state (used by diagnostics).
 export function resetStoreGeofence() {
   endVisit();
+  lastNavFixAt = -Infinity;
   lastFetchAt = 0;
   lastFetchPos = null;
   lastStores = [];

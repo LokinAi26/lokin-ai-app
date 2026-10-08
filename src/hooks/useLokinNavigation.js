@@ -620,7 +620,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       const fixAt = Date.now();
       lastNavFixRef.current = { lat: navLat, lon: navLon, t: fixAt };
       if (acceptedSample.dead_reckoned !== true) {
-        try { checkStoreGeofence(navLat, navLon, fixAt); } catch { /* geofence is best-effort */ }
+        try { checkStoreGeofence(navLat, navLon, fixAt, "nav"); } catch { /* geofence is best-effort */ }
       }
     }
     // GPS Super Agent monitoring: read-only sample report (never alters the pipeline).
@@ -920,7 +920,7 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
       if (f && Number.isFinite(f.lat) && Number.isFinite(f.lon)) {
         // Replays the last fix with its own time, so it is not mistaken for a
         // fresh stationary fix.
-        try { checkStoreGeofence(f.lat, f.lon, f.t); } catch { /* best-effort */ }
+        try { checkStoreGeofence(f.lat, f.lon, f.t, "nav"); } catch { /* best-effort */ }
       }
     };
     document.addEventListener("visibilitychange", onForeground);
