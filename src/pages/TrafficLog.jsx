@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trash2, Timer, ShieldAlert, CalendarRange } from "lucide-react";
+import { Trash2, Timer, ShieldAlert, CalendarRange, Sunrise, Sunset } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DAY_PART_LABELS } from "@/lib/trafficDelayLog";
 import DelayTimeline from "@/components/traffic/DelayTimeline";
@@ -8,6 +8,7 @@ export default function TrafficLog() {
   const [items, setItems] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState("timeline");
+  const [commuteOnly, setCommuteOnly] = useState(false);
 
   async function load() {
     const rows = await base44.entities.TrafficDelay.filter({}, "-created_date", 300);
@@ -27,6 +28,12 @@ export default function TrafficLog() {
   }
 
   // Avoid pattern: group by area × day part → count + average delay.
+  // Commute-only timeline: keep just the AM and PM rush day-parts.
+  const timelineItems = useMemo(() => {
+    if (!commuteOnly) return items;
+    return items.filter((i) => i.day_part === "morning" || i.day_part === "evening");
+  }, [items, commuteOnly]);
+
   const patterns = useMemo(() => {
     const byArea = new Map();
     for (const i of items) {
@@ -95,9 +102,38 @@ export default function TrafficLog() {
       ) : null}
 
       {view === "timeline" && loaded && items.length > 0 && (
-        <section className="space-y-2">
-          <DelayTimeline items={items} onRemove={remove} />
-        </section>
+        <>
+          {/* Commute filter: focus the timeline on AM/PM rush day-parts */}
+          <div className="lk-seg w-full" role="group" aria-label="Commute filter">
+            <button
+              type="button"
+              aria-pressed={!commuteOnly}
+              onClick={() => setCommuteOnly(false)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${!commuteOnly ? "text-primary" : "text-white/55"}`}
+              style={!commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+            >
+              <CalendarRange className="h-3 w-3" /> All hours
+            </button>
+            <button
+              type="button"
+              aria-pressed={commuteOnly}
+              onClick={() => setCommuteOnly(true)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${commuteOnly ? "text-primary" : "text-white/55"}`}
+              style={commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+            >
+              <Sunrise className="h-3 w-3" /> AM
+              <i aria-hidden className="h-3 w-px bg-white/15" />
+              <Sunset className="h-3 w-3" /> PM rush
+            </button>
+          </div>
+          <section className="space-y-2">
+            <DelayTimeline
+              items={timelineItems}
+              onRemove={remove}
+              emptyMessage="No delays logged during commute hours (AM/PM rush) yet — switch to All hours to see the rest."
+            />
+          </section>
+        </>
       )}
 
       {view === "patterns" && patterns.length > 0 && (

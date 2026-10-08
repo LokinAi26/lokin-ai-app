@@ -31,7 +31,7 @@ function severity(minutes) {
   return "#7CFC1E"; // lime — light
 }
 
-export default function DelayTimeline({ items, onRemove }) {
+export default function DelayTimeline({ items, onRemove, emptyMessage = "No delays logged yet. LOKIN records them as you drive — check back after a shift." }) {
   // Recurring = same area reported 2+ times across the whole log.
   const countsByArea = new Map();
   for (const i of items) {
@@ -54,7 +54,7 @@ export default function DelayTimeline({ items, onRemove }) {
   for (const key of days) byDay.get(key).sort((a, b) => new Date(b.reported_at || b.created_date) - new Date(a.reported_at || a.created_date));
 
   if (!days.length) {
-    return <div className="text-sm text-white/45 text-center py-6">No delays logged yet. LOKIN records them as you drive — check back after a shift.</div>;
+    return <div className="text-sm text-white/45 text-center py-6">{emptyMessage}</div>;
   }
 
   let dayTotalMinutes = 0;
