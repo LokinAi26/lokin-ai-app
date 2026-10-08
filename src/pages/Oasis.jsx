@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight, CheckCircle2, Clock3, DollarSign, Factory, Lightbulb,
-  Package, Palette, Plus, Rocket, ShieldCheck, Sparkles, Target,
-  TrendingUp, X
+  ArrowRight, CheckCircle2, Clock3, Factory, Lightbulb,
+  Package, Palette, Plus, RefreshCw, Rocket, ShieldCheck, Sparkles,
+  Truck, TrendingUp, X
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -10,6 +10,21 @@ import SelectSheet from "@/components/ui/SelectSheet";
 import OasisDesignStudio from "@/components/OasisDesignStudio";
 import OasisProductization from "@/components/OasisProductization";
 import OasisProductionFabric from "@/components/OasisProductionFabric";
+import { useOasisConfirm } from "@/components/OasisConfirmSheet";
+
+const LOAD_TIMEOUT_MS = 20000;
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+function errorText(err, fallback) {
+  return err?.response?.data?.error || err?.message || fallback;
+}
 
 const STAGES = [
   { key: "idea", label: "Idea", icon: Lightbulb },
@@ -91,13 +106,15 @@ function Score({ label, value }) {
   );
 }
 
-function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequests, advancing, analyzing, generating, reviewingId, productizing, supplierAction, onAdvance, onAnalyze, onGenerate, onReview, onProductize, onMatchSuppliers, onVerifySupplierCost, onRequestSample, onApproveSample }) {
+function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequests, jobs, recipes, confirm, advancing, analyzing, generating, reviewingId, productizing, supplierAction, onAdvance, onAnalyze, onGenerate, onReview, onProductize, onMatchSuppliers, onVerifySupplierCost, onRequestSample, onApproveSample, onJobSaved, onRecipesChange }) {
   const [detailsOpen, setDetailsOpen] = useState(Boolean(project.director_summary));
   const approvedAsset = assets.find((asset) => asset.status === "approved");
   const latestSpec = specs[0] || null;
   const price = Number(project.target_price || 0);
   const margin = Number(project.target_margin || 0);
   const estimatedContribution = price * (margin / 100);
+  const flowIndex = FLOW.indexOf(project.status);
+  const progress = flowIndex < 0 ? 0 : Math.round(((flowIndex + 1) / FLOW.length) * 100);
 
   return (
     <article className="rounded-2xl border border-white/10 lokin-panel p-4">
@@ -111,6 +128,16 @@ function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequest
         </div>
         <div className="shrink-0 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
           {project.category || "Concept"}
+        </div>
+      </div>
+
+      <div className="mt-3" aria-label={`Pipeline progress ${progress}%`}>
+        <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-full rounded-full bg-primary/80 transition-[width] duration-500" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="mt-1 flex justify-between text-[8px] uppercase tracking-wider text-white/30">
+          <span>Step {Math.max(flowIndex + 1, 0)} of {FLOW.length}</span>
+          <span>{project.approval_state ? project.approval_state.replaceAll("_", " ") : ""}</span>
         </div>
       </div>
 
@@ -140,7 +167,7 @@ function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequest
         type="button"
         disabled={analyzing}
         onClick={() => onAnalyze(project)}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-xs font-black text-black disabled:opacity-50"
+        className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-xs font-black text-black active:scale-[0.99] disabled:opacity-50"
       >
         {analyzing ? <Clock3 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
         {analyzing ? "OASIS Director is analyzing…" : project.director_summary ? "Refresh Director analysis" : "Analyze with OASIS Director"}
@@ -203,13 +230,21 @@ function ProjectCard({ project, assets, specs, supplierCandidates, sampleRequest
         onApproveSample={onApproveSample}
       />
 
-      <OasisProductionFabric project={project} sourceAsset={approvedAsset} />
+      <OasisProductionFabric
+        project={project}
+        sourceAsset={approvedAsset}
+        recipes={recipes}
+        jobs={jobs}
+        confirm={confirm}
+        onJobSaved={onJobSaved}
+        onRecipesChange={onRecipesChange}
+      />
 
       <button
         type="button"
         disabled={advancing || analyzing || Boolean(generating) || project.status === "scale" || project.status === "retired"}
         onClick={() => onAdvance(project)}
-        className="mt-3 flex w-full items-center justify-between rounded-xl border border-primary/25 bg-primary/[0.07] px-3 py-2.5 text-left disabled:opacity-45"
+        className="mt-3 flex min-h-[44px] w-full items-center justify-between rounded-xl border border-primary/25 bg-primary/[0.07] px-3 py-2.5 text-left active:scale-[0.99] disabled:opacity-45"
       >
         <span>
           <span className="block text-[9px] uppercase tracking-[0.14em] text-white/35">Next controlled action</span>
@@ -230,8 +265,14 @@ export default function Oasis() {
   const [specs, setSpecs] = useState([]);
   const [supplierCandidates, setSupplierCandidates] = useState([]);
   const [sampleRequests, setSampleRequests] = useState([]);
-  const [supplierAction, setSupplierAction] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [recipes, setRecipes] = useState([]);
+  // Scoped to one project so a supplier action on one card does not lock every card.
+  const [supplierAction, setSupplierAction] = useState({ projectId: "", kind: "" });
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [stageFilter, setStageFilter] = useState("");
+  const { confirm, sheet: confirmSheet } = useOasisConfirm();
   const [composerOpen, setComposerOpen] = useState(false);
   const [idea, setIdea] = useState(EMPTY_IDEA);
   const [saving, setSaving] = useState(false);
@@ -245,31 +286,59 @@ export default function Oasis() {
 
   async function loadProjects() {
     setLoading(true);
+    setLoadFailed(false);
     setError("");
     try {
-      const user = await refreshUser();
-      const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
-      const [records, designAssets, productSpecs, candidates, samples] = await Promise.all([
-        base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
-        base44.entities.OasisDesignAsset.filter(ownerFilter, "-created_at", 100, 0),
-        base44.entities.OasisProductSpec.filter(ownerFilter, "-created_at", 100, 0),
-        base44.entities.OasisSupplierCandidate.filter(ownerFilter, "-checked_at", 200, 0),
-        base44.entities.OasisSampleRequest.filter(ownerFilter, "-created_at", 100, 0),
-      ]);
-      setProjects(records || []);
-      setAssets(designAssets || []);
-      setSpecs(productSpecs || []);
-      setSupplierCandidates(candidates || []);
-      setSampleRequests(samples || []);
+      await withTimeout((async () => {
+        const user = await refreshUser();
+        const ownerFilter = user?.role === "admin" ? {} : { owner_user_id: user?.id || "__none__" };
+        const [records, designAssets, productSpecs, candidates, samples, productionJobs] = await Promise.all([
+          base44.entities.OasisProject.filter(ownerFilter, "-created_at", 50, 0),
+          base44.entities.OasisDesignAsset.filter(ownerFilter, "-created_at", 100, 0),
+          base44.entities.OasisProductSpec.filter(ownerFilter, "-created_at", 100, 0),
+          base44.entities.OasisSupplierCandidate.filter(ownerFilter, "-checked_at", 200, 0),
+          base44.entities.OasisSampleRequest.filter(ownerFilter, "-created_at", 100, 0),
+          // Jobs are optional context; a failure here must not block the pipeline.
+          base44.entities.OasisProductionJob.filter(ownerFilter, "-created_at", 200, 0).catch((err) => {
+            console.error("OASIS production jobs failed to load", err);
+            return [];
+          }),
+        ]);
+        setProjects(records || []);
+        setAssets(designAssets || []);
+        setSpecs(productSpecs || []);
+        setSupplierCandidates(candidates || []);
+        setSampleRequests(samples || []);
+        setJobs(productionJobs || []);
+      })(), LOAD_TIMEOUT_MS, "OASIS took too long to respond.");
     } catch (err) {
-      setError("OASIS could not load its project pipeline.");
+      console.error("OASIS pipeline failed to load", err);
+      setLoadFailed(true);
+      setError(`${errorText(err, "OASIS could not load its project pipeline.")} Check your connection and retry.`);
     } finally {
       setLoading(false);
     }
   }
 
+  // One catalog request for the whole page instead of one per project card.
+  const loadRecipes = useCallback(async () => {
+    try {
+      const response = await base44.functions.invoke("oasis-production-fabric", { action: "list_recipes" });
+      const result = response?.data || response || {};
+      if (Array.isArray(result.recipes) && result.recipes.length) setRecipes(result.recipes);
+    } catch (err) {
+      // The static fallback catalog keeps the panel truthful (everything shows setup required).
+      console.error("OASIS recipe catalog unavailable", err);
+    }
+  }, []);
+
+  const saveJob = useCallback((job) => {
+    setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
+  }, []);
+
   useEffect(() => {
     loadProjects();
+    loadRecipes();
   }, []);
 
   const counts = useMemo(() => {
@@ -280,6 +349,17 @@ export default function Oasis() {
     });
     return result;
   }, [projects]);
+
+  const visibleProjects = useMemo(
+    () => (stageFilter ? projects.filter((project) => stageBucket(project.status) === stageFilter) : projects),
+    [projects, stageFilter],
+  );
+
+  const approvedDesignCount = useMemo(() => assets.filter((asset) => asset.status === "approved").length, [assets]);
+  const readySupplierCount = useMemo(
+    () => supplierCandidates.filter((candidate) => candidate.match_status === "verified" && candidate.cost_verified && candidate.margin_passed).length,
+    [supplierCandidates],
+  );
 
   const averageProfitScore = useMemo(() => {
     if (!projects.length) return 0;
@@ -402,7 +482,11 @@ export default function Oasis() {
   }
 
   async function generateDesign(project, studyType, colorway) {
-    const approved = window.confirm(`Generate a ${studyType.replaceAll("_", " ")} for ${project.title}? This uses image-generation credits and creates a review-stage mockup.`);
+    const approved = await confirm({
+      title: `Generate ${studyType.replaceAll("_", " ")}?`,
+      body: `For ${project.title}. This uses image-generation credits and creates a review-stage mockup.`,
+      confirmLabel: "Generate",
+    });
     if (!approved) return;
 
     setGeneratingProjectId(project.id);
@@ -473,7 +557,11 @@ export default function Oasis() {
   }
 
   async function productizeProject(project) {
-    const approved = window.confirm(`Create a draft product specification for ${project.title}? This creates no supplier order and publishes nothing.`);
+    const approved = await confirm({
+      title: "Create draft product specification?",
+      body: `For ${project.title}. This creates no supplier order and publishes nothing.`,
+      confirmLabel: "Create spec",
+    });
     if (!approved) return;
 
     setProductizingId(project.id);
@@ -494,10 +582,14 @@ export default function Oasis() {
   }
 
   async function matchSuppliers(project) {
-    const approved = window.confirm(`Read the connected Printful and Printify catalogs for ${project.title}? This is read-only and creates no supplier product or order.`);
+    const approved = await confirm({
+      title: "Match live supplier catalogs?",
+      body: `Reads the connected Printful and Printify catalogs for ${project.title}. This is read-only and creates no supplier product or order.`,
+      confirmLabel: "Match catalogs",
+    });
     if (!approved) return;
 
-    setSupplierAction("matching");
+    setSupplierAction({ projectId: project.id, kind: "matching" });
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -514,25 +606,24 @@ export default function Oasis() {
       const message = err?.response?.data?.error || err?.message || "Live supplier matching failed.";
       setError(`${message} Nothing was ordered or changed at either supplier.`);
     } finally {
-      setSupplierAction("");
+      setSupplierAction({ projectId: "", kind: "" });
     }
   }
 
-  async function verifySupplierCost(candidate) {
-    const baseInput = window.prompt(`Confirmed base product cost for ${candidate.supplier} ${candidate.product_title || candidate.supplier_product_id}:`);
-    if (baseInput === null) return;
-    const shippingInput = window.prompt("Confirmed per-unit shipping or allocation:", "0");
-    if (shippingInput === null) return;
-    const baseCost = Number(baseInput);
-    const shipping = Number(shippingInput);
+  // Returns true when the cost was saved, so the inline form can close.
+  async function verifySupplierCost(candidate, { baseCost, shipping }) {
     if (!Number.isFinite(baseCost) || baseCost <= 0 || !Number.isFinite(shipping) || shipping < 0) {
       setError("Enter a positive base cost and non-negative shipping amount.");
-      return;
+      return false;
     }
-    const approved = window.confirm(`Confirm landed cost $${(baseCost + shipping).toFixed(2)}? This value is user-confirmed, not a supplier quote.`);
-    if (!approved) return;
+    const approved = await confirm({
+      title: `Confirm landed cost $${(baseCost + shipping).toFixed(2)}?`,
+      body: `For ${candidate.supplier} ${candidate.product_title || candidate.supplier_product_id}. This value is user-confirmed, not a supplier quote.`,
+      confirmLabel: "Confirm cost",
+    });
+    if (!approved) return false;
 
-    setSupplierAction("cost");
+    setSupplierAction({ projectId: candidate.project_id, kind: "cost" });
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -546,18 +637,24 @@ export default function Oasis() {
         setSupplierCandidates((current) => current.map((item) => item.id === result.candidate.id ? result.candidate : item));
       }
       if (result.project) setProjects((current) => current.map((item) => item.id === result.project.id ? result.project : item));
+      return true;
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Landed cost could not be confirmed.");
+      return false;
     } finally {
-      setSupplierAction("");
+      setSupplierAction({ projectId: "", kind: "" });
     }
   }
 
   async function requestSample(candidate) {
-    const approved = window.confirm(`Create a one-unit sample approval request for ${candidate.supplier}? This will not place an order or make a payment.`);
+    const approved = await confirm({
+      title: "Create sample approval request?",
+      body: `One unit from ${candidate.supplier}. This will not place an order or make a payment.`,
+      confirmLabel: "Create request",
+    });
     if (!approved) return;
 
-    setSupplierAction("sample");
+    setSupplierAction({ projectId: candidate.project_id, kind: "sample" });
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -572,15 +669,19 @@ export default function Oasis() {
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Sample approval request could not be created.");
     } finally {
-      setSupplierAction("");
+      setSupplierAction({ projectId: "", kind: "" });
     }
   }
 
   async function approveSample(sample) {
-    const approved = window.confirm("Approve this sample request for planning? This still will not place a supplier order or make a payment.");
+    const approved = await confirm({
+      title: "Approve sample for planning?",
+      body: "This still will not place a supplier order or make a payment.",
+      confirmLabel: "Approve",
+    });
     if (!approved) return;
 
-    setSupplierAction("approval");
+    setSupplierAction({ projectId: sample.project_id, kind: "approval" });
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -595,7 +696,7 @@ export default function Oasis() {
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Sample approval failed.");
     } finally {
-      setSupplierAction("");
+      setSupplierAction({ projectId: "", kind: "" });
     }
   }
 
@@ -624,7 +725,7 @@ export default function Oasis() {
   }
 
   return (
-    <div className="space-y-5 p-4 pb-8">
+    <div className="space-y-5 p-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <section className="relative overflow-hidden rounded-3xl border border-primary/30 lokin-panel radial-fade p-5">
         <div className="absolute inset-0 brand-grid opacity-25" />
         <div className="relative">
@@ -648,7 +749,7 @@ export default function Oasis() {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-black shadow-[0_0_24px_rgba(162,235,27,0.22)] active:scale-[0.98]"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-black glow-primary active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" /> Plant an idea
           </button>
@@ -669,12 +770,19 @@ export default function Oasis() {
         <div className="grid grid-cols-5 gap-1.5">
           {STAGES.map((stage) => {
             const Icon = stage.icon;
+            const active = stageFilter === stage.key;
             return (
-              <div key={stage.key} className="rounded-xl border border-white/10 bg-white/[0.025] px-1 py-2 text-center">
-                <Icon className="mx-auto h-4 w-4 text-primary/75" />
+              <button
+                key={stage.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setStageFilter(active ? "" : stage.key)}
+                className={`min-h-[64px] rounded-xl border px-1 py-2 text-center transition active:scale-[0.97] ${active ? "border-primary/60 bg-primary/[0.12]" : "border-white/10 bg-white/[0.025]"}`}
+              >
+                <Icon className={`mx-auto h-4 w-4 ${active ? "text-primary" : "text-primary/75"}`} />
                 <div className="mt-1 font-display text-sm font-black text-white">{counts[stage.key] || 0}</div>
-                <div className="mt-0.5 truncate text-[8px] uppercase tracking-tight text-white/35">{stage.label}</div>
-              </div>
+                <div className={`mt-0.5 truncate text-[8px] uppercase tracking-tight ${active ? "text-primary" : "text-white/35"}`}>{stage.label}</div>
+              </button>
             );
           })}
         </div>
@@ -682,9 +790,9 @@ export default function Oasis() {
 
       <section className="grid grid-cols-3 gap-2">
         {[
-          { icon: Target, label: "Brand DNA", value: "Protected" },
-          { icon: Package, label: "Products", value: projects.length },
-          { icon: DollarSign, label: "Profit truth", value: "On" },
+          { icon: Package, label: "Projects", value: projects.length },
+          { icon: CheckCircle2, label: "Approved designs", value: approvedDesignCount },
+          { icon: Truck, label: "Suppliers ready", value: readySupplierCount },
         ].map((item) => (
           <div key={item.label} className="rounded-2xl border border-white/10 lokin-panel p-3">
             <item.icon className="h-4 w-4 text-primary" />
@@ -694,22 +802,40 @@ export default function Oasis() {
         ))}
       </section>
 
-      {error && (
-        <div className="rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-200">{error}</div>
+      {error && !composerOpen && (
+        <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-200">
+          <span className="flex-1 py-1">{error}</span>
+          {loadFailed && (
+            <button type="button" onClick={loadProjects} className="flex min-h-[32px] shrink-0 items-center gap-1 rounded-lg border border-red-300/30 px-2 text-[10px] font-bold">
+              <RefreshCw className="h-3 w-3" /> Retry
+            </button>
+          )}
+          <button type="button" aria-label="Dismiss" onClick={() => setError("")} className="min-h-[32px] min-w-[32px] shrink-0 rounded-lg text-red-200/70">
+            <X className="mx-auto h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
 
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base font-bold text-white">Active creations</h2>
-          <span className="text-[10px] text-white/35">{projects.length} total</span>
+          <h2 className="text-base font-bold text-white">
+            {stageFilter ? `${STAGES.find((stage) => stage.key === stageFilter)?.label} creations` : "Active creations"}
+          </h2>
+          {stageFilter ? (
+            <button type="button" onClick={() => setStageFilter("")} className="min-h-[32px] rounded-lg px-2 text-[10px] font-bold text-primary">
+              Show all {projects.length}
+            </button>
+          ) : (
+            <span className="text-[10px] text-white/35">{projects.length} total</span>
+          )}
         </div>
         {loading ? (
           <div className="space-y-3">
             {[0, 1].map((item) => <div key={item} className="h-48 animate-pulse rounded-2xl border border-white/10 bg-white/[0.025]" />)}
           </div>
-        ) : projects.length ? (
+        ) : visibleProjects.length ? (
           <div className="space-y-3">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
@@ -717,12 +843,15 @@ export default function Oasis() {
                 specs={specs.filter((spec) => spec.project_id === project.id)}
                 supplierCandidates={supplierCandidates.filter((candidate) => candidate.project_id === project.id)}
                 sampleRequests={sampleRequests.filter((sample) => sample.project_id === project.id)}
+                jobs={jobs.filter((job) => job.project_id === project.id)}
+                recipes={recipes}
+                confirm={confirm}
                 advancing={advancingId === project.id}
                 analyzing={analyzingId === project.id}
                 generating={generatingProjectId === project.id ? generatingStudy : ""}
                 reviewingId={reviewingId}
                 productizing={productizingId === project.id}
-                supplierAction={supplierAction}
+                supplierAction={supplierAction.projectId === project.id ? supplierAction.kind : ""}
                 onAdvance={advanceProject}
                 onAnalyze={analyzeProject}
                 onGenerate={generateDesign}
@@ -732,8 +861,22 @@ export default function Oasis() {
                 onVerifySupplierCost={verifySupplierCost}
                 onRequestSample={requestSample}
                 onApproveSample={approveSample}
+                onJobSaved={saveJob}
+                onRecipesChange={loadRecipes}
               />
             ))}
+          </div>
+        ) : projects.length ? (
+          <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center">
+            <p className="text-xs text-white/45">No creations in this stage yet.</p>
+            <button type="button" onClick={() => setStageFilter("")} className="mt-2 min-h-[36px] text-xs font-bold text-primary">Show all creations</button>
+          </div>
+        ) : loadFailed ? (
+          <div className="rounded-2xl border border-dashed border-red-400/25 p-6 text-center">
+            <p className="text-xs text-white/50">Your OASIS pipeline didn't load. Nothing was changed.</p>
+            <button type="button" onClick={loadProjects} className="mt-3 inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 px-4 text-xs font-bold text-primary">
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
+            </button>
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-primary/25 bg-primary/[0.035] p-6 text-center">
@@ -742,6 +885,9 @@ export default function Oasis() {
             <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-white/45">
               Capture the product idea before it disappears. OASIS will preserve it inside the controlled design-to-profit pipeline.
             </p>
+            <button type="button" onClick={() => setComposerOpen(true)} className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-primary px-4 text-xs font-black text-black">
+              <Plus className="h-4 w-4" /> Plant an idea
+            </button>
           </div>
         )}
       </section>
@@ -755,8 +901,8 @@ export default function Oasis() {
                   <div className="font-display text-[10px] tracking-[0.2em] text-primary">OASIS IDEA LAB</div>
                   <h2 className="mt-1 text-xl font-bold text-white">Plant a new idea</h2>
                 </div>
-                <button type="button" onClick={() => setComposerOpen(false)} className="rounded-full border border-white/10 p-2 text-white/55">
-                  <X className="h-4 w-4" />
+                <button type="button" aria-label="Close" onClick={() => setComposerOpen(false)} className="min-h-[44px] min-w-[44px] rounded-full border border-white/10 p-2 text-white/55">
+                  <X className="mx-auto h-4 w-4" />
                 </button>
               </div>
 
@@ -825,6 +971,8 @@ export default function Oasis() {
           </div>
         </div>
       )}
+
+      {confirmSheet}
     </div>
   );
 }
