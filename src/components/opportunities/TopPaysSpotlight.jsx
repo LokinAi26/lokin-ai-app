@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Flame, Radar } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 
 // Daily-scan spotlight: surfaces the top verified, high-paying opportunities
 // the morning auto-scan found, so a good run is never missed. Only LIVE
@@ -29,12 +30,20 @@ export default function TopPaysSpotlight() {
 
   useEffect(() => {
     let alive = true;
+    // The dashboard spotlight honors the driver's own High-value bar
+    // (opportunity_alert_min_pay, set in Match Alerts on the Opportunities
+    // page): only listings at or above the bar get highlighted. Single-flight
+    // prefs load, so no extra request on the dashboard.
+    Promise.resolve(loadDriverPrefs())
+      .then((prefs) => { if (alive) setMinPay(Number(prefs?.opportunity_alert_min_pay) || 0); })
+      .catch(() => {});
     base44.entities.OpportunityScan.filter({ live_status: "live" }, "-created_date", 100)
       .then((recs) => {
         if (!alive) return;
         const now = Date.now();
         const fresh = recs
           .filter((r) => !r.expires_at || new Date(r.expires_at).getTime() > now)
+          .filter((r) => (Number(r.pay_amount) || 0) >= minPayRef.current)
           .sort((a, b) => (Number(b.pay_amount) || 0) - (Number(a.pay_amount) || 0))
           .slice(0, TOP_COUNT);
         setTops(fresh);
