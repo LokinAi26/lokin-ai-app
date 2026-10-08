@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Flame, Radar } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -27,6 +27,9 @@ function payLine(o) {
 
 export default function TopPaysSpotlight() {
   const [tops, setTops] = useState(null); // null = loading, [] = none fresh
+  const [minPay, setMinPay] = useState(0);
+  const minPayRef = useRef(0);
+  minPayRef.current = minPay;
 
   useEffect(() => {
     let alive = true;
