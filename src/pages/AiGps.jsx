@@ -665,8 +665,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
           only renders on the pre-navigation screen). Bottom-left above the
           current-street pill, level with the right control stack; the voice
           panel and annotation chips sit above it when opened. */}
-      {nav.route && !arrived && (
-        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] bottom-[calc(9rem+env(safe-area-inset-bottom))] z-20">
+      {nav.route && !arrived && !fuelOpen && (
+        <div className="pointer-events-none absolute left-[max(0.75rem,env(safe-area-inset-left))] bottom-[calc(12rem+env(safe-area-inset-bottom))] z-20">
           <Speedometer
             variant="hud"
             speedMps={nav.rawPosition?.speed_mps}
@@ -694,7 +694,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
           circular guidance-voice control above the ETA sheet. The pulsing Ask
           LOKIN mic was removed 2026-09-29: the top-bar LOKIN pill triggers the
           same Ask LOKIN action, so the mic was redundant. */}
-      <div className="absolute bottom-[calc(9rem+env(safe-area-inset-bottom))] right-3 z-40 flex flex-col gap-2.5">
+      <div className="absolute bottom-[calc(12rem+env(safe-area-inset-bottom))] right-3 z-40 flex flex-col gap-2.5">
         {nav.route && (
           <button
             type="button"
@@ -730,7 +730,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
       {/* Guidance voice panel: bottom-left above the ETA sheet (Kendall 2026-09-29:
           "move the voice picker down on to the hud"). */}
       {voicePanelOpen && nav.route && (
-        <div className="absolute left-3 bottom-[calc(9rem+env(safe-area-inset-bottom))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute left-3 bottom-[calc(12rem+env(safe-area-inset-bottom))] z-50 w-64 rounded-2xl border border-white/10 bg-black/92 p-3 shadow-2xl backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="lokin-kicker">Guidance voice</div>
             <button
@@ -749,8 +749,8 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
 
       {/* Current street banner (Kendall 2026-10-02): small pill just above the
           ETA sheet showing the road the driver is actually on. */}
-      {nav.route && currentStreet && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+      {nav.route && currentStreet && !fuelOpen && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(12rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/75 px-4 py-2 backdrop-blur-xl">
             <div className="h-1.5 w-1.5 rounded-full bg-primary" />
             <div className="max-w-[70vw] truncate text-xs font-bold tracking-wide text-white/90">

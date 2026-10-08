@@ -38,7 +38,7 @@ export default function FuelDealsOverlay({ fullscreen = false, open: openProp, o
       className={`absolute left-3 z-50 w-[min(17rem,62vw)] ${fullscreen ? "bottom-[calc(4.7rem+env(safe-area-inset-bottom))]" : "bottom-20"}`}
     >
       {open && (
-        <div className="lokin-card mb-2 overflow-hidden p-2.5 backdrop-blur">
+        <div className="lokin-card mb-2 max-h-[55dvh] overflow-y-auto overflow-x-hidden p-2.5 backdrop-blur">
           <div className="lokin-kicker lokin-kicker-lime mb-1.5">BEST FUEL PRICES NEARBY</div>
           <div className="space-y-1.5">
             {deals.map((d) => (
