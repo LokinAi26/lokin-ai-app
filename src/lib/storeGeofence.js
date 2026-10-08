@@ -3,11 +3,12 @@
 // Every accepted GPS fix — from the shift watch AND the navigation watch — is
 // checked against nearby grocery/retail stores (OpenStreetMap via Overpass,
 // same endpoint the 3D map engine uses). Crossing into a store's radius fires
-// an "enter" event; leaving fires "exit". Once the driver has stayed inside at
-// walking pace for SETTLE_MS a single "settled" event fires for that visit
-// (the driver parked and walked in, not a drive-by). The StoreEntrySheet
-// listens: "enter" shows the prompt, "settled" (or an arrival enter) switches
-// to the item locator when auto-open is on. Entries missed while LOKIN is
+// an "enter" event; leaving fires "exit". A single "settled" event fires per
+// visit once the driver has been at walking pace or slower for the whole of
+// SETTLE_MS inside the radius, or for ARRIVAL_SETTLE_MS after navigation
+// arrived at the store (parked and walked in, not a drive-by). The
+// StoreEntrySheet listens: "enter" shows the prompt, "settled" switches to the
+// item locator when auto-open is on. Entries missed while LOKIN is
 // backgrounded are caught by a foreground re-check, and arrival at a
 // grocery/retail destination fires the enter event directly.
 //
@@ -24,9 +25,12 @@ const REFETCH_MOVE_M = 500;
 const ENTER_RADIUS_M = 80;
 const EXIT_RADIUS_M = 200;
 const MAX_STORES = 40;
-const SETTLE_MS = 20 * 1000; // time inside before a visit counts as "settled"
-const SETTLE_WINDOW_MS = 5 * 1000; // min span used to measure pace
+const SETTLE_MS = 45 * 1000; // walking-pace dwell before a geofence visit settles
+const ARRIVAL_SETTLE_MS = 8 * 1000; // same, after navigation arrived at the store
+const PACE_WINDOW_MS = 5 * 1000; // min span used to measure pace (smooths indoor jitter)
 const WALKING_MAX_MPS = 2.5; // ~9 km/h: faster than this is still driving
+const FIX_HISTORY_MS = 90 * 1000;
+const FRESH_FIX_MS = 30 * 1000;
 
 const SHOP_RE = "^(supermarket|grocery|convenience|department_store|variety_store|wholesale|general|deli|bakery|greengrocer|farm)$";
 
@@ -118,6 +122,7 @@ async function fetchNearbyStores(lat, lon) {
 const listeners = new Set();
 let insideStore = null; // the store object we are currently inside, or null
 let insideSince = 0; // when the current visit started (ms)
+let arrivedAt = null; // when navigation arrived at this store (ms), null if it has not
 let settledFired = false; // "settled" fires at most once per visit
 let visitFixes = []; // recent {lat, lon, t} fixes during the current visit
 let lastFetchAt = 0;
@@ -128,6 +133,7 @@ let fetchInFlight = null;
 function startVisit(store, t) {
   insideStore = store;
   insideSince = t;
+  arrivedAt = null;
   settledFired = false;
   visitFixes = [];
 }
@@ -135,20 +141,66 @@ function startVisit(store, t) {
 function endVisit() {
   insideStore = null;
   insideSince = 0;
+  arrivedAt = null;
   settledFired = false;
   visitFixes = [];
 }
 
-// Pace over the most recent window of at least SETTLE_WINDOW_MS, or null when
-// there is not yet enough history to tell.
-function recentSpeedMps() {
-  const last = visitFixes[visitFixes.length - 1];
-  if (!last) return null;
-  for (let i = visitFixes.length - 2; i >= 0; i -= 1) {
-    const dt = last.t - visitFixes[i].t;
-    if (dt >= SETTLE_WINDOW_MS) return haversineMeters(visitFixes[i], last) / (dt / 1000);
+// Fastest pace (m/s) over any PACE_WINDOW_MS span of visit fixes at or after
+// `sinceT`, or null when the fixes do not yet span a full window.
+function maxPaceSince(sinceT) {
+  let max = null;
+  for (let i = 0; i < visitFixes.length; i += 1) {
+    if (visitFixes[i].t < sinceT) continue;
+    for (let j = i + 1; j < visitFixes.length; j += 1) {
+      const dt = visitFixes[j].t - visitFixes[i].t;
+      if (dt >= PACE_WINDOW_MS) {
+        const pace = haversineMeters(visitFixes[i], visitFixes[j]) / (dt / 1000);
+        if (max == null || pace > max) max = pace;
+        break;
+      }
+    }
   }
-  return null;
+  return max;
+}
+
+function shouldSettle(now) {
+  if (!insideStore || settledFired) return false;
+  const arrived = arrivedAt != null;
+  const since = arrived ? arrivedAt : now - SETTLE_MS;
+  const dwellStart = arrived ? arrivedAt : insideSince;
+  const dwellNeeded = arrived ? ARRIVAL_SETTLE_MS : SETTLE_MS;
+  if (now - dwellStart < dwellNeeded) return false;
+  const pace = maxPaceSince(since);
+  return pace != null && pace <= WALKING_MAX_MPS;
+}
+
+// True while the driver is inside a store and the latest fixes show walking
+// pace or slower. The StoreEntrySheet re-checks this right before it switches
+// screens, so a driver who started moving again is never pulled away.
+export function isVisitSettledNow(now = Date.now()) {
+  if (!insideStore) return false;
+  const last = visitFixes[visitFixes.length - 1];
+  if (!last || now - last.t > FRESH_FIX_MS) return false;
+  const pace = maxPaceSince(last.t - PACE_WINDOW_MS * 2);
+  return pace != null && pace <= WALKING_MAX_MPS;
+}
+
+// Single gate for switching the driver to the item locator. Checked when a
+// visit settles, again when the route changes, and again at the end of the
+// countdown, so nothing that changed in between (navigation started, the
+// driver drove off, auto-open was turned off) is missed.
+export function canAutoOpenItemLocator({ pathname = "", search = "", storeId = null, now = Date.now() } = {}) {
+  if (!isStoreGeofenceEnabled()) return false;
+  if (!insideStore || (storeId != null && insideStore.id !== storeId)) return false;
+  if (pathname === "/locator" || pathname === "/shop-deliver") return false;
+  // Active turn-by-turn navigation: never pull the driver out of it from a
+  // dwell alone (stopped traffic next to a store looks like a dwell). Arriving
+  // at the store is the signal there.
+  const params = new URLSearchParams(search);
+  const activeNav = pathname === "/ai-gps" && params.get("focus") === "locked" && params.get("nav") === "1";
+  if (activeNav && !insideStore.arrived) return false;
+  return isVisitSettledNow(now);
 }
 
 function notify(evt) {
@@ -213,12 +265,12 @@ async function refreshStores(lat, lon) {
 // destination, the driver is standing in the store even if no geofence
 // crossing was ever detected (e.g. iOS suspended GPS behind the Dasher app,
 // so the entry moment was missed). Fires the SAME "enter" event the
-// StoreEntrySheet already listens for. No-op when already inside a store,
-// when the geofence is disabled, or when the name is not a grocery/retail
-// place. Never throws.
-export function reportStoreArrival(name, lat, lon) {
+// StoreEntrySheet already listens for; the visit then settles after a short
+// walking-pace dwell. When already inside a store it upgrades that visit
+// instead. No-op when the geofence is disabled or the name is not a
+// grocery/retail place. Never throws.
+export function reportStoreArrival(name, lat, lon, t = Date.now()) {
   try {
-    if (insideStore) return;
     if (!isStoreGeofenceEnabled()) return;
     const n = String(name || "").toLowerCase();
     if (!n) return;
@@ -230,19 +282,31 @@ export function reportStoreArrival(name, lat, lon) {
     const BRAND_RE = /\b(wegmans|walmart|kroger|aldi|costco|trader\s*joe|whole\s*foods?|food\s*lion|publix|safeway|target|cvs|walgreens|harris\s*teeter|lidl)\b/;
     if (STREET_RE.test(n) && !BRAND_RE.test(n)) return;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const at = Number.isFinite(t) ? t : Date.now();
+    if (insideStore) {
+      // Already inside (the geofence caught the approach): navigation
+      // arriving here upgrades the open visit so it settles on the short
+      // arrival dwell instead of being ignored.
+      if (arrivedAt == null) {
+        arrivedAt = at;
+        insideStore = { ...insideStore, arrived: true };
+        // A dwell settle during navigation was suppressed by the sheet;
+        // let the arrival settle fire for this visit.
+        settledFired = false;
+      }
+      return;
+    }
     const label = String(name).trim().slice(0, 80);
     startVisit({
       id: "arrival:" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       name: label,
       kind: "arrival",
+      arrived: true,
       lat,
       lon,
-    }, Date.now());
-    // Navigation ended here, so the driver is stopped at the store: the visit
-    // is settled from the start.
-    settledFired = true;
+    }, at);
+    arrivedAt = at;
     notify({ type: "enter", store: insideStore });
-    notify({ type: "settled", store: insideStore });
   } catch {
     /* never break the navigation pipeline */
   }
@@ -289,11 +353,10 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
           startVisit(nearest, at);
           notify({ type: "enter", store: nearest });
         }
-        if (insideStore && !settledFired) {
+        if (insideStore) {
           visitFixes.push({ lat, lon, t: at });
-          if (visitFixes.length > 30) visitFixes.shift();
-          const speed = recentSpeedMps();
-          if (at - insideSince >= SETTLE_MS && speed != null && speed <= WALKING_MAX_MPS) {
+          while (visitFixes.length && at - visitFixes[0].t > FIX_HISTORY_MS) visitFixes.shift();
+          if (shouldSettle(at)) {
             settledFired = true;
             notify({ type: "settled", store: insideStore });
           }
