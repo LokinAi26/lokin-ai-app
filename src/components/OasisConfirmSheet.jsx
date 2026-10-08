@@ -26,19 +26,41 @@ export function useOasisConfirm() {
 
 function OasisConfirmSheet({ title, body, confirmLabel = "Confirm", tone = "primary", onSettle }) {
   const confirmRef = useRef(null);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
+    const opener = document.activeElement;
     confirmRef.current?.focus();
     function onKey(event) {
-      if (event.key === "Escape") onSettle(false);
+      if (event.key === "Escape") {
+        onSettle(false);
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      // Keep keyboard focus inside the dialog.
+      const focusable = dialogRef.current.querySelectorAll("button:not([disabled])");
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (opener && typeof opener.focus === "function" && document.contains(opener)) opener.focus();
+    };
   }, [onSettle]);
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end bg-black/75 backdrop-blur-sm" onClick={() => onSettle(false)}>
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="oasis-confirm-title"

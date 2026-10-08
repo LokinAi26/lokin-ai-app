@@ -177,7 +177,7 @@ function SupplierCandidate({ candidate, sample, retailPrice, targetMargin, suppl
 
       {candidate.supplier_product_id && !candidate.cost_verified && !costOpen && (
         <button type="button" disabled={Boolean(supplierAction)} onClick={() => setCostOpen(true)}
-          className="mt-2 flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-primary/25 bg-primary/[0.06] py-2 text-[10px] font-black text-primary disabled:opacity-45">
+          className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-primary/25 bg-primary/[0.06] py-2 text-[10px] font-black text-primary disabled:opacity-45">
           <CircleDollarSign className="h-3.5 w-3.5" /> Confirm landed cost
         </button>
       )}
@@ -206,9 +206,9 @@ function SupplierCandidate({ candidate, sample, retailPrice, targetMargin, suppl
           </div>
           <p className="text-[9px] leading-relaxed text-white/35">You are confirming these figures yourself. They are not a supplier quote.</p>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setCostOpen(false)} className="min-h-[40px] rounded-lg border border-white/10 text-[10px] font-bold text-white/60">Cancel</button>
+            <button type="button" onClick={() => setCostOpen(false)} className="min-h-[44px] rounded-lg border border-white/10 text-[10px] font-bold text-white/60">Cancel</button>
             <button type="submit" disabled={!valid || Boolean(supplierAction)}
-              className="flex min-h-[40px] items-center justify-center gap-1.5 rounded-lg bg-primary text-[10px] font-black text-black disabled:opacity-45">
+              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-primary text-[10px] font-black text-black disabled:opacity-45">
               {supplierAction === "cost" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
               Save landed cost
             </button>
@@ -218,7 +218,7 @@ function SupplierCandidate({ candidate, sample, retailPrice, targetMargin, suppl
 
       {ready && !sample && (
         <button type="button" disabled={Boolean(supplierAction)} onClick={() => onRequestSample(candidate)}
-          className="mt-2 flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-violet-300/25 bg-violet-300/[0.08] py-2 text-[10px] font-black text-violet-200 disabled:opacity-45">
+          className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-violet-300/25 bg-violet-300/[0.08] py-2 text-[10px] font-black text-violet-200 disabled:opacity-45">
           {supplierAction === "sample" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShoppingBag className="h-3.5 w-3.5" />} Create sample approval request
         </button>
       )}
@@ -230,7 +230,7 @@ function SupplierCandidate({ candidate, sample, retailPrice, targetMargin, suppl
           </div>
           {sample.status === "awaiting_approval" && (
             <button type="button" disabled={Boolean(supplierAction)} onClick={() => onApproveSample(sample)}
-              className="mt-2 flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-[10px] font-black text-black disabled:opacity-45">
+              className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-[10px] font-black text-black disabled:opacity-45">
               {supplierAction === "approval" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BadgeCheck className="h-3.5 w-3.5" />} Approve, do not order
             </button>
           )}

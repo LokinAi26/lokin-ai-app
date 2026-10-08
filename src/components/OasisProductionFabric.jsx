@@ -40,6 +40,14 @@ function errorMessage(err, fallback) {
   return err?.response?.data?.error || err?.message || fallback;
 }
 
+function jobSourceAssetId(job) {
+  try {
+    return String(JSON.parse(job.input_json || "{}")?.source_asset_id || "");
+  } catch {
+    return "";
+  }
+}
+
 export default function OasisProductionFabric({ project, sourceAsset, recipes, jobs, confirm, onJobSaved, onRecipesChange }) {
   const [open, setOpen] = useState(Boolean(jobs?.length));
   const [busyKey, setBusyKey] = useState("");
@@ -47,15 +55,18 @@ export default function OasisProductionFabric({ project, sourceAsset, recipes, j
   const [refreshing, setRefreshing] = useState(false);
   const [healthMessage, setHealthMessage] = useState("");
 
-  // Latest persisted job per workflow, so compiled work survives reloads.
+  // Latest persisted job per workflow for the current source asset. The backend keys jobs by
+  // workflow + source asset, so a job for an older design is not the one a compile would reuse.
+  const sourceId = sourceAsset?.id || "";
   const jobByKey = useMemo(() => {
     const map = {};
     for (const job of jobs || []) {
+      if (jobSourceAssetId(job) !== sourceId) continue;
       const current = map[job.workflow_key];
       if (!current || String(job.created_at || "") > String(current.created_at || "")) map[job.workflow_key] = job;
     }
     return map;
-  }, [jobs]);
+  }, [jobs, sourceId]);
 
   const list = recipes?.length ? recipes : FALLBACK_RECIPES;
   const readyCount = list.filter((recipe) => recipe.executable).length;
@@ -69,8 +80,8 @@ export default function OasisProductionFabric({ project, sourceAsset, recipes, j
       const healthResult = healthResponse?.data || healthResponse || {};
       const providers = Array.isArray(healthResult.providers) ? healthResult.providers : [];
       const healthy = providers.filter((provider) => provider.setup_status === "configured" && provider.health_status === "healthy").length;
-      await onRecipesChange?.();
-      setHealthMessage(`${healthy} of ${providers.length} live adapter${providers.length === 1 ? "" : "s"} healthy. Health checks do not generate media or spend credits.`);
+      const refreshed = await onRecipesChange?.();
+      setHealthMessage(`${healthy} of ${providers.length} live adapter${providers.length === 1 ? "" : "s"} healthy. Health checks do not generate media or spend credits.${refreshed === false ? " The recipe list could not refresh, so the statuses below may be out of date." : ""}`);
     } catch (err) {
       setError(errorMessage(err, "Provider health check failed."));
     } finally {
@@ -128,7 +139,7 @@ export default function OasisProductionFabric({ project, sourceAsset, recipes, j
           type="button"
           disabled={refreshing || Boolean(busyKey)}
           onClick={refreshProviderHealth}
-          className="flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2.5 text-[9px] font-bold uppercase tracking-wider text-cyan-200 transition hover:border-cyan-300/50 disabled:opacity-50"
+          className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg border border-cyan-300/20 px-3 text-[9px] font-bold uppercase tracking-wider text-cyan-200 transition hover:border-cyan-300/50 disabled:opacity-50"
           title="Run zero-spend provider health checks"
         >
           {refreshing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}

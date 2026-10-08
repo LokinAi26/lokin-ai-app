@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle2, Clock3, Factory, Lightbulb,
   Package, Palette, Plus, RefreshCw, Rocket, ShieldCheck, Sparkles,
@@ -267,8 +267,9 @@ export default function Oasis() {
   const [sampleRequests, setSampleRequests] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [recipes, setRecipes] = useState([]);
-  // Scoped to one project so a supplier action on one card does not lock every card.
-  const [supplierAction, setSupplierAction] = useState({ projectId: "", kind: "" });
+  // Busy supplier action per project id, so concurrent actions on different cards stay independent.
+  const [supplierBusy, setSupplierBusy] = useState({});
+  const loadSeq = useRef(0);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [stageFilter, setStageFilter] = useState("");
@@ -284,7 +285,21 @@ export default function Oasis() {
   const [productizingId, setProductizingId] = useState("");
   const [error, setError] = useState("");
 
+  function startSupplierAction(projectId, kind) {
+    setSupplierBusy((current) => ({ ...current, [projectId]: kind }));
+  }
+
+  function endSupplierAction(projectId) {
+    setSupplierBusy((current) => {
+      const next = { ...current };
+      delete next[projectId];
+      return next;
+    });
+  }
+
   async function loadProjects() {
+    // Each run gets an id; results from a superseded run (e.g. after Retry) are ignored.
+    const runId = ++loadSeq.current;
     setLoading(true);
     setLoadFailed(false);
     setError("");
@@ -304,31 +319,42 @@ export default function Oasis() {
             return [];
           }),
         ]);
+        if (runId !== loadSeq.current) return;
         setProjects(records || []);
         setAssets(designAssets || []);
         setSpecs(productSpecs || []);
         setSupplierCandidates(candidates || []);
         setSampleRequests(samples || []);
         setJobs(productionJobs || []);
+        // A load that finishes after the timeout fired still counts as recovered.
+        setLoadFailed(false);
+        setError("");
+        setLoading(false);
       })(), LOAD_TIMEOUT_MS, "OASIS took too long to respond.");
     } catch (err) {
+      if (runId !== loadSeq.current) return;
       console.error("OASIS pipeline failed to load", err);
       setLoadFailed(true);
       setError(`${errorText(err, "OASIS could not load its project pipeline.")} Check your connection and retry.`);
     } finally {
-      setLoading(false);
+      if (runId === loadSeq.current) setLoading(false);
     }
   }
 
-  // One catalog request for the whole page instead of one per project card.
+  // One catalog request for the whole page instead of one per project card. Returns whether it refreshed.
   const loadRecipes = useCallback(async () => {
     try {
       const response = await base44.functions.invoke("oasis-production-fabric", { action: "list_recipes" });
       const result = response?.data || response || {};
-      if (Array.isArray(result.recipes) && result.recipes.length) setRecipes(result.recipes);
+      if (Array.isArray(result.recipes) && result.recipes.length) {
+        setRecipes(result.recipes);
+        return true;
+      }
+      return false;
     } catch (err) {
       // The static fallback catalog keeps the panel truthful (everything shows setup required).
       console.error("OASIS recipe catalog unavailable", err);
+      return false;
     }
   }, []);
 
@@ -356,10 +382,19 @@ export default function Oasis() {
   );
 
   const approvedDesignCount = useMemo(() => assets.filter((asset) => asset.status === "approved").length, [assets]);
-  const readySupplierCount = useMemo(
-    () => supplierCandidates.filter((candidate) => candidate.match_status === "verified" && candidate.cost_verified && candidate.margin_passed).length,
-    [supplierCandidates],
-  );
+  // Same readiness rule as the Productization panel, counted against each project's latest spec only.
+  const readySupplierCount = useMemo(() => {
+    const latestSpecIds = new Set();
+    const seenProjects = new Set();
+    for (const spec of specs) {
+      if (seenProjects.has(spec.project_id)) continue;
+      seenProjects.add(spec.project_id);
+      latestSpecIds.add(spec.id);
+    }
+    return supplierCandidates.filter((candidate) => latestSpecIds.has(candidate.product_spec_id)
+      && candidate.match_status === "verified" && candidate.cost_verified && candidate.margin_passed && candidate.inventory_verified).length;
+  }, [specs, supplierCandidates]);
+  const statsUnknown = loading || loadFailed;
 
   const averageProfitScore = useMemo(() => {
     if (!projects.length) return 0;
@@ -589,7 +624,7 @@ export default function Oasis() {
     });
     if (!approved) return;
 
-    setSupplierAction({ projectId: project.id, kind: "matching" });
+    startSupplierAction(project.id, "matching");
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -606,7 +641,7 @@ export default function Oasis() {
       const message = err?.response?.data?.error || err?.message || "Live supplier matching failed.";
       setError(`${message} Nothing was ordered or changed at either supplier.`);
     } finally {
-      setSupplierAction({ projectId: "", kind: "" });
+      endSupplierAction(project.id);
     }
   }
 
@@ -623,7 +658,7 @@ export default function Oasis() {
     });
     if (!approved) return false;
 
-    setSupplierAction({ projectId: candidate.project_id, kind: "cost" });
+    startSupplierAction(candidate.project_id, "cost");
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -642,7 +677,7 @@ export default function Oasis() {
       setError(err?.response?.data?.error || err?.message || "Landed cost could not be confirmed.");
       return false;
     } finally {
-      setSupplierAction({ projectId: "", kind: "" });
+      endSupplierAction(candidate.project_id);
     }
   }
 
@@ -654,7 +689,7 @@ export default function Oasis() {
     });
     if (!approved) return;
 
-    setSupplierAction({ projectId: candidate.project_id, kind: "sample" });
+    startSupplierAction(candidate.project_id, "sample");
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -669,7 +704,7 @@ export default function Oasis() {
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Sample approval request could not be created.");
     } finally {
-      setSupplierAction({ projectId: "", kind: "" });
+      endSupplierAction(candidate.project_id);
     }
   }
 
@@ -681,7 +716,7 @@ export default function Oasis() {
     });
     if (!approved) return;
 
-    setSupplierAction({ projectId: sample.project_id, kind: "approval" });
+    startSupplierAction(sample.project_id, "approval");
     setError("");
     try {
       const response = await base44.functions.invoke("oasis-supplier-control", {
@@ -696,7 +731,7 @@ export default function Oasis() {
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Sample approval failed.");
     } finally {
-      setSupplierAction({ projectId: "", kind: "" });
+      endSupplierAction(sample.project_id);
     }
   }
 
@@ -764,7 +799,7 @@ export default function Oasis() {
           </div>
           <div className="text-right">
             <div className="text-[9px] uppercase tracking-wider text-white/35">Profit signal</div>
-            <div className="font-display text-lg font-black text-primary">{averageProfitScore}</div>
+            <div className="font-display text-lg font-black text-primary">{statsUnknown ? "—" : averageProfitScore}</div>
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1.5">
@@ -780,7 +815,7 @@ export default function Oasis() {
                 className={`min-h-[64px] rounded-xl border px-1 py-2 text-center transition active:scale-[0.97] ${active ? "border-primary/60 bg-primary/[0.12]" : "border-white/10 bg-white/[0.025]"}`}
               >
                 <Icon className={`mx-auto h-4 w-4 ${active ? "text-primary" : "text-primary/75"}`} />
-                <div className="mt-1 font-display text-sm font-black text-white">{counts[stage.key] || 0}</div>
+                <div className="mt-1 font-display text-sm font-black text-white">{statsUnknown ? "—" : counts[stage.key] || 0}</div>
                 <div className={`mt-0.5 truncate text-[8px] uppercase tracking-tight ${active ? "text-primary" : "text-white/35"}`}>{stage.label}</div>
               </button>
             );
@@ -797,7 +832,7 @@ export default function Oasis() {
           <div key={item.label} className="rounded-2xl border border-white/10 lokin-panel p-3">
             <item.icon className="h-4 w-4 text-primary" />
             <div className="mt-3 text-[9px] uppercase tracking-wider text-white/35">{item.label}</div>
-            <div className="mt-0.5 truncate text-xs font-bold text-white/80">{item.value}</div>
+            <div className="mt-0.5 truncate text-xs font-bold text-white/80">{statsUnknown ? "—" : item.value}</div>
           </div>
         ))}
       </section>
@@ -806,11 +841,11 @@ export default function Oasis() {
         <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-200">
           <span className="flex-1 py-1">{error}</span>
           {loadFailed && (
-            <button type="button" onClick={loadProjects} className="flex min-h-[32px] shrink-0 items-center gap-1 rounded-lg border border-red-300/30 px-2 text-[10px] font-bold">
+            <button type="button" onClick={loadProjects} className="flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg border border-red-300/30 px-3 text-[10px] font-bold">
               <RefreshCw className="h-3 w-3" /> Retry
             </button>
           )}
-          <button type="button" aria-label="Dismiss" onClick={() => setError("")} className="min-h-[32px] min-w-[32px] shrink-0 rounded-lg text-red-200/70">
+          <button type="button" aria-label="Dismiss" onClick={() => setError("")} className="min-h-[44px] min-w-[44px] shrink-0 rounded-lg text-red-200/70">
             <X className="mx-auto h-3.5 w-3.5" />
           </button>
         </div>
@@ -822,7 +857,7 @@ export default function Oasis() {
             {stageFilter ? `${STAGES.find((stage) => stage.key === stageFilter)?.label} creations` : "Active creations"}
           </h2>
           {stageFilter ? (
-            <button type="button" onClick={() => setStageFilter("")} className="min-h-[32px] rounded-lg px-2 text-[10px] font-bold text-primary">
+            <button type="button" onClick={() => setStageFilter("")} className="min-h-[44px] rounded-lg px-2 text-[10px] font-bold text-primary">
               Show all {projects.length}
             </button>
           ) : (
@@ -851,7 +886,7 @@ export default function Oasis() {
                 generating={generatingProjectId === project.id ? generatingStudy : ""}
                 reviewingId={reviewingId}
                 productizing={productizingId === project.id}
-                supplierAction={supplierAction.projectId === project.id ? supplierAction.kind : ""}
+                supplierAction={supplierBusy[project.id] || ""}
                 onAdvance={advanceProject}
                 onAnalyze={analyzeProject}
                 onGenerate={generateDesign}
@@ -869,12 +904,12 @@ export default function Oasis() {
         ) : projects.length ? (
           <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center">
             <p className="text-xs text-white/45">No creations in this stage yet.</p>
-            <button type="button" onClick={() => setStageFilter("")} className="mt-2 min-h-[36px] text-xs font-bold text-primary">Show all creations</button>
+            <button type="button" onClick={() => setStageFilter("")} className="mt-2 min-h-[44px] px-3 text-xs font-bold text-primary">Show all creations</button>
           </div>
         ) : loadFailed ? (
           <div className="rounded-2xl border border-dashed border-red-400/25 p-6 text-center">
             <p className="text-xs text-white/50">Your OASIS pipeline didn't load. Nothing was changed.</p>
-            <button type="button" onClick={loadProjects} className="mt-3 inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 px-4 text-xs font-bold text-primary">
+            <button type="button" onClick={loadProjects} className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-primary/30 px-4 text-xs font-bold text-primary">
               <RefreshCw className="h-3.5 w-3.5" /> Retry
             </button>
           </div>
@@ -885,7 +920,7 @@ export default function Oasis() {
             <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-white/45">
               Capture the product idea before it disappears. OASIS will preserve it inside the controlled design-to-profit pipeline.
             </p>
-            <button type="button" onClick={() => setComposerOpen(true)} className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-primary px-4 text-xs font-black text-black">
+            <button type="button" onClick={() => setComposerOpen(true)} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-4 text-xs font-black text-black">
               <Plus className="h-4 w-4" /> Plant an idea
             </button>
           </div>
