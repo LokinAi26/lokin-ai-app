@@ -13,6 +13,7 @@
     "verify:session-state": "node scripts/verify-session-state.mjs",
     "verify:redesign": "node scripts/verify-redesign.mjs",
     "verify:seal": "node scripts/verify-seal.mjs",
+    "verify:store-geofence": "node scripts/verify-store-geofence.mjs",
     "verify:driver-platforms": "node scripts/verify-driver-platform-ingestion.mjs",
     "verify:uber-driver": "node scripts/verify-uber-driver-integration.mjs",
     "verify:sensor-fusion": "node scripts/verify-sensor-fusion-v21.mjs && node scripts/verify-navigation-performance-v3.mjs",

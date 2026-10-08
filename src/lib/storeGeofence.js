@@ -3,8 +3,11 @@
 // Every accepted GPS fix — from the shift watch AND the navigation watch — is
 // checked against nearby grocery/retail stores (OpenStreetMap via Overpass,
 // same endpoint the 3D map engine uses). Crossing into a store's radius fires
-// an "enter" event; leaving fires "exit". The StoreEntrySheet listens and
-// auto-opens the item locator prompt. Entries missed while LOKIN is
+// an "enter" event; leaving fires "exit". Once the driver has stayed inside at
+// walking pace for SETTLE_MS a single "settled" event fires for that visit
+// (the driver parked and walked in, not a drive-by). The StoreEntrySheet
+// listens: "enter" shows the prompt, "settled" (or an arrival enter) switches
+// to the item locator when auto-open is on. Entries missed while LOKIN is
 // backgrounded are caught by a foreground re-check, and arrival at a
 // grocery/retail destination fires the enter event directly.
 //
@@ -21,6 +24,9 @@ const REFETCH_MOVE_M = 500;
 const ENTER_RADIUS_M = 80;
 const EXIT_RADIUS_M = 200;
 const MAX_STORES = 40;
+const SETTLE_MS = 20 * 1000; // time inside before a visit counts as "settled"
+const SETTLE_WINDOW_MS = 5 * 1000; // min span used to measure pace
+const WALKING_MAX_MPS = 2.5; // ~9 km/h: faster than this is still driving
 
 const SHOP_RE = "^(supermarket|grocery|convenience|department_store|variety_store|wholesale|general|deli|bakery|greengrocer|farm)$";
 
@@ -111,10 +117,39 @@ async function fetchNearbyStores(lat, lon) {
 
 const listeners = new Set();
 let insideStore = null; // the store object we are currently inside, or null
+let insideSince = 0; // when the current visit started (ms)
+let settledFired = false; // "settled" fires at most once per visit
+let visitFixes = []; // recent {lat, lon, t} fixes during the current visit
 let lastFetchAt = 0;
 let lastFetchPos = null;
 let lastStores = []; // in-memory store list from the most recent lookup
 let fetchInFlight = null;
+
+function startVisit(store, t) {
+  insideStore = store;
+  insideSince = t;
+  settledFired = false;
+  visitFixes = [];
+}
+
+function endVisit() {
+  insideStore = null;
+  insideSince = 0;
+  settledFired = false;
+  visitFixes = [];
+}
+
+// Pace over the most recent window of at least SETTLE_WINDOW_MS, or null when
+// there is not yet enough history to tell.
+function recentSpeedMps() {
+  const last = visitFixes[visitFixes.length - 1];
+  if (!last) return null;
+  for (let i = visitFixes.length - 2; i >= 0; i -= 1) {
+    const dt = last.t - visitFixes[i].t;
+    if (dt >= SETTLE_WINDOW_MS) return haversineMeters(visitFixes[i], last) / (dt / 1000);
+  }
+  return null;
+}
 
 function notify(evt) {
   listeners.forEach((fn) => {
@@ -196,54 +231,71 @@ export function reportStoreArrival(name, lat, lon) {
     if (STREET_RE.test(n) && !BRAND_RE.test(n)) return;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const label = String(name).trim().slice(0, 80);
-    insideStore = {
+    startVisit({
       id: "arrival:" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       name: label,
       kind: "arrival",
       lat,
       lon,
-    };
+    }, Date.now());
+    // Navigation ended here, so the driver is stopped at the store: the visit
+    // is settled from the start.
+    settledFired = true;
     notify({ type: "enter", store: insideStore });
+    notify({ type: "settled", store: insideStore });
   } catch {
     /* never break the navigation pipeline */
   }
 }
 
-// Called (fire-and-forget) on every accepted shift GPS fix. Never throws.
-export function checkStoreGeofence(lat, lon) {
+// Called (fire-and-forget) on every accepted shift/nav GPS fix. Never throws.
+// `t` is the fix time in ms (defaults to now).
+export function checkStoreGeofence(lat, lon, t = Date.now()) {
   try {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     if (!isStoreGeofenceEnabled()) {
       if (insideStore) {
-        insideStore = null;
+        endVisit();
         notify({ type: "exit", store: null });
       }
       return;
     }
+    const at = Number.isFinite(t) ? t : Date.now();
     refreshStores(lat, lon)
       .then((stores) => {
+        const here = { lat, lon };
         const list = Array.isArray(stores) ? stores : lastStores;
         let nearest = null;
         let nearestD = Infinity;
         for (const s of list) {
-          const d = haversineMeters({ lat, lon }, s);
+          const d = haversineMeters(here, s);
           if (d < nearestD) {
             nearestD = d;
             nearest = s;
           }
         }
+        if (insideStore) {
+          // Exit is measured against the store we are inside, not whichever
+          // store is nearest. An arrival-detected store has no OSM twin, and
+          // neighbors in a strip mall swap "nearest" as GPS drifts indoors;
+          // either used to fire an immediate exit that closed the prompt.
+          if (haversineMeters(here, insideStore) > EXIT_RADIUS_M) {
+            const left = insideStore;
+            endVisit();
+            notify({ type: "exit", store: left });
+          }
+        }
         if (!insideStore && nearest && nearestD <= ENTER_RADIUS_M) {
-          insideStore = nearest;
+          startVisit(nearest, at);
           notify({ type: "enter", store: nearest });
-        } else if (insideStore && (!nearest || nearestD > EXIT_RADIUS_M || nearest.id !== insideStore.id)) {
-          // left the radius, or the nearest store changed beyond exit radius
-          const left = insideStore;
-          insideStore = null;
-          notify({ type: "exit", store: left });
-          // re-check immediately in case we walked straight into a neighbor
-          if (nearest && nearestD <= ENTER_RADIUS_M) {
-            insideStore = nearest;
-            notify({ type: "enter", store: nearest });
+        }
+        if (insideStore && !settledFired) {
+          visitFixes.push({ lat, lon, t: at });
+          if (visitFixes.length > 30) visitFixes.shift();
+          const speed = recentSpeedMps();
+          if (at - insideSince >= SETTLE_MS && speed != null && speed <= WALKING_MAX_MPS) {
+            settledFired = true;
+            notify({ type: "settled", store: insideStore });
           }
         }
       })
@@ -257,7 +309,8 @@ export function checkStoreGeofence(lat, lon) {
 
 // Test seam: clear in-memory geofence state (used by diagnostics).
 export function resetStoreGeofence() {
-  insideStore = null;
+  endVisit();
   lastFetchAt = 0;
   lastFetchPos = null;
+  lastStores = [];
 }
