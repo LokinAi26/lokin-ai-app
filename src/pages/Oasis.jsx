@@ -382,6 +382,7 @@ export default function Oasis() {
   );
 
   const approvedDesignCount = useMemo(() => assets.filter((asset) => asset.status === "approved").length, [assets]);
+
   // Same readiness rule as the Productization panel, counted against each project's latest spec only.
   const readySupplierCount = useMemo(() => {
     const latestSpecIds = new Set();
@@ -394,6 +395,7 @@ export default function Oasis() {
     return supplierCandidates.filter((candidate) => latestSpecIds.has(candidate.product_spec_id)
       && candidate.match_status === "verified" && candidate.cost_verified && candidate.margin_passed && candidate.inventory_verified).length;
   }, [specs, supplierCandidates]);
+
   const statsUnknown = loading || loadFailed;
 
   const averageProfitScore = useMemo(() => {
@@ -407,7 +409,6 @@ export default function Oasis() {
       setError("Add a product name and the idea you want OASIS to develop.");
       return;
     }
-
     setSaving(true);
     setError("");
     try {
@@ -450,7 +451,6 @@ export default function Oasis() {
       const result = response?.data || response || {};
       const user = await refreshUser();
       const now = new Date().toISOString();
-
       if (result.analysis_status === "setup_required" || result.configured === false) {
         await base44.entities.OasisDirectorRun.create({
           organization_id: project.organization_id || user?.organization_id || user?.id || "lokin",
@@ -469,7 +469,6 @@ export default function Oasis() {
         setError(result.director_summary || "OASIS Director provider setup is required. Your project was not changed.");
         return;
       }
-
       const clampScore = (value) => Math.max(0, Math.min(100, Number(value || 0)));
       const update = {
         director_summary: String(result.director_summary || "").slice(0, 1400),
@@ -491,7 +490,6 @@ export default function Oasis() {
         next_action: String(result.next_action || "Review Director brief").slice(0, 500),
         updated_at: now,
       };
-
       const updated = await base44.entities.OasisProject.update(project.id, update);
       await base44.entities.OasisDirectorRun.create({
         organization_id: project.organization_id || user?.organization_id || user?.id || "lokin",
@@ -523,7 +521,6 @@ export default function Oasis() {
       confirmLabel: "Generate",
     });
     if (!approved) return;
-
     setGeneratingProjectId(project.id);
     setGeneratingStudy(studyType);
     setError("");
@@ -598,7 +595,6 @@ export default function Oasis() {
       confirmLabel: "Create spec",
     });
     if (!approved) return;
-
     setProductizingId(project.id);
     setError("");
     try {
@@ -623,7 +619,6 @@ export default function Oasis() {
       confirmLabel: "Match catalogs",
     });
     if (!approved) return;
-
     startSupplierAction(project.id, "matching");
     setError("");
     try {
@@ -657,7 +652,6 @@ export default function Oasis() {
       confirmLabel: "Confirm cost",
     });
     if (!approved) return false;
-
     startSupplierAction(candidate.project_id, "cost");
     setError("");
     try {
@@ -688,7 +682,6 @@ export default function Oasis() {
       confirmLabel: "Create request",
     });
     if (!approved) return;
-
     startSupplierAction(candidate.project_id, "sample");
     setError("");
     try {
@@ -715,7 +708,6 @@ export default function Oasis() {
       confirmLabel: "Approve",
     });
     if (!approved) return;
-
     startSupplierAction(sample.project_id, "approval");
     setError("");
     try {
@@ -741,7 +733,6 @@ export default function Oasis() {
     const nextStatus = FLOW[currentIndex + 1];
     const controlledGate = ["brand_review", "production_review", "sample", "final_approval", "storefront", "campaign"];
     const nextApprovalState = controlledGate.includes(nextStatus) ? "needs_review" : "draft";
-
     setAdvancingId(project.id);
     setError("");
     try {
@@ -940,7 +931,6 @@ export default function Oasis() {
                   <X className="mx-auto h-4 w-4" />
                 </button>
               </div>
-
               <form onSubmit={createIdea} className="mt-5 space-y-3">
                 <label className="block">
                   <span className="text-xs font-semibold text-white/65">Product or collection name</span>
@@ -981,7 +971,6 @@ export default function Oasis() {
                       className="mt-1 w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none" />
                   </label>
                 </div>
-
                 <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-3">
                   <div className="flex items-center gap-2 text-xs font-bold text-primary">
                     <CheckCircle2 className="h-4 w-4" /> Controlled creation
@@ -990,13 +979,11 @@ export default function Oasis() {
                     Saving an idea does not publish, manufacture, purchase, or spend. Human approval remains required at every external commitment gate.
                   </p>
                 </div>
-
                 {error && (
                   <div role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-[11px] text-red-200">
                     {error}
                   </div>
                 )}
-
                 <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-black text-black disabled:opacity-50">
                   {saving ? <Clock3 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {saving ? "Planting idea…" : "Create OASIS project"}
@@ -1006,7 +993,6 @@ export default function Oasis() {
           </div>
         </div>
       )}
-
       {confirmSheet}
     </div>
   );
