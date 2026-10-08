@@ -41,7 +41,7 @@ import {
 } from "@/lib/navFusion";
 import { gpsSuperAgent } from "@/lib/gpsSuperAgent";
 import { withTimeout } from "@/lib/promiseTimeout";
-import { checkStoreGeofence, reportStoreArrival } from "@/lib/storeGeofence";
+import { checkStoreGeofence, reportNavigationActive, reportStoreArrival } from "@/lib/storeGeofence";
 import { speakGuidance } from "@/lib/lokinVoicePipeline";
 import { playNavCue } from "@/lib/navAudioCue";
 
@@ -132,7 +132,8 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
   const arrivalAnnouncedRef = useRef("");
   const startedKeyRef = useRef("");
   const nativeSeenAtRef = useRef(0);
-  const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon} for the grocery-geofence foreground re-check
+  const lastNavFixRef = useRef(null); // latest accepted nav fix {lat, lon, t} for the grocery-geofence foreground re-check
+  const geofenceOwnerRef = useRef({}); // identity for reportNavigationActive
   const webFixReceivedRef = useRef(false); // first web-geolocation fix arrived (watchdog guard)
   const lastAcceptedSampleRef = useRef(null);
   // HUD anti-flicker latches (2026-09-26): the maneuver card and ETA are
@@ -558,6 +559,15 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     return () => window.clearInterval(timer);
   }, [enabled, route?.generated_at, checkForRouteImprovement]);
 
+  // Tell the store geofence while turn-by-turn guidance is running, so a stop
+  // in traffic next to a store never auto-opens the item locator.
+  const guidingActive = enabled && normalizedDestinations.length > 0 && status !== "arrived" && status !== "idle";
+  useEffect(() => {
+    const owner = geofenceOwnerRef.current;
+    reportNavigationActive(owner, guidingActive);
+    return () => reportNavigationActive(owner, false);
+  }, [guidingActive]);
+
   useEffect(() => {
     if (!enabled) setStatus("idle");
     base44LiveFunctions.functions.invoke("navigation-engine", { action: "status" })
@@ -607,9 +617,10 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const navLat = Number(coord[1]);
     const navLon = Number(coord[0]);
     if (Number.isFinite(navLat) && Number.isFinite(navLon)) {
-      lastNavFixRef.current = { lat: navLat, lon: navLon };
+      const fixAt = Date.now();
+      lastNavFixRef.current = { lat: navLat, lon: navLon, t: fixAt };
       if (acceptedSample.dead_reckoned !== true) {
-        try { checkStoreGeofence(navLat, navLon); } catch { /* geofence is best-effort */ }
+        try { checkStoreGeofence(navLat, navLon, fixAt); } catch { /* geofence is best-effort */ }
       }
     }
     // GPS Super Agent monitoring: read-only sample report (never alters the pipeline).
@@ -907,7 +918,9 @@ export default function useLokinNavigation({ destinationAddresses = [], enabled 
     const onForeground = () => {
       const f = lastNavFixRef.current;
       if (f && Number.isFinite(f.lat) && Number.isFinite(f.lon)) {
-        try { checkStoreGeofence(f.lat, f.lon); } catch { /* best-effort */ }
+        // Replays the last fix with its own time, so it is not mistaken for a
+        // fresh stationary fix.
+        try { checkStoreGeofence(f.lat, f.lon, f.t); } catch { /* best-effort */ }
       }
     };
     document.addEventListener("visibilitychange", onForeground);

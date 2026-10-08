@@ -6,6 +6,7 @@ import {
   isStoreGeofenceEnabled,
   setStoreGeofenceEnabled,
   canAutoOpenItemLocator,
+  getCurrentStore,
 } from "@/lib/storeGeofence";
 import { speakLokin } from "@/lib/lokinVoicePipeline";
 
@@ -16,11 +17,7 @@ function isShopPath(p) {
 }
 
 function autoOpenAllowed(storeId) {
-  return canAutoOpenItemLocator({
-    pathname: window.location.pathname,
-    search: window.location.search,
-    storeId,
-  });
+  return canAutoOpenItemLocator({ pathname: window.location.pathname, storeId });
 }
 
 // Auto-trigger sheet for the AI item locator.
@@ -35,14 +32,17 @@ export default function StoreEntrySheet() {
   const [store, setStore] = useState(null);
   const [enabled, setEnabled] = useState(isStoreGeofenceEnabled());
   const [countdown, setCountdown] = useState(null); // seconds left, or null
-  const dismissedRef = useRef(null); // store id dismissed for this visit
-  const pendingSettleRef = useRef(null); // settled store id held back by the gate
+  // Store id dismissed, or already opened, for this visit: no more auto-open.
+  const dismissedRef = useRef(null);
+  const countingRef = useRef(false); // a countdown is running
+  const announcedRef = useRef(null); // store id the "Opening" line was spoken for
 
   useEffect(() => {
     return subscribeStoreGeofence((evt) => {
       if (evt.type === "exit") {
         dismissedRef.current = null;
-        pendingSettleRef.current = null;
+        announcedRef.current = null;
+        countingRef.current = false;
         setStore(null);
         setCountdown(null);
         return;
@@ -50,14 +50,21 @@ export default function StoreEntrySheet() {
       if (evt.type === "settled" && evt.store) {
         if (!isStoreGeofenceEnabled()) return;
         if (dismissedRef.current === evt.store.id) return;
-        if (isShopPath(window.location.pathname)) return;
+        if (countingRef.current) return;
+        // Fires on every fix while settled: a switch held back here (e.g.
+        // navigation still guiding) is retried on the next fix.
+        if (!autoOpenAllowed(evt.store.id)) return;
         setStore(evt.store);
-        if (!autoOpenAllowed(evt.store.id)) {
-          // e.g. still in active navigation: retry when the route changes.
-          pendingSettleRef.current = evt.store.id;
-          return;
+        countingRef.current = true;
+        setCountdown(AUTO_OPEN_SECONDS);
+        if (announcedRef.current !== evt.store.id) {
+          announcedRef.current = evt.store.id;
+          try {
+            speakLokin("Opening the item locator.", { rate: 1.05 });
+          } catch {
+            /* voice is best-effort */
+          }
         }
-        startCountdown();
         return;
       }
       if (evt.type === "enter" && evt.store) {
@@ -76,33 +83,36 @@ export default function StoreEntrySheet() {
     });
   }, []);
 
-  // If the driver navigates to the locator themselves, drop the sheet. A
-  // settle held back by the gate (e.g. during navigation) gets another chance
-  // whenever the route changes.
+  // If the driver navigates to the locator themselves, drop the sheet and
+  // don't auto-open again for this visit.
   useEffect(() => {
     if (isShopPath(location.pathname)) {
-      pendingSettleRef.current = null;
+      const current = getCurrentStore();
+      if (current) dismissedRef.current = current.id;
+      countingRef.current = false;
       setStore(null);
       setCountdown(null);
-      return;
     }
-    const pending = pendingSettleRef.current;
-    if (pending && dismissedRef.current !== pending && autoOpenAllowed(pending)) {
-      pendingSettleRef.current = null;
-      startCountdown();
-    }
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   // Auto-open countdown: switch to the item locator when it reaches zero.
   useEffect(() => {
     if (countdown == null) return undefined;
     if (countdown <= 0) {
       setCountdown(null);
+      countingRef.current = false;
       // Re-check right before switching: navigation may have started, the
       // driver may have driven off, or auto-open may have been turned off.
       if (store && autoOpenAllowed(store.id)) {
+        dismissedRef.current = store.id; // opened once; never again this visit
         setStore(null);
         navigate("/locator");
+      } else {
+        try {
+          speakLokin("Item locator on hold.", { rate: 1.05 });
+        } catch {
+          /* voice is best-effort */
+        }
       }
       return undefined;
     }
@@ -110,18 +120,9 @@ export default function StoreEntrySheet() {
     return () => clearTimeout(timer);
   }, [countdown, navigate, store]);
 
-  function startCountdown() {
-    setCountdown(AUTO_OPEN_SECONDS);
-    try {
-      speakLokin("Opening the item locator.", { rate: 1.05 });
-    } catch {
-      /* voice is best-effort */
-    }
-  }
-
   function dismiss() {
     if (store) dismissedRef.current = store.id;
-    pendingSettleRef.current = null;
+    countingRef.current = false;
     setStore(null);
     setCountdown(null);
   }
@@ -131,6 +132,7 @@ export default function StoreEntrySheet() {
     setEnabled(next);
     setStoreGeofenceEnabled(next);
     if (!next) {
+      countingRef.current = false;
       setStore(null);
       setCountdown(null);
     }

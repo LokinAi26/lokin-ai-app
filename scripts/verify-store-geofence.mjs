@@ -3,6 +3,7 @@
 import {
   canAutoOpenItemLocator,
   checkStoreGeofence,
+  reportNavigationActive,
   reportStoreArrival,
   resetStoreGeofence,
   setStoreGeofenceEnabled,
@@ -44,12 +45,14 @@ async function fix(metersNorth, t) {
 async function walk(t0, t1, posAt) {
   for (let t = t0; t <= t1; t += 2_000) await fix(posAt(t), t);
 }
+const NAV = {};
 function reset() {
   resetStoreGeofence();
+  reportNavigationActive(NAV, false);
   mem.clear();
   events.length = 0;
 }
-const settled = () => events.filter((e) => e.startsWith("settled"));
+const settled = () => [...new Set(events.filter((e) => e.startsWith("settled")))];
 const nodeStore = (id, metersNorth, name) => {
   const p = offset(metersNorth);
   return { type: "node", id, lat: p.lat, lon: p.lon, tags: { shop: "supermarket", name } };
@@ -81,6 +84,8 @@ reset();
 }
 await walk(2_000, 14_000, (t) => (t / 1_000) * 6 - 90); // -78..-6 m, 6 m/s
 assert(settled().length === 0, `rolling arrival must not settle, got ${events}`);
+await walk(16_000, 30_000, () => -6); // stopped
+assert(settled().length === 1, `arrival settles soon after the car stops, got ${events}`);
 
 // 3. Geofence caught the approach first, then navigation arrived: the
 // arrival must upgrade the open visit (it used to be ignored).
@@ -92,12 +97,9 @@ assert(events.join() === "enter:n5", `approach must enter, got ${events}`);
   const p = offset(30);
   reportStoreArrival("Food Lion", p.lat, p.lon, 6_000);
 }
-await walk(6_000, 16_000, (t) => 30 - (t - 6_000) / 2_000);
+await walk(6_000, 20_000, (t) => 30 - (t - 6_000) / 2_000);
 assert(settled().join() === "settled:n5", `arrival after approach must settle, got ${events}`);
-assert(
-  canAutoOpenItemLocator({ pathname: "/ai-gps", search: "?focus=locked&nav=1", storeId: "n5", now: 16_000 }),
-  "arrived visit may auto-open even on the navigation screen",
-);
+assert(canAutoOpenItemLocator({ pathname: "/ai-gps", storeId: "n5", now: 20_000 }), "arrived visit may auto-open");
 
 // 4. Walking in without navigation: settles once after the full dwell at
 // walking pace.
@@ -107,12 +109,13 @@ await walk(0, 40_000, (t) => 70 - t / 1_000); // 1 m/s
 assert(settled().length === 0, "must not settle before the dwell time");
 await walk(42_000, 60_000, () => 25);
 assert(settled().join() === "settled:n2", `walking-pace dwell must settle, got ${events}`);
+assert(events.filter((e) => e === "settled:n2").length > 1, "settled repeats on each fix so a held switch is retried");
 assert(canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 60_000 }), "settled walk-in may auto-open");
 assert(!canAutoOpenItemLocator({ pathname: "/locator", storeId: "n2", now: 60_000 }), "never re-open from the locator");
-assert(
-  !canAutoOpenItemLocator({ pathname: "/ai-gps", search: "?focus=locked&nav=1", storeId: "n2", now: 60_000 }),
-  "a dwell alone never auto-opens during active navigation",
-);
+reportNavigationActive(NAV, true); // e.g. Vision HUD or AI GPS guiding
+assert(!canAutoOpenItemLocator({ pathname: "/vision-hud", storeId: "n2", now: 60_000 }), "never auto-opens while navigation is guiding");
+reportNavigationActive(NAV, false);
+assert(canAutoOpenItemLocator({ pathname: "/vision-hud", storeId: "n2", now: 60_000 }), "allowed again once guidance stops");
 assert(!canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 120_000 }), "stale fixes block auto-open");
 setStoreGeofenceEnabled(false);
 assert(!canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 60_000 }), "auto-open toggle off blocks it");
@@ -134,6 +137,22 @@ assert(settled().length === 0, `a short stop in traffic must not settle, got ${e
 // Moving off again: the gate refuses even though the stop was long.
 await walk(40_000, 46_000, (t) => 6 - ((t - 38_000) / 1_000) * 12);
 assert(!canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 46_000 }), "moving again blocks auto-open");
+
+// 6b. Sparse indoor fixes (one every 12 s): still settles, and the gate agrees.
+reset();
+await fix(70, 0);
+for (let t = 12_000; t <= 72_000; t += 12_000) await fix(70 - t / 2_000, t);
+assert(settled().join() === "settled:n2", `sparse fixes must settle, got ${events}`);
+assert(canAutoOpenItemLocator({ pathname: "/", storeId: "n2", now: 72_000 }), "gate must agree with a sparse-fix settle");
+
+// 6c. A replayed old fix (foreground re-check) is not a new stationary fix.
+reset();
+await walk(0, 10_000, (t) => 78 - (t / 1_000) * 3); // 3 m/s, not walking pace
+const replay = offset(48);
+for (let i = 0; i < 30; i += 1) checkStoreGeofence(replay.lat, replay.lon, 10_000);
+await flush();
+await flush();
+assert(settled().length === 0, `replayed fixes must not create a dwell, got ${events}`);
 
 // 7. Neighbouring stores: drift that makes a neighbour "nearest" must not
 // bounce the visit (exit then re-enter re-announced the store).
