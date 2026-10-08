@@ -6,6 +6,8 @@ import { formatDuration, haversineMeters, remainingRouteLine } from "@/lib/navig
 import { withTimeout } from "@/lib/promiseTimeout";
 import LiveVectorMap from "@/components/LiveVectorMap";
 import FuelDealsOverlay from "@/components/map/FuelDealsOverlay";
+import useTrafficHotspots from "@/hooks/useTrafficHotspots";
+import { hotspotFeatureCollection } from "@/lib/trafficHotspots";
 import { getLatestOfflineMap, getOfflineMap, saveOfflineMap } from "@/lib/offlineMapCache";
 
 const MAP_W = 640;
@@ -191,6 +193,9 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
         ? "LOW-BANDWIDTH MAP FALLBACK"
         : null;
   const headingForward = fullscreen && followDriver;
+  // Traffic-delay hotspots (2026-10-08): the driver's logged TrafficDelay
+  // records clustered into pins — red for frequent delay areas (2+ reports).
+  const trafficHotspots = useTrafficHotspots();
 
   const activeCoords = useMemo(() => {
     if (!followDriver || !snappedPosition?.coordinate || !coords.length) return coords;
@@ -566,6 +571,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
             <LiveVectorMap
               routeGeometry={activeRouteGeometry}
               deliveryStops={deliveryStops}
+              trafficHotspots={trafficHotspots}
               snappedPosition={snappedPosition}
               perspective={perspective}
               cinematic={cinematic}
@@ -602,6 +608,18 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
                   <g key={`${stop.sequence ?? i}-${stop.coordinate?.[0] ?? i}`} transform={`translate(${point.x},${point.y})`}>
                     <circle r="10" fill="#8FE44E" stroke="#06100A" strokeWidth="2.5" />
                     <text textAnchor="middle" dy="3.5" fontSize="10" fontWeight="800" fill="#06100A">{stop.sequence || i + 1}</text>
+                  </g>
+                );
+              })}
+              {hotspotFeatureCollection(trafficHotspots).features.map((f, i) => {
+                const point = markerViewport ? project(f.geometry.coordinates, markerViewport, renderW, renderH) : null;
+                if (!point) return null;
+                const pinColor = f.properties.frequent ? "#FF2D2D" : "#FFB020";
+                return (
+                  <g key={`hotspot-${i}`} transform={`translate(${point.x},${point.y})`}>
+                    <circle r="9" fill={pinColor} fillOpacity="0.3" stroke="none" />
+                    <circle r="5.5" fill={pinColor} stroke="#1A0505" strokeWidth="2" />
+                    <text textAnchor="middle" dy="-10" fontSize="9" fontWeight="800" fill={pinColor}>{f.properties.label}</text>
                   </g>
                 );
               })}

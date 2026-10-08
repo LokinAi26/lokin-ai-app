@@ -15,6 +15,7 @@ import {
   createPoiAnchorLayer,
   getPoiAnchors,
 } from "@/lib/poiAnchors";
+import { hotspotFeatureCollection } from "@/lib/trafficHotspots";
 
 import GpsVoiceAnnotation from "@/components/gps/GpsVoiceAnnotation";
 
@@ -33,6 +34,13 @@ const LOKIN_LIME_ROUTE = "#A2EB1B";
 const STOPS_SOURCE = "lokin-delivery-stops";
 const STOPS_INK = "#06100A";
 const STOPS_FONT = ["Noto Sans Regular"];
+
+// Traffic-delay hotspots (2026-10-08): red pins for areas that frequently
+// cause delays (2+ logged reports), amber for occasional single reports.
+const HOTSPOTS_SOURCE = "lokin-traffic-hotspots";
+const HOTSPOT_RED = "#FF2D2D";
+const HOTSPOT_AMBER = "#FFB020";
+const HOTSPOT_INK = "#1A0505";
 
 // AERIAL mode is daytime satellite photography. The dusk treatment below is
 // what makes it read as night: a dark fill above the raster (but below the
@@ -239,6 +247,60 @@ function addDeliveryStopLayers(map, stops) {
       "text-ignore-placement": true,
     },
     paint: { "text-color": STOPS_INK },
+  });
+}
+
+function addTrafficHotspotLayers(map, hotspots) {
+  const data = hotspotFeatureCollection(hotspots);
+  if (map.getSource(HOTSPOTS_SOURCE)) {
+    map.getSource(HOTSPOTS_SOURCE).setData(data);
+    return;
+  }
+  map.addSource(HOTSPOTS_SOURCE, { type: "geojson", data });
+  map.addLayer({
+    id: "lokin-hotspot-halo",
+    type: "circle",
+    source: HOTSPOTS_SOURCE,
+    slot: "top",
+    paint: {
+      "circle-color": ["case", ["get", "frequent"], HOTSPOT_RED, HOTSPOT_AMBER],
+      "circle-opacity": 0.22,
+      "circle-blur": 0.9,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 16, 17, 30],
+    },
+  });
+  map.addLayer({
+    id: "lokin-hotspot-pin",
+    type: "circle",
+    source: HOTSPOTS_SOURCE,
+    slot: "top",
+    paint: {
+      "circle-color": ["case", ["get", "frequent"], HOTSPOT_RED, HOTSPOT_AMBER],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5.5, 17, 8.5],
+      "circle-stroke-color": HOTSPOT_INK,
+      "circle-stroke-width": 2.5,
+      "circle-opacity": 0.96,
+    },
+  });
+  map.addLayer({
+    id: "lokin-hotspot-label",
+    type: "symbol",
+    source: HOTSPOTS_SOURCE,
+    slot: "top",
+    minzoom: 12,
+    layout: {
+      "text-field": ["get", "label"],
+      "text-font": STOPS_FONT,
+      "text-size": 10,
+      "text-offset": [0, -1.9],
+      "text-allow-overlap": true,
+      "text-ignore-placement": true,
+    },
+    paint: {
+      "text-color": ["case", ["get", "frequent"], HOTSPOT_RED, HOTSPOT_AMBER],
+      "text-halo-color": "#050505",
+      "text-halo-width": 1.2,
+    },
   });
 }
 
@@ -994,6 +1056,7 @@ function CinematicFpsMeter({ fullscreen = false, mapRef, showcaseRef }) {
 export default function LiveVectorMap({
   routeGeometry,
   deliveryStops = [],
+  trafficHotspots = [],
   snappedPosition,
   perspective = false,
   followDriver = true,
@@ -1500,6 +1563,17 @@ export default function LiveVectorMap({
     if (map.isStyleLoaded()) apply();
     else map.once("style.load", apply);
   }, [deliveryStops]);
+
+  // Traffic-delay hotspot pins (2026-10-08): red for frequent delay areas
+  // (2+ reports), amber for occasional ones. Data comes from the driver's
+  // own TrafficLog via useTrafficHotspots in RoadMatchedMap.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    const apply = () => addTrafficHotspotLayers(map, trafficHotspots);
+    if (map.isStyleLoaded()) apply();
+    else map.once("style.load", apply);
+  }, [trafficHotspots]);
 
   useEffect(() => {
     const map = mapRef.current;
