@@ -1,44 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Fuel as FuelIcon, ChevronDown, ChevronUp, Copy, Check, Percent, Tag, Zap } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import useFuelDeals, { netPrice } from "@/hooks/useFuelDeals";
 
 // Small floating overlay for the navigation map: highlights the best fuel
 // prices nearby (saved FuelDeal records) and a quick button that reveals
 // each station's cashback % and promo codes for the route.
-const NEARBY_MI = 15;
-const TOP_N = 3;
-
-function netPrice(d) {
-  return Number(d.price_per_gallon || 0) - Number(d.discount_per_gallon || 0);
-}
-
-export default function FuelDealsOverlay({ fullscreen = false }) {
-  const [deals, setDeals] = useState(null);
-  const [open, setOpen] = useState(false);
+//
+// In active navigation the standalone pill is hidden (hidePill) and the ETA
+// sheet owns the toggle instead — pass open/onToggle to control the card
+// from there. Everywhere else it manages its own open state.
+export default function FuelDealsOverlay({ fullscreen = false, open: openProp, onToggle, hidePill = false }) {
+  const deals = useFuelDeals();
+  const [internalOpen, setInternalOpen] = useState(false);
   const [showPerks, setShowPerks] = useState(false);
   const [copied, setCopied] = useState("");
 
-  useEffect(() => {
-    let on = true;
-    base44.entities.FuelDeal.filter({}, "price_per_gallon")
-      .then((rows) => {
-        if (!on) return;
-        const today = new Date().toISOString().slice(0, 10);
-        setDeals(
-          rows
-            .filter((d) => !d.expires_on || d.expires_on >= today)
-            .filter((d) => d.distance_miles == null || d.distance_miles <= NEARBY_MI)
-            .sort((a, b) => netPrice(a) - netPrice(b))
-            .slice(0, TOP_N)
-        );
-      })
-      .catch(() => {
-        if (on) setDeals([]);
-      });
-    return () => {
-      on = false;
-    };
-  }, []);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const toggle = () => {
+    if (isControlled) onToggle?.(!openProp);
+    else setInternalOpen((v) => !v);
+  };
 
   if (!deals || deals.length === 0) return null;
 
@@ -115,14 +97,16 @@ export default function FuelDealsOverlay({ fullscreen = false }) {
           </div>
         </div>
       )}
+      {!hidePill && (
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         className="flex w-full items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-black/85 px-3 py-2 text-[10px] font-bold tracking-[0.08em] text-primary shadow-lg backdrop-blur active:scale-95"
       >
         <FuelIcon className="h-3.5 w-3.5 shrink-0" />
         <span className="truncate">${bestNet.toFixed(2)}/GAL · BEST FUEL NEARBY</span>
         {open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronUp className="h-3.5 w-3.5 shrink-0" />}
       </button>
+      )}
     </div>
   );
 }

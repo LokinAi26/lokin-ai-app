@@ -113,7 +113,7 @@ function project(coord, viewport, width = MAP_W, height = MAP_H) {
   return { x: width / 2 + screenDx, y: height / 2 + screenDy };
 }
 
-export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onActivateCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null, cinematic = false, onCinematicChange = null }) {
+export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snappedPosition, maneuver, remainingDurationS, followDriver = true, perspective = false, fullscreen = false, onResetFollow = null, onEnterFullscreen = null, etaLiveTraffic = false, navigationStatus = "navigating", destinationSide = null, doorPinArrived = false, mapView = "real", onActivateCinematic = null, onExit = null, onSelectMapView = null, onAskLokin = null, cinematic = false, onCinematicChange = null, fuelOpen, onFuelToggle = null, hideFuelPill = false }) {
   const coords = routeGeometry?.coordinates || routeGeometry || [];
   // NIGHT default: vector-dark Mapbox Standard + night preset + 3D buildings.
   // AERIAL: Mapbox Satellite Streets with the same cinematic camera and glow route.
@@ -701,7 +701,7 @@ export default function RoadMatchedMap({ routeGeometry, deliveryStops = [], snap
           </div>
         )}
 
-        <FuelDealsOverlay fullscreen={fullscreen} />
+        <FuelDealsOverlay fullscreen={fullscreen} open={fuelOpen} onToggle={onFuelToggle} hidePill={hideFuelPill} />
 
         {statusPillText && (
           <div className={`absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300/30 bg-black/85 px-3 py-1.5 text-[9px] font-extrabold tracking-[0.12em] text-amber-200 backdrop-blur ${fullscreen ? "top-[calc(11rem+env(safe-area-inset-top))]" : "top-14"}`}>

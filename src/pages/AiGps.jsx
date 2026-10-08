@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Lock, MapPin, Merge, Mic, Move, Navigation, PackageSearch, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Search, Split, Undo2, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUp, ArrowUpLeft, ArrowUpRight, ChevronDown, ChevronUp, CircleCheck, CircleDot, CornerUpLeft, CornerUpRight, Flag, Fuel, Lock, MapPin, Merge, Mic, Move, Navigation, PackageSearch, Pause, Power, Radar, RefreshCw, RotateCw, Route as RouteIcon, Satellite, Search, Split, Undo2, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import SatelliteRoutePreview from "@/components/SatelliteRoutePreview";
 import RoadMatchedMap from "@/components/RoadMatchedMap";
@@ -10,6 +10,7 @@ import VoicePicker from "@/components/VoicePicker";
 import { base44 } from "@/api/base44Client";
 import { guardedInvoke } from "@/lib/creditGuardian";
 import useLokinNavigation from "@/hooks/useLokinNavigation";
+import useFuelDeals, { netPrice as fuelNetPrice } from "@/hooks/useFuelDeals";
 import { dispatchLokinCommand, LOKIN_COMMANDS } from "@/lib/lokinCommandBus";
 import { formatDistance, formatDuration } from "@/lib/navigationGeometry";
 import { loadOptimizedRouteSession } from "@/lib/optimizedRouteSession";
@@ -545,6 +546,10 @@ function formatArrivalClock(remainingDurationS) {
 function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, routeLoadError, loadingStops, deliveryStops, destinationAddresses, doorPinArrived, voiceGuidance, setVoiceGuidance, guidanceAudioError, onExit, searchOpen, setSearchOpen, onQuickSearch }) {
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const [locatorOpen, setLocatorOpen] = useState(false);
+  // Fuel pill merged into the ETA sheet (Kendall 2026-10-08): the ETA card
+  // owns the toggle, the floating map pill is hidden while navigating.
+  const [fuelOpen, setFuelOpen] = useState(false);
+  const fuelDeals = useFuelDeals();
   // Hands-free voice entry ("Hey LOKIN, start item locator"): the locked nav
   // surface consumes the open event so the camera homing overlay mounts ON TOP
   // of live navigation instead of navigating away mid-drive.
@@ -610,6 +615,9 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
           navigationStatus={nav.status}
           destinationSide={nav.route?.destination_side}
           doorPinArrived={doorPinArrived}
+          fuelOpen={fuelOpen}
+          onFuelToggle={setFuelOpen}
+          hideFuelPill={!!nav.route}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
@@ -767,6 +775,21 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
                   ? `Destination reached${doorPinArrived ? " \u00b7 saved door pin" : ""}`
                   : `${nav.remainingDistanceM != null ? formatDistance(nav.remainingDistanceM) : "\u2014"}${arrivalClock ? ` \u00b7 ${arrivalClock}` : ""}`}
               </div>
+              {fuelDeals && fuelDeals.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFuelOpen((v) => !v)}
+                  aria-expanded={fuelOpen}
+                  aria-label="Best fuel prices nearby"
+                  className="mt-2 flex w-full items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-left active:scale-[0.98]"
+                >
+                  <Fuel className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1 truncate text-[11px] font-bold tracking-[0.06em] text-primary">
+                    ${fuelNetPrice(fuelDeals[0]).toFixed(2)}/GAL · BEST FUEL NEARBY
+                  </span>
+                  {fuelOpen ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" /> : <ChevronUp className="h-4 w-4 shrink-0 text-primary" />}
+                </button>
+              )}
               {finalDestination && (
                 <DestinationHours
                   name={finalDestination.name}
