@@ -53,7 +53,7 @@ export default function FuelDealsOverlay({ fullscreen = false }) {
 
   return (
     <div
-      className={`absolute left-3 z-30 w-[min(17rem,62vw)] ${fullscreen ? "bottom-[calc(4.7rem+env(safe-area-inset-bottom))]" : "bottom-20"}`}
+      className={`absolute left-3 z-50 w-[min(17rem,62vw)] ${fullscreen ? "bottom-[calc(4.7rem+env(safe-area-inset-bottom))]" : "bottom-20"}`}
     >
       {open && (
         <div className="lokin-card mb-2 overflow-hidden p-2.5 backdrop-blur">
