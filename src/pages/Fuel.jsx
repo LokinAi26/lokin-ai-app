@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Fuel as FuelIcon, Tag, Percent, MapPin, Plus, Check } from "lucide-react";
+import { Fuel as FuelIcon, Tag, Percent, MapPin, Plus, Check, Radar } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { loadDriverPrefs } from "@/context/DriverPrefsContext";
 
 export default function Fuel() {
   const [deals, setDeals] = useState([]);
@@ -9,6 +10,26 @@ export default function Fuel() {
   const [newGallons, setNewGallons] = useState("");
   const [newTotal, setNewTotal] = useState("");
   const [newStation, setNewStation] = useState("");
+  const [scanning, setScanning] = useState("");
+
+  // Google-Search-backed refresh of local gas discount updates: the scan
+  // engine upserts FuelDeal records, which both this list and the navigation
+  // map's FuelDealsOverlay (cheapest pumps along the active route) read.
+  async function scanDeals() {
+    setScanning("Scanning local gas discounts…");
+    try {
+      const prefs = await loadDriverPrefs();
+      const res = await base44.functions.invoke("gas-deal-scan", {
+        region: prefs?.region || "Hampton Roads, VA",
+      });
+      const d = res?.data || {};
+      setScanning(d.ok ? `Updated ${d.created + d.updated} local deal${d.created + d.updated === 1 ? "" : "s"} from the web scan` : "Scan failed — try again");
+      await load();
+    } catch (e) {
+      setScanning("Scan failed — try again");
+    }
+    setTimeout(() => setScanning(""), 5000);
+  }
 
   async function load() {
     const [d, p] = await Promise.all([
@@ -67,9 +88,20 @@ export default function Fuel() {
       </div>
 
       <div>
-        <div className="text-sm font-semibold text-white/80 mb-2">Saved Fuel Deals</div>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="text-sm font-semibold text-white/80">Saved Fuel Deals</div>
+          <button
+            onClick={scanDeals}
+            disabled={Boolean(scanning)}
+            className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[10px] font-bold tracking-[0.08em] text-primary disabled:opacity-50 active:scale-95 transition-transform"
+          >
+            <Radar className={`h-3.5 w-3.5 ${scanning ? "animate-pulse" : ""}`} />
+            SCAN LOCAL DEALS
+          </button>
+        </div>
+        {scanning && <div className="mb-2 text-xs text-white/60">{scanning}</div>}
         <div className="space-y-2">
-          {deals.length === 0 && <div className="text-xs text-white/45 text-center py-3">No active deals.</div>}
+          {deals.length === 0 && <div className="text-xs text-white/45 text-center py-3">No active deals — tap Scan Local Deals to pull the cheapest pumps near you.</div>}
           {deals.map((d) => {
             const net = (d.price_per_gallon - (d.discount_per_gallon || 0)).toFixed(2);
             return (
