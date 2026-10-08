@@ -300,6 +300,7 @@ export default function Oasis() {
   async function loadProjects() {
     // Each run gets an id; results from a superseded run (e.g. after Retry) are ignored.
     const runId = ++loadSeq.current;
+    let failedCurrentRun = false;
     setLoading(true);
     setLoadFailed(false);
     setError("");
@@ -331,11 +332,12 @@ export default function Oasis() {
       if (runId !== loadSeq.current) return;
       // Invalidate this run so a response arriving after the timeout can't overwrite newer state.
       loadSeq.current += 1;
+      failedCurrentRun = true;
       console.error("OASIS pipeline failed to load", err);
       setLoadFailed(true);
       setError(`${errorText(err, "OASIS could not load its project pipeline.")} Check your connection and retry.`);
     } finally {
-      setLoading((current) => (runId === loadSeq.current || runId === loadSeq.current - 1 ? false : current));
+      if (runId === loadSeq.current || failedCurrentRun) setLoading(false);
     }
   }
 
