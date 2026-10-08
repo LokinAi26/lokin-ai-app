@@ -27,8 +27,7 @@ export default function TrafficLog() {
     }
   }
 
-  // Avoid pattern: group by area × day part → count + average delay.
-  // Commute-only timeline: keep just the AM and PM rush day-parts.
+  // Commute filter: keep just the AM and PM rush day-parts (both views).
   const timelineItems = useMemo(() => {
     if (!commuteOnly) return items;
     return items.filter((i) => i.day_part === "morning" || i.day_part === "evening");
@@ -36,7 +35,7 @@ export default function TrafficLog() {
 
   const patterns = useMemo(() => {
     const byArea = new Map();
-    for (const i of items) {
+    for (const i of timelineItems) {
       const key = String(i.area || "").toLowerCase().trim();
       if (!key) continue;
       if (!byArea.has(key)) byArea.set(key, { area: i.area, parts: new Map() });
@@ -58,7 +57,7 @@ export default function TrafficLog() {
         totalReports: [...e.parts.values()].reduce((s, p) => s + p.count, 0),
       }))
       .sort((a, b) => b.totalReports - a.totalReports);
-  }, [items]);
+  }, [timelineItems]);
 
   return (
     <div className="p-4 space-y-4">
@@ -101,31 +100,34 @@ export default function TrafficLog() {
         </div>
       ) : null}
 
+      {/* Commute filter: applies to both the timeline and the patterns view */}
+      {loaded && items.length > 0 && (
+        <div className="lk-seg w-full" role="group" aria-label="Commute filter">
+          <button
+            type="button"
+            aria-pressed={!commuteOnly}
+            onClick={() => setCommuteOnly(false)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${!commuteOnly ? "text-primary" : "text-white/55"}`}
+            style={!commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+          >
+            <CalendarRange className="h-3 w-3" /> All hours
+          </button>
+          <button
+            type="button"
+            aria-pressed={commuteOnly}
+            onClick={() => setCommuteOnly(true)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${commuteOnly ? "text-primary" : "text-white/55"}`}
+            style={commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
+          >
+            <Sunrise className="h-3 w-3" /> AM
+            <i aria-hidden className="h-3 w-px bg-white/15" />
+            <Sunset className="h-3 w-3" /> PM rush
+          </button>
+        </div>
+      )}
+
       {view === "timeline" && loaded && items.length > 0 && (
         <>
-          {/* Commute filter: focus the timeline on AM/PM rush day-parts */}
-          <div className="lk-seg w-full" role="group" aria-label="Commute filter">
-            <button
-              type="button"
-              aria-pressed={!commuteOnly}
-              onClick={() => setCommuteOnly(false)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${!commuteOnly ? "text-primary" : "text-white/55"}`}
-              style={!commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
-            >
-              <CalendarRange className="h-3 w-3" /> All hours
-            </button>
-            <button
-              type="button"
-              aria-pressed={commuteOnly}
-              onClick={() => setCommuteOnly(true)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 font-display text-[11px] tracking-[0.08em] uppercase ${commuteOnly ? "text-primary" : "text-white/55"}`}
-              style={commuteOnly ? { textShadow: "0 0 10px rgba(124,252,30,.6)" } : undefined}
-            >
-              <Sunrise className="h-3 w-3" /> AM
-              <i aria-hidden className="h-3 w-px bg-white/15" />
-              <Sunset className="h-3 w-3" /> PM rush
-            </button>
-          </div>
           <section className="space-y-2">
             <DelayTimeline
               items={timelineItems}
@@ -164,7 +166,7 @@ export default function TrafficLog() {
       {view === "patterns" && items.length > 0 && (
         <section className="space-y-2">
           <div className="text-[11px] tracking-[0.2em] text-primary/70 font-display">RECENT LOG</div>
-          {items.slice(0, 30).map((i) => (
+          {timelineItems.slice(0, 30).map((i) => (
             <div key={i.id} className="flex items-start justify-between rounded-2xl border border-white/10 lokin-panel lokin-card p-3">
               <div>
                 <div className="text-sm text-white">{i.area}</div>
