@@ -326,18 +326,16 @@ export default function Oasis() {
         setSupplierCandidates(candidates || []);
         setSampleRequests(samples || []);
         setJobs(productionJobs || []);
-        // A load that finishes after the timeout fired still counts as recovered.
-        setLoadFailed(false);
-        setError("");
-        setLoading(false);
       })(), LOAD_TIMEOUT_MS, "OASIS took too long to respond.");
     } catch (err) {
       if (runId !== loadSeq.current) return;
+      // Invalidate this run so a response arriving after the timeout can't overwrite newer state.
+      loadSeq.current += 1;
       console.error("OASIS pipeline failed to load", err);
       setLoadFailed(true);
       setError(`${errorText(err, "OASIS could not load its project pipeline.")} Check your connection and retry.`);
     } finally {
-      if (runId === loadSeq.current) setLoading(false);
+      setLoading((current) => (runId === loadSeq.current || runId === loadSeq.current - 1 ? false : current));
     }
   }
 

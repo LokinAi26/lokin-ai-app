@@ -62,11 +62,14 @@ export default function OasisProductionFabric({ project, sourceAsset, recipes, j
     const map = {};
     for (const job of jobs || []) {
       if (jobSourceAssetId(job) !== sourceId) continue;
+      // The backend keys jobs by workflow version too (currently always 1).
+      const recipeVersion = Number((recipes || []).find((recipe) => recipe.key === job.workflow_key)?.version || 1);
+      if (Number(job.workflow_version || 1) !== recipeVersion) continue;
       const current = map[job.workflow_key];
       if (!current || String(job.created_at || "") > String(current.created_at || "")) map[job.workflow_key] = job;
     }
     return map;
-  }, [jobs, sourceId]);
+  }, [jobs, sourceId, recipes]);
 
   const list = recipes?.length ? recipes : FALLBACK_RECIPES;
   const readyCount = list.filter((recipe) => recipe.executable).length;
