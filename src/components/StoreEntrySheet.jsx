@@ -36,12 +36,14 @@ export default function StoreEntrySheet() {
   const dismissedRef = useRef(null);
   const countingRef = useRef(false); // a countdown is running
   const announcedRef = useRef(null); // store id the "Opening" line was spoken for
+  const heldRef = useRef(null); // store id the "on hold" line was spoken for
 
   useEffect(() => {
     return subscribeStoreGeofence((evt) => {
       if (evt.type === "exit") {
         dismissedRef.current = null;
         announcedRef.current = null;
+        heldRef.current = null;
         countingRef.current = false;
         setStore(null);
         setCountdown(null);
@@ -107,7 +109,8 @@ export default function StoreEntrySheet() {
         dismissedRef.current = store.id; // opened once; never again this visit
         setStore(null);
         navigate("/locator");
-      } else {
+      } else if (store && heldRef.current !== store.id) {
+        heldRef.current = store.id; // say it once per visit, not every retry
         try {
           speakLokin("Item locator on hold.", { rate: 1.05 });
         } catch {

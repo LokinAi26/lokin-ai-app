@@ -5,7 +5,7 @@
 // same endpoint the 3D map engine uses). Crossing into a store's radius fires
 // an "enter" event; leaving fires "exit". Once the driver has been at walking
 // pace or slower for the whole of SETTLE_MS inside the radius, or for
-// ARRIVAL_SETTLE_MS after navigation arrived at the store (parked and walked
+// a near-standstill ARRIVAL_SETTLE_MS after navigation arrived at the store (parked and walked
 // in, not a drive-by), every fix also fires "settled". The StoreEntrySheet
 // listens: "enter" shows the prompt, "settled" switches to the item locator
 // when auto-open is on and canAutoOpenItemLocator allows it. Entries missed while LOKIN is
@@ -26,9 +26,10 @@ const ENTER_RADIUS_M = 80;
 const EXIT_RADIUS_M = 200;
 const MAX_STORES = 40;
 const SETTLE_MS = 45 * 1000; // walking-pace dwell before a geofence visit settles
-const ARRIVAL_SETTLE_MS = 8 * 1000; // same, after navigation arrived at the store
+const ARRIVAL_SETTLE_MS = 15 * 1000; // near-standstill dwell after navigation arrived
+const ARRIVAL_MAX_MPS = 1.0; // stricter than walking: a parking-lot crawl is not "arrived"
 const PACE_WINDOW_MS = 5 * 1000; // min span used to measure pace (smooths indoor jitter)
-const WALKING_MAX_MPS = 2.5; // ~9 km/h: faster than this is still driving
+const WALKING_MAX_MPS = 2.0; // ~7 km/h, brisk walking: faster than this is still driving
 const FIX_HISTORY_MS = 90 * 1000;
 const FRESH_FIX_MS = 30 * 1000;
 
@@ -171,16 +172,20 @@ function maxPaceSince(sinceT) {
   return max;
 }
 
+// True when pace stayed at or under maxMps for the whole of the last
+// windowMs, and the visit (or arrival) is at least that old.
+function steadyFor(now, startedAt, windowMs, maxMps) {
+  if (now - startedAt < windowMs) return false;
+  const pace = maxPaceSince(now - windowMs);
+  return pace != null && pace <= maxMps;
+}
+
 function shouldSettle(now) {
-  const arrived = arrivedAt != null;
-  const dwellStart = arrived ? arrivedAt : insideSince;
-  const dwellNeeded = arrived ? ARRIVAL_SETTLE_MS : SETTLE_MS;
-  if (now - dwellStart < dwellNeeded) return false;
-  // Walking pace (or slower) for the whole of the last dwellNeeded. After an
-  // arrival this is a sliding window, so the car rolling to a stop at the
-  // arrival point only delays the settle by ARRIVAL_SETTLE_MS.
-  const pace = maxPaceSince(now - dwellNeeded);
-  return pace != null && pace <= WALKING_MAX_MPS;
+  // After navigation arrived: a short near-standstill (sliding window, so the
+  // car rolling to a stop only delays it). A parking-lot crawl is faster than
+  // ARRIVAL_MAX_MPS and falls through to the regular walking-pace dwell.
+  if (arrivedAt != null && steadyFor(now, arrivedAt, ARRIVAL_SETTLE_MS, ARRIVAL_MAX_MPS)) return true;
+  return steadyFor(now, insideSince, SETTLE_MS, WALKING_MAX_MPS);
 }
 
 // Turn-by-turn navigation (AI GPS, Vision HUD) reports whether it is actively
@@ -285,12 +290,19 @@ export function reportStoreArrival(name, lat, lon, t = Date.now()) {
     if (STREET_RE.test(n) && !BRAND_RE.test(n)) return;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     const at = Number.isFinite(t) ? t : Date.now();
-    if (insideStore) {
+    if (insideStore && haversineMeters({ lat, lon }, insideStore) <= ENTER_RADIUS_M) {
       // Already inside (the geofence caught the approach): navigation
-      // arriving here upgrades the open visit so it settles on the short
-      // arrival dwell instead of being ignored.
+      // arriving here upgrades the open visit so it settles on the arrival
+      // dwell instead of being ignored.
       if (arrivedAt == null) arrivedAt = at;
       return;
+    }
+    if (insideStore) {
+      // The open visit is a different store (e.g. a gas-station shop passed on
+      // the way in): the arrival wins.
+      const left = insideStore;
+      endVisit();
+      notify({ type: "exit", store: left });
     }
     const label = String(name).trim().slice(0, 80);
     startVisit({
@@ -338,7 +350,14 @@ export function checkStoreGeofence(lat, lon, t = Date.now()) {
           // store is nearest. An arrival-detected store has no OSM twin, and
           // neighbors in a strip mall swap "nearest" as GPS drifts indoors;
           // either used to fire an immediate exit that closed the prompt.
-          if (haversineMeters(here, insideStore) > EXIT_RADIUS_M) {
+          const heldD = haversineMeters(here, insideStore);
+          // Also hand over when another store is now within the enter radius
+          // and the held one no longer is (passed a corner shop, parked at the
+          // supermarket next door). Drift between two stores that are both
+          // still within the enter radius keeps the visit.
+          const switched = nearest && nearest.id !== insideStore.id
+            && nearestD <= ENTER_RADIUS_M && heldD > ENTER_RADIUS_M;
+          if (heldD > EXIT_RADIUS_M || switched) {
             const left = insideStore;
             endVisit();
             notify({ type: "exit", store: left });

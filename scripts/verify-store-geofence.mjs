@@ -70,7 +70,7 @@ stores = [{ type: "way", id: 1, center: offset(150), tags: { shop: "supermarket"
 assert(events.join() === "enter:arrival:walmart-supercenter", `arrival must enter, got ${events}`);
 await walk(2_000, 6_000, (t) => t / 2_000); // 1 m every 2 s
 assert(settled().length === 0, "arrival must not settle before its dwell");
-await walk(8_000, 12_000, (t) => t / 2_000);
+await walk(8_000, 16_000, (t) => t / 2_000);
 assert(!events.some((e) => e.startsWith("exit")), `arrival visit must not exit on nearby fixes, got ${events}`);
 assert(settled().join() === "settled:arrival:walmart-supercenter", `arrival must settle, got ${events}`);
 await fix(400, 60_000);
@@ -84,7 +84,7 @@ reset();
 }
 await walk(2_000, 14_000, (t) => (t / 1_000) * 6 - 90); // -78..-6 m, 6 m/s
 assert(settled().length === 0, `rolling arrival must not settle, got ${events}`);
-await walk(16_000, 30_000, () => -6); // stopped
+await walk(16_000, 34_000, () => -6); // stopped
 assert(settled().length === 1, `arrival settles soon after the car stops, got ${events}`);
 
 // 3. Geofence caught the approach first, then navigation arrived: the
@@ -97,9 +97,39 @@ assert(events.join() === "enter:n5", `approach must enter, got ${events}`);
   const p = offset(30);
   reportStoreArrival("Food Lion", p.lat, p.lon, 6_000);
 }
-await walk(6_000, 20_000, (t) => 30 - (t - 6_000) / 2_000);
+await walk(6_000, 26_000, (t) => 30 - (t - 6_000) / 2_000);
 assert(settled().join() === "settled:n5", `arrival after approach must settle, got ${events}`);
-assert(canAutoOpenItemLocator({ pathname: "/ai-gps", storeId: "n5", now: 20_000 }), "arrived visit may auto-open");
+assert(canAutoOpenItemLocator({ pathname: "/ai-gps", storeId: "n5", now: 26_000 }), "arrived visit may auto-open");
+
+// 3b. Parking-lot crawl at ~2.2 m/s (8 km/h) after arrival, for a full
+// minute: neither the arrival nor the walking-pace dwell settles.
+reset();
+stores = [];
+{
+  const p = offset(0);
+  reportStoreArrival("Kroger", p.lat, p.lon, 0);
+}
+await walk(2_000, 60_000, (t) => (t / 1_000) * 2.2 - 66); // -62..+66 m at 2.2 m/s
+assert(settled().length === 0, `a parking-lot crawl after arrival must not settle, got ${events}`);
+
+// 3c. Arrival at a store other than the one the visit holds: hands over.
+reset();
+stores = [nodeStore(6, 0, "Shell Food Mart")];
+await fix(60, 0);
+assert(events.join() === "enter:n6", `corner shop entered, got ${events}`);
+{
+  const p = offset(170);
+  reportStoreArrival("Aldi", p.lat, p.lon, 10_000);
+}
+assert(events.join() === "enter:n6,exit:n6,enter:arrival:aldi", `arrival elsewhere must hand over, got ${events}`);
+
+// 3d. Geofence handover: held store fell out of its enter radius and another
+// store is now within its own.
+reset();
+stores = [nodeStore(7, 0, "Shell Food Mart"), nodeStore(8, 150, "Aldi")];
+await fix(70, 0);
+await fix(140, 8_000);
+assert(events.join() === "enter:n7,exit:n7,enter:n8", `geofence must hand over to the nearer store, got ${events}`);
 
 // 4. Walking in without navigation: settles once after the full dwell at
 // walking pace.
