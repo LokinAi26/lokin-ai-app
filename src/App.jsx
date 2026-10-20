@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/SplashScreen';
 import FeatureTour from './components/FeatureTour';
 import DeepLinkHandler from './components/DeepLinkHandler';
+import ErrorBoundary from './components/ErrorBoundary';
 // Add page imports here
 import Home from './pages/Home';
 const RoutePlanner = lazy(() => import('./pages/RoutePlanner'));
@@ -100,10 +101,12 @@ const AuthenticatedApp = () => {
   if (isShopifyEmbedRequest(pathname)) {
     return (
       <Suspense fallback={<RouteFallback />}>
+      <ErrorBoundary>
       <Routes>
         <Route path="/shopify" element={<ShopifyEmbed />} />
         <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
       </Routes>
+      </ErrorBoundary>
       </Suspense>
     );
   }
@@ -131,6 +134,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Suspense fallback={<RouteFallback />}>
+    <ErrorBoundary>
     <Routes>
       <Route element={<ProtectedRoute unauthenticatedElement={<Login />} />}>
         <Route element={<DriverLayout />}>
@@ -203,6 +207,7 @@ const AuthenticatedApp = () => {
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </ErrorBoundary>
     </Suspense>
   );
 };
@@ -213,11 +218,13 @@ function ShopifyPublicApp() {
     <QueryClientProvider client={queryClientInstance}>
       <Router>
         <Suspense fallback={<RouteFallback />}>
+        <ErrorBoundary>
         <Routes>
           <Route path="/shopify" element={<ShopifyEmbed />} />
           <Route path="/shopify/auth/callback" element={<ShopifyEmbed />} />
           <Route path="*" element={<ShopifyEmbed />} />
         </Routes>
+        </ErrorBoundary>
         </Suspense>
       </Router>
     </QueryClientProvider>
