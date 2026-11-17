@@ -1136,8 +1136,14 @@ export default function LiveVectorMap({
   // Honest retail data-service status: idle | loading | ready | error.
   const [retailStatus, setRetailStatus] = useState("idle");
   // Approach-alert mute (2026-11-17): silences the spoken hazard/zone warnings
-  // that fire near voice-annotated records. Persists for the map session.
-  const [approachMuted, setApproachMuted] = useState(false);
+  // that fire near voice-annotated records. Persists across map sessions via
+  // localStorage so the driver's choice survives a route reload or app restart.
+  const [approachMuted, setApproachMuted] = useState(
+    () => { try { return localStorage.getItem("lokin:approachMuted") === "1"; } catch { return false; } }
+  );
+  useEffect(() => {
+    try { localStorage.setItem("lokin:approachMuted", approachMuted ? "1" : "0"); } catch { /* private mode */ }
+  }, [approachMuted]);
 
   routeRef.current = routeGeometry;
   stopsRef.current = deliveryStops;
