@@ -25,6 +25,18 @@ export default function Settings() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
+  // Approach-alert mute (2026-11-17): same localStorage key the live map reads,
+  // so toggling it here updates the map instantly on the next session.
+  const [approachMuted, setApproachMuted] = useState(
+    () => { try { return localStorage.getItem("lokin:approachMuted") === "1"; } catch { return false; } }
+  );
+  function toggleApproachMuted() {
+    setApproachMuted((m) => {
+      const next = !m;
+      try { localStorage.setItem("lokin:approachMuted", next ? "1" : "0"); } catch { /* private mode */ }
+      return next;
+    });
+  }
 
   // Shared single-fetch source for the DriverPreference row.
   const { prefs: sharedPrefs, refreshPrefs } = useDriverPrefs();
@@ -198,6 +210,24 @@ export default function Settings() {
             </button>
           ))}
         </div>
+      </Section>
+
+      <Section title="Navigation">
+        <button
+          type="button"
+          onClick={toggleApproachMuted}
+          className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${approachMuted ? "border-white/10 bg-white/[0.03]" : "border-primary/35 bg-primary/[0.07]"}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold text-white">Approach Alerts</div>
+              <div className="mt-0.5 text-[11px] text-white/45">Spoken warnings for hazards and delivery zones you reported near your route.</div>
+            </div>
+            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${approachMuted ? "border-white/10 text-white/40" : "border-primary/35 bg-primary/10 text-primary"}`}>
+              {approachMuted ? "MUTED" : "ON"}
+            </span>
+          </div>
+        </button>
       </Section>
 
       <button onClick={save} className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 glow-primary flex items-center justify-center gap-2 select-none">
