@@ -22,7 +22,6 @@ import GpsQuickSearch from "@/components/gps/GpsQuickSearch";
 import DestinationHours from "@/components/gps/DestinationHours";
 import Speedometer from "@/components/gps/Speedometer";
 import TrafficDelayHotspotAlert from "@/components/gps/TrafficDelayHotspotAlert";
-import GpsApproachAlert from "@/components/gps/GpsApproachAlert";
 
 export default function AiGps() {
   const [params, setParams] = useSearchParams();
@@ -688,13 +687,7 @@ function LockedGpsSurface({ nav, mapView, setMapView, cinematic, setCinematic, r
       {/* Logged delay hotspots (2026-10-07): one spoken alert when the driver
           closes on a TrafficDelay they recorded in the last 3 days. */}
       {nav.route && !arrived && (
-        <>
-          <TrafficDelayHotspotAlert latitude={nav.rawPosition?.latitude} longitude={nav.rawPosition?.longitude} />
-          {/* Voice-annotated hazards & delivery zones (2026-11-17): one spoken
-              warning when closing on a Hazard/DeliveryZone the driver reported
-              via the GPS voice-annotation mic. */}
-          <GpsApproachAlert latitude={nav.rawPosition?.latitude} longitude={nav.rawPosition?.longitude} />
-        </>
+        <TrafficDelayHotspotAlert latitude={nav.rawPosition?.latitude} longitude={nav.rawPosition?.longitude} />
       )}
 
       {/* Right control stack (2026-09-29 HUD cleanup, Google Maps reference):

@@ -18,6 +18,7 @@ import {
 import { hotspotFeatureCollection } from "@/lib/trafficHotspots";
 
 import GpsVoiceAnnotation from "@/components/gps/GpsVoiceAnnotation";
+import GpsApproachAlert from "@/components/gps/GpsApproachAlert";
 
 const ROUTE_SOURCE = "lokin-live-route";
 const ROUTE_CASING = "lokin-live-route-casing";
@@ -1960,10 +1961,19 @@ export default function LiveVectorMap({
       {/* GPS voice annotation (SPEC-002 section 6): mic button + provisional
           DRIVER_REPORTED annotations. Only new chrome on the map surface. */}
       {status === "ready" && (
-        <GpsVoiceAnnotation
-          mapRef={mapRef}
-          coordinate={normalizeCoordinate(snappedPosition?.coordinate)}
-        />
+        <>
+          <GpsVoiceAnnotation
+            mapRef={mapRef}
+            coordinate={normalizeCoordinate(snappedPosition?.coordinate)}
+          />
+          {/* Approach alerts (2026-11-17): one spoken warning when closing on a
+              voice-annotated Hazard/DeliveryZone. Lives on the live vector map
+              so it fires in both navigation and free-roam. */}
+          <GpsApproachAlert
+            latitude={normalizeCoordinate(snappedPosition?.coordinate)?.[1]}
+            longitude={normalizeCoordinate(snappedPosition?.coordinate)?.[0]}
+          />
+        </>
       )}
       {status === "loading" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111820]">
