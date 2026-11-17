@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Layers3 } from "lucide-react";
+import { Layers3, Volume2, VolumeX } from "lucide-react";
 import { base44LiveFunctions } from "@/api/base44Client";
 import {
   rendererInterpolationBudgetMs,
@@ -1135,6 +1135,9 @@ export default function LiveVectorMap({
   cinematicRef.current = cinematic;
   // Honest retail data-service status: idle | loading | ready | error.
   const [retailStatus, setRetailStatus] = useState("idle");
+  // Approach-alert mute (2026-11-17): silences the spoken hazard/zone warnings
+  // that fire near voice-annotated records. Persists for the map session.
+  const [approachMuted, setApproachMuted] = useState(false);
 
   routeRef.current = routeGeometry;
   stopsRef.current = deliveryStops;
@@ -1961,6 +1964,17 @@ export default function LiveVectorMap({
       {/* GPS voice annotation (SPEC-002 section 6): mic button + provisional
           DRIVER_REPORTED annotations. Only new chrome on the map surface. */}
       {status === "ready" && (
+        <button
+          type="button"
+          aria-label={approachMuted ? "Unmute approach alerts" : "Mute approach alerts"}
+          aria-pressed={approachMuted}
+          onClick={() => setApproachMuted((m) => !m)}
+          className="absolute right-3 bottom-[calc(8.6rem+env(safe-area-inset-bottom))] z-30 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/85 text-white/80 shadow-lg backdrop-blur active:scale-95"
+        >
+          {approachMuted ? <VolumeX className="h-5 w-5 text-white/55" /> : <Volume2 className="h-5 w-5 text-accent" />}
+        </button>
+      )}
+      {status === "ready" && (
         <>
           <GpsVoiceAnnotation
             mapRef={mapRef}
@@ -1972,6 +1986,7 @@ export default function LiveVectorMap({
           <GpsApproachAlert
             latitude={normalizeCoordinate(snappedPosition?.coordinate)?.[1]}
             longitude={normalizeCoordinate(snappedPosition?.coordinate)?.[0]}
+            muted={approachMuted}
           />
         </>
       )}

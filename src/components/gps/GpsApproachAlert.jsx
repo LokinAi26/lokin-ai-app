@@ -20,7 +20,9 @@ function wordingFor(rec) {
   return `${label} zone ahead, reported here earlier.`;
 }
 
-export default function GpsApproachAlert({ latitude, longitude }) {
+export default function GpsApproachAlert({ latitude, longitude, muted = false }) {
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
   const recordsRef = useRef([]);
   const alertedRef = useRef(new Set());
   const posRef = useRef(null);
@@ -63,8 +65,10 @@ export default function GpsApproachAlert({ latitude, longitude }) {
       const dist = haversineMeters(pos, [Number(r.longitude), Number(r.latitude)]);
       if (dist <= ALERT_M) {
         alertedRef.current.add(r.id);
-        playNavCue("imminent");
-        speakGuidance(wordingFor(r));
+        if (!mutedRef.current) {
+          playNavCue("imminent");
+          speakGuidance(wordingFor(r));
+        }
         break; // one alert per GPS fix
       }
     }
